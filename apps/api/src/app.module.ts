@@ -29,6 +29,9 @@ import { StatementsModule } from './statements/statements.module';
 import { CollectionActivitiesModule } from './collection-activities/collection-activities.module';
 import { CollectionCasesModule } from './collection-cases/collection-cases.module';
 import { ArAgingModule } from './ar-aging/ar-aging.module';
+import { UtilityMetersModule } from './utility-meters/utility-meters.module';
+import { ConsumptionReadingsModule } from './consumption-readings/consumption-readings.module';
+import { UtilityBillsModule } from './utility-bills/utility-bills.module';
 
 @Module({
   imports: [
@@ -59,6 +62,9 @@ import { ArAgingModule } from './ar-aging/ar-aging.module';
     CollectionActivitiesModule,
     CollectionCasesModule,
     ArAgingModule,
+    UtilityMetersModule,
+    ConsumptionReadingsModule,
+    UtilityBillsModule,
     ...(process.env.MONGODB_URI ? [MongodbModule] : []),
     ThrottlerModule.forRoot([
       {

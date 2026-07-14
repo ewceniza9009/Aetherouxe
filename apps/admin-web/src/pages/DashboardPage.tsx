@@ -6,7 +6,7 @@ import {
   Building2, Users, FileText, DollarSign, TrendingUp, Activity,
   Plus, ArrowRight, Hammer, CheckCircle2, Clock, AlertTriangle,
   Layers, KeyRound, UserCheck, ShieldCheck, BadgeDollarSign,
-  Wallet, FolderOpen, BellRing,
+  Wallet, FolderOpen, BellRing, Droplets,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -17,6 +17,7 @@ import { useRtoContracts } from "@/hooks/use-rto";
 import { useAgents } from "@/hooks/use-agents";
 import { useCommissionAging } from "@/hooks/use-commissions";
 import { useArAging, useCollectionCases } from "@/hooks/use-collections";
+import { useBills } from "@/hooks/use-utilities";
 import api from "@/lib/api";
 import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
 
@@ -110,6 +111,18 @@ export default function DashboardPage() {
   const openCasesCount = (collectionCases ?? []).filter(
     (c) => c.status === "open" || c.status === "in_progress" || c.status === "escalated"
   ).length;
+
+  const { data: utilityBillsData, isLoading: loadingUtilityBills } = useBills({
+    page: 1,
+    limit: 100,
+  });
+  const utilityBills = utilityBillsData?.data ?? [];
+  const unpaidUtilityBills = utilityBills.filter(
+    (b) => b.status === "pending" || b.status === "partially_paid" || b.status === "disputed"
+  ).length;
+  const unpaidUtilityAmount = utilityBills
+    .filter((b) => b.status !== "paid" && b.status !== "waived")
+    .reduce((sum, b) => sum + (b.amountDue ?? 0), 0);
 
   return (
     <div className="space-y-6">
@@ -515,6 +528,25 @@ export default function DashboardPage() {
             <Button variant="outline" size="sm" onClick={() => navigate({ to: "/statements" })}>
               Statements
             </Button>
+          </CardContent>
+        </Card>
+        <Card className="bg-cyan-50 border-cyan-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-cyan-800 flex items-center gap-1">
+              <Droplets className="h-4 w-4" /> Unpaid Utility Bills
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingUtilityBills ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <>
+                <div className="text-3xl font-bold text-cyan-700">{unpaidUtilityBills}</div>
+                <p className="text-xs text-cyan-600">
+                  ${unpaidUtilityAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })} outstanding
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

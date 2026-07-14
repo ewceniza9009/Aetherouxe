@@ -217,6 +217,8 @@ model Tenant {
   utilityRates         UtilityRate[]
   arInvoices           ArInvoice[]
 
+  utilityMeters        UtilityMeter[]
+  utilityBills         UtilityBill[]
   paymentReminders     PaymentReminder[]
   statements           StatementOfAccount[]
   collectionCases      CollectionCase[]
@@ -834,48 +836,83 @@ model ArCollectionAction {
 // UTILITY BILLING
 // ─────────────────────────────────────────────
 
-model UtilityMeter {
-  id                  String    @id @default(uuid())
-  propertyId          String
-  unitId              String
-  meterType           MeterType
-  meterNumber         String    @unique
-  multiplier          Decimal   @default(1) @db.Decimal(10, 4)
-  installationDate    DateTime?
-  isActive            Boolean   @default(true)
-  isSmartMeter        Boolean   @default(false)
-  lastMaintenanceDate DateTime?
-  createdAt           DateTime  @default(now())
+enum UtilityType {
+  water
+  electricity
+  gas
+}
 
-  property Property    @relation(fields: [propertyId], references: [id])
-  unit     Unit        @relation(fields: [unitId], references: [id])
+enum BillStatus {
+  pending
+  paid
+  partially_paid
+  waived
+  disputed
+}
+
+model UtilityMeter {
+  id               String       @id @default(cuid())
+  tenantId         String?
+  unitId           String?
+  propertyId       String?
+  utilityType      UtilityType
+  meterNumber      String       @unique
+  multiplier       Float        @default(1)
+  isActive         Boolean      @default(true)
+  installationDate DateTime?
+  lastReadingValue Float?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  readings ConsumptionReading[]
   bills    UtilityBill[]
+  tenant   Tenant?  @relation(fields: [tenantId], references: [id])
+  property Property? @relation(fields: [propertyId], references: [id])
+  unit     Unit?     @relation(fields: [unitId], references: [id])
 
   @@map("utility_meters")
 }
 
+model ConsumptionReading {
+  id          String       @id @default(cuid())
+  meterId     String
+  readingDate DateTime
+  value       Float
+  reader      String?
+  note        String?
+  createdAt   DateTime     @default(now())
+
+  meter UtilityMeter  @relation(fields: [meterId], references: [id], onDelete: Cascade)
+  bills UtilityBill[]
+
+  @@map("consumption_readings")
+}
+
 model UtilityBill {
-  id                 String   @id @default(uuid())
-  propertyId         String
-  unitId             String
+  id                 String     @id @default(cuid())
   meterId            String
+  tenantId           String?
+  unitId             String?
+  propertyId         String?
   billingPeriodStart DateTime
   billingPeriodEnd   DateTime
-  previousReading    Decimal  @db.Decimal(12, 2)
-  currentReading     Decimal  @db.Decimal(12, 2)
-  consumption        Decimal  @db.Decimal(12, 2)
-  ratePerUnit        Decimal  @db.Decimal(10, 4)
-  baseCharge         Decimal  @db.Decimal(10, 2)
-  totalAmount        Decimal  @db.Decimal(12, 2)
-  isProrated         Boolean  @default(false)
-  prorationDays      Int?
-  invoiceId          String?
-  status             String   @default("pending")
-  createdAt          DateTime @default(now())
+  previousReading    Float
+  currentReading     Float
+  consumption        Float
+  ratePerUnit        Float
+  amountDue          Float
+  status             BillStatus @default(pending)
+  issuedDate         DateTime   @default(now())
+  dueDate            DateTime?
+  notes              String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 
-  property Property    @relation(fields: [propertyId], references: [id])
-  unit     Unit        @relation(fields: [unitId], references: [id])
-  meter    UtilityMeter @relation(fields: [meterId], references: [id])
+  meter    UtilityMeter        @relation(fields: [meterId], references: [id])
+  readings ConsumptionReading[]
+  tenant   Tenant?             @relation(fields: [tenantId], references: [id])
+  property Property?           @relation(fields: [propertyId], references: [id])
+  unit     Unit?               @relation(fields: [unitId], references: [id])
 
   @@map("utility_bills")
 }

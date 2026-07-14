@@ -12,6 +12,7 @@ import {
   Percent,
   DollarSign,
   Settings,
+  Droplet,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -40,6 +41,7 @@ const navItems: NavItem[] = [
   { label: "Collections", icon: <BellRing size={20} />, path: "/collections" },
   { label: "Statements", icon: <Inbox size={20} />, path: "/statements" },
   { label: "Finance", icon: <DollarSign size={20} />, path: "/finance" },
+  { label: "Meters & Billing", icon: <Droplet size={20} />, path: "/meters" },
   { label: "Settings", icon: <Settings size={20} />, path: "/settings" },
 ];
 

@@ -47,6 +47,10 @@ import StatementsPage from "./pages/StatementsPage";
 import CollectionCasesPage from "./pages/CollectionCasesPage";
 import CollectionCaseDetailPage from "./pages/CollectionCaseDetailPage";
 import PaymentRemindersPage from "./pages/PaymentRemindersPage";
+import MetersPage from "./pages/MetersPage";
+import MeterDetailPage from "./pages/MeterDetailPage";
+import ReadingsPage from "./pages/ReadingsPage";
+import UtilityBillsPage from "./pages/UtilityBillsPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 
 const rootRoute = createRootRoute({
@@ -329,6 +333,30 @@ const paymentRemindersRoute = createRoute({
   component: PaymentRemindersPage,
 });
 
+const metersRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/meters",
+  component: MetersPage,
+});
+
+const meterDetailRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/meters/$id",
+  component: MeterDetailPage,
+});
+
+const readingsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/readings",
+  component: ReadingsPage,
+});
+
+const utilityBillsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/utility-bills",
+  component: UtilityBillsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -374,6 +402,10 @@ const routeTree = rootRoute.addChildren([
     collectionCasesRoute,
     collectionCaseDetailRoute,
     paymentRemindersRoute,
+    metersRoute,
+    meterDetailRoute,
+    readingsRoute,
+    utilityBillsRoute,
   ]),
 ]);
 

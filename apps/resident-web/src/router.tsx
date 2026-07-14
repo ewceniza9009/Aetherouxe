@@ -17,6 +17,7 @@ import CommunityPage from "./pages/CommunityPage";
 import ResidentDocumentsPage from "./pages/DocumentsPage";
 import StatementsPage from "./pages/StatementsPage";
 import PaymentRemindersPage from "./pages/PaymentRemindersPage";
+import UtilityBillsPage from "./pages/UtilityBillsPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 
 const rootRoute = createRootRoute({
@@ -117,6 +118,12 @@ const remindersRoute = createRoute({
   component: PaymentRemindersPage,
 });
 
+const utilityBillsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/utility-bills",
+  component: UtilityBillsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -132,6 +139,7 @@ const routeTree = rootRoute.addChildren([
     documentsRoute,
     statementsRoute,
     remindersRoute,
+    utilityBillsRoute,
   ]),
 ]);
 

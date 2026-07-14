@@ -14,6 +14,7 @@ import {
   LogOut,
   Inbox,
   BellRing,
+  Droplets,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
   { label: "Documents", icon: <FolderOpen size={20} />, path: "/documents" },
   { label: "Statements", icon: <Inbox size={20} />, path: "/statements" },
   { label: "Reminders", icon: <BellRing size={20} />, path: "/reminders" },
+  { label: "Utilities", icon: <Droplets size={20} />, path: "/utility-bills" },
 ];
 
 export default function Sidebar() {
