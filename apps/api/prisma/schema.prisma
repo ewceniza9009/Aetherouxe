@@ -1314,3 +1314,40 @@ model CollectionCaseNote {
 
   @@map("collection_case_notes")
 }
+
+// ─────────────────────────────────────────────
+// NOTIFICATIONS (PHASE 9: ROADMAP)
+// ─────────────────────────────────────────────
+
+enum NotificationType {
+  rent_due
+  rent_overdue
+  service_request
+  document_signature
+  collection_case
+  announcement
+  system
+}
+
+enum NotificationRole {
+  admin
+  owner
+  resident
+}
+
+model Notification {
+  id        String            @id @default(cuid())
+  role      NotificationRole
+  userId    String?
+  tenantId  String?
+  ownerId   String?
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  refId     String?
+  isRead    Boolean           @default(false)
+  createdAt DateTime          @default(now())
+
+  @@map("notifications")
+}

@@ -21,6 +21,7 @@ import {
   Megaphone,
   Wrench,
   PieChart,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ const navItems: NavItem[] = [
   { label: "Service Requests", icon: <Wrench size={20} />, path: "/service-requests" },
   { label: "Documents", icon: <FileText size={20} />, path: "/documents" },
   { label: "Owner P&L", icon: <PieChart size={20} />, path: "/owner-pnl" },
+  { label: "Analytics", icon: <BarChart3 size={20} />, path: "/analytics" },
   { label: "Settings", icon: <Settings size={20} />, path: "/settings" },
 ];
 

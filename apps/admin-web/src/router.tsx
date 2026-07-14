@@ -60,6 +60,7 @@ import DocumentsPage from "./pages/DocumentsPage";
 import DocumentDetailPage from "./pages/DocumentDetailPage";
 import OwnerPnlPage from "./pages/OwnerPnlPage";
 import PnlDetailPage from "./pages/PnlDetailPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 
 const rootRoute = createRootRoute({
@@ -420,6 +421,12 @@ const pnlDetailRoute = createRoute({
   component: PnlDetailPage,
 });
 
+const analyticsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/analytics",
+  component: AnalyticsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -478,6 +485,7 @@ const routeTree = rootRoute.addChildren([
     documentDetailRoute,
     ownerPnlRoute,
     pnlDetailRoute,
+    analyticsRoute,
   ]),
 ]);
 

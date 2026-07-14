@@ -36,6 +36,8 @@ import { CommunityModule } from './community/community.module';
 import { ServiceRequestsModule } from './service-requests/service-requests.module';
 import { DocumentsModule } from './documents/documents.module';
 import { OwnerPnlModule } from './owner-pnl/owner-pnl.module';
+import { ReportsModule } from './reports/reports.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -73,6 +75,8 @@ import { OwnerPnlModule } from './owner-pnl/owner-pnl.module';
     ServiceRequestsModule,
     DocumentsModule,
     OwnerPnlModule,
+    ReportsModule,
+    NotificationsModule,
     ...(process.env.MONGODB_URI ? [MongodbModule] : []),
     ThrottlerModule.forRoot([
       {
