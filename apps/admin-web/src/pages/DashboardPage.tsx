@@ -6,7 +6,7 @@ import {
   Building2, Users, FileText, DollarSign, TrendingUp, Activity,
   Plus, ArrowRight, Hammer, CheckCircle2, Clock, AlertTriangle,
   Layers, KeyRound, UserCheck, ShieldCheck, BadgeDollarSign,
-  Wallet, FolderOpen, BellRing, Droplets,
+  Wallet, FolderOpen, BellRing, Droplets, Wrench,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -18,6 +18,8 @@ import { useAgents } from "@/hooks/use-agents";
 import { useCommissionAging } from "@/hooks/use-commissions";
 import { useArAging, useCollectionCases } from "@/hooks/use-collections";
 import { useBills } from "@/hooks/use-utilities";
+import { useServiceRequests } from "@/hooks/use-service-requests";
+import { useDocuments } from "@/hooks/use-documents";
 import api from "@/lib/api";
 import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
 
@@ -123,6 +125,22 @@ export default function DashboardPage() {
   const unpaidUtilityAmount = utilityBills
     .filter((b) => b.status !== "paid" && b.status !== "waived")
     .reduce((sum, b) => sum + (b.amountDue ?? 0), 0);
+
+  const { data: openRequestsData, isLoading: loadingRequests } = useServiceRequests({
+    page: 1,
+    limit: 100,
+    status: "open",
+  });
+  const openRequests = openRequestsData?.data ?? [];
+  const openRequestCount =
+    openRequestsData?.meta?.total ?? openRequests.length;
+
+  const { data: documentsData, isLoading: loadingDocuments } = useDocuments({
+    page: 1,
+    limit: 100,
+  });
+  const documents = documentsData?.data ?? [];
+  const unsignedDocuments = documents.filter((d) => !d.isSigned).length;
 
   return (
     <div className="space-y-6">
@@ -545,6 +563,40 @@ export default function DashboardPage() {
                 <p className="text-xs text-cyan-600">
                   ${unpaidUtilityAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })} outstanding
                 </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="bg-rose-50 border-rose-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-rose-800 flex items-center gap-1">
+              <Wrench className="h-4 w-4" /> Open Service Requests
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingRequests ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <>
+                <div className="text-3xl font-bold text-rose-700">{openRequestCount}</div>
+                <p className="text-xs text-rose-600">Awaiting assignment</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="bg-amber-50 border-amber-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-amber-800 flex items-center gap-1">
+              <FileText className="h-4 w-4" /> Unsigned Documents
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingDocuments ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <>
+                <div className="text-3xl font-bold text-amber-700">{unsignedDocuments}</div>
+                <p className="text-xs text-amber-600">Pending signatures</p>
               </>
             )}
           </CardContent>

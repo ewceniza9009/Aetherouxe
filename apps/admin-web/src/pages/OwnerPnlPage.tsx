@@ -1,0 +1,339 @@
+import { useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle,
+  Plus,
+  PieChart,
+  Loader2,
+} from "lucide-react";
+import {
+  usePnlStatements,
+  useGeneratePnl,
+  type OwnerPnlStatement,
+  type PnlStatus,
+} from "@/hooks/use-owner-pnl";
+
+const pnlStatusMeta: Record<PnlStatus, { label: string; variant: any }> = {
+  draft: { label: "Draft", variant: "secondary" },
+  generated: { label: "Generated", variant: "default" },
+  sent: { label: "Sent", variant: "warning" },
+  paid: { label: "Paid", variant: "success" },
+  archived: { label: "Archived", variant: "destructive" },
+};
+
+function money(n: number) {
+  return `$${Number(n ?? 0).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+export default function OwnerPnlPage() {
+  const navigate = useNavigate();
+  const [page, setPage] = useState(1);
+
+  const query = useMemo(() => ({ page, limit: 10 }), [page]);
+
+  const { data, isLoading, isError, refetch } = usePnlStatements(query);
+  const generatePnl = useGeneratePnl();
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    ownerId: "",
+    ownerName: "",
+    propertyId: "",
+    propertyName: "",
+    periodStart: "",
+    periodEnd: "",
+    managementFeeRate: "0.10",
+  });
+
+  const statements = data?.data ?? [];
+  const meta = data?.meta;
+  const totalPages = meta?.totalPages ?? 1;
+
+  const handleGenerate = async () => {
+    setSaving(true);
+    try {
+      const result = await generatePnl.mutateAsync({
+        ownerId: form.ownerId,
+        propertyId: form.propertyId || undefined,
+        periodStart: form.periodStart,
+        periodEnd: form.periodEnd,
+        managementFeeRate: Number(form.managementFeeRate),
+      });
+      setOpen(false);
+      setForm({
+        ownerId: "",
+        ownerName: "",
+        propertyId: "",
+        propertyName: "",
+        periodStart: "",
+        periodEnd: "",
+        managementFeeRate: "0.10",
+      });
+      refetch();
+      if (result?.id) navigate({ to: `/owner-pnl/${result.id}` });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="font-serif text-3xl font-bold tracking-tight">Owner P&amp;L</h1>
+          <p className="text-muted-foreground">Profit &amp; loss statements for owners</p>
+        </div>
+        <Button onClick={() => setOpen(true)} disabled={generatePnl.isPending}>
+          <Plus className="mr-2 h-4 w-4" /> Generate Statement
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <PieChart className="h-5 w-5 text-accent" /> Statements
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isError ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+              <AlertCircle className="h-8 w-8 text-destructive" />
+              <p className="text-sm text-muted-foreground">Failed to load statements.</p>
+              <Button variant="outline" size="sm" onClick={() => refetch()}>
+                Retry
+              </Button>
+            </div>
+          ) : isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : statements.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+              <PieChart className="h-8 w-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">No statements found.</p>
+            </div>
+          ) : (
+            <>
+              <div className="rounded-md border overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                        Owner
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                        Property
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                        Period
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                        Gross
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                        Expenses
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                        Fee
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                        Net
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {statements.map((s: OwnerPnlStatement) => (
+                      <tr
+                        key={s.id}
+                        className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+                        onClick={() => navigate({ to: `/owner-pnl/${s.id}` })}
+                      >
+                        <td className="px-4 py-3 font-medium">
+                          {s.ownerName || s.ownerId.slice(0, 8).toUpperCase()}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {s.propertyName || s.propertyId?.slice(0, 8).toUpperCase() || "—"}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {new Date(s.periodStart).toLocaleDateString()} –{" "}
+                          {new Date(s.periodEnd).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums">
+                          {money(s.grossRentalIncome)}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums">
+                          {money(s.totalExpenses)}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums">
+                          {money(s.managementFee)}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums font-semibold gold-text">
+                          {money(s.netIncome)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant={pnlStatusMeta[s.status].variant}>
+                            {pnlStatusMeta[s.status].label}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex items-center justify-between pt-4">
+                <p className="text-sm text-muted-foreground">
+                  Page {page} of {totalPages} · {meta?.total ?? 0} total
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Prev
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                  >
+                    Next <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generate Statement</DialogTitle>
+            <DialogDescription>
+              Produce an owner P&amp;L for a period.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="ownerId">Owner ID *</Label>
+                <Input
+                  id="ownerId"
+                  value={form.ownerId}
+                  onChange={(e) => setForm((f) => ({ ...f, ownerId: e.target.value }))}
+                  placeholder="Owner reference"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ownerName">Owner Name</Label>
+                <Input
+                  id="ownerName"
+                  value={form.ownerName}
+                  onChange={(e) => setForm((f) => ({ ...f, ownerName: e.target.value }))}
+                  placeholder="Display name"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="propertyId">Property ID (optional)</Label>
+              <Input
+                id="propertyId"
+                value={form.propertyId}
+                onChange={(e) => setForm((f) => ({ ...f, propertyId: e.target.value }))}
+                placeholder="Property reference"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="periodStart">Period Start *</Label>
+                <Input
+                  id="periodStart"
+                  type="date"
+                  value={form.periodStart}
+                  onChange={(e) => setForm((f) => ({ ...f, periodStart: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="periodEnd">Period End *</Label>
+                <Input
+                  id="periodEnd"
+                  type="date"
+                  value={form.periodEnd}
+                  onChange={(e) => setForm((f) => ({ ...f, periodEnd: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="managementFeeRate">Management Fee Rate</Label>
+              <Input
+                id="managementFeeRate"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.managementFeeRate}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, managementFeeRate: e.target.value }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleGenerate}
+              disabled={saving || !form.ownerId || !form.periodStart || !form.periodEnd}
+            >
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Generate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

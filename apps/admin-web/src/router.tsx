@@ -51,6 +51,15 @@ import MetersPage from "./pages/MetersPage";
 import MeterDetailPage from "./pages/MeterDetailPage";
 import ReadingsPage from "./pages/ReadingsPage";
 import UtilityBillsPage from "./pages/UtilityBillsPage";
+import AmenitiesPage from "./pages/AmenitiesPage";
+import AmenityDetailPage from "./pages/AmenityDetailPage";
+import CommunityPostsPage from "./pages/CommunityPostsPage";
+import ServiceRequestsPage from "./pages/ServiceRequestsPage";
+import ServiceRequestDetailPage from "./pages/ServiceRequestDetailPage";
+import DocumentsPage from "./pages/DocumentsPage";
+import DocumentDetailPage from "./pages/DocumentDetailPage";
+import OwnerPnlPage from "./pages/OwnerPnlPage";
+import PnlDetailPage from "./pages/PnlDetailPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 
 const rootRoute = createRootRoute({
@@ -357,6 +366,60 @@ const utilityBillsRoute = createRoute({
   component: UtilityBillsPage,
 });
 
+const amenitiesRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/amenities",
+  component: AmenitiesPage,
+});
+
+const amenityDetailRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/amenities/$id",
+  component: AmenityDetailPage,
+});
+
+const communityPostsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/community-posts",
+  component: CommunityPostsPage,
+});
+
+const serviceRequestsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/service-requests",
+  component: ServiceRequestsPage,
+});
+
+const serviceRequestDetailRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/service-requests/$id",
+  component: ServiceRequestDetailPage,
+});
+
+const documentsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/documents",
+  component: DocumentsPage,
+});
+
+const documentDetailRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/documents/$id",
+  component: DocumentDetailPage,
+});
+
+const ownerPnlRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/owner-pnl",
+  component: OwnerPnlPage,
+});
+
+const pnlDetailRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/owner-pnl/$id",
+  component: PnlDetailPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -406,6 +469,15 @@ const routeTree = rootRoute.addChildren([
     meterDetailRoute,
     readingsRoute,
     utilityBillsRoute,
+    amenitiesRoute,
+    amenityDetailRoute,
+    communityPostsRoute,
+    serviceRequestsRoute,
+    serviceRequestDetailRoute,
+    documentsRoute,
+    documentDetailRoute,
+    ownerPnlRoute,
+    pnlDetailRoute,
   ]),
 ]);
 

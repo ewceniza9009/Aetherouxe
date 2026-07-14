@@ -13,6 +13,7 @@ import OwnerProjectDetailPage from "./pages/ProjectDetailPage";
 import OwnerBudgetHealthPage from "./pages/BudgetHealthPage";
 import FinancialsPage from "./pages/FinancialsPage";
 import DocumentsPage from "./pages/DocumentsPage";
+import PnlPage from "./pages/PnlPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 
 const rootRoute = createRootRoute({
@@ -83,6 +84,12 @@ const financialsRoute = createRoute({
   component: FinancialsPage,
 });
 
+const pnlRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/pnl",
+  component: PnlPage,
+});
+
 const documentsRoute = createRoute({
   getParentRoute: () => protectedLayout,
   path: "/documents",
@@ -99,6 +106,7 @@ const routeTree = rootRoute.addChildren([
         projectDetailRoute,
         budgetHealthRoute,
         financialsRoute,
+        pnlRoute,
         documentsRoute,
       ]),
 ]);

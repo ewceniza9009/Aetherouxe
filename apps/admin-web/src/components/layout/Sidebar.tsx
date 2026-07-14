@@ -18,6 +18,9 @@ import {
   LogOut,
   BellRing,
   Inbox,
+  Megaphone,
+  Wrench,
+  PieChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -42,6 +45,10 @@ const navItems: NavItem[] = [
   { label: "Statements", icon: <Inbox size={20} />, path: "/statements" },
   { label: "Finance", icon: <DollarSign size={20} />, path: "/finance" },
   { label: "Meters & Billing", icon: <Droplet size={20} />, path: "/meters" },
+  { label: "Community", icon: <Megaphone size={20} />, path: "/community-posts" },
+  { label: "Service Requests", icon: <Wrench size={20} />, path: "/service-requests" },
+  { label: "Documents", icon: <FileText size={20} />, path: "/documents" },
+  { label: "Owner P&L", icon: <PieChart size={20} />, path: "/owner-pnl" },
   { label: "Settings", icon: <Settings size={20} />, path: "/settings" },
 ];
 

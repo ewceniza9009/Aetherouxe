@@ -6,6 +6,7 @@ import {
   Hammer,
   DollarSign,
   FileText,
+  PieChart,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -25,6 +26,7 @@ const navItems: NavItem[] = [
   { label: "Properties", icon: <Building2 size={20} />, path: "/properties" },
   { label: "Projects", icon: <Hammer size={20} />, path: "/projects" },
   { label: "Financials", icon: <DollarSign size={20} />, path: "/financials" },
+  { label: "P&L", icon: <PieChart size={20} />, path: "/pnl" },
   { label: "Documents", icon: <FileText size={20} />, path: "/documents" },
 ];
 

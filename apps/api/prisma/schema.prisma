@@ -222,6 +222,7 @@ model Tenant {
   paymentReminders     PaymentReminder[]
   statements           StatementOfAccount[]
   collectionCases      CollectionCase[]
+  amenityBookings      AmenityBooking[]
 
   @@map("tenants")
 }
@@ -251,6 +252,7 @@ model User {
   collectionCasesAssigned CollectionCase[]
   caseNotesAuthored       CollectionCaseNote[]
   activitiesPerformed     CollectionActivity[]
+  pnlStatements           OwnerPnlStatement[]
 
   @@map("users")
 }
@@ -302,6 +304,8 @@ model Property {
   utilityMeters   UtilityMeter[]
   utilityBills    UtilityBill[]
   statements      StatementOfAccount[]
+  amenities       Amenity[]
+  pnlStatements   OwnerPnlStatement[]
 
   @@map("properties")
 }
@@ -933,83 +937,232 @@ model UtilityRate {
 }
 
 // ─────────────────────────────────────────────
-// COMMUNITY & AMENITY MANAGEMENT
+// PHASE 8: COMMUNITY, SERVICE REQUESTS, DOCUMENTS, OWNER P&L
 // ─────────────────────────────────────────────
 
-model Amenity {
-  id            String   @id @default(uuid())
-  tenantId      String
-  name          String
-  description   String?
-  capacity      Int?
-  location      String?
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
+enum AmenityType {
+  gym
+  pool
+  function_room
+  parking
+  garden
+  other
+}
+enum BookingStatus {
+  pending
+  confirmed
+  completed
+  cancelled
+}
+enum PostType {
+  announcement
+  event
+}
+enum Audience {
+  all
+  building
+  property
+  unit
+}
 
-  bookings AmenityBooking[]
+model Amenity {
+  id         String      @id @default(cuid())
+  name       String
+  type       AmenityType
+  description String?
+  capacity   Int?
+  location   String?
+  hourlyRate Float?
+  isActive   Boolean     @default(true)
+  propertyId String?
+  createdAt  DateTime    @default(now())
+  bookings   AmenityBooking[]
+  property   Property?   @relation(fields: [propertyId], references: [id])
 
   @@map("amenities")
 }
 
 model AmenityBooking {
-  id         String   @id @default(uuid())
-  amenityId  String
-  userId     String
-  bookedDate DateTime
-  startTime  DateTime
-  endTime    DateTime
-  status     String   @default("confirmed")
-  notes      String?
-  createdAt  DateTime @default(now())
-
-  amenity Amenity @relation(fields: [amenityId], references: [id])
+  id           String        @id @default(cuid())
+  amenityId    String
+  tenantId     String?
+  unitId       String?
+  bookingStart DateTime
+  bookingEnd   DateTime
+  status       BookingStatus @default(pending)
+  totalAmount  Float?
+  notes        String?
+  createdAt    DateTime      @default(now())
+  amenity      Amenity       @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+  tenant       Tenant?       @relation(fields: [tenantId], references: [id])
 
   @@map("amenity_bookings")
 }
 
-// ─────────────────────────────────────────────
-// SERVICE REQUESTS & MAINTENANCE
-// ─────────────────────────────────────────────
+enum ServiceCategory {
+  plumbing
+  electrical
+  hvac
+  general
+  pest
+  elevator
+  other
+}
+enum Priority {
+  low
+  medium
+  high
+  emergency
+}
+enum ServiceStatus {
+  open
+  assigned
+  in_progress
+  completed
+  cancelled
+  rejected
+}
+enum WorkOrderStatus {
+  scheduled
+  in_progress
+  completed
+  cancelled
+}
 
 model ServiceRequest {
-  id          String   @id @default(uuid())
-  tenantId    String
-  unitId      String
-  userId      String
-  category    String
-  description String
-  priority    String   @default("normal")
-  status      String   @default("open")
-  assignedTo  String?
-  slaDeadline DateTime?
-  completedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String          @id @default(cuid())
+  tenantId      String?
+  unitId        String?
+  propertyId    String?
+  category      ServiceCategory
+  priority      Priority
+  description   String
+  status        ServiceStatus   @default(open)
+  requestedAt   DateTime        @default(now())
+  scheduledAt   DateTime?
+  completedAt   DateTime?
+  assignedToId  String?
+  assignedToType String?
+  resolutionNotes String?
+  createdAt     DateTime        @default(now())
+  workOrders    MaintenanceWorkOrder[]
 
   @@map("service_requests")
 }
 
-// ─────────────────────────────────────────────
-// DOCUMENT VAULT
-// ─────────────────────────────────────────────
+model MaintenanceWorkOrder {
+  id              String          @id @default(cuid())
+  serviceRequestId String
+  vendorId        String?
+  scheduledDate   DateTime?
+  estimatedCost   Float?
+  actualCost      Float?
+  status          WorkOrderStatus @default(scheduled)
+  completedDate   DateTime?
+  notes           String?
+  createdAt       DateTime        @default(now())
+  serviceRequest  ServiceRequest  @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
 
-model Document {
-  id              String   @id @default(uuid())
-  tenantId        String
-  documentType    String
-  fileName        String
-  fileUrl         String
-  fileSize        Int?
-  mimeType        String?
-  referenceType   String?
-  referenceId     String?
-  expiryDate      DateTime?
-  isSigned        Boolean  @default(false)
-  signatureId     String?
-  uploadedById    String
-  createdAt       DateTime @default(now())
+  @@map("maintenance_work_orders")
+}
 
-  @@map("documents")
+model CommunityPost {
+  id          String    @id @default(cuid())
+  title       String
+  body        String
+  postType    PostType  @default(announcement)
+  audience    Audience  @default(all)
+  propertyId  String?
+  scheduledAt DateTime?
+  authorId    String?
+  isPublished Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  @@map("community_posts")
+}
+
+enum DocOwnerType {
+  tenant
+  owner
+  property
+  lease
+  project
+  unit
+}
+enum DocumentType {
+  lease_agreement
+  id_proof
+  title_deed
+  permit
+  insurance
+  statement
+  other
+}
+enum SignatureStatus {
+  pending
+  sent
+  signed
+  declined
+  expired
+}
+
+model DocumentVault {
+  id            String        @id @default(cuid())
+  ownerType     DocOwnerType
+  ownerId       String
+  documentType  DocumentType
+  title         String
+  fileName      String?
+  fileUrl       String
+  mimeType      String?
+  fileSize      Int?
+  uploadedById  String?
+  uploadedAt    DateTime      @default(now())
+  expiryDate    DateTime?
+  isSigned      Boolean       @default(false)
+  signatures    DocumentSignature[]
+
+  @@map("document_vaults")
+}
+
+model DocumentSignature {
+  id              String          @id @default(cuid())
+  documentVaultId String
+  signerName      String
+  signerEmail     String?
+  signerUserId    String?
+  status          SignatureStatus @default(pending)
+  requestedAt     DateTime        @default(now())
+  sentAt          DateTime?
+  signedAt        DateTime?
+  signatureUrl    String?
+  documentVault   DocumentVault   @relation(fields: [documentVaultId], references: [id], onDelete: Cascade)
+
+  @@map("document_signatures")
+}
+
+enum PnlStatus {
+  draft
+  issued
+}
+
+model OwnerPnlStatement {
+  id             String       @id @default(cuid())
+  ownerId        String
+  propertyId     String?
+  periodStart    DateTime
+  periodEnd      DateTime
+  grossRentalIncome Float     @default(0)
+  totalExpenses  Float        @default(0)
+  managementFee  Float        @default(0)
+  netIncome      Float        @default(0)
+  yieldPct       Float?
+  status         PnlStatus    @default(draft)
+  generatedAt    DateTime     @default(now())
+  owner          User         @relation(fields: [ownerId], references: [id])
+  property       Property?    @relation(fields: [propertyId], references: [id])
+
+  @@map("owner_pnl_statements")
 }
 
 // ─────────────────────────────────────────────
