@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/use-auth";
 import { RouterProvider } from "@tanstack/react-router";
 import router from "@/router";
+import { registerServiceWorker } from "@/pwa";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -27,4 +28,8 @@ if (!rootElement.innerHTML) {
       </QueryClientProvider>
     </StrictMode>
   );
+}
+
+if (import.meta.env.PROD) {
+  registerServiceWorker();
 }

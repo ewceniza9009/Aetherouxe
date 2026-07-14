@@ -1,0 +1,18 @@
+{
+  "name": "Aether Estates — Resident",
+  "short_name": "Aether",
+  "description": "Aether Estates resident portal: pay rent, track utilities, submit service requests, and access your documents.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A1428",
+  "theme_color": "#00BFA5",
+  "categories": ["business", "productivity", "lifestyle"],
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
