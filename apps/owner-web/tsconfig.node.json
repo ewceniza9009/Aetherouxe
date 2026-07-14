@@ -1,0 +1,12 @@
+{
+  "extends": "@elite-realty/config-tsconfig/base.json",
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "outDir": "dist"
+  },
+  "include": ["vite.config.ts"]
+}

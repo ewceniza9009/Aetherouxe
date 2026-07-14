@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Premium Resident — bright approachable light, teal accent */
+    --background: 200 40% 98%;          /* cool off-white */
+    --foreground: 222 35% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 35% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 35% 14%;
+
+    --primary: 179 100% 37%;           /* #00BFA5 teal */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 200 35% 93%;
+    --secondary-foreground: 222 35% 18%;
+
+    --muted: 200 30% 94%;
+    --muted-foreground: 220 12% 42%;
+
+    --accent: 43 71% 54%;             /* gold highlight */
+    --accent-foreground: 222 64% 9%;
+
+    --destructive: 0 72% 56%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 160 84% 39%;
+    --warning: 38 92% 60%;
+
+    --border: 200 25% 88%;
+    --input: 200 25% 86%;
+    --ring: 179 100% 37%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 179 70% 16%;   /* deep teal sidebar */
+    --sidebar-foreground: 180 40% 92%;
+    --sidebar-primary: 43 71% 60%;
+    --sidebar-primary-foreground: 222 64% 9%;
+    --sidebar-accent: 179 60% 22%;
+    --sidebar-accent-foreground: 180 40% 92%;
+    --sidebar-border: 179 50% 24%;
+    --sidebar-ring: 179 100% 37%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    background-image:
+      radial-gradient(900px circle at 100% 0%, rgba(0,191,165,0.10), transparent 45%),
+      radial-gradient(700px circle at 0% 100%, rgba(212,175,55,0.06), transparent 42%);
+    background-attachment: fixed;
+  }
+  h1, h2, h3, h4 {
+    @apply font-serif;
+  }
+}
+
+@layer utilities {
+  .gold-gradient {
+    background-image: linear-gradient(120deg, #00BFA5 0%, #17C1B8 55%, #D4AF37 130%);
+  }
+  .gold-text {
+    background-image: linear-gradient(120deg, #0E9384 0%, #00BFA5 50%, #B8860B 140%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      rgba(0,191,165,0.22) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s ease-in-out infinite;
+  }
+  .glass {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(0,191,165,0.16);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

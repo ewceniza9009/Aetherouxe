@@ -1,0 +1,62 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/api";
+import type { ApiResponse } from "@elite-realty/shared-types";
+
+export interface Floor {
+  id: string;
+  buildingId: string;
+  floorNumber: number;
+  sortOrder: number;
+  unitsCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function useFloors(buildingId: string) {
+  return useQuery({
+    queryKey: ["floors", buildingId],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<Floor[]>>(`/buildings/${buildingId}/floors`);
+      return data.data;
+    },
+    enabled: !!buildingId,
+  });
+}
+
+export function useCreateFloor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Partial<Floor>) => {
+      const { data } = await api.post<ApiResponse<Floor>>(`/buildings/${payload.buildingId}/floors`, payload);
+      return data.data;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["floors", result.buildingId] });
+    },
+  });
+}
+
+export function useUpdateFloor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, buildingId, ...payload }: Partial<Floor> & { id: string; buildingId: string }) => {
+      const { data } = await api.patch<ApiResponse<Floor>>(`/buildings/${buildingId}/floors/${id}`, payload);
+      return data.data;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["floors", result.buildingId] });
+    },
+  });
+}
+
+export function useDeleteFloor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, buildingId }: { id: string; buildingId: string }) => {
+      await api.delete(`/buildings/${buildingId}/floors/${id}`);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["floors", variables.buildingId] });
+    },
+  });
+}

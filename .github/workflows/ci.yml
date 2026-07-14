@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  DATABASE_URL: postgresql://elite:elite123@localhost:5432/elite_realty_test
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & TypeCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        working-directory: apps/api
+
+      - name: TypeCheck API
+        run: npx tsc --noEmit
+        working-directory: apps/api
+
+      - name: TypeCheck packages
+        run: npx tsc --noEmit
+        working-directory: packages/shared-types
+
+      - name: Lint
+        run: npx turbo lint
+
+  test-api:
+    name: API Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: elite
+          POSTGRES_PASSWORD: elite123
+          POSTGRES_DB: elite_realty_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        working-directory: apps/api
+
+      - name: Run migrations
+        run: npx prisma migrate deploy
+        working-directory: apps/api
+
+      - name: Run tests
+        run: npx jest --passWithNoTests
+        working-directory: apps/api
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [admin-web, owner-web, resident-web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build ${{ matrix.app }}
+        run: npx vite build
+        working-directory: apps/${{ matrix.app }}
+
+  build-api:
+    name: Build API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        working-directory: apps/api
+
+      - name: Build API
+        run: npx nest build
+        working-directory: apps/api

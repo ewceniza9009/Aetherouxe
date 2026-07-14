@@ -1,0 +1,17 @@
+{
+  "extends": "@elite-realty/config-tsconfig/base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

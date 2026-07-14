@@ -1,0 +1,962 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserType {
+  super_admin
+  admin
+  property_manager
+  finance
+  agent
+  owner
+  tenant
+}
+
+enum PropertyType {
+  condo_unit
+  house_and_lot
+  townhouse
+  commercial_space
+  parking_slot
+}
+
+enum PropertyStatus {
+  available
+  reserved
+  sold
+  rented
+  rto_active
+  under_maintenance
+}
+
+enum BuildingType {
+  tower
+  mid_rise
+  low_rise
+  cluster
+  block
+}
+
+enum UnitType {
+  studio
+  one_br
+  two_br
+  three_br
+  penthouse
+  commercial
+  parking
+}
+
+enum ProjectType {
+  high_rise
+  mid_rise
+  village
+  township
+  commercial_complex
+}
+
+enum ProjectStatus {
+  planning
+  pre_selling
+  construction
+  fit_out
+  completed
+  turnover
+}
+
+enum PhaseStatus {
+  planning
+  in_progress
+  completed
+  delayed
+  on_hold
+}
+
+enum BudgetCategory {
+  land_acquisition
+  construction
+  permits
+  architectural_design
+  engineering
+  interior_fit_out
+  landscaping
+  marketing
+  contingency
+  misc
+}
+
+enum ContractorEngagementStatus {
+  pending
+  active
+  completed
+  disputed
+}
+
+enum LeaseType {
+  standard_rental
+  rent_to_own
+  corporate_lease
+  short_term
+}
+
+enum RTOStatus {
+  active
+  grace_period
+  defaulted
+  exercised
+  completed
+}
+
+enum AgentTier {
+  junior
+  senior
+  team_lead
+  external_broker
+}
+
+enum CommissionType {
+  flat_amount
+  percentage_of_sale
+  percentage_of_rent
+  tiered
+}
+
+enum TransactionType {
+  sale
+  rental_lease
+  rto_contract
+  lease_renewal
+}
+
+enum CommissionStatus {
+  pending
+  approved
+  partially_paid
+  fully_paid
+  disputed
+}
+
+enum PaymentStatus {
+  pending
+  pending_approval
+  approved
+  paid
+  partially_paid
+  overdue
+  waived
+}
+
+enum InvoiceType {
+  rental
+  utility_water
+  utility_electricity
+  association_dues
+  late_fee
+  damage_charge
+  misc
+}
+
+enum InvoiceStatus {
+  pending
+  partially_paid
+  paid
+  overdue
+  disputed
+  written_off
+}
+
+enum PaymentArrangementStatus {
+  proposed
+  approved
+  active
+  completed
+  broken
+}
+
+enum CollectionActionType {
+  reminder_email
+  reminder_sms
+  phone_call
+  demand_letter
+  site_visit
+  legal_notice
+}
+
+enum MeterType {
+  water
+  electricity
+}
+
+// ─────────────────────────────────────────────
+// CORE IDENTITY & TENANCY
+// ─────────────────────────────────────────────
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  domain    String   @unique
+  logoUrl   String?
+  settings  Json?    @default("{}")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  users                User[]
+  properties           Property[]
+  buildings            Building[]
+  projects             Project[]
+  contractors          Contractor[]
+  agentCommissions     AgentCommission[]
+  agentLicenseRenewals AgentLicenseRenewal[]
+  realEstateAgents     RealEstateAgent[]
+  utilityRates         UtilityRate[]
+  arInvoices           ArInvoice[]
+
+  @@map("tenants")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  tenantId     String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  userType     UserType
+  firstName    String?
+  lastName     String?
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant                  Tenant                @relation(fields: [tenantId], references: [id])
+  realEstateAgent         RealEstateAgent?
+  leaseAgreementsAsTenant LeaseAgreement[]      @relation("TenantLeaseAgreements")
+  mortgageScenarios       MortgageScenario[]    @relation("MortgageScenarioUser")
+  rtoEquityLedgerEntries  RtoEquityLedger[]
+
+  @@map("users")
+}
+
+model RealEstateAgent {
+  id                    String   @id @default(uuid())
+  tenantId              String
+  userId                String   @unique
+  licenseNumber         String   @unique
+  tinNumber             String?
+  commissionRateDefault Decimal? @db.Decimal(5, 2)
+  tier                  AgentTier @default(junior)
+  managerId             String?
+  isInternal            Boolean  @default(true)
+  createdAt             DateTime @default(now())
+
+  tenant              Tenant                 @relation(fields: [tenantId], references: [id])
+  user                User                   @relation(fields: [userId], references: [id])
+  manager             RealEstateAgent?       @relation("AgentHierarchy", fields: [managerId], references: [id])
+  subordinates        RealEstateAgent[]      @relation("AgentHierarchy")
+  transactions    AgentTransaction[]
+  licenseRenewals AgentLicenseRenewal[]
+
+  @@map("real_estate_agents")
+}
+
+// ─────────────────────────────────────────────
+// PROPERTY INVENTORY
+// ─────────────────────────────────────────────
+
+model Property {
+  id               String         @id @default(uuid())
+  tenantId         String
+  propertyCode     String         @unique
+  propertyType     PropertyType
+  status           PropertyStatus @default(available)
+  specsDocumentId  String?
+  parentPropertyId String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  tenant          Tenant               @relation(fields: [tenantId], references: [id])
+  parentProperty  Property?            @relation("PropertyHierarchy", fields: [parentPropertyId], references: [id])
+  childProperties Property[]           @relation("PropertyHierarchy")
+  units           Unit[]
+  leaseAgreements LeaseAgreement[]
+  mortgageScenarios MortgageScenario[]
+  agentTransactions AgentTransaction[]
+  utilityMeters   UtilityMeter[]
+  utilityBills    UtilityBill[]
+
+  @@map("properties")
+}
+
+model Building {
+  id           String       @id @default(uuid())
+  tenantId     String
+  projectId    String?
+  name         String
+  buildingType BuildingType
+  floorCount   Int?
+  unitCount    Int?
+  address      String?
+  createdAt    DateTime     @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
+  floors  Floor[]
+  units   Unit[]
+
+  @@map("buildings")
+}
+
+model Floor {
+  id           String  @id @default(uuid())
+  buildingId   String
+  floorNumber  String
+  sortOrder    Int
+  floorPlanUrl String?
+
+  building Building @relation(fields: [buildingId], references: [id])
+  units    Unit[]
+
+  @@map("floors")
+}
+
+model Unit {
+  id              String   @id @default(uuid())
+  propertyId      String
+  buildingId      String
+  floorId         String
+  unitNumber      String
+  unitType        UnitType
+  squareMeters    Decimal? @db.Decimal(10, 2)
+  bedrooms        Int?
+  bathrooms       Int?
+  hasBalcony      Boolean  @default(false)
+  hasParking      Boolean  @default(false)
+  facingDirection String?
+  createdAt       DateTime @default(now())
+
+  property Property  @relation(fields: [propertyId], references: [id])
+  building Building  @relation(fields: [buildingId], references: [id])
+  floor    Floor     @relation(fields: [floorId], references: [id])
+  utilityMeters UtilityMeter[]
+  utilityBills  UtilityBill[]
+
+  @@map("units")
+}
+
+// ─────────────────────────────────────────────
+// PROJECT DEVELOPMENT & BUDGETING
+// ─────────────────────────────────────────────
+
+model Project {
+  id                    String        @id @default(uuid())
+  tenantId              String
+  name                  String
+  description           String?
+  projectType           ProjectType
+  status                ProjectStatus @default(planning)
+  totalPhases           Int?
+  targetStartDate       DateTime?
+  targetCompletionDate  DateTime?
+  actualCompletionDate  DateTime?
+  projectLogoUrl        String?
+  address               String?
+  createdAt             DateTime      @default(now())
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  buildings Building[]
+  phases    Phase[]
+  budgets   Budget[]
+
+  @@map("projects")
+}
+
+model Phase {
+  id          String      @id @default(uuid())
+  projectId   String
+  phaseName   String
+  phaseOrder  Int
+  status      PhaseStatus @default(planning)
+  targetStart DateTime?
+  targetEnd   DateTime?
+  actualStart DateTime?
+  actualEnd   DateTime?
+  createdAt   DateTime    @default(now())
+
+  project Project  @relation(fields: [projectId], references: [id])
+  budgets Budget[]
+
+  @@map("phases")
+}
+
+model Budget {
+  id                String  @id @default(uuid())
+  phaseId           String?
+  projectId         String?
+  budgetName        String
+  totalBudgetAmount Decimal @db.Decimal(14, 2)
+  approvedByUserId  String?
+  isCurrentVersion  Boolean @default(true)
+  versionNumber     Int     @default(1)
+  createdAt         DateTime @default(now())
+
+  phase     Phase?             @relation(fields: [phaseId], references: [id])
+  project   Project?           @relation(fields: [projectId], references: [id])
+  lineItems BudgetLineItem[]
+
+  @@map("budgets")
+}
+
+model BudgetLineItem {
+  id            String         @id @default(uuid())
+  budgetId      String
+  category      BudgetCategory
+  subcategory   String?
+  plannedAmount Decimal        @db.Decimal(14, 2)
+  actualAmount  Decimal        @default(0) @db.Decimal(14, 2)
+  startDate     DateTime?
+  endDate       DateTime?
+  vendorName    String?
+  notes         String?
+  createdAt     DateTime       @default(now())
+
+  budget      Budget                 @relation(fields: [budgetId], references: [id])
+  engagements ContractorEngagement[]
+
+  @@map("budget_line_items")
+}
+
+model Contractor {
+  id             String   @id @default(uuid())
+  tenantId       String
+  companyName    String
+  contactPerson  String?
+  email          String?
+  phone          String?
+  licenseNumber  String?
+  taxId          String?
+  specialization String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  tenant      Tenant                @relation(fields: [tenantId], references: [id])
+  engagements ContractorEngagement[]
+
+  @@map("contractors")
+}
+
+model ContractorEngagement {
+  id                  String                      @id @default(uuid())
+  budgetLineItemId    String
+  contractorId        String
+  contractAmount      Decimal                     @db.Decimal(14, 2)
+  startDate           DateTime?
+  endDate             DateTime?
+  contractDocumentUrl String?
+  terms               String?
+  status              ContractorEngagementStatus  @default(pending)
+  createdAt           DateTime                    @default(now())
+
+  budgetLineItem BudgetLineItem      @relation(fields: [budgetLineItemId], references: [id])
+  contractor     Contractor          @relation(fields: [contractorId], references: [id])
+  payments       ContractorPayment[]
+
+  @@map("contractor_engagements")
+}
+
+model ContractorPayment {
+  id                     String   @id @default(uuid())
+  contractorEngagementId String
+  amount                 Decimal  @db.Decimal(14, 2)
+  paymentDate            DateTime
+  invoiceReference       String?
+  paymentMethod          String?
+  status                 String   @default("pending_approval")
+  approvedByUserId       String?
+  receiptUrl             String?
+  notes                  String?
+  createdAt              DateTime @default(now())
+
+  engagement ContractorEngagement @relation(fields: [contractorEngagementId], references: [id])
+
+  @@map("contractor_payments")
+}
+
+// ─────────────────────────────────────────────
+// LEASES, RENTAL & MORTGAGE
+// ─────────────────────────────────────────────
+
+model LeaseAgreement {
+  id                         String    @id @default(uuid())
+  propertyId                 String
+  tenantUserId               String
+  leaseType                  LeaseType
+  startDate                  DateTime
+  endDate                    DateTime
+  monthlyRentAmount          Decimal   @db.Decimal(12, 2)
+  securityDepositAmount      Decimal?  @db.Decimal(12, 2)
+  securityDepositHeldIn      String?
+  latePaymentPenaltyPercent  Decimal?  @db.Decimal(5, 2)
+  gracePeriodDays            Int?      @default(3)
+  isActive                   Boolean   @default(true)
+  terminationDate            DateTime?
+  terminationReason          String?
+  leaseDocumentUrl           String?
+  createdAt                  DateTime  @default(now())
+
+  property Property  @relation(fields: [propertyId], references: [id])
+  tenant   User      @relation("TenantLeaseAgreements", fields: [tenantUserId], references: [id])
+
+  rentalPayments       RentalPayment[]
+  mortgageScenarios    MortgageScenario[]
+  rtoContract          RtoContract?
+  agentTransactions    AgentTransaction[]
+
+  @@map("lease_agreements")
+}
+
+model RentalPayment {
+  id                String   @id @default(uuid())
+  leaseAgreementId  String
+  billingPeriodStart DateTime
+  billingPeriodEnd  DateTime
+  dueDate           DateTime
+  amountDue         Decimal  @db.Decimal(12, 2)
+  amountPaid        Decimal? @default(0) @db.Decimal(12, 2)
+  paymentDate       DateTime?
+  paymentMethod     String?
+  paymentReference  String?
+  status            String   @default("pending")
+  lateFeeApplied    Boolean  @default(false)
+  notes             String?
+  createdAt         DateTime @default(now())
+
+  leaseAgreement      LeaseAgreement        @relation(fields: [leaseAgreementId], references: [id])
+  rtoPaymentAllocations RtoPaymentAllocation[]
+
+  @@map("rental_payments")
+}
+
+model MortgageScenario {
+  id                       String   @id @default(uuid())
+  leaseAgreementId         String
+  propertyId               String
+  generatedForUserId       String
+  propertyValueAtGeneration Decimal  @db.Decimal(14, 2)
+  downPaymentPercent       Decimal  @db.Decimal(5, 2)
+  loanAmount               Decimal  @db.Decimal(14, 2)
+  interestRatePercent      Decimal  @db.Decimal(5, 3)
+  loanTermMonths           Int
+  monthlyAmortization      Decimal  @db.Decimal(12, 2)
+  totalInterestPayable     Decimal  @db.Decimal(14, 2)
+  generationDate           DateTime @default(now())
+  expiryDate               DateTime?
+  status                   String   @default("draft")
+  createdAt                DateTime @default(now())
+
+  leaseAgreement LeaseAgreement @relation(fields: [leaseAgreementId], references: [id])
+  property       Property       @relation(fields: [propertyId], references: [id])
+  generatedFor   User           @relation("MortgageScenarioUser", fields: [generatedForUserId], references: [id])
+
+  amortizationSchedule MortgageAmortizationSchedule[]
+
+  @@map("mortgage_scenarios")
+}
+
+model MortgageAmortizationSchedule {
+  id                    String  @id @default(uuid())
+  mortgageScenarioId    String
+  periodNumber          Int
+  beginningBalance      Decimal @db.Decimal(14, 2)
+  monthlyPayment        Decimal @db.Decimal(12, 2)
+  principalPayment      Decimal @db.Decimal(12, 2)
+  interestPayment       Decimal @db.Decimal(12, 2)
+  endingBalance         Decimal @db.Decimal(14, 2)
+  cumulativeInterestPaid Decimal @db.Decimal(14, 2)
+  createdAt             DateTime @default(now())
+
+  scenario MortgageScenario @relation(fields: [mortgageScenarioId], references: [id])
+
+  @@map("mortgage_amortization_schedules")
+}
+
+// ─────────────────────────────────────────────
+// RENT-TO-OWN
+// ─────────────────────────────────────────────
+
+model RtoContract {
+  id                   String   @id @default(uuid())
+  leaseAgreementId     String   @unique
+  totalContractValue   Decimal  @db.Decimal(14, 2)
+  optionFeeAmount      Decimal  @default(0) @db.Decimal(12, 2)
+  monthlyRentPortion   Decimal  @db.Decimal(12, 2)
+  monthlyEquityPortion Decimal  @db.Decimal(12, 2)
+  accumulatedEquity    Decimal  @default(0) @db.Decimal(14, 2)
+  targetPurchaseDate   DateTime?
+  purchaseOptionPrice  Decimal? @db.Decimal(14, 2)
+  isOptionExercised    Boolean  @default(false)
+  exerciseDate         DateTime?
+  status               RTOStatus @default(active)
+  contractDocumentUrl  String?
+  createdAt            DateTime @default(now())
+
+  leaseAgreement    LeaseAgreement        @relation(fields: [leaseAgreementId], references: [id])
+  paymentAllocations RtoPaymentAllocation[]
+  equityLedger       RtoEquityLedger[]
+
+  @@map("rto_contracts")
+}
+
+model RtoPaymentAllocation {
+  id                  String   @id @default(uuid())
+  rentalPaymentId     String
+  rtoContractId       String
+  rentPortionAmount   Decimal  @db.Decimal(12, 2)
+  equityPortionAmount Decimal  @db.Decimal(12, 2)
+  totalPaymentAmount  Decimal  @db.Decimal(12, 2)
+  createdAt           DateTime @default(now())
+
+  rentalPayment RentalPayment @relation(fields: [rentalPaymentId], references: [id])
+  rtoContract   RtoContract   @relation(fields: [rtoContractId], references: [id])
+
+  @@map("rto_payment_allocations")
+}
+
+model RtoEquityLedger {
+  id              String   @id @default(uuid())
+  rtoContractId    String
+  transactionType String
+  amount          Decimal  @db.Decimal(14, 2)
+  runningBalance  Decimal  @db.Decimal(14, 2)
+  reference       String?
+  notes           String?
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+
+  rtoContract RtoContract @relation(fields: [rtoContractId], references: [id])
+  createdBy   User?       @relation(fields: [createdByUserId], references: [id])
+
+  @@map("rto_equity_ledger")
+}
+
+// ─────────────────────────────────────────────
+// AGENT COMMISSIONS
+// ─────────────────────────────────────────────
+
+model AgentCommission {
+  id              String       @id @default(uuid())
+  tenantId        String
+  name            String
+  agentTier       AgentTier?
+  propertyType    PropertyType?
+  projectId       String?
+  commissionType  CommissionType
+  commissionValue Decimal      @db.Decimal(10, 2)
+  isActive        Boolean      @default(true)
+  effectiveFrom   DateTime?
+  effectiveUntil  DateTime?
+  createdAt       DateTime     @default(now())
+
+  tenant       Tenant              @relation(fields: [tenantId], references: [id])
+  transactions AgentTransaction[]
+
+  @@map("agent_commissions")
+}
+
+model AgentTransaction {
+  id                  String           @id @default(uuid())
+  agentId             String
+  transactionType     TransactionType
+  propertyId          String
+  leaseAgreementId    String?
+  transactionAmount   Decimal          @db.Decimal(14, 2)
+  commissionRuleId    String?
+  calculatedCommission Decimal          @db.Decimal(12, 2)
+  finalCommission     Decimal?         @db.Decimal(12, 2)
+  status              CommissionStatus @default(pending)
+  transactionDate     DateTime
+  createdAt           DateTime         @default(now())
+
+  agent          RealEstateAgent   @relation(fields: [agentId], references: [id])
+  property       Property          @relation(fields: [propertyId], references: [id])
+  leaseAgreement LeaseAgreement?   @relation(fields: [leaseAgreementId], references: [id])
+  commissionRule AgentCommission?  @relation(fields: [commissionRuleId], references: [id])
+  commissionReleases AgentCommissionRelease[]
+
+  @@map("agent_transactions")
+}
+
+model AgentCommissionRelease {
+  id                 String   @id @default(uuid())
+  agentTransactionId String
+  amount             Decimal  @db.Decimal(12, 2)
+  releaseDate        DateTime
+  releaseType        String
+  agingBucket        String?
+  paymentReference   String?
+  notes              String?
+  createdAt          DateTime @default(now())
+
+  transaction AgentTransaction @relation(fields: [agentTransactionId], references: [id])
+
+  @@map("agent_commission_releases")
+}
+
+model AgentLicenseRenewal {
+  id                 String   @id @default(uuid())
+  tenantId           String
+  agentId            String
+  licenseNumber      String
+  licenseExpiryDate  DateTime
+  cpeUnitsCompleted  Int?     @default(0)
+  cpeUnitsRequired   Int?     @default(0)
+  renewalStatus      String   @default("compliant")
+  renewalDocumentUrl String?
+  lastRenewedAt      DateTime?
+  createdAt          DateTime @default(now())
+
+  tenant Tenant         @relation(fields: [tenantId], references: [id])
+  agent  RealEstateAgent @relation(fields: [agentId], references: [id])
+
+  @@map("agent_license_renewals")
+}
+
+// ─────────────────────────────────────────────
+// ACCOUNTS RECEIVABLES & COLLECTIONS
+// ─────────────────────────────────────────────
+
+model ArInvoice {
+  id              String        @id @default(uuid())
+  tenantId        String
+  userId          String
+  invoiceType     InvoiceType
+  referenceSource String?
+  invoiceNumber   String        @unique
+  amount          Decimal       @db.Decimal(12, 2)
+  dueDate         DateTime
+  status          InvoiceStatus @default(pending)
+  issuedDate      DateTime      @default(now())
+  notes           String?
+  createdAt       DateTime      @default(now())
+
+  tenant            Tenant              @relation(fields: [tenantId], references: [id])
+  payments          ArPayment[]
+  collectionActions ArCollectionAction[]
+
+  @@map("ar_invoices")
+}
+
+model ArPayment {
+  id               String   @id @default(uuid())
+  invoiceId        String
+  amount           Decimal  @db.Decimal(12, 2)
+  paymentDate      DateTime
+  paymentMethod    String?
+  paymentReference String?
+  receivedByUserId String?
+  notes            String?
+  createdAt        DateTime @default(now())
+
+  invoice ArInvoice @relation(fields: [invoiceId], references: [id])
+
+  @@map("ar_payments")
+}
+
+model ArPaymentArrangement {
+  id                     String                    @id @default(uuid())
+  userId                 String
+  totalOutstandingAmount  Decimal                   @db.Decimal(14, 2)
+  numberOfInstallments   Int
+  installmentAmount      Decimal                   @db.Decimal(12, 2)
+  startDate              DateTime
+  endDate                DateTime?
+  status                 PaymentArrangementStatus  @default(proposed)
+  approvedByUserId       String?
+  termsDocumentUrl       String?
+  createdAt              DateTime                  @default(now())
+
+  installments ArArrangementInstallment[]
+
+  @@map("ar_payment_arrangements")
+}
+
+model ArArrangementInstallment {
+  id                    String   @id @default(uuid())
+  paymentArrangementId  String
+  installmentNumber     Int
+  dueDate               DateTime
+  amount                Decimal  @db.Decimal(12, 2)
+  status                String   @default("pending")
+  paidDate              DateTime?
+  createdAt             DateTime @default(now())
+
+  arrangement ArPaymentArrangement @relation(fields: [paymentArrangementId], references: [id])
+
+  @@map("ar_arrangement_installments")
+}
+
+model ArCollectionAction {
+  id                String             @id @default(uuid())
+  userId            String
+  invoiceId         String
+  actionType        CollectionActionType
+  actionDate        DateTime           @default(now())
+  performedByUserId String?
+  outcome           String?
+  notes             String?
+  createdAt         DateTime           @default(now())
+
+  invoice ArInvoice @relation(fields: [invoiceId], references: [id])
+
+  @@map("ar_collection_actions")
+}
+
+// ─────────────────────────────────────────────
+// UTILITY BILLING
+// ─────────────────────────────────────────────
+
+model UtilityMeter {
+  id                  String    @id @default(uuid())
+  propertyId          String
+  unitId              String
+  meterType           MeterType
+  meterNumber         String    @unique
+  multiplier          Decimal   @default(1) @db.Decimal(10, 4)
+  installationDate    DateTime?
+  isActive            Boolean   @default(true)
+  isSmartMeter        Boolean   @default(false)
+  lastMaintenanceDate DateTime?
+  createdAt           DateTime  @default(now())
+
+  property Property    @relation(fields: [propertyId], references: [id])
+  unit     Unit        @relation(fields: [unitId], references: [id])
+  bills    UtilityBill[]
+
+  @@map("utility_meters")
+}
+
+model UtilityBill {
+  id                 String   @id @default(uuid())
+  propertyId         String
+  unitId             String
+  meterId            String
+  billingPeriodStart DateTime
+  billingPeriodEnd   DateTime
+  previousReading    Decimal  @db.Decimal(12, 2)
+  currentReading     Decimal  @db.Decimal(12, 2)
+  consumption        Decimal  @db.Decimal(12, 2)
+  ratePerUnit        Decimal  @db.Decimal(10, 4)
+  baseCharge         Decimal  @db.Decimal(10, 2)
+  totalAmount        Decimal  @db.Decimal(12, 2)
+  isProrated         Boolean  @default(false)
+  prorationDays      Int?
+  invoiceId          String?
+  status             String   @default("pending")
+  createdAt          DateTime @default(now())
+
+  property Property    @relation(fields: [propertyId], references: [id])
+  unit     Unit        @relation(fields: [unitId], references: [id])
+  meter    UtilityMeter @relation(fields: [meterId], references: [id])
+
+  @@map("utility_bills")
+}
+
+model UtilityRate {
+  id             String    @id @default(uuid())
+  tenantId       String
+  meterType      MeterType
+  ratePerUnit    Decimal   @db.Decimal(10, 4)
+  baseCharge     Decimal   @default(0) @db.Decimal(10, 2)
+  effectiveFrom  DateTime
+  effectiveUntil DateTime?
+  createdAt      DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("utility_rates")
+}
+
+// ─────────────────────────────────────────────
+// COMMUNITY & AMENITY MANAGEMENT
+// ─────────────────────────────────────────────
+
+model Amenity {
+  id            String   @id @default(uuid())
+  tenantId      String
+  name          String
+  description   String?
+  capacity      Int?
+  location      String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  bookings AmenityBooking[]
+
+  @@map("amenities")
+}
+
+model AmenityBooking {
+  id         String   @id @default(uuid())
+  amenityId  String
+  userId     String
+  bookedDate DateTime
+  startTime  DateTime
+  endTime    DateTime
+  status     String   @default("confirmed")
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  amenity Amenity @relation(fields: [amenityId], references: [id])
+
+  @@map("amenity_bookings")
+}
+
+// ─────────────────────────────────────────────
+// SERVICE REQUESTS & MAINTENANCE
+// ─────────────────────────────────────────────
+
+model ServiceRequest {
+  id          String   @id @default(uuid())
+  tenantId    String
+  unitId      String
+  userId      String
+  category    String
+  description String
+  priority    String   @default("normal")
+  status      String   @default("open")
+  assignedTo  String?
+  slaDeadline DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("service_requests")
+}
+
+// ─────────────────────────────────────────────
+// DOCUMENT VAULT
+// ─────────────────────────────────────────────
+
+model Document {
+  id              String   @id @default(uuid())
+  tenantId        String
+  documentType    String
+  fileName        String
+  fileUrl         String
+  fileSize        Int?
+  mimeType        String?
+  referenceType   String?
+  referenceId     String?
+  expiryDate      DateTime?
+  isSigned        Boolean  @default(false)
+  signatureId     String?
+  uploadedById    String
+  createdAt       DateTime @default(now())
+
+  @@map("documents")
+}

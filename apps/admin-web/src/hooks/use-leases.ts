@@ -1,0 +1,189 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/api";
+import { LeaseType, type ApiResponse, type PaginationMeta } from "@elite-realty/shared-types";
+
+export type LeaseStatus =
+  | "pending"
+  | "active"
+  | "expiring"
+  | "expired"
+  | "terminated"
+  | "rto_active"
+  | "rto_delinquent"
+  | "rto_converted";
+
+export interface Lease {
+  id: string;
+  leaseNumber?: string;
+  tenantName: string;
+  tenantEmail: string;
+  tenantUserId?: string;
+  propertyId?: string;
+  propertyName?: string;
+  unitLabel?: string;
+  leaseType: LeaseType;
+  startDate: string;
+  endDate: string;
+  monthlyRent: number;
+  securityDeposit?: number;
+  penaltyPercent?: number;
+  graceDays?: number;
+  status: LeaseStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PaymentMethod = "card" | "ach" | "cash" | "check" | "bank_transfer";
+export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
+
+export interface RentalPayment {
+  id: string;
+  leaseAgreementId: string;
+  amount: number;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  period?: string;
+  dueDate?: string;
+  paidDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LeaseQuery {
+  page?: number;
+  limit?: number;
+  sort?: string;
+  order?: "asc" | "desc";
+  search?: string;
+  type?: LeaseType;
+  status?: LeaseStatus;
+}
+
+interface PaginatedResult<T> {
+  data: T[];
+  meta: PaginationMeta;
+}
+
+export function useLeases(query: LeaseQuery) {
+  return useQuery({
+    queryKey: ["leases", query],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (query.page) params.set("page", String(query.page));
+      if (query.limit) params.set("limit", String(query.limit));
+      if (query.sort) params.set("sort", query.sort);
+      if (query.order) params.set("order", query.order);
+      if (query.search) params.set("search", query.search);
+      if (query.type) params.set("type", query.type);
+      if (query.status) params.set("status", query.status);
+      const { data } = await api.get<ApiResponse<Lease[]>>(`/leases?${params}`);
+      return { data: data.data, meta: data.meta } as PaginatedResult<Lease>;
+    },
+  });
+}
+
+export function useLease(id: string) {
+  return useQuery({
+    queryKey: ["lease", id],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<Lease>>(`/leases/${id}`);
+      return data.data;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useCreateLease() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Partial<Lease>) => {
+      const { data } = await api.post<ApiResponse<Lease>>("/leases", payload);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leases"] });
+    },
+  });
+}
+
+export function useUpdateLease() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: Partial<Lease> & { id: string }) => {
+      const { data } = await api.patch<ApiResponse<Lease>>(`/leases/${id}`, payload);
+      return data.data;
+    },
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["leases"] });
+      queryClient.invalidateQueries({ queryKey: ["lease", variables.id] });
+      void result;
+    },
+  });
+}
+
+export function useTerminateLease() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
+      const { data } = await api.post<ApiResponse<Lease>>(`/leases/${id}/terminate`, { reason });
+      return data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["leases"] });
+      queryClient.invalidateQueries({ queryKey: ["lease", variables.id] });
+    },
+  });
+}
+
+export function useLeasePayments(leaseId: string) {
+  return useQuery({
+    queryKey: ["rental-payments", leaseId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (leaseId) params.set("leaseAgreementId", leaseId);
+      const { data } = await api.get<ApiResponse<RentalPayment[]>>(`/rental-payments?${params}`);
+      return data.data;
+    },
+    enabled: !!leaseId,
+  });
+}
+
+export function useCreateRentalPayment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Partial<RentalPayment>) => {
+      const { data } = await api.post<ApiResponse<RentalPayment>>("/rental-payments", payload);
+      return data.data;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["rental-payments", result.leaseAgreementId] });
+    },
+  });
+}
+
+export function useRecordPayment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      amount,
+      method,
+      paidDate,
+    }: {
+      id: string;
+      amount: number;
+      method: PaymentMethod;
+      paidDate?: string;
+    }) => {
+      const { data } = await api.post<ApiResponse<RentalPayment>>(`/rental-payments/${id}/record`, {
+        amount,
+        method,
+        paidDate,
+      });
+      return data.data;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["rental-payments", result.leaseAgreementId] });
+    },
+  });
+}
