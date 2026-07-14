@@ -1,0 +1,10 @@
+FROM node:20-alpine
+WORKDIR /app
+ARG APP
+# Whole monorepo is the build context (workspaces resolve locally)
+COPY . .
+RUN npm ci
+WORKDIR /app/apps/${APP}
+RUN npx vite build
+EXPOSE 4173
+CMD ["npx", "vite", "preview", "--host", "0.0.0.0", "--port", "4173"]

@@ -1,0 +1,105 @@
+version: "3.8"
+
+# Production stack: builds the API + 3 web portals and fronts them with nginx.
+# Web apps call the API at the relative "/api" base; nginx routes /api -> api
+# and serves each SPA under its own subdomain.
+#
+# Usage:  docker compose -f docker-compose.prod.yml up --build
+# Then edit your hosts file to point:
+#   127.0.0.1  api.localhost admin.localhost owner.localhost resident.localhost
+# and open http://admin.localhost:8080  (or owner/resident/api)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: elite
+      POSTGRES_PASSWORD: elite123
+      POSTGRES_DB: elite_realty
+    ports: ["5432:5432"]
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U elite"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: elite
+      MONGO_INITDB_ROOT_PASSWORD: elite123
+      MONGO_INITDB_DATABASE: elite_realty
+    ports: ["27017:27017"]
+    volumes: ["mongo-data:/data/db"]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports: ["9000:9000", "9001:9001"]
+    volumes: ["minio-data:/data"]
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      DATABASE_URL: postgresql://elite:elite123@postgres:5432/elite_realty
+      MONGODB_URL: mongodb://elite:elite123@mongodb:27017/elite_realty?authSource=admin
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: change-me-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+    expose: ["4000"]
+
+  admin-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        APP: admin-web
+    depends_on: [api]
+    expose: ["4173"]
+
+  owner-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        APP: owner-web
+    depends_on: [api]
+    expose: ["4173"]
+
+  resident-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        APP: resident-web
+    depends_on: [api]
+    expose: ["4173"]
+
+  nginx:
+    build: ./nginx
+    ports: ["8080:80"]
+    depends_on: [api, admin-web, owner-web, resident-web]
+
+volumes:
+  postgres-data:
+  mongo-data:
+  redis-data:
+  minio-data:
