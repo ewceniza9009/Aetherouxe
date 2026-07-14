@@ -41,6 +41,12 @@ import CommissionsPage from "./pages/CommissionsPage";
 import CommissionAgingPage from "./pages/CommissionAgingPage";
 import FinancePage from "./pages/FinancePage";
 import SettingsPage from "./pages/SettingsPage";
+import CollectionsPage from "./pages/CollectionsPage";
+import ArAgingPage from "./pages/ArAgingPage";
+import StatementsPage from "./pages/StatementsPage";
+import CollectionCasesPage from "./pages/CollectionCasesPage";
+import CollectionCaseDetailPage from "./pages/CollectionCaseDetailPage";
+import PaymentRemindersPage from "./pages/PaymentRemindersPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 
 const rootRoute = createRootRoute({
@@ -287,6 +293,42 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
+const collectionsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/collections",
+  component: CollectionsPage,
+});
+
+const arAgingRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/collections/ar-aging",
+  component: ArAgingPage,
+});
+
+const statementsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/statements",
+  component: StatementsPage,
+});
+
+const collectionCasesRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/collections/cases",
+  component: CollectionCasesPage,
+});
+
+const collectionCaseDetailRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/collections/cases/$id",
+  component: CollectionCaseDetailPage,
+});
+
+const paymentRemindersRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/payment-reminders",
+  component: PaymentRemindersPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -326,6 +368,12 @@ const routeTree = rootRoute.addChildren([
     commissionAgingRoute,
     financeRoute,
     settingsRoute,
+    collectionsRoute,
+    arAgingRoute,
+    statementsRoute,
+    collectionCasesRoute,
+    collectionCaseDetailRoute,
+    paymentRemindersRoute,
   ]),
 ]);
 

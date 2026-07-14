@@ -6,6 +6,7 @@ import {
   Building2, Users, FileText, DollarSign, TrendingUp, Activity,
   Plus, ArrowRight, Hammer, CheckCircle2, Clock, AlertTriangle,
   Layers, KeyRound, UserCheck, ShieldCheck, BadgeDollarSign,
+  Wallet, FolderOpen, BellRing,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -15,6 +16,7 @@ import { useLeases } from "@/hooks/use-leases";
 import { useRtoContracts } from "@/hooks/use-rto";
 import { useAgents } from "@/hooks/use-agents";
 import { useCommissionAging } from "@/hooks/use-commissions";
+import { useArAging, useCollectionCases } from "@/hooks/use-collections";
 import api from "@/lib/api";
 import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
 
@@ -101,6 +103,13 @@ export default function DashboardPage() {
 
   const { data: agingReport, isLoading: loadingAging } = useCommissionAging();
   const unpaidCommissions = agingReport?.totalUnpaid ?? 0;
+
+  const { data: arReport, isLoading: loadingAr } = useArAging();
+  const totalReceivable = arReport?.totalReceivable ?? 0;
+  const { data: collectionCases, isLoading: loadingCases } = useCollectionCases();
+  const openCasesCount = (collectionCases ?? []).filter(
+    (c) => c.status === "open" || c.status === "in_progress" || c.status === "escalated"
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -455,6 +464,57 @@ export default function DashboardPage() {
                 <p className="text-xs text-amber-600">Outstanding aging total</p>
               </>
             )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="border-amber-200 bg-gradient-to-br from-yellow-50 to-amber-50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-amber-800">Total Receivable</CardTitle>
+            <Wallet className="h-4 w-4 text-amber-600" />
+          </CardHeader>
+          <CardContent>
+            {loadingAr ? (
+              <Skeleton className="h-8 w-28" />
+            ) : (
+              <>
+                <div className="text-3xl font-bold gold-text">
+                  ${totalReceivable.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </div>
+                <p className="text-xs text-amber-600">Outstanding AR across tenants</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="bg-rose-50 border-rose-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-rose-800">Open Collection Cases</CardTitle>
+            <FolderOpen className="h-4 w-4 text-rose-600" />
+          </CardHeader>
+          <CardContent>
+            {loadingCases ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <>
+                <div className="text-3xl font-bold text-rose-700">{openCasesCount}</div>
+                <p className="text-xs text-rose-600">Active collection efforts</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="bg-blue-50 border-blue-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-blue-800">Quick Links</CardTitle>
+            <BellRing className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate({ to: "/collections" })}>
+              Collections
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate({ to: "/statements" })}>
+              Statements
+            </Button>
           </CardContent>
         </Card>
       </div>

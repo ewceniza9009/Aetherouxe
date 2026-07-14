@@ -24,6 +24,11 @@ import { CommissionsModule } from './commissions/commissions.module';
 import { AgentTransactionsModule } from './agent-transactions/agent-transactions.module';
 import { CommissionReleasesModule } from './commission-releases/commission-releases.module';
 import { CommissionAgingModule } from './commission-aging/commission-aging.module';
+import { PaymentRemindersModule } from './payment-reminders/payment-reminders.module';
+import { StatementsModule } from './statements/statements.module';
+import { CollectionActivitiesModule } from './collection-activities/collection-activities.module';
+import { CollectionCasesModule } from './collection-cases/collection-cases.module';
+import { ArAgingModule } from './ar-aging/ar-aging.module';
 
 @Module({
   imports: [
@@ -49,6 +54,11 @@ import { CommissionAgingModule } from './commission-aging/commission-aging.modul
     AgentTransactionsModule,
     CommissionReleasesModule,
     CommissionAgingModule,
+    PaymentRemindersModule,
+    StatementsModule,
+    CollectionActivitiesModule,
+    CollectionCasesModule,
+    ArAgingModule,
     ...(process.env.MONGODB_URI ? [MongodbModule] : []),
     ThrottlerModule.forRoot([
       {

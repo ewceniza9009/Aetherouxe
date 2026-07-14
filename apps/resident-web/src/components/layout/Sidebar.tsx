@@ -12,6 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Inbox,
+  BellRing,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -32,6 +34,8 @@ const navItems: NavItem[] = [
   { label: "Service Requests", icon: <Wrench size={20} />, path: "/service-requests" },
   { label: "Community", icon: <Users size={20} />, path: "/community" },
   { label: "Documents", icon: <FolderOpen size={20} />, path: "/documents" },
+  { label: "Statements", icon: <Inbox size={20} />, path: "/statements" },
+  { label: "Reminders", icon: <BellRing size={20} />, path: "/reminders" },
 ];
 
 export default function Sidebar() {

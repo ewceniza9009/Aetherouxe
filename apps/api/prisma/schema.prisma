@@ -217,6 +217,10 @@ model Tenant {
   utilityRates         UtilityRate[]
   arInvoices           ArInvoice[]
 
+  paymentReminders     PaymentReminder[]
+  statements           StatementOfAccount[]
+  collectionCases      CollectionCase[]
+
   @@map("tenants")
 }
 
@@ -239,6 +243,12 @@ model User {
   leaseAgreementsAsTenant LeaseAgreement[]      @relation("TenantLeaseAgreements")
   mortgageScenarios       MortgageScenario[]    @relation("MortgageScenarioUser")
   rtoEquityLedgerEntries  RtoEquityLedger[]
+
+  paymentRemindersOwned   PaymentReminder[]
+  statementsOwned         StatementOfAccount[]
+  collectionCasesAssigned CollectionCase[]
+  caseNotesAuthored       CollectionCaseNote[]
+  activitiesPerformed     CollectionActivity[]
 
   @@map("users")
 }
@@ -289,6 +299,7 @@ model Property {
   agentTransactions AgentTransaction[]
   utilityMeters   UtilityMeter[]
   utilityBills    UtilityBill[]
+  statements      StatementOfAccount[]
 
   @@map("properties")
 }
@@ -516,6 +527,8 @@ model LeaseAgreement {
   mortgageScenarios    MortgageScenario[]
   rtoContract          RtoContract?
   agentTransactions    AgentTransaction[]
+  paymentReminders     PaymentReminder[]
+  collectionCases      CollectionCase[]
 
   @@map("lease_agreements")
 }
@@ -538,6 +551,7 @@ model RentalPayment {
 
   leaseAgreement      LeaseAgreement        @relation(fields: [leaseAgreementId], references: [id])
   rtoPaymentAllocations RtoPaymentAllocation[]
+  paymentReminders      PaymentReminder[]
 
   @@map("rental_payments")
 }
@@ -959,4 +973,154 @@ model Document {
   createdAt       DateTime @default(now())
 
   @@map("documents")
+}
+
+// ─────────────────────────────────────────────
+// COLLECTIONS & ACCOUNTS RECEIVABLE (PHASE 6)
+// ─────────────────────────────────────────────
+
+enum ReminderType {
+  pre_due
+  post_due
+  final_notice
+}
+
+enum ReminderChannel {
+  email
+  sms
+  portal
+  letter
+}
+
+enum ReminderStatus {
+  pending
+  sent
+  failed
+  acknowledged
+}
+
+model PaymentReminder {
+  id              String          @id @default(uuid())
+  tenantId        String?
+  ownerId         String?
+  leaseId         String?
+  rentalPaymentId String?
+  type            ReminderType
+  channel         ReminderChannel
+  scheduledAt     DateTime
+  message         String?
+  status          ReminderStatus  @default(pending)
+  sentAt          DateTime?
+  createdAt       DateTime        @default(now())
+
+  tenant        Tenant?         @relation(fields: [tenantId], references: [id])
+  owner         User?           @relation(fields: [ownerId], references: [id])
+  lease         LeaseAgreement? @relation(fields: [leaseId], references: [id])
+  rentalPayment RentalPayment?  @relation(fields: [rentalPaymentId], references: [id])
+
+  @@map("payment_reminders")
+}
+
+enum StatementStatus {
+  draft
+  sent
+  disputed
+}
+
+model StatementOfAccount {
+  id             String         @id @default(uuid())
+  tenantId       String?
+  ownerId        String?
+  propertyId     String?
+  periodStart    DateTime
+  periodEnd      DateTime
+  openingBalance Decimal        @db.Decimal(14, 2)
+  totalBilled    Decimal        @db.Decimal(14, 2)
+  totalPaid      Decimal        @db.Decimal(14, 2)
+  closingBalance Decimal        @db.Decimal(14, 2)
+  status         StatementStatus @default(draft)
+  pdfUrl         String?
+  createdAt      DateTime       @default(now())
+
+  tenant   Tenant?   @relation(fields: [tenantId], references: [id])
+  owner    User?     @relation(fields: [ownerId], references: [id])
+  property Property? @relation(fields: [propertyId], references: [id])
+
+  @@map("statements_of_account")
+}
+
+enum CollectionActivityType {
+  call
+  email
+  letter
+  visit
+  payment_promise
+  legal_notice
+}
+
+model CollectionActivity {
+  id               String                 @id @default(uuid())
+  collectionCaseId String
+  activityType     CollectionActivityType
+  performedById    String?
+  performedAt      DateTime               @default(now())
+  notes            String?
+  outcome          String?
+  nextActionDate   DateTime?
+
+  case        CollectionCase @relation(fields: [collectionCaseId], references: [id])
+  performedBy User?          @relation(fields: [performedById], references: [id])
+
+  @@map("collection_activities")
+}
+
+enum CollectionCaseStatus {
+  open
+  in_progress
+  escalated
+  resolved
+  written_off
+}
+
+enum CollectionCasePriority {
+  low
+  medium
+  high
+  critical
+}
+
+model CollectionCase {
+  id               String                 @id @default(uuid())
+  tenantId         String?
+  leaseId          String?
+  totalOutstanding Decimal                @db.Decimal(14, 2)
+  priority         CollectionCasePriority @default(medium)
+  status           CollectionCaseStatus   @default(open)
+  assignedToId     String?
+  openedAt         DateTime               @default(now())
+  lastActivityAt   DateTime               @default(now())
+  nextActionDate   DateTime?
+  resolutionNotes  String?
+  createdAt        DateTime               @default(now())
+
+  tenant      Tenant?         @relation(fields: [tenantId], references: [id])
+  lease       LeaseAgreement? @relation(fields: [leaseId], references: [id])
+  assignedTo  User?           @relation(fields: [assignedToId], references: [id])
+  activities  CollectionActivity[]
+  notes       CollectionCaseNote[]
+
+  @@map("collection_cases")
+}
+
+model CollectionCaseNote {
+  id        String   @id @default(uuid())
+  caseId    String
+  authorId  String?
+  note      String
+  createdAt DateTime @default(now())
+
+  case   CollectionCase @relation(fields: [caseId], references: [id])
+  author User?          @relation(fields: [authorId], references: [id])
+
+  @@map("collection_case_notes")
 }

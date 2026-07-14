@@ -15,6 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  BellRing,
+  Inbox,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,6 +37,8 @@ const navItems: NavItem[] = [
   { label: "Projects", icon: <Hammer size={20} />, path: "/projects" },
   { label: "Agents", icon: <UserCheck size={20} />, path: "/agents" },
   { label: "Commissions", icon: <BadgeDollarSign size={20} />, path: "/commissions" },
+  { label: "Collections", icon: <BellRing size={20} />, path: "/collections" },
+  { label: "Statements", icon: <Inbox size={20} />, path: "/statements" },
   { label: "Finance", icon: <DollarSign size={20} />, path: "/finance" },
   { label: "Settings", icon: <Settings size={20} />, path: "/settings" },
 ];
