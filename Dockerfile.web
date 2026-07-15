@@ -3,7 +3,7 @@ WORKDIR /app
 ARG APP
 # Whole monorepo is the build context (workspaces resolve locally)
 COPY . .
-RUN npm ci
+RUN npm install
 WORKDIR /app/apps/${APP}
 RUN npx vite build
 EXPOSE 4173

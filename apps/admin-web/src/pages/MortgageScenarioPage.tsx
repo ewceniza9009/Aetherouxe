@@ -58,7 +58,7 @@ function money(n: number) {
 }
 
 export default function MortgageScenarioPage() {
-  const { leaseId, scenarioId } = useParams({ from: "/leases/$leaseId/mortgage/$scenarioId" });
+  const { leaseId, scenarioId } = useParams({ from: "/protected/leases/$leaseId/mortgage/$scenarioId" });
   const navigate = useNavigate();
   const { data: scenario, isLoading, error } = useMortgageScenario(scenarioId);
 

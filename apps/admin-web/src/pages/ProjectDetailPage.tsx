@@ -54,7 +54,7 @@ function getHealthTextColor(pct: number) {
 }
 
 export default function ProjectDetailPage() {
-  const { id } = useParams({ from: "/projects/$id" });
+  const { id } = useParams({ from: "/protected/projects/$id" });
   const navigate = useNavigate();
   const [tab, setTab] = useState("overview");
   const { data: project, isLoading, isError } = useProject(id);

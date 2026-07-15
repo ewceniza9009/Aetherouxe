@@ -81,7 +81,7 @@ const paymentStatusVariant: Record<RentalPayment["status"], "success" | "warning
 };
 
 export default function LeaseDetailPage() {
-  const { id } = useParams({ from: "/leases/$id" });
+  const { id } = useParams({ from: "/protected/leases/$id" });
   const navigate = useNavigate();
   const { data: lease, isLoading, error } = useLease(id);
   const { data: payments, isLoading: loadingPayments, refetch: refetchPayments } = useLeasePayments(id);

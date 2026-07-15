@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, UseGuards, Request } from '@nestjs/common';
 import { Request as ExpressRequest } from 'express';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -35,5 +35,16 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   getMe(@Request() req: ExpressRequest & { user: { sub: string; id: string } }) {
     return this.authService.getMe(req.user.sub || req.user.id);
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update current user profile' })
+  updateMe(
+    @Request() req: ExpressRequest & { user: { sub: string; id: string } },
+    @Body() data: { firstName?: string; lastName?: string; phone?: string; email?: string },
+  ) {
+    return this.authService.updateMe(req.user.sub || req.user.id, data);
   }
 }

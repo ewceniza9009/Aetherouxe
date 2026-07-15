@@ -82,15 +82,12 @@ const statusMeta: Record<string, { label: string; variant: any }> = {
 };
 
 const categoryMeta: Record<ServiceCategory, string> = {
-  maintenance: "Maintenance",
   plumbing: "Plumbing",
   electrical: "Electrical",
   hvac: "HVAC",
-  landscaping: "Landscaping",
-  security: "Security",
-  cleaning: "Cleaning",
+  general: "General",
+  pest: "Pest Control",
   elevator: "Elevator",
-  pest_control: "Pest Control",
   other: "Other",
 };
 
@@ -132,7 +129,7 @@ function SummaryCard({
 }
 
 export default function ServiceRequestDetailPage() {
-  const { id } = useParams({ from: "/service-requests/$id" });
+  const { id } = useParams({ from: "/protected/service-requests/$id" });
   const navigate = useNavigate();
   const { data: request, isLoading, isError } = useServiceRequest(id);
   const { data: workOrdersData, isLoading: loadingWo } = useWorkOrders({

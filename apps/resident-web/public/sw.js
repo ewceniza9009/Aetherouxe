@@ -1,4 +1,4 @@
-const CACHE = "aether-resident-v1";
+const CACHE = "Aetherouxe-resident-v1";
 const APP_SHELL = ["/", "/index.html", "/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

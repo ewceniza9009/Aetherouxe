@@ -12,9 +12,10 @@ export interface Project {
   status: ProjectStatus;
   description?: string;
   startDate?: string;
-  targetEndDate?: string;
+  targetStartDate?: string;
+  targetCompletionDate?: string;
   address?: string;
-  logoUrl?: string;
+  projectLogoUrl?: string;
   completionPercentage: number;
   totalBudget?: number;
   totalSpent?: number;
@@ -57,20 +58,30 @@ export function useProject(id: string) {
   });
 }
 
-export interface TimelineEntry {
+export interface TimelinePhase {
   id: string;
   phaseName: string;
-  startDate: string;
-  endDate: string;
+  phaseOrder: number;
   status: string;
-  progress: number;
+  targetStart?: string | null;
+  targetEnd?: string | null;
+  actualStart?: string | null;
+  actualEnd?: string | null;
+}
+
+export interface ProjectTimeline {
+  projectId: string;
+  projectName: string;
+  targetStartDate?: string | null;
+  targetCompletionDate?: string | null;
+  phases: TimelinePhase[];
 }
 
 export function useProjectTimeline(id: string) {
   return useQuery({
     queryKey: ["owner-project-timeline", id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<TimelineEntry[]>>(`/projects/${id}/timeline`);
+      const { data } = await api.get<ApiResponse<ProjectTimeline>>(`/projects/${id}/timeline`);
       return data.data;
     },
     enabled: !!id,

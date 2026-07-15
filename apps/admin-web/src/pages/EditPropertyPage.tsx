@@ -19,7 +19,7 @@ import { useProperty, useUpdateProperty, usePropertySpecs, useUpdatePropertySpec
 import { PropertyType, PropertyStatus } from "@elite-realty/shared-types";
 
 export default function EditPropertyPage() {
-  const { id } = useParams({ from: "/properties/$propertyId/edit" });
+  const { propertyId: id } = useParams({ from: "/protected/properties/$propertyId/edit" });
   const navigate = useNavigate();
   const { data: property, isLoading } = useProperty(id);
   const { data: specs } = usePropertySpecs(id);
@@ -98,8 +98,8 @@ export default function EditPropertyPage() {
     }
   }, [specs]);
 
-  const showCondoFields = form.type === "condo" || form.type === "condo_unit";
-  const showHouseFields = form.type === "single_family" || form.type === "house_and_lot";
+  const showCondoFields = form.type === "condo_unit";
+  const showHouseFields = form.type === "house_and_lot";
   const showParkingFields = form.type === "parking_slot";
 
   const handleSubmit = async (e: React.FormEvent) => {

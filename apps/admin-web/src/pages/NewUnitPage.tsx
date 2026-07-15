@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,17 +18,16 @@ import { useProperty } from "@/hooks/use-properties";
 
 const UNIT_TYPES = [
   "studio",
-  "1br",
-  "2br",
-  "3br",
+  "one_br",
+  "two_br",
+  "three_br",
   "penthouse",
   "commercial",
-  "storage",
   "parking",
 ];
 
 export default function NewUnitPage() {
-  const { propertyId } = useParams({ from: "/properties/$propertyId/units/new" });
+  const { propertyId } = useParams({ from: "/protected/properties/$propertyId/units/new" });
   const navigate = useNavigate();
   const { data: property } = useProperty(propertyId);
   const createUnit = useCreateUnit();
@@ -46,15 +45,30 @@ export default function NewUnitPage() {
     propertyId,
   });
 
+  useEffect(() => {
+    if (property) {
+      setForm((p) => ({
+        ...p,
+        buildingId: property.buildingId || "",
+        floorId: property.floorId || "",
+      }));
+    }
+  }, [property]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const payload: any = {
-        ...form,
-        size: form.size ? parseFloat(form.size) : undefined,
+        propertyId: form.propertyId,
+        buildingId: form.buildingId,
+        floorId: form.floorId,
+        unitNumber: form.unitNumber,
+        unitType: form.type,
+        squareMeters: form.size ? parseFloat(form.size) : undefined,
         bedrooms: form.bedrooms ? parseInt(form.bedrooms) : undefined,
         bathrooms: form.bathrooms ? parseInt(form.bathrooms) : undefined,
-        features: form.features ? form.features.split(",").map((f) => f.trim()).filter(Boolean) : undefined,
+        hasBalcony: form.features ? form.features.toLowerCase().includes("balcony") : undefined,
+        hasParking: form.features ? form.features.toLowerCase().includes("parking") : undefined,
       };
       Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
       await createUnit.mutateAsync(payload);

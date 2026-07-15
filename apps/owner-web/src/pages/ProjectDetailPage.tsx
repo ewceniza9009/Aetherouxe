@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -96,8 +97,8 @@ export default function OwnerProjectDetailPage() {
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-            {project.logoUrl ? (
-              <img src={project.logoUrl} alt="" className="h-12 w-12 rounded-lg object-cover" />
+            {project.projectLogoUrl ? (
+              <img src={project.projectLogoUrl} alt="" className="h-12 w-12 rounded-lg object-cover" />
             ) : (
               <Hammer className="h-7 w-7 text-primary" />
             )}
@@ -190,7 +191,7 @@ export default function OwnerProjectDetailPage() {
           {timeline && timeline.phases.length > 0 ? (
             <div className="divide-y">
               {timeline.phases.map((p) => (
-                <GanttRow key={p.id} name={p.phaseName} start={p.startDate} end={p.endDate} status={p.status} />
+                <GanttRow key={p.id} name={p.phaseName} start={p.targetStart ?? undefined} end={p.targetEnd ?? undefined} status={p.status} />
               ))}
             </div>
           ) : (
@@ -199,7 +200,7 @@ export default function OwnerProjectDetailPage() {
           <Separator className="my-4" />
           <p className="text-xs text-muted-foreground">
             Target: {project.targetStartDate ? new Date(project.targetStartDate).toLocaleDateString() : "TBD"} →{" "}
-            {project.targetEndDate ? new Date(project.targetEndDate).toLocaleDateString() : "TBD"}
+            {project.targetCompletionDate ? new Date(project.targetCompletionDate).toLocaleDateString() : "TBD"}
           </p>
         </CardContent>
       </Card>

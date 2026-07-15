@@ -79,7 +79,7 @@ function SummaryCard({
 }
 
 export default function MeterDetailPage() {
-  const { id } = useParams({ from: "/meters/$id" });
+  const { id } = useParams({ from: "/protected/meters/$id" });
   const navigate = useNavigate();
   const { data: meter, isLoading, isError } = useMeter(id);
   const { data: readings, isLoading: loadingReadings } = useMeterReadings(id);

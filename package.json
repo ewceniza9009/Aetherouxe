@@ -9,6 +9,7 @@
     "clean": "turbo clean"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.5.0",
     "turbo": "^2.5.0",
     "typescript": "^5.7.0"
   },

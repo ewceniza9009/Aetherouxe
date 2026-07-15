@@ -3,15 +3,12 @@ import api from "@/lib/api";
 import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
 
 export type ServiceCategory =
-  | "maintenance"
   | "plumbing"
   | "electrical"
   | "hvac"
-  | "landscaping"
-  | "security"
-  | "cleaning"
+  | "general"
+  | "pest"
   | "elevator"
-  | "pest_control"
   | "other";
 
 export type ServicePriority = "low" | "medium" | "high" | "emergency";

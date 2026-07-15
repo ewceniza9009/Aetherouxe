@@ -59,6 +59,31 @@ interface PaginatedResult<T> {
   meta: PaginationMeta;
 }
 
+export function transformProperty(p: any): Property {
+  const units = Array.isArray(p.units) ? p.units : [];
+  const building = units[0]?.building || p.building || p.buildings?.[0];
+  return {
+    id: p.id,
+    code: p.propertyCode || p.code,
+    name: building?.name || p.name || p.propertyCode || "Unnamed Property",
+    address: building?.address || p.address || "",
+    type: p.propertyType || p.type,
+    status: p.status,
+    buildingId: p.buildingId || units[0]?.buildingId || building?.id,
+    floorId: p.floorId || units[0]?.floorId,
+    unitId: p.unitId,
+    description: p.description,
+    units: p._count?.units ?? units.length,
+    yearBuilt: p.yearBuilt,
+    lotSize: p.lotSize,
+    totalSquareFeet: p.totalSquareFeet,
+    monthlyRevenue: p.monthlyRevenue,
+    occupancyRate: p.occupancyRate,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  };
+}
+
 export function useProperties(query: PropertyQuery) {
   return useQuery({
     queryKey: ["properties", query],
@@ -71,8 +96,10 @@ export function useProperties(query: PropertyQuery) {
       if (query.search) params.set("search", query.search);
       if (query.type) params.set("type", query.type);
       if (query.status) params.set("status", query.status);
-      const { data } = await api.get<ApiResponse<Property[]>>(`/properties?${params}`);
-      return { data: data.data, meta: data.meta } as PaginatedResult<Property>;
+      const { data } = await api.get<ApiResponse<any[]>>(`/properties?${params}`);
+      const raw = data.data;
+      const transformed = raw.map(transformProperty);
+      return { data: transformed, meta: data.meta } as PaginatedResult<Property>;
     },
   });
 }
@@ -81,8 +108,8 @@ export function useProperty(id: string) {
   return useQuery({
     queryKey: ["property", id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Property>>(`/properties/${id}`);
-      return data.data;
+      const { data } = await api.get<ApiResponse<any>>(`/properties/${id}`);
+      return transformProperty(data.data);
     },
     enabled: !!id,
   });

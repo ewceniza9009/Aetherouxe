@@ -12,7 +12,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card/70 px-6 backdrop-blur-sm">
-          <div className="font-serif text-lg font-bold gold-text">Aether Estates</div>
+          <div className="flex items-center gap-2">
+            <img src="/favicon.png" alt="Logo" className="h-7 w-7 rounded object-cover" />
+            <span className="font-serif text-lg font-bold gold-text">Aetherouxe Estates</span>
+          </div>
           <div className="flex items-center gap-3">
             <NotificationBell role="admin" />
           </div>

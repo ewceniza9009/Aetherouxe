@@ -19,7 +19,7 @@ import { useProperties } from "@/hooks/use-properties";
 import { useLease, useUpdateLease, type Lease } from "@/hooks/use-leases";
 
 export default function EditLeasePage() {
-  const { id } = useParams({ from: "/leases/$id/edit" });
+  const { id } = useParams({ from: "/protected/leases/$id/edit" });
   const navigate = useNavigate();
   const { data: lease, isLoading, error } = useLease(id);
   const { data: propertiesData, isLoading: loadingProps } = useProperties({ limit: 100 });
@@ -147,10 +147,10 @@ export default function EditLeasePage() {
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={LeaseType.Fixed}>Fixed</SelectItem>
-                  <SelectItem value={LeaseType.MonthToMonth}>Month to Month</SelectItem>
+                  <SelectItem value={LeaseType.StandardRental}>Standard Rental</SelectItem>
                   <SelectItem value={LeaseType.RentToOwn}>Rent to Own</SelectItem>
-                  <SelectItem value={LeaseType.Commercial}>Commercial</SelectItem>
+                  <SelectItem value={LeaseType.CorporateLease}>Corporate Lease</SelectItem>
+                  <SelectItem value={LeaseType.ShortTerm}>Short Term</SelectItem>
                 </SelectContent>
               </Select>
             </div>

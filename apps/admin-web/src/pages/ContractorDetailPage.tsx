@@ -38,7 +38,7 @@ import {
 } from "@/hooks/use-contractors";
 
 export default function ContractorDetailPage() {
-  const { id } = useParams({ from: "/contractors/$id" });
+  const { id } = useParams({ from: "/protected/contractors/$id" });
   const navigate = useNavigate();
   const { data: contractor, isLoading, isError } = useContractor(id);
   const { data: engagements } = useEngagements({ contractorId: id });

@@ -64,6 +64,29 @@ interface PaginatedResult<T> {
   meta: PaginationMeta;
 }
 
+export function transformLease(l: any): Lease {
+  return {
+    id: l.id,
+    leaseNumber: l.leaseNumber,
+    tenantName: l.tenant ? `${l.tenant.firstName ?? ""} ${l.tenant.lastName ?? ""}`.trim() || "Unknown" : "Unknown",
+    tenantEmail: l.tenant?.email ?? "",
+    tenantUserId: l.tenantUserId,
+    propertyId: l.propertyId,
+    propertyName: l.property?.propertyCode ?? "",
+    unitLabel: l.unitLabel,
+    leaseType: l.leaseType,
+    startDate: l.startDate,
+    endDate: l.endDate,
+    monthlyRent: Number(l.monthlyRentAmount),
+    securityDeposit: l.securityDepositAmount ? Number(l.securityDepositAmount) : undefined,
+    penaltyPercent: l.latePaymentPenaltyPercent ? Number(l.latePaymentPenaltyPercent) : undefined,
+    graceDays: l.gracePeriodDays,
+    status: l.isActive ? "active" : "expired",
+    createdAt: l.createdAt,
+    updatedAt: l.updatedAt,
+  };
+}
+
 export function useLeases(query: LeaseQuery) {
   return useQuery({
     queryKey: ["leases", query],
@@ -76,8 +99,9 @@ export function useLeases(query: LeaseQuery) {
       if (query.search) params.set("search", query.search);
       if (query.type) params.set("type", query.type);
       if (query.status) params.set("status", query.status);
-      const { data } = await api.get<ApiResponse<Lease[]>>(`/leases?${params}`);
-      return { data: data.data, meta: data.meta } as PaginatedResult<Lease>;
+      const { data } = await api.get<ApiResponse<any[]>>(`/leases?${params}`);
+      const transformed = data.data.map(transformLease);
+      return { data: transformed, meta: data.meta } as PaginatedResult<Lease>;
     },
   });
 }
@@ -86,8 +110,8 @@ export function useLease(id: string) {
   return useQuery({
     queryKey: ["lease", id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Lease>>(`/leases/${id}`);
-      return data.data;
+      const { data } = await api.get<ApiResponse<any>>(`/leases/${id}`);
+      return transformLease(data.data);
     },
     enabled: !!id,
   });
@@ -141,8 +165,19 @@ export function useLeasePayments(leaseId: string) {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (leaseId) params.set("leaseAgreementId", leaseId);
-      const { data } = await api.get<ApiResponse<RentalPayment[]>>(`/rental-payments?${params}`);
-      return data.data;
+      const { data } = await api.get<ApiResponse<any[]>>(`/rental-payments?${params}`);
+      return (data.data ?? []).map((p: any) => ({
+        id: p.id,
+        leaseAgreementId: p.leaseAgreementId,
+        amount: Number(p.amountDue),
+        method: p.paymentMethod || "card",
+        status: p.status,
+        period: p.period,
+        dueDate: p.dueDate,
+        paidDate: p.paymentDate,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+      })) as RentalPayment[];
     },
     enabled: !!leaseId,
   });

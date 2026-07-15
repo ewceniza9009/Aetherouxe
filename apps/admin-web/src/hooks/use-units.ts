@@ -41,8 +41,25 @@ export function useUnits(query: UnitQuery) {
       if (query.propertyId) params.set("propertyId", query.propertyId);
       if (query.type) params.set("type", query.type);
       if (query.status) params.set("status", query.status);
-      const { data } = await api.get<ApiResponse<Unit[]>>(`/units?${params}`);
-      return { data: data.data, meta: data.meta } as PaginatedResult<Unit>;
+      const { data } = await api.get<ApiResponse<any[]>>(`/units?${params}`);
+      const transformed = (data.data ?? []).map((u: any) => ({
+        id: u.id,
+        propertyId: u.propertyId,
+        buildingId: u.buildingId,
+        floorId: u.floorId,
+        unitNumber: u.unitNumber,
+        type: u.unitType || u.type,
+        size: u.squareMeters ?? u.size,
+        squareMeters: u.squareMeters,
+        bedrooms: u.bedrooms,
+        bathrooms: u.bathrooms,
+        status: u.status || (u.unitType ? "available" : "unknown"),
+        unitType: u.unitType,
+        features: u.features,
+        createdAt: u.createdAt,
+        updatedAt: u.updatedAt,
+      }));
+      return { data: transformed, meta: data.meta } as PaginatedResult<Unit>;
     },
   });
 }
@@ -51,8 +68,25 @@ export function useUnit(id: string) {
   return useQuery({
     queryKey: ["unit", id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Unit>>(`/units/${id}`);
-      return data.data;
+      const { data } = await api.get<ApiResponse<any>>(`/units/${id}`);
+      const u = data.data;
+      return {
+        id: u.id,
+        propertyId: u.propertyId,
+        buildingId: u.buildingId,
+        floorId: u.floorId,
+        unitNumber: u.unitNumber,
+        type: u.unitType || u.type,
+        size: u.squareMeters ?? u.size,
+        squareMeters: u.squareMeters,
+        bedrooms: u.bedrooms,
+        bathrooms: u.bathrooms,
+        status: u.status || "available",
+        unitType: u.unitType,
+        features: u.features,
+        createdAt: u.createdAt,
+        updatedAt: u.updatedAt,
+      } as Unit;
     },
     enabled: !!id,
   });

@@ -49,7 +49,7 @@ import {
 } from "@/hooks/use-collections";
 
 export default function CollectionCaseDetailPage() {
-  const { id } = useParams({ from: "/collections/cases/$id" });
+  const { id } = useParams({ from: "/protected/collections/cases/$id" });
   const navigate = useNavigate();
   const { data, isLoading, isError } = useCollectionCase(id);
 

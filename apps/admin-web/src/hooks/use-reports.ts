@@ -5,6 +5,7 @@ import type { ApiResponse } from "@elite-realty/shared-types";
 export interface PortfolioKpis {
   totalProperties: number;
   totalUnits: number;
+  occupiedUnits: number;
   occupancyRate: number;
   activeLeases: number;
   monthlyRecurringRevenue: number;

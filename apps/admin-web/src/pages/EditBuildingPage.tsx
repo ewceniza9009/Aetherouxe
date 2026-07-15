@@ -16,15 +16,15 @@ import { ArrowLeft, Save } from "lucide-react";
 import { useBuilding, useUpdateBuilding } from "@/hooks/use-buildings";
 
 const BUILDING_TYPES = [
-  "residential",
-  "commercial",
-  "mixed_use",
-  "industrial",
-  "warehouse",
+  "tower",
+  "mid_rise",
+  "low_rise",
+  "cluster",
+  "block",
 ];
 
 export default function EditBuildingPage() {
-  const { buildingId } = useParams({ from: "/buildings/$buildingId/edit" });
+  const { buildingId } = useParams({ from: "/protected/buildings/$buildingId/edit" });
   const navigate = useNavigate();
   const { data: building, isLoading } = useBuilding(buildingId);
   const updateBuilding = useUpdateBuilding();

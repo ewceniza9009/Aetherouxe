@@ -20,20 +20,32 @@ import { useArAging, useCollectionCases } from "@/hooks/use-collections";
 import { useBills } from "@/hooks/use-utilities";
 import { useServiceRequests } from "@/hooks/use-service-requests";
 import { useDocuments } from "@/hooks/use-documents";
+import { usePortfolioKpis, useRevenueTrend } from "@/hooks/use-reports";
+import type { PortfolioKpis } from "@/hooks/use-reports";
 import api from "@/lib/api";
 import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
-
-const stats = [
-  { title: "Total Properties", value: "247", icon: Building2, change: "+12%", changeType: "up" },
-  { title: "Active Tenants", value: "1,893", icon: Users, change: "+8%", changeType: "up" },
-  { title: "Active Leases", value: "1,245", icon: FileText, change: "+5%", changeType: "up" },
-  { title: "Monthly Revenue", value: "$847K", icon: DollarSign, change: "+14%", changeType: "up" },
-  { title: "Avg. Occupancy", value: "94.2%", icon: TrendingUp, change: "+2.1%", changeType: "up" },
-  { title: "Pending Requests", value: "38", icon: Activity, change: "-6%", changeType: "down" },
-];
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+} from "recharts";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { data: kpis } = usePortfolioKpis();
+  const k = (kpis ?? {}) as PortfolioKpis;
+  const { data: revenueTrend } = useRevenueTrend(6);
+
+  const money = (n: number) =>
+    `$${(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+
+  const stats = [
+    { title: "Total Properties", value: (k.totalProperties ?? 0).toLocaleString(), icon: Building2, accent: "text-primary", sub: "Across portfolio" },
+    { title: "Occupied Units", value: `${(k.occupiedUnits ?? 0)}/${(k.totalUnits ?? 0)}`, icon: Users, accent: "text-accent", sub: `${k.occupancyRate ?? 0}% occupancy` },
+    { title: "Active Leases", value: (k.activeLeases ?? 0).toLocaleString(), icon: FileText, accent: "text-success", sub: "Currently generating revenue" },
+    { title: "Monthly Revenue", value: money(k.monthlyRecurringRevenue ?? 0), icon: DollarSign, accent: "text-warning", sub: "Recurring MRR" },
+    { title: "Total Receivable", value: money(k.totalReceivable ?? 0), icon: TrendingUp, accent: "text-destructive", sub: "Outstanding AR" },
+    { title: "Open Requests", value: (k.openServiceRequests ?? 0).toLocaleString(), icon: Activity, accent: "text-primary", sub: "Awaiting action" },
+  ];
+
   const { data: recentProperties, isLoading: loadingRecent } = useProperties({
     page: 1,
     limit: 5,
@@ -161,13 +173,11 @@ export default function DashboardPage() {
             <Card key={stat.title}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
+                <Icon className={`h-4 w-4 ${stat.accent}`} />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
-                <p className={`text-xs ${stat.changeType === "up" ? "text-green-600" : "text-red-600"}`}>
-                  {stat.change} from last month
-                </p>
+                {stat.sub && <p className="text-xs text-muted-foreground">{stat.sub}</p>}
               </CardContent>
             </Card>
           );
@@ -175,52 +185,52 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-amber-50 border-amber-200">
+        <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-amber-800">Active Leases</CardTitle>
-            <FileText className="h-4 w-4 text-amber-600" />
+            <CardTitle className="text-sm font-medium text-accent">Active Leases</CardTitle>
+            <FileText className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent>
             {loadingLeases ? (
               <Skeleton className="h-8 w-16" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-amber-700">{activeLeaseCount}</div>
-                <p className="text-xs text-amber-600">Currently generating revenue</p>
+                <div className="text-3xl font-bold text-accent">{activeLeaseCount}</div>
+                <p className="text-xs text-muted-foreground">Currently generating revenue</p>
               </>
             )}
           </CardContent>
         </Card>
-        <Card className="bg-emerald-50 border-emerald-200">
+        <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-800">Monthly Rental Income</CardTitle>
-            <DollarSign className="h-4 w-4 text-emerald-600" />
+            <CardTitle className="text-sm font-medium text-success">Monthly Rental Income</CardTitle>
+            <DollarSign className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
             {loadingLeases ? (
               <Skeleton className="h-8 w-28" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-emerald-700">
-                  ${monthlyRentalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                <div className="text-3xl font-bold text-success">
+                  {money(monthlyRentalIncome)}
                 </div>
-                <p className="text-xs text-emerald-600">Across {activeLeaseCount} active leases</p>
+                <p className="text-xs text-muted-foreground">Across {activeLeaseCount} active leases</p>
               </>
             )}
           </CardContent>
         </Card>
-        <Card className="bg-rose-50 border-rose-200">
+        <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-rose-800">Overdue Payments</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-rose-600" />
+            <CardTitle className="text-sm font-medium text-destructive">Overdue Payments</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
             {loadingOverdue ? (
               <Skeleton className="h-8 w-16" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-rose-700">{overdueCount}</div>
-                <p className="text-xs text-rose-600">Payments past due</p>
+                <div className="text-3xl font-bold text-destructive">{overdueCount}</div>
+                <p className="text-xs text-muted-foreground">Payments past due</p>
               </>
             )}
           </CardContent>
@@ -228,10 +238,10 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-amber-200 bg-gradient-to-br from-yellow-50 to-amber-50">
+        <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-amber-800">Active RTO Contracts</CardTitle>
-            <KeyRound className="h-4 w-4 text-amber-600" />
+            <CardTitle className="text-sm font-medium text-primary">Active RTO Contracts</CardTitle>
+            <KeyRound className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             {loadingActiveRto ? (
@@ -239,41 +249,41 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div className="text-3xl font-bold gold-text">{activeRtoCount}</div>
-                <p className="text-xs text-amber-600">Building equity toward ownership</p>
+                <p className="text-xs text-muted-foreground">Building equity toward ownership</p>
               </>
             )}
           </CardContent>
         </Card>
-        <Card className="bg-emerald-50 border-emerald-200">
+        <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-800">Total Equity Accumulated</CardTitle>
-            <TrendingUp className="h-4 w-4 text-emerald-600" />
+            <CardTitle className="text-sm font-medium text-success">Total Equity Accumulated</CardTitle>
+            <TrendingUp className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
             {loadingActiveRto ? (
               <Skeleton className="h-8 w-28" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-emerald-700">
-                  ${totalEquityAccumulated.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                <div className="text-3xl font-bold text-success">
+                  {money(totalEquityAccumulated)}
                 </div>
-                <p className="text-xs text-emerald-600">Across {activeRtoCount} active contracts</p>
+                <p className="text-xs text-muted-foreground">Across {activeRtoCount} active contracts</p>
               </>
             )}
           </CardContent>
         </Card>
-        <Card className="bg-rose-50 border-rose-200">
+        <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-rose-800">Defaulted RTO</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-rose-600" />
+            <CardTitle className="text-sm font-medium text-destructive">Defaulted RTO</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
             {loadingDefaultedRto ? (
               <Skeleton className="h-8 w-16" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-rose-700">{defaultedRtoCount}</div>
-                <p className="text-xs text-rose-600">Contracts in default</p>
+                <div className="text-3xl font-bold text-destructive">{defaultedRtoCount}</div>
+                <p className="text-xs text-muted-foreground">Contracts in default</p>
               </>
             )}
           </CardContent>
@@ -281,9 +291,9 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="border-border bg-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-blue-800 flex items-center gap-1">
+            <CardTitle className="text-sm text-accent flex items-center gap-1">
               <Hammer className="h-4 w-4" /> Active Projects
             </CardTitle>
           </CardHeader>
@@ -292,15 +302,15 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-16" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-blue-700">{activeProjects}</div>
-                <p className="text-xs text-blue-600">Currently in progress</p>
+                <div className="text-3xl font-bold text-accent">{activeProjects}</div>
+                <p className="text-xs text-muted-foreground">Currently in progress</p>
               </>
             )}
           </CardContent>
         </Card>
-        <Card className="bg-green-50 border-green-200">
+        <Card className="border-border bg-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-green-800 flex items-center gap-1">
+            <CardTitle className="text-sm text-success flex items-center gap-1">
               <CheckCircle2 className="h-4 w-4" /> Projects by Status
             </CardTitle>
           </CardHeader>
@@ -310,28 +320,28 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-1">
                 <div className="flex justify-between text-xs">
-                  <span className="text-green-700">Completed</span>
-                  <span className="font-semibold text-green-700">{completedProjects}</span>
+                  <span className="text-success">Completed</span>
+                  <span className="font-semibold text-success">{completedProjects}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-blue-700">In Progress</span>
-                  <span className="font-semibold text-blue-700">{activeProjects}</span>
+                  <span className="text-accent">In Progress</span>
+                  <span className="font-semibold text-accent">{activeProjects}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-yellow-700">Planning</span>
-                  <span className="font-semibold text-yellow-700">{planningProjects}</span>
+                  <span className="text-warning">Planning</span>
+                  <span className="font-semibold text-warning">{planningProjects}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-red-700">Delayed</span>
-                  <span className="font-semibold text-red-700">{delayedProjects}</span>
+                  <span className="text-destructive">Delayed</span>
+                  <span className="font-semibold text-destructive">{delayedProjects}</span>
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
-        <Card className="bg-purple-50 border-purple-200">
+        <Card className="border-border bg-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-purple-800 flex items-center gap-1">
+            <CardTitle className="text-sm text-primary flex items-center gap-1">
               <TrendingUp className="h-4 w-4" /> Budget Health
             </CardTitle>
           </CardHeader>
@@ -341,16 +351,16 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-green-500" />
-                  <span className="text-xs text-purple-700">On Budget: {greenBudgets}</span>
+                  <div className="h-3 w-3 rounded-full bg-success" />
+                  <span className="text-xs text-muted-foreground">On Budget: {greenBudgets}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-yellow-500" />
-                  <span className="text-xs text-purple-700">Warning: {yellowBudgets}</span>
+                  <div className="h-3 w-3 rounded-full bg-warning" />
+                  <span className="text-xs text-muted-foreground">Warning: {yellowBudgets}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-red-500" />
-                  <span className="text-xs text-purple-700">Over Budget: {redBudgets}</span>
+                  <div className="h-3 w-3 rounded-full bg-destructive" />
+                  <span className="text-xs text-muted-foreground">Over Budget: {redBudgets}</span>
                 </div>
               </div>
             )}
@@ -359,17 +369,33 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
+        <Card className="border-border bg-card lg:col-span-4">
           <CardHeader>
             <CardTitle>Revenue Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg border-muted-foreground/20">
-              <p className="text-muted-foreground">Revenue chart will render here</p>
+            <div className="h-[300px]">
+              {revenueTrend && revenueTrend.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={revenueTrend} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                    <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip
+                      contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 13 }}
+                      formatter={(v: number) => [`$${v.toLocaleString()}`, "Revenue"]}
+                    />
+                    <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center border-2 border-dashed rounded-lg border-border">
+                  <p className="text-muted-foreground">No revenue data yet</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
-        <Card className="lg:col-span-3">
+        <Card className="border-border bg-card lg:col-span-3">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Recent Properties</CardTitle>
@@ -414,39 +440,9 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-green-50 border-green-200">
+        <Card className="border-border bg-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-green-800">Available Properties</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-700">24</div>
-            <p className="text-xs text-green-600">Ready for lease or sale</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-blue-50 border-blue-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-blue-800">Rented Properties</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-700">186</div>
-            <p className="text-xs text-blue-600">Currently generating revenue</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-purple-50 border-purple-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-purple-800">Sold Properties</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-purple-700">37</div>
-            <p className="text-xs text-purple-600">Completed transactions</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-blue-50 border-blue-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-blue-800 flex items-center gap-1">
+            <CardTitle className="text-sm text-success flex items-center gap-1">
               <UserCheck className="h-4 w-4" /> Total Agents
             </CardTitle>
           </CardHeader>
@@ -455,15 +451,15 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-16" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-blue-700">{totalAgents}</div>
-                <p className="text-xs text-blue-600">{internalAgents} internal staff</p>
+                <div className="text-3xl font-bold text-success">{totalAgents}</div>
+                <p className="text-xs text-muted-foreground">{internalAgents} internal staff</p>
               </>
             )}
           </CardContent>
         </Card>
-        <Card className="bg-emerald-50 border-emerald-200">
+        <Card className="border-border bg-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-emerald-800 flex items-center gap-1">
+            <CardTitle className="text-sm text-success flex items-center gap-1">
               <ShieldCheck className="h-4 w-4" /> Active Licenses
             </CardTitle>
           </CardHeader>
@@ -472,15 +468,15 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-16" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-emerald-700">{compliantAgents}</div>
-                <p className="text-xs text-emerald-600">License compliant</p>
+                <div className="text-3xl font-bold text-success">{compliantAgents}</div>
+                <p className="text-xs text-muted-foreground">License compliant</p>
               </>
             )}
           </CardContent>
         </Card>
-        <Card className="border-amber-200 bg-gradient-to-br from-yellow-50 to-amber-50">
+        <Card className="border-border bg-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-amber-800 flex items-center gap-1">
+            <CardTitle className="text-sm text-primary flex items-center gap-1">
               <BadgeDollarSign className="h-4 w-4" /> Unpaid Commissions
             </CardTitle>
           </CardHeader>
@@ -490,9 +486,9 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div className="text-3xl font-bold gold-text">
-                  ${unpaidCommissions.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  {money(unpaidCommissions)}
                 </div>
-                <p className="text-xs text-amber-600">Outstanding aging total</p>
+                <p className="text-xs text-muted-foreground">Outstanding aging total</p>
               </>
             )}
           </CardContent>
@@ -500,10 +496,10 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-amber-200 bg-gradient-to-br from-yellow-50 to-amber-50">
+        <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-amber-800">Total Receivable</CardTitle>
-            <Wallet className="h-4 w-4 text-amber-600" />
+            <CardTitle className="text-sm font-medium text-primary">Total Receivable</CardTitle>
+            <Wallet className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             {loadingAr ? (
@@ -511,33 +507,33 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div className="text-3xl font-bold gold-text">
-                  ${totalReceivable.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  {money(totalReceivable)}
                 </div>
-                <p className="text-xs text-amber-600">Outstanding AR across tenants</p>
+                <p className="text-xs text-muted-foreground">Outstanding AR across tenants</p>
               </>
             )}
           </CardContent>
         </Card>
-        <Card className="bg-rose-50 border-rose-200">
+        <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-rose-800">Open Collection Cases</CardTitle>
-            <FolderOpen className="h-4 w-4 text-rose-600" />
+            <CardTitle className="text-sm font-medium text-destructive">Open Collection Cases</CardTitle>
+            <FolderOpen className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
             {loadingCases ? (
               <Skeleton className="h-8 w-16" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-rose-700">{openCasesCount}</div>
-                <p className="text-xs text-rose-600">Active collection efforts</p>
+                <div className="text-3xl font-bold text-destructive">{openCasesCount}</div>
+                <p className="text-xs text-muted-foreground">Active collection efforts</p>
               </>
             )}
           </CardContent>
         </Card>
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800">Quick Links</CardTitle>
-            <BellRing className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-medium text-accent">Quick Links</CardTitle>
+            <BellRing className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate({ to: "/collections" })}>
@@ -548,9 +544,9 @@ export default function DashboardPage() {
             </Button>
           </CardContent>
         </Card>
-        <Card className="bg-cyan-50 border-cyan-200">
+        <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-cyan-800 flex items-center gap-1">
+            <CardTitle className="text-sm font-medium text-accent flex items-center gap-1">
               <Droplets className="h-4 w-4" /> Unpaid Utility Bills
             </CardTitle>
           </CardHeader>
@@ -559,17 +555,17 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-16" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-cyan-700">{unpaidUtilityBills}</div>
-                <p className="text-xs text-cyan-600">
-                  ${unpaidUtilityAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })} outstanding
+                <div className="text-3xl font-bold text-accent">{unpaidUtilityBills}</div>
+                <p className="text-xs text-muted-foreground">
+                  {money(unpaidUtilityAmount)} outstanding
                 </p>
               </>
             )}
           </CardContent>
         </Card>
-        <Card className="bg-rose-50 border-rose-200">
+        <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-rose-800 flex items-center gap-1">
+            <CardTitle className="text-sm font-medium text-destructive flex items-center gap-1">
               <Wrench className="h-4 w-4" /> Open Service Requests
             </CardTitle>
           </CardHeader>
@@ -578,15 +574,15 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-16" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-rose-700">{openRequestCount}</div>
-                <p className="text-xs text-rose-600">Awaiting assignment</p>
+                <div className="text-3xl font-bold text-destructive">{openRequestCount}</div>
+                <p className="text-xs text-muted-foreground">Awaiting assignment</p>
               </>
             )}
           </CardContent>
         </Card>
-        <Card className="bg-amber-50 border-amber-200">
+        <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-amber-800 flex items-center gap-1">
+            <CardTitle className="text-sm font-medium text-primary flex items-center gap-1">
               <FileText className="h-4 w-4" /> Unsigned Documents
             </CardTitle>
           </CardHeader>
@@ -595,8 +591,8 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-16" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-amber-700">{unsignedDocuments}</div>
-                <p className="text-xs text-amber-600">Pending signatures</p>
+                <div className="text-3xl font-bold text-primary">{unsignedDocuments}</div>
+                <p className="text-xs text-muted-foreground">Pending signatures</p>
               </>
             )}
           </CardContent>

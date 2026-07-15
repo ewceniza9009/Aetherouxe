@@ -79,7 +79,7 @@ function HealthBanner({ health }: { health: { healthScore: string; variancePerce
 }
 
 export default function BudgetDetailPage() {
-  const { budgetId } = useParams({ from: "/projects/$projectId/budgets/$budgetId" });
+  const { budgetId } = useParams({ from: "/protected/projects/$projectId/budgets/$budgetId" });
   const navigate = useNavigate();
   const { data: budget, isLoading, isError } = useBudget(budgetId);
   const { data: health } = useBudgetHealth(budgetId);
@@ -125,7 +125,7 @@ export default function BudgetDetailPage() {
   if (isError || !budget) {
     return (
       <div className="space-y-6">
-        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+        <Button variant="outline" size="sm" onClick={() => window.history.back()}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
         <Card>
@@ -142,7 +142,7 @@ export default function BudgetDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+        <Button variant="outline" size="icon" onClick={() => window.history.back()}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
@@ -308,7 +308,7 @@ export default function BudgetDetailPage() {
                     return (
                       <tr key={i} className="border-b hover:bg-muted/30">
                         <td className="px-4 py-3 text-sm font-medium">{item.category}</td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground">{item.subcategory}</td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">{item.category}</td>
                         <td className="px-4 py-3 text-sm text-right">${item.planned.toLocaleString()}</td>
                         <td className="px-4 py-3 text-sm text-right">${item.actual.toLocaleString()}</td>
                         <td className={`px-4 py-3 text-sm text-right ${variance > 0 ? "text-red-600" : "text-green-600"}`}>

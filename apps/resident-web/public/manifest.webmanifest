@@ -1,7 +1,7 @@
 {
-  "name": "Aether Estates — Resident",
-  "short_name": "Aether",
-  "description": "Aether Estates resident portal: pay rent, track utilities, submit service requests, and access your documents.",
+  "name": "Aetherouxe Estates — Resident",
+  "short_name": "Aetherouxe",
+  "description": "Aetherouxe Estates resident portal: pay rent, track utilities, submit service requests, and access your documents.",
   "lang": "en",
   "dir": "ltr",
   "start_url": "/",
@@ -12,7 +12,7 @@
   "theme_color": "#00BFA5",
   "categories": ["business", "productivity", "lifestyle"],
   "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+    { "src": "/favicon.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" },
+    { "src": "/favicon.png", "sizes": "1024x1024", "type": "image/png", "purpose": "maskable" }
   ]
 }

@@ -95,11 +95,11 @@ export default function PropertiesPage() {
         cell: ({ row }) => {
           const status = row.getValue("status") as string;
           const variant =
-            status === "leased"
+            status === "rented"
               ? "success"
               : status === "available"
                 ? "default"
-                : status === "under_maintenance" || status === "under_construction"
+                : status === "under_maintenance"
                   ? "warning"
                   : "secondary";
           return <Badge variant={variant as any}>{status.replace(/_/g, " ")}</Badge>;

@@ -64,7 +64,7 @@ function money(n: number | null | undefined) {
 }
 
 export default function RtoContractDetailPage() {
-  const { id } = useParams({ from: "/rto/$id" });
+  const { id } = useParams({ from: "/protected/rto/$id" });
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: contract, isLoading, error } = useRtoContract(id);

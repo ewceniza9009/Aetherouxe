@@ -16,16 +16,25 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const body = response.data;
+    if (body && typeof body === "object" && "data" in body) {
+      const result = (body as any).data;
+      if ((body as any).meta !== undefined) (result as any).meta = (body as any).meta;
+      return { ...response, data: result };
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem("refreshToken");
-        const { data } = await axios.post("/api/auth/refresh", { refreshToken });
-        localStorage.setItem("accessToken", data.accessToken);
-        originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+        const resp = await axios.post("/api/auth/refresh", { refreshToken });
+        const inner = (resp.data && (resp.data as any).data) ? (resp.data as any).data : resp.data;
+        localStorage.setItem("accessToken", inner.accessToken);
+        originalRequest.headers.Authorization = `Bearer ${inner.accessToken}`;
         return api(originalRequest);
       } catch {
         localStorage.removeItem("accessToken");

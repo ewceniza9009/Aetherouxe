@@ -15,11 +15,11 @@ import { ArrowLeft, Save } from "lucide-react";
 import { useCreateBuilding } from "@/hooks/use-buildings";
 
 const BUILDING_TYPES = [
-  "residential",
-  "commercial",
-  "mixed_use",
-  "industrial",
-  "warehouse",
+  "tower",
+  "mid_rise",
+  "low_rise",
+  "cluster",
+  "block",
 ];
 
 export default function NewBuildingPage() {

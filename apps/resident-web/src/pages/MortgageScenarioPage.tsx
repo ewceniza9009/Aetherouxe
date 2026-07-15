@@ -60,7 +60,7 @@ function money(n: number) {
 const PAGE_SIZE = 24;
 
 export default function MortgageScenarioPage() {
-  const { scenarioId } = useParams({ from: "/lease/mortgage/$scenarioId" });
+  const { scenarioId } = useParams({ from: "/protected/lease/mortgage/$scenarioId" });
   const navigate = useNavigate();
   const { data: scenario, isLoading, error } = useMortgageScenario(scenarioId);
   const [page, setPage] = useState(0);

@@ -19,7 +19,7 @@ import { useFloors, useCreateFloor, useUpdateFloor, useDeleteFloor, type Floor }
 import { useBuilding } from "@/hooks/use-buildings";
 
 export default function FloorListPage() {
-  const { buildingId } = useParams({ from: "/buildings/$buildingId/floors" });
+  const { buildingId } = useParams({ from: "/protected/buildings/$buildingId/floors" });
   const navigate = useNavigate();
   const { data: building } = useBuilding(buildingId);
   const { data: floors, isLoading, error } = useFloors(buildingId);

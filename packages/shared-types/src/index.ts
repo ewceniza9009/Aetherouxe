@@ -9,38 +9,35 @@ export enum UserType {
 }
 
 export enum PropertyType {
-  SingleFamily = "single_family",
-  MultiFamily = "multi_family",
-  Condo = "condo",
+  CondoUnit = "condo_unit",
+  HouseAndLot = "house_and_lot",
   Townhouse = "townhouse",
-  Commercial = "commercial",
-  Land = "land",
-  Industrial = "industrial",
+  CommercialSpace = "commercial_space",
+  ParkingSlot = "parking_slot",
 }
 
 export enum PropertyStatus {
   Available = "available",
-  Leased = "leased",
-  UnderMaintenance = "under_maintenance",
-  UnderConstruction = "under_construction",
+  Reserved = "reserved",
   Sold = "sold",
-  OffMarket = "off_market",
+  Rented = "rented",
+  RtoActive = "rto_active",
+  UnderMaintenance = "under_maintenance",
 }
 
 export enum LeaseType {
-  Fixed = "fixed",
-  MonthToMonth = "month_to_month",
+  StandardRental = "standard_rental",
   RentToOwn = "rent_to_own",
-  Commercial = "commercial",
+  CorporateLease = "corporate_lease",
+  ShortTerm = "short_term",
 }
 
 export enum RTOStatus {
   Active = "active",
-  OnTrack = "on_track",
-  Delinquent = "delinquent",
-  Converted = "converted",
-  Expired = "expired",
-  Terminated = "terminated",
+  GracePeriod = "grace_period",
+  Defaulted = "defaulted",
+  Exercised = "exercised",
+  Completed = "completed",
 }
 
 export enum InvoiceType {

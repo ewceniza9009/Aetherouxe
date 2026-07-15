@@ -3,6 +3,9 @@ node_modules
 .pnp
 .pnp.js
 
+# Untracked workspace docs
+untracked/
+
 # Build / typecheck artifacts
 dist
 build
@@ -48,5 +51,5 @@ Thumbs.db
 *.swo
 
 # Local / stray workspace folders
-/unctracked/
+/untracked/
 /commission-releases/

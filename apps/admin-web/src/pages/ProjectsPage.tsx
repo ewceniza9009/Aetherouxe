@@ -106,11 +106,14 @@ export default function ProjectsPage() {
     }),
     columnHelper.accessor("targetEndDate", {
       header: "Target End",
-      cell: (info) => (
-        <span className="text-sm">
-          {info.getValue() ? new Date(info.getValue()).toLocaleDateString() : "—"}
-        </span>
-      ),
+      cell: (info) => {
+        const v = info.getValue();
+        return (
+          <span className="text-sm">
+            {v ? new Date(v).toLocaleDateString() : "—"}
+          </span>
+        );
+      },
     }),
     columnHelper.display({
       id: "actions",

@@ -34,20 +34,36 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/dashboard" },
+  {
+    label: "Dashboard",
+    icon: <LayoutDashboard size={20} />,
+    path: "/dashboard",
+  },
   { label: "Properties", icon: <Building2 size={20} />, path: "/properties" },
   { label: "Tenants", icon: <Users size={20} />, path: "/tenants" },
   { label: "Leases", icon: <FileText size={20} />, path: "/leases" },
   { label: "Rent-to-Own", icon: <KeyRound size={20} />, path: "/rto" },
   { label: "Projects", icon: <Hammer size={20} />, path: "/projects" },
   { label: "Agents", icon: <UserCheck size={20} />, path: "/agents" },
-  { label: "Commissions", icon: <BadgeDollarSign size={20} />, path: "/commissions" },
+  {
+    label: "Commissions",
+    icon: <BadgeDollarSign size={20} />,
+    path: "/commissions",
+  },
   { label: "Collections", icon: <BellRing size={20} />, path: "/collections" },
   { label: "Statements", icon: <Inbox size={20} />, path: "/statements" },
   { label: "Finance", icon: <DollarSign size={20} />, path: "/finance" },
   { label: "Meters & Billing", icon: <Droplet size={20} />, path: "/meters" },
-  { label: "Community", icon: <Megaphone size={20} />, path: "/community-posts" },
-  { label: "Service Requests", icon: <Wrench size={20} />, path: "/service-requests" },
+  {
+    label: "Community",
+    icon: <Megaphone size={20} />,
+    path: "/community-posts",
+  },
+  {
+    label: "Service Requests",
+    icon: <Wrench size={20} />,
+    path: "/service-requests",
+  },
   { label: "Documents", icon: <FileText size={20} />, path: "/documents" },
   { label: "Owner P&L", icon: <PieChart size={20} />, path: "/owner-pnl" },
   { label: "Analytics", icon: <BarChart3 size={20} />, path: "/analytics" },
@@ -63,17 +79,17 @@ export default function Sidebar() {
     <aside
       className={cn(
         "flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        collapsed ? "w-16" : "w-64",
       )}
     >
       <div className="flex h-14 items-center justify-between px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
-          <div className="gold-gradient flex h-8 w-8 items-center justify-center rounded-lg shadow-gold">
-            <span className="font-serif text-lg font-bold text-sidebar-primary-foreground">Æ</span>
-          </div>
+          <img src="/favicon.png" alt="Logo" className="h-8 w-8 rounded-lg object-cover" />
           {!collapsed && (
             <div className="leading-tight">
-              <span className="font-serif text-lg font-bold gold-text">Aether</span>
+              <span className="font-serif text-lg font-bold gold-text">
+                Aetherouxe
+              </span>
               <span className="block text-[10px] uppercase tracking-widest text-sidebar-foreground/60">
                 Estates
               </span>
@@ -101,7 +117,7 @@ export default function Sidebar() {
                 "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                 isActive
                   ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
               )}
             >
               {item.icon}

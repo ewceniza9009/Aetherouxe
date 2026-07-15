@@ -55,8 +55,8 @@ export default function NewPropertyPage() {
     floorPlanImage: "",
   });
 
-  const showCondoFields = form.type === "condo" || form.type === "condo_unit";
-  const showHouseFields = form.type === "single_family" || form.type === "house_and_lot";
+  const showCondoFields = form.type === "condo_unit";
+  const showHouseFields = form.type === "house_and_lot";
   const showParkingFields = form.type === "parking_slot";
 
   const handleSubmit = async (e: React.FormEvent) => {

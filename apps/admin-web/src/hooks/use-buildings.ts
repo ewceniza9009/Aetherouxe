@@ -29,6 +29,21 @@ interface PaginatedResult<T> {
   meta: PaginationMeta;
 }
 
+export function transformBuilding(b: any): Building {
+  return {
+    id: b.id,
+    name: b.name,
+    type: b.buildingType || b.type,
+    floorCount: b.floorCount ?? 0,
+    units: b._count?.units ?? b.unitCount ?? (Array.isArray(b.units) ? b.units.length : 0),
+    projectId: b.projectId,
+    projectName: b.project?.name || b.projectName,
+    address: b.address,
+    createdAt: b.createdAt,
+    updatedAt: b.updatedAt,
+  };
+}
+
 export function useBuildings(query: BuildingQuery) {
   return useQuery({
     queryKey: ["buildings", query],
@@ -40,8 +55,9 @@ export function useBuildings(query: BuildingQuery) {
       if (query.order) params.set("order", query.order);
       if (query.search) params.set("search", query.search);
       if (query.projectId) params.set("projectId", query.projectId);
-      const { data } = await api.get<ApiResponse<Building[]>>(`/buildings?${params}`);
-      return { data: data.data, meta: data.meta } as PaginatedResult<Building>;
+      const { data } = await api.get<ApiResponse<any[]>>(`/buildings?${params}`);
+      const transformed = (data.data ?? []).map(transformBuilding);
+      return { data: transformed, meta: data.meta } as PaginatedResult<Building>;
     },
   });
 }
@@ -50,8 +66,8 @@ export function useBuilding(id: string) {
   return useQuery({
     queryKey: ["building", id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Building>>(`/buildings/${id}`);
-      return data.data;
+      const { data } = await api.get<ApiResponse<any>>(`/buildings/${id}`);
+      return transformBuilding(data.data);
     },
     enabled: !!id,
   });

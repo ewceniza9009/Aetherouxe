@@ -62,7 +62,7 @@ function SummaryCard({
 }
 
 export default function PnlDetailPage() {
-  const { id } = useParams({ from: "/owner-pnl/$id" });
+  const { id } = useParams({ from: "/protected/owner-pnl/$id" });
   const navigate = useNavigate();
   const { data: statement, isLoading, isError } = usePnlStatement(id);
 

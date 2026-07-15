@@ -99,3 +99,51 @@
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Dark-only app: remap leftover hardcoded light utilities to theme tokens */
+@layer base {
+  .bg-slate-100 { background-color: hsl(var(--muted)); }
+  .text-slate-700 { color: hsl(var(--muted-foreground)); }
+  .border-slate-200 { border-color: hsl(var(--border)); }
+  .bg-gray-50 { background-color: hsl(var(--background)); }
+  .bg-gray-200 { background-color: hsl(var(--muted)); }
+  .border-gray-300 { border-color: hsl(var(--border)); }
+  .bg-white { background-color: hsl(var(--card)); }
+  .bg-white\/60 { background-color: hsl(var(--primary) / 0.3); }
+  .after\:bg-white::after { background-color: hsl(var(--foreground)); }
+}
+
+/* Custom scrollbar — elite dark gold */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 3px;
+  border: 1px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.4);
+  border: none;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
+}
+
+/* Notification panel scrollbar — even more subtle */
+.notifications-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.notifications-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.15);
+  border-radius: 2px;
+}
+.notifications-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.35);
+}

@@ -2,7 +2,7 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon.png?v=3" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0A1428" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -12,9 +12,12 @@
       rel="stylesheet"
     />
     <title>Aetherouxe - Admin Console</title>
+    <script type="module" crossorigin src="/assets/index-SHyj6DZA.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-wcB8DUgY.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-CiPwq77l.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-C65k3Qq1.css">
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

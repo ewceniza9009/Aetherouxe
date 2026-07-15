@@ -43,7 +43,7 @@ export class PropertiesService {
         where,
         skip,
         take: limit,
-        include: { units: { include: { building: true, floor: true }, take: 1 } },
+        include: { _count: { select: { units: true } } },
         orderBy: query.sortBy ? { [query.sortBy]: query.sortOrder || 'asc' } : { createdAt: 'desc' },
       }),
       this.prisma.property.count({ where }),

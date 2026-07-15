@@ -19,17 +19,16 @@ import { useProperty } from "@/hooks/use-properties";
 
 const UNIT_TYPES = [
   "studio",
-  "1br",
-  "2br",
-  "3br",
+  "one_br",
+  "two_br",
+  "three_br",
   "penthouse",
   "commercial",
-  "storage",
   "parking",
 ];
 
 export default function EditUnitPage() {
-  const { propertyId, unitId } = useParams({ from: "/properties/$propertyId/units/$unitId/edit" });
+  const { propertyId, unitId } = useParams({ from: "/protected/properties/$propertyId/units/$unitId/edit" });
   const navigate = useNavigate();
   const { data: unit, isLoading } = useUnit(unitId);
   const { data: property } = useProperty(propertyId);

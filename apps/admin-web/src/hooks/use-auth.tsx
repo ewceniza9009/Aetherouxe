@@ -6,6 +6,9 @@ interface User {
   id: string;
   email: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
   type: UserType;
 }
 
@@ -14,6 +17,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  refetchUser: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -21,18 +25,35 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem("user");
-    return stored ? JSON.parse(stored) : null;
+    try {
+      const stored = localStorage.getItem("user");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  const refetchUser = useCallback(async () => {
+    if (!localStorage.getItem("accessToken")) return;
+    try {
+      const { data: resp } = await api.get("/auth/me");
+      const userData: User = (resp as any).data ?? resp;
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const { data } = await api.post("/auth/login", { email, password });
-      const userData: User = data.user;
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      const { data: resp } = await api.post("/auth/login", { email, password });
+      const body = (resp as any).data ?? resp;
+      const userData: User = body.user;
+      localStorage.setItem("accessToken", body.accessToken);
+      localStorage.setItem("refreshToken", body.refreshToken);
       localStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
     } finally {
@@ -48,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, refetchUser, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

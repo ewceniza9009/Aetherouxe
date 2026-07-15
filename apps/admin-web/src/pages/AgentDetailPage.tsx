@@ -72,7 +72,7 @@ import {
 } from "@/lib/agent-meta";
 
 export default function AgentDetailPage() {
-  const { id } = useParams({ from: "/agents/$id" });
+  const { id } = useParams({ from: "/protected/agents/$id" });
   const navigate = useNavigate();
   const { data: agent, isLoading, isError } = useAgent(id);
   const { data: performance } = useAgentPerformance(id);

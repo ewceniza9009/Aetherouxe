@@ -12,6 +12,17 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  const user = localStorage.getItem("user");
+  if (user) {
+    try {
+      const parsed = JSON.parse(user);
+      if (parsed.tenantId) {
+        config.headers["x-tenant-id"] = parsed.tenantId;
+      }
+    } catch {
+      // ignore
+    }
+  }
   return config;
 });
 
@@ -23,9 +34,10 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem("refreshToken");
-        const { data } = await axios.post("/api/auth/refresh", { refreshToken });
-        localStorage.setItem("accessToken", data.accessToken);
-        originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+        const resp = await axios.post("/api/auth/refresh", { refreshToken });
+        const inner = (resp.data && (resp.data as any).data) ? (resp.data as any).data : resp.data;
+        localStorage.setItem("accessToken", inner.accessToken);
+        originalRequest.headers.Authorization = `Bearer ${inner.accessToken}`;
         return api(originalRequest);
       } catch {
         localStorage.removeItem("accessToken");

@@ -33,7 +33,7 @@ const statuses: { value: ProjectStatus; label: string }[] = [
 ];
 
 export default function EditProjectPage() {
-  const { id } = useParams({ from: "/projects/$projectId/edit" });
+  const { projectId: id } = useParams({ from: "/protected/projects/$projectId/edit" });
   const navigate = useNavigate();
   const { data: project, isLoading } = useProject(id);
   const updateProject = useUpdateProject();

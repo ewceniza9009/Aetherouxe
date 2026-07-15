@@ -121,7 +121,7 @@ function SummaryCard({
 }
 
 export default function AmenityDetailPage() {
-  const { id } = useParams({ from: "/amenities/$id" });
+  const { id } = useParams({ from: "/protected/amenities/$id" });
   const navigate = useNavigate();
   const { data: amenity, isLoading, isError } = useAmenity(id);
   const { data: bookingsData, isLoading: loadingBookings } = useBookings({

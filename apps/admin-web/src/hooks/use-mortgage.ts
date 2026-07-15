@@ -57,8 +57,25 @@ export function useMortgageScenarios(query: MortgageScenarioQuery) {
       if (query.page) params.set("page", String(query.page));
       if (query.limit) params.set("limit", String(query.limit));
       if (query.leaseAgreementId) params.set("leaseAgreementId", query.leaseAgreementId);
-      const { data } = await api.get<ApiResponse<MortgageScenario[]>>(`/mortgage/scenarios?${params}`);
-      return { data: data.data, meta: data.meta } as PaginatedResult<MortgageScenario>;
+      const { data } = await api.get<ApiResponse<any[]>>(`/mortgage/scenarios?${params}`);
+      const transformed = (data.data ?? []).map((s: any) => ({
+        id: s.id,
+        leaseAgreementId: s.leaseAgreementId,
+        propertyId: s.propertyId,
+        homePrice: s.propertyValueAtGeneration ? Number(s.propertyValueAtGeneration) : undefined,
+        downPaymentPercent: Number(s.downPaymentPercent),
+        downPaymentAmount: s.downPaymentAmount ? Number(s.downPaymentAmount) : undefined,
+        loanAmount: Number(s.loanAmount),
+        interestRate: Number(s.interestRatePercent),
+        termMonths: s.loanTermMonths,
+        monthlyPayment: Number(s.monthlyAmortization),
+        totalInterest: Number(s.totalInterestPayable),
+        totalPaid: s.totalPaid ? Number(s.totalPaid) : undefined,
+        amortizationSchedule: s.amortizationSchedule ?? [],
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt,
+      }));
+      return { data: transformed, meta: data.meta } as PaginatedResult<MortgageScenario>;
     },
     enabled: !!query.leaseAgreementId,
   });
@@ -68,8 +85,25 @@ export function useMortgageScenario(id: string) {
   return useQuery({
     queryKey: ["mortgage-scenario", id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<MortgageScenario>>(`/mortgage/scenarios/${id}`);
-      return data.data;
+      const { data } = await api.get<ApiResponse<any>>(`/mortgage/scenarios/${id}`);
+      const s = data.data;
+      return {
+        id: s.id,
+        leaseAgreementId: s.leaseAgreementId,
+        propertyId: s.propertyId,
+        homePrice: s.propertyValueAtGeneration ? Number(s.propertyValueAtGeneration) : undefined,
+        downPaymentPercent: Number(s.downPaymentPercent),
+        downPaymentAmount: s.downPaymentAmount ? Number(s.downPaymentAmount) : undefined,
+        loanAmount: Number(s.loanAmount),
+        interestRate: Number(s.interestRatePercent),
+        termMonths: s.loanTermMonths,
+        monthlyPayment: Number(s.monthlyAmortization),
+        totalInterest: Number(s.totalInterestPayable),
+        totalPaid: s.totalPaid ? Number(s.totalPaid) : undefined,
+        amortizationSchedule: s.amortizationSchedule ?? [],
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt,
+      } as MortgageScenario;
     },
     enabled: !!id,
   });

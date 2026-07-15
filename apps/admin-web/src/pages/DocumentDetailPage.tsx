@@ -72,7 +72,7 @@ const signatureStatusMeta: Record<SignatureStatus, { label: string; variant: any
 };
 
 export default function DocumentDetailPage() {
-  const { id } = useParams({ from: "/documents/$id" });
+  const { id } = useParams({ from: "/protected/documents/$id" });
   const navigate = useNavigate();
   const { data: doc, isLoading, isError } = useDocument(id);
   const requestSignature = useRequestSignature();

@@ -110,10 +110,10 @@ export default function NewLeasePage() {
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={LeaseType.Fixed}>Fixed</SelectItem>
-                  <SelectItem value={LeaseType.MonthToMonth}>Month to Month</SelectItem>
+                  <SelectItem value={LeaseType.StandardRental}>Standard Rental</SelectItem>
                   <SelectItem value={LeaseType.RentToOwn}>Rent to Own</SelectItem>
-                  <SelectItem value={LeaseType.Commercial}>Commercial</SelectItem>
+                  <SelectItem value={LeaseType.CorporateLease}>Corporate Lease</SelectItem>
+                  <SelectItem value={LeaseType.ShortTerm}>Short Term</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Bell,
@@ -69,6 +70,10 @@ export default function NotificationBell({ role }: { role: NotificationRole }) {
 
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [coords, setCoords] = useState<{ top: number; right: number } | null>(
+    null,
+  );
 
   const syncRef = useRef(sync);
   syncRef.current = sync;
@@ -86,6 +91,15 @@ export default function NotificationBell({ role }: { role: NotificationRole }) {
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
+
+  useEffect(() => {
+    if (open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setCoords({ top: r.bottom + 8, right: window.innerWidth - r.right });
+    } else {
+      setCoords(null);
+    }
+  }, [open]);
 
   const handleRow = async (n: AppNotification) => {
     if (!n.isRead) {
@@ -113,10 +127,100 @@ export default function NotificationBell({ role }: { role: NotificationRole }) {
     }
   };
 
+  const panel = open && coords && createPortal(
+    <div
+      style={{ position: "fixed", top: coords.top, right: coords.right, zIndex: 1000 }}
+      className="w-80 overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-elevate"
+    >
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <span className="font-serif text-sm font-semibold">Notifications</span>
+        {unreadCount > 0 && (
+          <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">
+            {unreadCount} new
+          </span>
+        )}
+      </div>
+
+      <div className="notifications-scroll max-h-96 overflow-y-auto">
+        {isLoading ? (
+          <div className="space-y-2 p-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+              <Bell className="h-5 w-5 text-primary" />
+            </div>
+            <p className="text-sm font-medium">You're all caught up</p>
+            <p className="text-xs text-muted-foreground">
+              No new notifications.
+            </p>
+          </div>
+        ) : (
+          notifications.map((n) => {
+            const Icon = typeIcon(n.type);
+            return (
+              <button
+                key={n.id}
+                type="button"
+                onClick={() => handleRow(n)}
+                className={cn(
+                  "flex w-full items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-primary/5",
+                  !n.isRead && "bg-primary/5",
+                )}
+              >
+                <div
+                  className={cn(
+                    "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                    n.isRead
+                      ? "bg-muted text-muted-foreground"
+                      : "bg-primary/15 text-primary",
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-medium">{n.title}</p>
+                    {!n.isRead && (
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-destructive" />
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {n.message}
+                  </p>
+                  <p className="mt-1 text-[11px] text-muted-foreground/70">
+                    {relativeTime(n.createdAt)}
+                  </p>
+                </div>
+              </button>
+            );
+          })
+        )}
+      </div>
+
+      {notifications.length > 0 && (
+        <div className="border-t border-border p-2">
+          <Button
+            variant="ghost"
+            className="w-full justify-center text-xs"
+            onClick={handleMarkAll}
+          >
+            <CheckCheck className="mr-2 h-4 w-4" /> Mark all as read
+          </Button>
+        </div>
+      )}
+    </div>,
+    document.body,
+  );
+
   return (
     <div className="relative" ref={ref}>
       <button
         type="button"
+        ref={btnRef}
         onClick={() => setOpen((o) => !o)}
         className="relative flex h-10 w-10 items-center justify-center rounded-xl text-foreground/70 transition-colors hover:bg-primary/10 hover:text-primary"
         aria-label="Notifications"
@@ -128,91 +232,7 @@ export default function NotificationBell({ role }: { role: NotificationRole }) {
           </span>
         )}
       </button>
-
-      {open && (
-        <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-border bg-card shadow-elevate">
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <span className="font-serif text-sm font-semibold">Notifications</span>
-            {unreadCount > 0 && (
-              <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">
-                {unreadCount} new
-              </span>
-            )}
-          </div>
-
-          <div className="max-h-96 overflow-y-auto">
-            {isLoading ? (
-              <div className="space-y-2 p-4">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                  <Bell className="h-5 w-5 text-primary" />
-                </div>
-                <p className="text-sm font-medium">You're all caught up</p>
-                <p className="text-xs text-muted-foreground">
-                  No new notifications.
-                </p>
-              </div>
-            ) : (
-              notifications.map((n) => {
-                const Icon = typeIcon(n.type);
-                return (
-                  <button
-                    key={n.id}
-                    type="button"
-                    onClick={() => handleRow(n)}
-                    className={cn(
-                      "flex w-full items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-primary/5",
-                      !n.isRead && "bg-primary/5"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-                        n.isRead
-                          ? "bg-muted text-muted-foreground"
-                          : "bg-primary/15 text-primary"
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate text-sm font-medium">{n.title}</p>
-                        {!n.isRead && (
-                          <span className="h-2 w-2 shrink-0 rounded-full bg-destructive" />
-                        )}
-                      </div>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {n.message}
-                      </p>
-                      <p className="mt-1 text-[11px] text-muted-foreground/70">
-                        {relativeTime(n.createdAt)}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
-
-          {notifications.length > 0 && (
-            <div className="border-t border-border p-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-center text-xs"
-                onClick={handleMarkAll}
-              >
-                <CheckCheck className="mr-2 h-4 w-4" /> Mark all as read
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+      {panel}
     </div>
   );
 }

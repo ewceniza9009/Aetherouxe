@@ -4,15 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Edit, Building2, MapPin, Users, DollarSign, Plus, FileText } from "lucide-react";
+import { ArrowLeft, Edit, Building2, MapPin, Users, DollarSign, Plus, FileText, Calendar } from "lucide-react";
 import { useProperty, usePropertySpecs } from "@/hooks/use-properties";
+import { useUnits } from "@/hooks/use-units";
 
 export default function PropertyDetailPage() {
-  const { id } = useParams({ from: "/properties/$id" });
+  const { id } = useParams({ from: "/protected/properties/$id" });
   const navigate = useNavigate();
 
   const { data: property, isLoading, error } = useProperty(id);
   const { data: specs } = usePropertySpecs(id);
+  const { data: unitsResult } = useUnits({ propertyId: id, limit: 5 });
 
   if (error) {
     return (
@@ -55,11 +57,11 @@ export default function PropertyDetailPage() {
   }
 
   const statusVariant =
-    property.status === "leased"
+    property.status === "rented"
       ? "success"
       : property.status === "available"
         ? "default"
-        : property.status === "under_maintenance" || property.status === "under_construction"
+        : property.status === "under_maintenance"
           ? "warning"
           : "secondary";
 
@@ -297,27 +299,63 @@ export default function PropertyDetailPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Units in this Property</CardTitle>
-            <Button size="sm" onClick={() => navigate({ to: `/properties/${id}/units/new` })}>
-              <Plus className="mr-2 h-4 w-4" /> Add Unit
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => navigate({ to: `/properties/${id}/units` })}>
+                <Building2 className="mr-2 h-4 w-4" /> View All
+              </Button>
+              <Button size="sm" onClick={() => navigate({ to: `/properties/${id}/units/new` })}>
+                <Plus className="mr-2 h-4 w-4" /> Add Unit
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <Building2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p>Units will be displayed here</p>
-            <p className="text-sm">
-              <Button variant="link" className="p-0 h-auto" onClick={() => navigate({ to: `/properties/${id}/units` })}>
-                View all units
-              </Button>
-            </p>
-          </div>
+          {!unitsResult?.data?.length ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Building2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>No units yet</p>
+              <p className="text-sm">
+                <Button variant="link" className="p-0 h-auto" onClick={() => navigate({ to: `/properties/${id}/units/new` })}>
+                  Create the first unit
+                </Button>
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-md border overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Unit</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Type</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Size</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Bed</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Bath</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {unitsResult.data.map((unit) => (
+                    <tr key={unit.id} className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+                      onClick={() => navigate({ to: `/properties/${id}/units/${unit.id}/edit` })}>
+                      <td className="px-4 py-2 text-sm font-mono font-medium">{unit.unitNumber}</td>
+                      <td className="px-4 py-2 text-sm"><Badge variant="secondary">{unit.type || unit.unitType || "--"}</Badge></td>
+                      <td className="px-4 py-2 text-sm">{unit.size ? `${unit.size} sq ft` : unit.squareMeters ? `${unit.squareMeters} m²` : "--"}</td>
+                      <td className="px-4 py-2 text-sm">{unit.bedrooms ?? "--"}</td>
+                      <td className="px-4 py-2 text-sm">{unit.bathrooms ?? "--"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       <div className="flex gap-2">
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2" onClick={() => navigate({ to: "/leases" })}>
           <FileText className="h-4 w-4" /> View Lease History
+        </Button>
+        <Button variant="outline" className="gap-2" onClick={() => navigate({ to: `/properties/${id}/units` })}>
+          <Calendar className="h-4 w-4" /> Manage Units
         </Button>
       </div>
     </div>

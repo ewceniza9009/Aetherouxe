@@ -100,6 +100,39 @@ export class AuthService {
     return user;
   }
 
+  async updateMe(userId: string, data: { firstName?: string; lastName?: string; phone?: string; email?: string }) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('User not found');
+
+    if (data.email && data.email !== user.email) {
+      const existing = await this.prisma.user.findUnique({ where: { email: data.email } });
+      if (existing) throw new ConflictException('Email already in use');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        firstName: data.firstName ?? user.firstName,
+        lastName: data.lastName ?? user.lastName,
+        phone: data.phone ?? user.phone,
+        email: data.email ?? user.email,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        userType: true,
+        isActive: true,
+        lastLoginAt: true,
+        createdAt: true,
+        tenant: { select: { id: true, name: true, domain: true } },
+      },
+    });
+    return updated;
+  }
+
   private generateTokens(userPayload: { id: string; email: string; userType: any; tenantId: string }) {
     const payload = { sub: userPayload.id, email: userPayload.email, userType: userPayload.userType, tenantId: userPayload.tenantId };
 

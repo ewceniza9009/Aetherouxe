@@ -24,7 +24,7 @@ import {
 import { TIER_LABELS, LICENSE_STATUS_LABELS } from "@/lib/agent-meta";
 
 export default function EditAgentPage() {
-  const { id } = useParams({ from: "/agents/$id/edit" });
+  const { id } = useParams({ from: "/protected/agents/$id/edit" });
   const navigate = useNavigate();
   const { data: agent, isLoading } = useAgent(id);
   const updateAgent = useUpdateAgent();

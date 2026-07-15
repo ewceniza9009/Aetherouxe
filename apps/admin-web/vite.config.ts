@@ -9,6 +9,17 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      treeshake: false,
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom", "@tanstack/react-router", "@tanstack/react-query"],
+          ui: ["lucide-react", "@radix-ui/react-tabs", "@radix-ui/react-dialog", "@radix-ui/react-select"],
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {

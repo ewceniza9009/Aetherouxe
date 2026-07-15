@@ -99,8 +99,8 @@ export default function OwnerProjectsPage() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-                      {project.logoUrl ? (
-                        <img src={project.logoUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                      {project.projectLogoUrl ? (
+                        <img src={project.projectLogoUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />
                       ) : (
                         <Hammer className="h-6 w-6 text-primary" />
                       )}

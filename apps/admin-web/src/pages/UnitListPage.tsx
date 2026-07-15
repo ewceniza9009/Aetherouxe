@@ -30,7 +30,7 @@ import { useUnits, useDeleteUnit, type Unit, type UnitQuery } from "@/hooks/use-
 import { useProperty } from "@/hooks/use-properties";
 
 export default function UnitListPage() {
-  const { propertyId } = useParams({ from: "/properties/$propertyId/units" });
+  const { propertyId } = useParams({ from: "/protected/properties/$propertyId/units" });
   const navigate = useNavigate();
   const { data: property } = useProperty(propertyId);
   const [typeFilter, setTypeFilter] = useState("all");
@@ -170,9 +170,9 @@ export default function UnitListPage() {
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="studio">Studio</SelectItem>
-                <SelectItem value="1br">1 BR</SelectItem>
-                <SelectItem value="2br">2 BR</SelectItem>
-                <SelectItem value="3br">3 BR</SelectItem>
+                <SelectItem value="one_br">1 BR</SelectItem>
+                <SelectItem value="two_br">2 BR</SelectItem>
+                <SelectItem value="three_br">3 BR</SelectItem>
                 <SelectItem value="penthouse">Penthouse</SelectItem>
               </SelectContent>
             </Select>

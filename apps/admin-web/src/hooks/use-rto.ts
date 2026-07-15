@@ -117,8 +117,18 @@ export function useRtoContracts(query: RtoQuery) {
       if (query.limit) params.set("limit", String(query.limit));
       if (query.status) params.set("status", query.status);
       if (query.propertyId) params.set("propertyId", query.propertyId);
-      const { data } = await api.get<ApiResponse<RtoContract[]>>(`/rto-contracts?${params}`);
-      return { data: data.data, meta: data.meta } as PaginatedResult<RtoContract>;
+      const { data } = await api.get<ApiResponse<any[]>>(`/rto-contracts?${params}`);
+      const raw = data.data;
+      const transformed = raw.map((c: any) => ({
+        ...c,
+        totalContractValue: Number(c.totalContractValue),
+        optionFeeAmount: Number(c.optionFeeAmount),
+        monthlyRentPortion: Number(c.monthlyRentPortion),
+        monthlyEquityPortion: Number(c.monthlyEquityPortion),
+        accumulatedEquity: Number(c.accumulatedEquity),
+        purchaseOptionPrice: c.purchaseOptionPrice ? Number(c.purchaseOptionPrice) : null,
+      }));
+      return { data: transformed, meta: data.meta } as PaginatedResult<RtoContract>;
     },
   });
 }

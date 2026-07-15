@@ -72,15 +72,12 @@ const statusMeta: Record<ServiceStatus, { label: string; variant: any }> = {
 };
 
 const categoryMeta: Record<ServiceCategory, string> = {
-  maintenance: "Maintenance",
   plumbing: "Plumbing",
   electrical: "Electrical",
   hvac: "HVAC",
-  landscaping: "Landscaping",
-  security: "Security",
-  cleaning: "Cleaning",
+  general: "General",
+  pest: "Pest Control",
   elevator: "Elevator",
-  pest_control: "Pest Control",
   other: "Other",
 };
 
@@ -112,7 +109,7 @@ export default function ServiceRequestsPage() {
     tenantName: "",
     unitLabel: "",
     propertyId: "",
-    category: "maintenance" as ServiceCategory,
+    category: "general" as ServiceCategory,
     priority: "medium" as ServicePriority,
     description: "",
     scheduledAt: "",
@@ -140,7 +137,7 @@ export default function ServiceRequestsPage() {
         tenantName: "",
         unitLabel: "",
         propertyId: "",
-        category: "maintenance",
+        category: "general",
         priority: "medium",
         description: "",
         scheduledAt: "",

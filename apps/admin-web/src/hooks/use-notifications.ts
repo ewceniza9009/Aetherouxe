@@ -93,7 +93,7 @@ export function useNotifications(
       const { data } = await api.get<ApiResponse<AppNotification[]>>(
         `/notifications?${buildParams(role, ownerId, tenantId)}`
       );
-      return (data.data ?? []) as AppNotification[];
+      return ((data.data as any)?.notifications ?? []) as AppNotification[];
     },
   });
 

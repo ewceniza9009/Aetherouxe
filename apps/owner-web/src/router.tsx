@@ -36,7 +36,7 @@ const loginRoute = createRoute({
 
 const protectedLayout = createRoute({
   getParentRoute: () => rootRoute,
-  id: "protected",
+  id: "__protected",
   component: () => {
     const token = localStorage.getItem("accessToken");
     if (!token) return <LoginPage />;
