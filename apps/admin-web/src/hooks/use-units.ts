@@ -10,6 +10,8 @@ export interface Unit {
   unitNumber: string;
   type: string;
   size: number;
+  unitType?: string;
+  squareMeters?: number;
   bedrooms: number;
   bathrooms: number;
   status: string;

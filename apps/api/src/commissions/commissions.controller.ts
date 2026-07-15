@@ -7,10 +7,13 @@ import {
   CommissionQueryDto,
 } from './dto/commissions.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserType } from '@prisma/client';
 
 @ApiTags('Commissions')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('commissions')
 export class CommissionsController {
   constructor(private readonly service: CommissionsService) {}
@@ -21,14 +24,14 @@ export class CommissionsController {
   @Get(':id') @ApiOperation({ summary: 'Get commission rule by ID' })
   findOne(@Param('id') id: string) { return this.service.findOne(id); }
 
-  @Post() @ApiOperation({ summary: 'Create a commission rule' })
+  @Post() @Roles(UserType.super_admin, UserType.admin) @ApiOperation({ summary: 'Create a commission rule' })
   create(@Body() dto: CreateCommissionDto) { return this.service.create(dto); }
 
-  @Patch(':id') @ApiOperation({ summary: 'Update a commission rule' })
+  @Patch(':id') @Roles(UserType.super_admin, UserType.admin) @ApiOperation({ summary: 'Update a commission rule' })
   update(@Param('id') id: string, @Body() dto: UpdateCommissionDto) {
     return this.service.update(id, dto);
   }
 
-  @Delete(':id') @ApiOperation({ summary: 'Delete a commission rule' })
+  @Delete(':id') @Roles(UserType.super_admin, UserType.admin) @ApiOperation({ summary: 'Delete a commission rule' })
   remove(@Param('id') id: string) { return this.service.remove(id); }
 }

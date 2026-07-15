@@ -116,7 +116,11 @@ export class RtoService {
     const contract = await this.prisma.rtoContract.findUnique({
       where: { leaseAgreementId: lease.id },
     });
-    if (!contract || contract.status !== 'active') return null;
+    if (
+      !contract ||
+      (contract.status !== 'active' && contract.status !== 'grace_period')
+    )
+      return null;
 
     const amountPaid = Number(payment.amountPaid) || 0;
     const rentPortionTotal =
@@ -187,14 +191,23 @@ export class RtoService {
       const threshold = new Date(now);
       threshold.setDate(threshold.getDate() - gracePeriodDays);
 
-      const missedCount = (lease.rentalPayments || []).filter((p) => {
+      const rentalPayments = lease.rentalPayments || [];
+      const missedCount = rentalPayments.filter((p) => {
         const isUnpaid = p.status !== 'paid' && p.status !== 'partially_paid';
         if (!isUnpaid) return false;
         return new Date(p.dueDate) < threshold;
       }).length;
 
-      if (missedCount >= 2) {
-        const prevBalance = Number(contract.accumulatedEquity);
+      const hasUnpaid = rentalPayments.some(
+        (p) => p.status !== 'paid' && p.status !== 'partially_paid',
+      );
+
+      if (missedCount >= 1) {
+        const latest = await this.prisma.rtoEquityLedger.findFirst({
+          where: { rtoContractId: contract.id },
+          orderBy: { createdAt: 'desc' },
+        });
+        const prevBalance = latest ? Number(latest.runningBalance) : 0;
         const forfeited = Number((prevBalance * 0.5).toFixed(2));
         const newBalance = Number((prevBalance - forfeited).toFixed(2));
 
@@ -214,7 +227,7 @@ export class RtoService {
         });
 
         defaulted.push(contract.id);
-      } else if (missedCount === 1) {
+      } else if (hasUnpaid && contract.status !== 'defaulted') {
         if (contract.status !== 'grace_period') {
           await this.prisma.rtoContract.update({
             where: { id: contract.id },

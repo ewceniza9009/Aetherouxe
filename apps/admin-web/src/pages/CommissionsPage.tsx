@@ -44,13 +44,11 @@ import { PropertyType } from "@elite-realty/shared-types";
 
 const PROPERTY_LABELS: Record<string, string> = {
   all: "All Types",
-  [PropertyType.SingleFamily]: "Single Family",
-  [PropertyType.MultiFamily]: "Multi Family",
-  [PropertyType.Condo]: "Condo",
+  [PropertyType.CondoUnit]: "Condo Unit",
+  [PropertyType.HouseAndLot]: "House & Lot",
   [PropertyType.Townhouse]: "Townhouse",
-  [PropertyType.Commercial]: "Commercial",
-  [PropertyType.Land]: "Land",
-  [PropertyType.Industrial]: "Industrial",
+  [PropertyType.CommercialSpace]: "Commercial Space",
+  [PropertyType.ParkingSlot]: "Parking Slot",
 };
 
 const EMPTY_FORM: CommissionRulePayload = {

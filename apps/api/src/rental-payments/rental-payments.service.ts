@@ -45,26 +45,28 @@ export class RentalPaymentsService {
   }
 
   async recordPayment(id: string, dto: RecordPaymentDto) {
-    const payment = await this.prisma.rentalPayment.findUnique({ where: { id } });
-    if (!payment) throw new NotFoundException('Rental payment not found');
+    const existing = await this.prisma.rentalPayment.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Rental payment not found');
 
     const lease = await this.prisma.leaseAgreement.findUnique({
-      where: { id: payment.leaseAgreementId },
+      where: { id: existing.leaseAgreementId },
     });
 
-    const amountDue = Number(payment.amountDue);
-    const amountPaid = Number(dto.amountPaid);
-    const dueDate = new Date(payment.dueDate);
-    const paymentDate = new Date(dto.paymentDate);
+    const amountDue = Number(existing.amountDue);
+    const newAmountPaid = Number(existing.amountPaid ?? 0) + Number(dto.amountPaid);
+    const dueDate = new Date(existing.dueDate);
+    const paymentDate = dto.paymentDate ? new Date(dto.paymentDate) : undefined;
 
-    const isPaid = amountPaid >= amountDue;
-    const status = isPaid ? 'paid' : 'partially_paid';
-    const lateFeeApplied = paymentDate > dueDate;
+    let status: string;
+    if (newAmountPaid >= amountDue) status = 'paid';
+    else if (newAmountPaid > 0) status = 'partially_paid';
+    else status = 'pending';
+    const lateFeeApplied = paymentDate ? paymentDate > dueDate : existing.lateFeeApplied;
 
     const updated = await this.prisma.rentalPayment.update({
       where: { id },
       data: {
-        amountPaid,
+        amountPaid: newAmountPaid,
         paymentDate,
         paymentMethod: dto.paymentMethod,
         paymentReference: dto.paymentReference,
@@ -105,6 +107,49 @@ export class RentalPaymentsService {
   async remove(id: string) {
     const payment = await this.prisma.rentalPayment.findUnique({ where: { id } });
     if (!payment) throw new NotFoundException('Rental payment not found');
+
+    try {
+      const allocation = await this.prisma.rtoPaymentAllocation.findFirst({
+        where: { rentalPaymentId: id },
+      });
+
+      if (allocation) {
+        const contract = await this.prisma.rtoContract.findUnique({
+          where: { id: allocation.rtoContractId },
+        });
+
+        if (contract) {
+          const latest = await this.prisma.rtoEquityLedger.findFirst({
+            where: { rtoContractId: contract.id },
+            orderBy: { createdAt: 'desc' },
+          });
+          const prevBalance = latest ? Number(latest.runningBalance) : 0;
+          const reverseAmount = -Number(allocation.equityPortionAmount);
+          const newBalance = Number((prevBalance + reverseAmount).toFixed(2));
+
+          await this.prisma.rtoEquityLedger.create({
+            data: {
+              rtoContractId: contract.id,
+              transactionType: 'adjustment',
+              amount: reverseAmount,
+              runningBalance: newBalance,
+              reference: id,
+              notes: 'Equity reversal on rental payment removal',
+            },
+          });
+
+          await this.prisma.rtoContract.update({
+            where: { id: contract.id },
+            data: { accumulatedEquity: newBalance },
+          });
+        }
+
+        await this.prisma.rtoPaymentAllocation.delete({ where: { id: allocation.id } });
+      }
+    } catch {
+      // safe: still delete the payment even if equity reversal fails
+    }
+
     await this.prisma.rentalPayment.delete({ where: { id } });
     return { deleted: true };
   }

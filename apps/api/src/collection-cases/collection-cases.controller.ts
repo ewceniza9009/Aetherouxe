@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { CollectionCasesService } from './collection-cases.service';
 import {
   CreateCaseDto,
@@ -7,8 +7,11 @@ import {
   CreateCaseNoteDto,
   CaseQueryDto,
 } from './dto/collection-cases.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Collection Cases')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('collection-cases')
 export class CollectionCasesController {
   constructor(private readonly service: CollectionCasesService) {}

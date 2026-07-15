@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { MortgageService } from './mortgage.service';
 import { GenerateScenarioDto, MortgageScenarioQueryDto } from './dto/mortgage.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Mortgage')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('mortgage')
 export class MortgageController {
   constructor(private readonly service: MortgageService) {}

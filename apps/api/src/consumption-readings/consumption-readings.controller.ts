@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ConsumptionReadingsService } from './consumption-readings.service';
 import { CreateReadingDto, UpdateReadingDto, ReadingQueryDto } from './dto/consumption-readings.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Consumption Readings')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('consumption-readings')
 export class ConsumptionReadingsController {
   constructor(private readonly service: ConsumptionReadingsService) {}

@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { CollectionActivitiesService } from './collection-activities.service';
 import { CreateActivityDto, UpdateActivityDto, ActivityQueryDto } from './dto/collection-activities.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Collection Activities')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('collection-activities')
 export class CollectionActivitiesController {
   constructor(private readonly service: CollectionActivitiesService) {}

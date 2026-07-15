@@ -382,7 +382,7 @@ export default function DashboardPage() {
                     <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
                     <Tooltip
                       contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 13 }}
-                      formatter={(v: number) => [`$${v.toLocaleString()}`, "Revenue"]}
+                      formatter={(v: any) => [`$${Number(v).toLocaleString()}`, "Revenue"]}
                     />
                     <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={48} />
                   </BarChart>

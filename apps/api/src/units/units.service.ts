@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUnitDto, UpdateUnitDto, UnitQueryDto } from './dto/units.dto';
 
@@ -6,21 +6,33 @@ import { CreateUnitDto, UpdateUnitDto, UnitQueryDto } from './dto/units.dto';
 export class UnitsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(dto: CreateUnitDto) {
-    await this.prisma.property.findUniqueOrThrow({ where: { id: dto.propertyId } });
-    await this.prisma.building.findUniqueOrThrow({ where: { id: dto.buildingId } });
-    await this.prisma.floor.findUniqueOrThrow({ where: { id: dto.floorId } });
+  async create(dto: CreateUnitDto, tenantId: string) {
+    const property = await this.prisma.property.findUnique({
+      where: { id: dto.propertyId, tenantId },
+    });
+    if (!property) throw new BadRequestException('Property does not belong to your tenant');
+
+    const building = await this.prisma.building.findUnique({
+      where: { id: dto.buildingId, tenantId },
+    });
+    if (!building) throw new BadRequestException('Building does not belong to your tenant');
+
+    const floor = await this.prisma.floor.findUnique({
+      where: { id: dto.floorId, building: { tenantId } },
+    });
+    if (!floor) throw new BadRequestException('Floor does not belong to your tenant');
+
     return this.prisma.unit.create({
-      data: dto as any,
+      data: { ...(dto as any) },
       include: { property: true, building: true, floor: true },
     });
   }
 
-  async findAll(query: UnitQueryDto) {
+  async findAll(query: UnitQueryDto, tenantId: string) {
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 20;
     const skip = (page - 1) * limit;
-    const where: any = {};
+    const where: any = { building: { tenantId } };
     if (query.buildingId) where.buildingId = query.buildingId;
     if (query.floorId) where.floorId = query.floorId;
     if (query.unitType) where.unitType = query.unitType;
@@ -36,27 +48,27 @@ export class UnitsService {
     return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, tenantId: string) {
     const unit = await this.prisma.unit.findUnique({
-      where: { id },
+      where: { id, building: { tenantId } },
       include: { property: true, building: true, floor: true },
     });
     if (!unit) throw new NotFoundException('Unit not found');
     return unit;
   }
 
-  async update(id: string, dto: UpdateUnitDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateUnitDto, tenantId: string) {
+    await this.findOne(id, tenantId);
     return this.prisma.unit.update({
-      where: { id },
+      where: { id, building: { tenantId } },
       data: dto as any,
       include: { property: true, building: true, floor: true },
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
-    await this.prisma.unit.delete({ where: { id } });
+  async remove(id: string, tenantId: string) {
+    await this.findOne(id, tenantId);
+    await this.prisma.unit.delete({ where: { id, building: { tenantId } } });
     return { deleted: true };
   }
 }

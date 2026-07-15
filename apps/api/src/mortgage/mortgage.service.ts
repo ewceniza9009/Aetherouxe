@@ -32,7 +32,8 @@ export class MortgageService {
       monthlyAmortization = (loanAmount * (i * pow)) / (pow - 1);
     }
 
-    const totalInterestPayable = monthlyAmortization * n - loanAmount;
+    const roundedPayment = Number(monthlyAmortization.toFixed(2));
+    const totalInterestPayable = roundedPayment * n - loanAmount;
 
     const scenario = await this.prisma.mortgageScenario.create({
       data: {
@@ -44,7 +45,7 @@ export class MortgageService {
         loanAmount: Number(loanAmount.toFixed(2)),
         interestRatePercent: interestRatePercent,
         loanTermMonths: n,
-        monthlyAmortization: Number(monthlyAmortization.toFixed(2)),
+        monthlyAmortization: roundedPayment,
         totalInterestPayable: Number(totalInterestPayable.toFixed(2)),
         status: 'draft',
       },
@@ -53,26 +54,47 @@ export class MortgageService {
     const schedule: any[] = [];
     let beginningBalance = loanAmount;
     let cumulativeInterest = 0;
+    let interestRowSum = 0;
 
     for (let period = 1; period <= n; period++) {
-      const interestPayment = beginningBalance * i;
-      const principalPayment = monthlyAmortization - interestPayment;
-      let endingBalance = beginningBalance - principalPayment;
-      if (endingBalance < 0) endingBalance = 0;
+      const interestPayment = Number((beginningBalance * i).toFixed(2));
+      let principalPayment: number;
+      let endingBalance: number;
+      let monthlyPayment: number;
+
+      if (period === n) {
+        principalPayment = Number(beginningBalance.toFixed(2));
+        endingBalance = 0;
+        monthlyPayment = Number((interestPayment + principalPayment).toFixed(2));
+      } else {
+        principalPayment = Number((roundedPayment - interestPayment).toFixed(2));
+        endingBalance = Number((beginningBalance - principalPayment).toFixed(2));
+        monthlyPayment = roundedPayment;
+      }
+
       cumulativeInterest += interestPayment;
+      interestRowSum += interestPayment;
 
       schedule.push({
         mortgageScenarioId: scenario.id,
         periodNumber: period,
         beginningBalance: Number(beginningBalance.toFixed(2)),
-        monthlyPayment: Number(monthlyAmortization.toFixed(2)),
-        principalPayment: Number(principalPayment.toFixed(2)),
-        interestPayment: Number(interestPayment.toFixed(2)),
-        endingBalance: Number(endingBalance.toFixed(2)),
+        monthlyPayment,
+        principalPayment,
+        interestPayment,
+        endingBalance,
         cumulativeInterestPaid: Number(cumulativeInterest.toFixed(2)),
       });
 
       beginningBalance = endingBalance;
+    }
+
+    const finalTotalInterest = Number(interestRowSum.toFixed(2));
+    if (finalTotalInterest !== Number(totalInterestPayable.toFixed(2))) {
+      await this.prisma.mortgageScenario.update({
+        where: { id: scenario.id },
+        data: { totalInterestPayable: finalTotalInterest },
+      });
     }
 
     await this.prisma.mortgageAmortizationSchedule.createMany({

@@ -6,7 +6,8 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
-    "clean": "turbo clean"
+    "clean": "turbo clean",
+    "smoke": "node scripts/smoke.mjs"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.5.0",

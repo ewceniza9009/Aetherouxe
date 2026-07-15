@@ -28,7 +28,7 @@ export default function EditLeasePage() {
   const [tenantName, setTenantName] = useState("");
   const [tenantEmail, setTenantEmail] = useState("");
   const [propertyId, setPropertyId] = useState("");
-  const [leaseType, setLeaseType] = useState<LeaseType>(LeaseType.Fixed);
+  const [leaseType, setLeaseType] = useState<LeaseType>(LeaseType.StandardRental);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [monthlyRent, setMonthlyRent] = useState("");

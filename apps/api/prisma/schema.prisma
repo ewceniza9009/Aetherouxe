@@ -1,5 +1,6 @@
 generator client {
-  provider        = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
   previewFeatures = ["postgresqlExtensions"]
 }
 
@@ -237,6 +238,7 @@ model User {
   firstName    String?
   lastName     String?
   isActive     Boolean  @default(true)
+  tokenVersion Int      @default(0)
   lastLoginAt  DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -676,7 +678,7 @@ model AgentCommission {
   propertyType    PropertyType?
   projectId       String?
   commissionType  CommissionType
-  commissionValue Decimal      @db.Decimal(10, 2)
+  commissionValue String
   isActive        Boolean      @default(true)
   effectiveFrom   DateTime?
   effectiveUntil  DateTime?

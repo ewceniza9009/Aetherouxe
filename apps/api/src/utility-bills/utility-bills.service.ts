@@ -12,20 +12,59 @@ export class UtilityBillsService {
     return meter;
   }
 
-  computeBill(meter: { multiplier: number }, previousReading: number, currentReading: number, ratePerUnit: number) {
-    const consumption = Math.max(0, currentReading - previousReading) * meter.multiplier;
-    const amountDue = consumption * ratePerUnit;
-    return { consumption, amountDue };
+  computeBill(consumption: number, ratePerUnit: number, baseCharge: number) {
+    const amountDue = consumption * ratePerUnit + baseCharge;
+    return { amountDue };
+  }
+
+  private calcConsumption(
+    meter: { multiplier: number },
+    previousReading: number,
+    currentReading: number,
+  ) {
+    return Math.max(0, currentReading - previousReading) * meter.multiplier;
+  }
+
+  private async resolveRate(
+    tenantId: string | null | undefined,
+    meterType: string,
+    periodStart: Date,
+    periodEnd: Date,
+  ) {
+    if (!tenantId) return null;
+    return this.prisma.utilityRate.findFirst({
+      where: {
+        tenantId,
+        meterType: meterType as any,
+        effectiveFrom: { lte: periodEnd },
+        OR: [{ effectiveUntil: null }, { effectiveUntil: { gte: periodStart } }],
+      },
+      orderBy: { effectiveFrom: 'desc' },
+    });
   }
 
   async create(dto: CreateBillDto) {
     const meter = await this.assertMeter(dto.meterId);
-    const { consumption, amountDue } = this.computeBill(
+    const periodStart = new Date(dto.billingPeriodStart);
+    const periodEnd = new Date(dto.billingPeriodEnd);
+
+    const rate = await this.resolveRate(
+      dto.tenantId ?? meter.tenantId,
+      meter.utilityType,
+      periodStart,
+      periodEnd,
+    );
+
+    const ratePerUnit =
+      dto.ratePerUnit ?? (rate ? Number(rate.ratePerUnit) : 0);
+    const baseCharge = rate ? Number(rate.baseCharge) : 0;
+
+    const consumption = this.calcConsumption(
       meter,
       dto.previousReading,
       dto.currentReading,
-      dto.ratePerUnit,
     );
+    const { amountDue } = this.computeBill(consumption, ratePerUnit, baseCharge);
 
     return this.prisma.utilityBill.create({
       data: {
@@ -33,12 +72,12 @@ export class UtilityBillsService {
         tenantId: dto.tenantId,
         unitId: dto.unitId,
         propertyId: dto.propertyId,
-        billingPeriodStart: new Date(dto.billingPeriodStart),
-        billingPeriodEnd: new Date(dto.billingPeriodEnd),
+        billingPeriodStart: periodStart,
+        billingPeriodEnd: periodEnd,
         previousReading: dto.previousReading,
         currentReading: dto.currentReading,
         consumption,
-        ratePerUnit: dto.ratePerUnit,
+        ratePerUnit,
         amountDue,
         status: dto.status ?? 'pending',
         dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
@@ -100,17 +139,30 @@ export class UtilityBillsService {
 
     const previousReading = dto.previousReading ?? bill.previousReading;
     const currentReading = dto.currentReading ?? bill.currentReading;
-    const ratePerUnit = dto.ratePerUnit ?? bill.ratePerUnit;
 
     const meter = await this.assertMeter(bill.meterId);
-    const { consumption, amountDue } = this.computeBill(meter, previousReading, currentReading, ratePerUnit);
+    const periodStart = bill.billingPeriodStart;
+    const periodEnd = bill.billingPeriodEnd;
+
+    const rate = await this.resolveRate(
+      bill.tenantId,
+      meter.utilityType,
+      periodStart,
+      periodEnd,
+    );
+
+    const ratePerUnit = dto.ratePerUnit ?? (rate ? Number(rate.ratePerUnit) : Number(bill.ratePerUnit));
+    const baseCharge = rate ? Number(rate.baseCharge) : 0;
+
+    const consumption = this.calcConsumption(meter, previousReading, currentReading);
+    const { amountDue } = this.computeBill(consumption, ratePerUnit, baseCharge);
 
     return this.prisma.utilityBill.update({
       where: { id },
       data: {
         previousReading: dto.previousReading,
         currentReading: dto.currentReading,
-        ratePerUnit: dto.ratePerUnit,
+        ratePerUnit,
         consumption,
         amountDue,
         status: dto.status,
@@ -157,7 +209,7 @@ export class UtilityBillsService {
     const start = new Date(dto.billingPeriodStart);
     const end = new Date(dto.billingPeriodEnd);
 
-    const created: { meterId: string; previousReading: number; currentReading: number; consumption: number; amountDue: number }[] = [];
+    const created: { meterId: string; previousReading: number; currentReading: number; consumption: number; ratePerUnit: number; amountDue: number }[] = [];
 
     for (const meter of meters) {
       const prevReading = await this.prisma.consumptionReading.findFirst({
@@ -175,18 +227,20 @@ export class UtilityBillsService {
       if (currentValue === null || currentValue === undefined) continue;
       if (currentValue < previousValue) continue;
 
-      const { consumption, amountDue } = this.computeBill(
-        meter,
-        previousValue,
-        currentValue,
-        dto.ratePerUnit,
-      );
+      const rate = await this.resolveRate(meter.tenantId, meter.utilityType, start, end);
+      const ratePerUnit =
+        dto.ratePerUnit ?? (rate ? Number(rate.ratePerUnit) : 0);
+      const baseCharge = rate ? Number(rate.baseCharge) : 0;
+
+      const consumption = this.calcConsumption(meter, previousValue, currentValue);
+      const { amountDue } = this.computeBill(consumption, ratePerUnit, baseCharge);
 
       created.push({
         meterId: meter.id,
         previousReading: previousValue,
         currentReading: currentValue,
         consumption,
+        ratePerUnit,
         amountDue,
       });
     }
@@ -206,7 +260,7 @@ export class UtilityBillsService {
           previousReading: c.previousReading,
           currentReading: c.currentReading,
           consumption: c.consumption,
-          ratePerUnit: dto.ratePerUnit,
+          ratePerUnit: c.ratePerUnit,
           amountDue: c.amountDue,
           status: 'pending',
           dueDate: dto.dueDate ? new Date(dto.dueDate) : null,

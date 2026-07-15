@@ -2,7 +2,6 @@ import { IsString, IsOptional, IsEnum, IsInt, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateBuildingDto {
-  @ApiProperty() @IsString() @IsUUID() tenantId: string;
   @ApiPropertyOptional() @IsOptional() @IsString() projectId?: string;
   @ApiProperty() @IsString() name: string;
   @ApiProperty({ enum: ['tower', 'mid_rise', 'low_rise', 'cluster', 'block'] })

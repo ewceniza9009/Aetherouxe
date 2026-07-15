@@ -34,8 +34,11 @@ export class CommissionAgingService {
     const asOf = asOfDate ? new Date(asOfDate) : new Date();
 
     const where: any = {
-      status: { in: ['approved', 'pending', 'partially_paid'] },
+      status: { not: 'fully_paid' },
     };
+    if (tenantId) {
+      where.agent = { tenantId };
+    }
 
     const transactions = await this.prisma.agentTransaction.findMany({
       where,
@@ -54,9 +57,9 @@ export class CommissionAgingService {
       { agentId: string; agentName: string; totalUnpaid: number; buckets: Record<string, BucketAccumulator> }
     > = {};
 
-    const byProjectMap: Record<
+    const byPropertyMap: Record<
       string,
-      { projectId: string; projectName: string; totalUnpaid: number; buckets: Record<string, BucketAccumulator> }
+      { propertyId: string; propertyName: string; totalUnpaid: number; buckets: Record<string, BucketAccumulator> }
     > = {};
 
     const byTypeMap: Record<
@@ -72,8 +75,22 @@ export class CommissionAgingService {
       const unpaid = owed - paid;
       if (unpaid <= 0) continue;
 
-      const txDate = new Date(tx.transactionDate);
-      const daysOverdue = Math.floor((asOf.getTime() - txDate.getTime()) / DAY_MS);
+      // Anchor the aging on the most recent commission release date when
+      // releases exist; otherwise fall back to the transaction date.
+      const anchorDate =
+        tx.commissionReleases.length > 0
+          ? tx.commissionReleases.reduce(
+              (max, r) =>
+                new Date(r.releaseDate).getTime() > new Date(max).getTime()
+                  ? r.releaseDate
+                  : max,
+              tx.commissionReleases[0].releaseDate,
+            )
+          : tx.transactionDate;
+
+      const daysOverdue = Math.floor(
+        (asOf.getTime() - new Date(anchorDate).getTime()) / DAY_MS,
+      );
       const bucket = bucketForDays(daysOverdue);
 
       totalUnpaid += unpaid;
@@ -94,17 +111,17 @@ export class CommissionAgingService {
       byAgentMap[agentId].buckets[bucket].total += unpaid;
       byAgentMap[agentId].buckets[bucket].count += 1;
 
-      // By project (property-level since Property has no direct project FK)
-      const projectId = tx.propertyId;
-      const projectName = tx.property?.propertyCode || projectId;
-      if (!byProjectMap[projectId]) {
+      // By property (grouped at property level)
+      const propertyId = tx.propertyId;
+      const propertyName = tx.property?.propertyCode || propertyId;
+      if (!byPropertyMap[propertyId]) {
         const bm: Record<string, BucketAccumulator> = {};
         for (const b of BUCKET_ORDER) bm[b] = { name: b, total: 0, count: 0 };
-        byProjectMap[projectId] = { projectId, projectName, totalUnpaid: 0, buckets: bm };
+        byPropertyMap[propertyId] = { propertyId, propertyName, totalUnpaid: 0, buckets: bm };
       }
-      byProjectMap[projectId].totalUnpaid += unpaid;
-      byProjectMap[projectId].buckets[bucket].total += unpaid;
-      byProjectMap[projectId].buckets[bucket].count += 1;
+      byPropertyMap[propertyId].totalUnpaid += unpaid;
+      byPropertyMap[propertyId].buckets[bucket].total += unpaid;
+      byPropertyMap[propertyId].buckets[bucket].count += 1;
 
       // By type
       const type = tx.transactionType;
@@ -125,9 +142,9 @@ export class CommissionAgingService {
       totalUnpaid: a.totalUnpaid,
       buckets: BUCKET_ORDER.map((b) => a.buckets[b]),
     }));
-    const byProject = Object.values(byProjectMap).map((p) => ({
-      projectId: p.projectId,
-      projectName: p.projectName,
+    const byProperty = Object.values(byPropertyMap).map((p) => ({
+      propertyId: p.propertyId,
+      propertyName: p.propertyName,
       totalUnpaid: p.totalUnpaid,
       buckets: BUCKET_ORDER.map((b) => p.buckets[b]),
     }));
@@ -142,7 +159,7 @@ export class CommissionAgingService {
       totalUnpaid,
       buckets,
       byAgent,
-      byProject,
+      byProperty,
       byType,
     };
   }

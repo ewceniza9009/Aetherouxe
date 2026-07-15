@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Delete, Body, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { RentalPaymentsService } from './rental-payments.service';
 import { CreateRentalPaymentDto, RecordPaymentDto, RentalPaymentQueryDto } from './dto/rental-payments.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Rental Payments')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('rental-payments')
 export class RentalPaymentsController {
   constructor(private readonly service: RentalPaymentsService) {}

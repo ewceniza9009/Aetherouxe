@@ -88,7 +88,7 @@ export class ProjectsService {
     const totalActual = healthResults.reduce((s, h) => s + h.totalActual, 0);
     const totalVariance = totalPlanned - totalActual;
     const plannedVsActual = healthResults.flatMap((h) =>
-      h.items.map((i) => ({ category: i.category, planned: i.plannedAmount, actual: i.actualAmount })),
+      h.items.map((i: { category: string; plannedAmount: number; actualAmount: number }) => ({ category: i.category, planned: i.plannedAmount, actual: i.actualAmount })),
     );
     const redCount = healthResults.filter((h) => h.overallHealth === 'red').length;
     const yellowCount = healthResults.filter((h) => h.overallHealth === 'yellow').length;

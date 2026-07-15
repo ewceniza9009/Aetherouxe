@@ -37,7 +37,7 @@ export class CreateCommissionDto {
   @ApiPropertyOptional({ enum: PROPERTY_TYPES }) @IsOptional() @IsEnum(PROPERTY_TYPES) propertyType?: PropertyTypeType;
   @ApiPropertyOptional() @IsOptional() @IsUUID() projectId?: string;
   @ApiProperty({ enum: COMMISSION_TYPES }) @IsEnum(COMMISSION_TYPES) commissionType: CommissionTypeType;
-  @ApiProperty() @IsNumber() commissionValue: number;
+  @ApiProperty({ description: 'Scalar value (number) or a JSON string of tiered brackets' }) commissionValue: number | string;
   @ApiPropertyOptional() @IsOptional() @IsISO8601() effectiveFrom?: string;
   @ApiPropertyOptional() @IsOptional() @IsISO8601() effectiveUntil?: string;
 }
@@ -48,7 +48,7 @@ export class UpdateCommissionDto {
   @ApiPropertyOptional({ enum: PROPERTY_TYPES }) @IsOptional() @IsEnum(PROPERTY_TYPES) propertyType?: PropertyTypeType;
   @ApiPropertyOptional() @IsOptional() @IsUUID() projectId?: string;
   @ApiPropertyOptional({ enum: COMMISSION_TYPES }) @IsOptional() @IsEnum(COMMISSION_TYPES) commissionType?: CommissionTypeType;
-  @ApiPropertyOptional() @IsOptional() @IsNumber() commissionValue?: number;
+  @ApiPropertyOptional({ description: 'Scalar value (number) or a JSON string of tiered brackets' }) @IsOptional() commissionValue?: number | string;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() isActive?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsISO8601() effectiveFrom?: string;
   @ApiPropertyOptional() @IsOptional() @IsISO8601() effectiveUntil?: string;

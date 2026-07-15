@@ -1,8 +1,11 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ArAgingService } from './ar-aging.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('AR Aging')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('ar-aging')
 export class ArAgingController {
   constructor(private readonly service: ArAgingService) {}

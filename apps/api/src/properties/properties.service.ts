@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NumberingEngineService } from '../numbering-engine/numbering-engine.service';
 import { PropertySpecService } from '../mongodb/property-spec.service';
@@ -12,29 +13,49 @@ export class PropertiesService {
     private propertySpecService: PropertySpecService,
   ) {}
 
-  async create(dto: CreatePropertyDto) {
-    const code = dto.propertyCode || this.numberingEngine.generatePropertyCode({
-      projectCode: 'PRJ',
-      buildingCode: 'BLD',
-      unitNumber: String(Date.now()).slice(-6),
-    });
-    return this.prisma.property.create({
-      data: {
-        tenantId: dto.tenantId,
-        propertyCode: code,
-        propertyType: dto.propertyType as any,
-        status: (dto.status as any) || 'available',
-        parentPropertyId: dto.parentPropertyId,
-      },
-      include: { units: { include: { building: true, floor: true } } },
-    });
+  private generateFallbackCode(): string {
+    return 'PROP-' + Math.random().toString(36).slice(2, 10).toUpperCase();
   }
 
-  async findAll(query: PropertyQueryDto) {
+  async create(dto: CreatePropertyDto, tenantId: string) {
+    const code =
+      dto.propertyCode ||
+      this.numberingEngine.generatePropertyCode({
+        projectCode: 'PRJ',
+        buildingCode: 'BLD',
+        unitNumber: String(Date.now()).slice(-6),
+      });
+
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const candidateCode = attempt === 0 ? code : this.generateFallbackCode();
+      try {
+        return await this.prisma.property.create({
+          data: {
+            tenantId,
+            propertyCode: candidateCode,
+            propertyType: dto.propertyType as any,
+            status: (dto.status as any) || 'available',
+            parentPropertyId: dto.parentPropertyId,
+          },
+          include: { units: { include: { building: true, floor: true } } },
+        });
+      } catch (err) {
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+          lastError = err;
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw lastError;
+  }
+
+  async findAll(query: PropertyQueryDto, tenantId: string) {
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 20;
     const skip = (page - 1) * limit;
-    const where: any = {};
+    const where: any = { tenantId };
     if (query.propertyType) where.propertyType = query.propertyType;
     if (query.status) where.status = query.status;
     if (query.search) where.propertyCode = { contains: query.search, mode: 'insensitive' };
@@ -51,33 +72,33 @@ export class PropertiesService {
     return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, tenantId: string) {
     const property = await this.prisma.property.findUnique({
-      where: { id },
+      where: { id, tenantId },
       include: { units: { include: { building: true, floor: true } }, childProperties: true },
     });
     if (!property) throw new NotFoundException('Property not found');
     return property;
   }
 
-  async update(id: string, dto: UpdatePropertyDto) {
-    await this.findOne(id);
-    return this.prisma.property.update({ where: { id }, data: dto as any });
+  async update(id: string, dto: UpdatePropertyDto, tenantId: string) {
+    await this.findOne(id, tenantId);
+    return this.prisma.property.update({ where: { id, tenantId }, data: dto as any });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
-    await this.prisma.property.update({ where: { id }, data: { status: 'under_maintenance' } });
+  async remove(id: string, tenantId: string) {
+    await this.findOne(id, tenantId);
+    await this.prisma.property.update({ where: { id, tenantId }, data: { status: 'under_maintenance' } });
     return { deleted: true };
   }
 
-  async getSpecs(propertyId: string) {
-    await this.findOne(propertyId);
+  async getSpecs(propertyId: string, tenantId: string) {
+    await this.findOne(propertyId, tenantId);
     return this.propertySpecService.findByPropertyId(propertyId);
   }
 
-  async updateSpecs(propertyId: string, data: { specs?: any; metadata?: any }) {
-    await this.findOne(propertyId);
+  async updateSpecs(propertyId: string, data: { specs?: any; metadata?: any }, tenantId: string) {
+    await this.findOne(propertyId, tenantId);
     return this.propertySpecService.upsert(propertyId, data);
   }
 }

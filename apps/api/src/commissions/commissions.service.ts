@@ -25,7 +25,7 @@ export class CommissionsService {
         propertyType: dto.propertyType as any,
         projectId: dto.projectId,
         commissionType: dto.commissionType as any,
-        commissionValue: dto.commissionValue,
+        commissionValue: String(dto.commissionValue),
         effectiveFrom: dto.effectiveFrom ? new Date(dto.effectiveFrom) : null,
         effectiveUntil: dto.effectiveUntil ? new Date(dto.effectiveUntil) : null,
       },
@@ -74,7 +74,7 @@ export class CommissionsService {
         propertyType: dto.propertyType as any,
         projectId: dto.projectId,
         commissionType: dto.commissionType as any,
-        commissionValue: dto.commissionValue,
+        commissionValue: String(dto.commissionValue),
         isActive: dto.isActive,
         effectiveFrom: dto.effectiveFrom ? new Date(dto.effectiveFrom) : undefined,
         effectiveUntil: dto.effectiveUntil ? new Date(dto.effectiveUntil) : undefined,
@@ -88,27 +88,108 @@ export class CommissionsService {
     return { deleted: true };
   }
 
+  private parseTieredBrackets(
+    value: any,
+  ): { upto: number | null; rate: number }[] | null {
+    if (Array.isArray(value)) return value as any[];
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
   calculateCommissionForRule(
     rule: CommissionRuleLike,
     transactionAmount: number,
     leaseMonthlyRent?: number,
   ): number {
-    const value =
-      typeof rule.commissionValue === 'object' && rule.commissionValue !== null
-        ? Number(rule.commissionValue.toString())
-        : Number(rule.commissionValue);
+    const raw = rule.commissionValue;
+    const value = Number(raw);
+    const brackets = this.parseTieredBrackets(raw);
 
     switch (rule.commissionType) {
       case 'flat_amount':
         return value;
       case 'percentage_of_sale':
         return Number(transactionAmount) * (value / 100);
-      case 'percentage_of_rent':
-        return Number(leaseMonthlyRent ?? transactionAmount) * (value / 100);
-      case 'tiered':
+      case 'percentage_of_rent': {
+        const rent = Number(leaseMonthlyRent ?? 0);
+        if (!rent || rent <= 0) return 0;
+        return rent * (value / 100);
+      }
+      case 'tiered': {
+        if (brackets && brackets.length > 0) {
+          const amount = Number(transactionAmount);
+          let prevUpto = 0;
+          let commission = 0;
+          for (const bracket of brackets) {
+            const upper =
+              bracket.upto == null ? Infinity : Number(bracket.upto);
+            const rate = Number(bracket.rate);
+            if (amount > prevUpto) {
+              const portion = Math.min(amount, upper) - prevUpto;
+              if (portion > 0) commission += portion * (rate / 100);
+            }
+            prevUpto = upper;
+          }
+          return commission;
+        }
+        // plain number fallback -> percentage_of_sale behavior
         return Number(transactionAmount) * (value / 100);
+      }
       default:
         return 0;
     }
+  }
+
+  async resolveCommissionRule(
+    tenantId: string,
+    propertyType?: string,
+    projectId?: string,
+    agentTier?: string,
+    transactionType?: string,
+  ) {
+    const now = new Date();
+    const candidates = await this.prisma.agentCommission.findMany({
+      where: {
+        tenantId,
+        isActive: true,
+        OR: [
+          { effectiveFrom: null, effectiveUntil: null },
+          { effectiveFrom: { lte: now }, effectiveUntil: null },
+          { effectiveFrom: null, effectiveUntil: { gte: now } },
+          { effectiveFrom: { lte: now }, effectiveUntil: { gte: now } },
+        ],
+      },
+    });
+
+    let best: any = null;
+    let bestScore = -1;
+    for (const c of candidates) {
+      let score = 0;
+      let matches = true;
+      if (c.projectId) {
+        if (c.projectId !== projectId) matches = false;
+        else score += 3;
+      }
+      if (c.propertyType) {
+        if (c.propertyType !== propertyType) matches = false;
+        else score += 2;
+      }
+      if (c.agentTier) {
+        if (c.agentTier !== agentTier) matches = false;
+        else score += 1;
+      }
+      if (matches && score > bestScore) {
+        bestScore = score;
+        best = c;
+      }
+    }
+    return best;
   }
 }

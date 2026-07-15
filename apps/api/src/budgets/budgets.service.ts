@@ -1,10 +1,26 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import Redis from 'ioredis';
 import { CreateBudgetDto, UpdateBudgetDto, CreateLineItemDto, UpdateLineItemDto, BudgetQueryDto } from './dto/budgets.dto';
 
 @Injectable()
 export class BudgetsService {
+  private redis: Redis | null = null;
+
   constructor(private prisma: PrismaService) {}
+
+  private getRedis(): Redis | null {
+    if (this.redis) return this.redis;
+    try {
+      const url = process.env.REDIS_URL;
+      if (!url) return null;
+      this.redis = new Redis(url);
+      this.redis.on('error', () => {});
+      return this.redis;
+    } catch {
+      return null;
+    }
+  }
 
   async create(dto: CreateBudgetDto) {
     return this.prisma.budget.create({
@@ -120,6 +136,17 @@ export class BudgetsService {
   }
 
   async calculateBudgetHealth(budgetId: string) {
+    const cacheKey = `budget:health:${budgetId}`;
+    const redis = this.getRedis();
+    if (redis) {
+      try {
+        const cached = await redis.get(cacheKey);
+        if (cached) return JSON.parse(cached);
+      } catch {
+        // ignore cache read errors
+      }
+    }
+
     const budget = await this.prisma.budget.findUnique({
       where: { id: budgetId },
       include: {
@@ -140,7 +167,7 @@ export class BudgetsService {
         .filter((p) => p.status === 'approved' || p.status === 'paid')
         .reduce((sum, p) => sum + Number(p.amount), 0);
 
-      const actualAmount = Math.max(Number(li.actualAmount), approvedPayments);
+      const actualAmount = approvedPayments;
       const plannedAmount = Number(li.plannedAmount);
       const variance = plannedAmount - actualAmount;
       const variancePercent = plannedAmount > 0 ? (variance / plannedAmount) * 100 : 0;
@@ -186,7 +213,7 @@ export class BudgetsService {
       overallHealth = 'green';
     }
 
-    return {
+    const result = {
       budgetId: budget.id,
       budgetName: budget.budgetName,
       totalPlanned,
@@ -196,5 +223,15 @@ export class BudgetsService {
       overallHealth,
       items,
     };
+
+    if (redis) {
+      try {
+        await redis.set(cacheKey, JSON.stringify(result), 'EX', 900);
+      } catch {
+        // ignore cache write errors
+      }
+    }
+
+    return result;
   }
 }

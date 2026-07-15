@@ -27,10 +27,9 @@ export class CommissionReleasesService {
     });
     if (!tx) throw new NotFoundException('Agent transaction not found');
 
+    const now = new Date();
     const releaseDate = dto.releaseDate ? new Date(dto.releaseDate) : new Date();
-    const days = Math.floor(
-      (releaseDate.getTime() - new Date(tx.transactionDate).getTime()) / DAY_MS,
-    );
+    const days = Math.floor((now.getTime() - releaseDate.getTime()) / DAY_MS);
     const agingBucket = bucketForDays(days);
 
     return this.prisma.agentCommissionRelease.create({
