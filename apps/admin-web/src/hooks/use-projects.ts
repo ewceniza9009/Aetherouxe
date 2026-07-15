@@ -110,8 +110,19 @@ export function useProjectTimeline(id: string) {
   return useQuery({
     queryKey: ["project-timeline", id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<ProjectTimelineEntry[]>>(`/projects/${id}/timeline`);
-      return data.data;
+      const { data } = await api.get<ApiResponse<any>>(`/projects/${id}/timeline`);
+      const payload = data.data;
+      const phases: any[] = payload?.phases ?? (Array.isArray(payload) ? payload : []);
+      return phases.map((p) => ({
+        id: p.id,
+        phaseName: p.phaseName ?? p.name,
+        startDate: p.targetStart ?? p.actualStart ?? p.startDate ?? null,
+        endDate: p.targetEnd ?? p.actualEnd ?? p.endDate ?? null,
+        status: p.status,
+        progress:
+          p.progress ??
+          (p.status === "completed" ? 100 : p.status === "in_progress" ? 50 : p.status === "delayed" ? 50 : 0),
+      })) as ProjectTimelineEntry[];
     },
     enabled: !!id,
   });

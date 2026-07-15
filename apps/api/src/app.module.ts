@@ -41,6 +41,7 @@ import { OwnerPnlModule } from './owner-pnl/owner-pnl.module';
 import { ReportsModule } from './reports/reports.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SettingsModule } from './settings/settings.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { SettingsModule } from './settings/settings.module';
     ReportsModule,
     NotificationsModule,
     SettingsModule,
+    UsersModule,
     ...(process.env.MONGODB_URI ? [MongodbModule] : []),
     ThrottlerModule.forRoot([
       {

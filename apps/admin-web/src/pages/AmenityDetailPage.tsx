@@ -69,27 +69,22 @@ const amenityTypeMeta: Record<AmenityType, { label: string; className: string }>
   other: { label: "Other", className: "bg-slate-100 text-slate-700 border-slate-200" },
 };
 
-const postTypeMeta: Record<PostType, { label: string; className: string }> = {
+const postTypeMeta: Record<string, { label: string; className: string }> = {
   announcement: {
     label: "Announcement",
     className: "bg-blue-100 text-blue-700 border-blue-200",
   },
   event: { label: "Event", className: "bg-purple-100 text-purple-700 border-purple-200" },
-  maintenance: {
-    label: "Maintenance",
-    className: "bg-orange-100 text-orange-700 border-orange-200",
-  },
-  general: { label: "General", className: "bg-slate-100 text-slate-700 border-slate-200" },
-  emergency: { label: "Emergency", className: "bg-red-100 text-red-700 border-red-200" },
 };
 
-const audienceMeta: Record<PostAudience, { label: string; className: string }> = {
+const audienceMeta: Record<string, { label: string; className: string }> = {
   all: { label: "All", className: "bg-slate-100 text-slate-700 border-slate-200" },
-  tenants: { label: "Tenants", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  owners: { label: "Owners", className: "bg-amber-100 text-amber-700 border-amber-200" },
-  staff: { label: "Staff", className: "bg-indigo-100 text-indigo-700 border-indigo-200" },
-  property: { label: "Property", className: "bg-cyan-100 text-cyan-700 border-cyan-200" },
+  building: { label: "Building", className: "bg-cyan-100 text-cyan-700 border-cyan-200" },
+  property: { label: "Property", className: "bg-amber-100 text-amber-700 border-amber-200" },
+  unit: { label: "Unit", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
 };
+
+const META_FALLBACK = { label: "Unknown", className: "bg-slate-100 text-slate-700 border-slate-200" };
 
 function money(n: number) {
   return `$${Number(n ?? 0).toLocaleString(undefined, {
@@ -391,11 +386,11 @@ export default function AmenityDetailPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{p.title}</span>
-                          <Badge className={postTypeMeta[p.postType].className}>
-                            {postTypeMeta[p.postType].label}
+                          <Badge className={(postTypeMeta[p.postType] ?? META_FALLBACK).className}>
+                            {(postTypeMeta[p.postType] ?? META_FALLBACK).label}
                           </Badge>
-                          <Badge className={audienceMeta[p.audience].className}>
-                            {audienceMeta[p.audience].label}
+                          <Badge className={(audienceMeta[p.audience] ?? META_FALLBACK).className}>
+                            {(audienceMeta[p.audience] ?? META_FALLBACK).label}
                           </Badge>
                         </div>
                         <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">

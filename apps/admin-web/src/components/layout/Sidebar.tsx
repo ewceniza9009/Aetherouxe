@@ -22,6 +22,8 @@ import {
   Wrench,
   PieChart,
   BarChart3,
+  UserCog,
+  IdCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -67,6 +69,8 @@ const navItems: NavItem[] = [
   { label: "Documents", icon: <FileText size={20} />, path: "/documents" },
   { label: "Owner P&L", icon: <PieChart size={20} />, path: "/owner-pnl" },
   { label: "Analytics", icon: <BarChart3 size={20} />, path: "/analytics" },
+  { label: "Users", icon: <UserCog size={20} />, path: "/users" },
+  { label: "Profile", icon: <IdCard size={20} />, path: "/profile" },
   { label: "Settings", icon: <Settings size={20} />, path: "/settings" },
 ];
 

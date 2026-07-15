@@ -41,6 +41,7 @@ import CommissionsPage from "./pages/CommissionsPage";
 import CommissionAgingPage from "./pages/CommissionAgingPage";
 import FinancePage from "./pages/FinancePage";
 import SettingsPage from "./pages/SettingsPage";
+import ProfilePage from "./pages/ProfilePage";
 import CollectionsPage from "./pages/CollectionsPage";
 import ArAgingPage from "./pages/ArAgingPage";
 import StatementsPage from "./pages/StatementsPage";
@@ -59,6 +60,7 @@ import ServiceRequestDetailPage from "./pages/ServiceRequestDetailPage";
 import DocumentsPage from "./pages/DocumentsPage";
 import DocumentDetailPage from "./pages/DocumentDetailPage";
 import OwnerPnlPage from "./pages/OwnerPnlPage";
+import UsersPage from "./pages/UsersPage";
 import PnlDetailPage from "./pages/PnlDetailPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -307,6 +309,12 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 });
 
+const profileRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/profile",
+  component: ProfilePage,
+});
+
 const collectionsRoute = createRoute({
   getParentRoute: () => protectedLayout,
   path: "/collections",
@@ -427,6 +435,12 @@ const analyticsRoute = createRoute({
   component: AnalyticsPage,
 });
 
+const usersRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/users",
+  component: UsersPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -466,6 +480,7 @@ const routeTree = rootRoute.addChildren([
     commissionAgingRoute,
     financeRoute,
     settingsRoute,
+    profileRoute,
     collectionsRoute,
     arAgingRoute,
     statementsRoute,
@@ -486,6 +501,7 @@ const routeTree = rootRoute.addChildren([
     ownerPnlRoute,
     pnlDetailRoute,
     analyticsRoute,
+    usersRoute,
   ]),
 ]);
 

@@ -13,8 +13,20 @@ async function bootstrap() {
 
   app.use(helmet());
 
+  // CORS: restrict to known portal origins (supports credentials).
+  // Configure via ALLOWED_ORIGINS (comma-separated). Requests without an
+  // Origin header (server-to-server, health checks, smoke tests) are allowed.
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS ||
+    'http://admin.localhost,http://owner.localhost,http://resident.localhost,http://api.localhost,http://localhost:8080')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: true,
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      cb(new Error(`CORS: origin '${origin}' not allowed`));
+    },
     credentials: true,
   });
 

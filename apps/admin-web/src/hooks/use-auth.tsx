@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import type { UserType } from "@elite-realty/shared-types";
 import api from "@/lib/api";
+import { bootstrapSettings } from "@/lib/settings-store";
 
 interface User {
   id: string;
@@ -34,6 +35,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    if (localStorage.getItem("accessToken")) {
+      void bootstrapSettings();
+    }
+  }, []);
+
   const refetchUser = useCallback(async () => {
     if (!localStorage.getItem("accessToken")) return;
     try {
@@ -56,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("refreshToken", body.refreshToken);
       localStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
+      void bootstrapSettings();
     } finally {
       setIsLoading(false);
     }

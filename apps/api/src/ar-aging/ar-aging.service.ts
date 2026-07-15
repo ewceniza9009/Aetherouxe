@@ -11,7 +11,7 @@ const BUCKET_ORDER: BucketName[] = [
   'Bucket120Plus',
 ];
 
-function bucketForDays(days: number): BucketName {
+export function bucketForDays(days: number): BucketName {
   if (days <= 0) return 'Current';
   if (days <= 30) return 'Bucket31_60';
   if (days <= 60) return 'Bucket61_90';

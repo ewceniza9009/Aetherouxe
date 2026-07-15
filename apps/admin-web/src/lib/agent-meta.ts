@@ -120,13 +120,7 @@ export const RELEASE_TYPE_LABELS: Record<CommissionReleaseType, string> = {
   adjustment: "Adjustment",
 };
 
-export function formatCurrency(value?: number | null): string {
-  if (value === undefined || value === null) return "—";
-  return `$${value.toLocaleString(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })}`;
-}
+export { formatCurrency } from "./settings-store";
 
 export function formatDate(value?: string | null): string {
   if (!value) return "—";

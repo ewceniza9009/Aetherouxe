@@ -41,16 +41,14 @@ import {
   usePnlStatements,
   useGeneratePnl,
   type OwnerPnlStatement,
-  type PnlStatus,
 } from "@/hooks/use-owner-pnl";
 
-const pnlStatusMeta: Record<PnlStatus, { label: string; variant: any }> = {
+const pnlStatusMeta: Record<string, { label: string; variant: any }> = {
   draft: { label: "Draft", variant: "secondary" },
-  generated: { label: "Generated", variant: "default" },
-  sent: { label: "Sent", variant: "warning" },
-  paid: { label: "Paid", variant: "success" },
-  archived: { label: "Archived", variant: "destructive" },
+  issued: { label: "Issued", variant: "default" },
 };
+
+const PNL_STATUS_FALLBACK = { label: "Unknown", variant: "secondary" };
 
 function money(n: number) {
   return `$${Number(n ?? 0).toLocaleString(undefined, {
@@ -210,8 +208,8 @@ export default function OwnerPnlPage() {
                           {money(s.netIncome)}
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant={pnlStatusMeta[s.status].variant}>
-                            {pnlStatusMeta[s.status].label}
+                          <Badge variant={(pnlStatusMeta[s.status] ?? PNL_STATUS_FALLBACK).variant}>
+                            {(pnlStatusMeta[s.status] ?? PNL_STATUS_FALLBACK).label}
                           </Badge>
                         </td>
                       </tr>

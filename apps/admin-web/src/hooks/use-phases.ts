@@ -21,8 +21,21 @@ export function usePhases(projectId: string) {
     queryKey: ["phases", projectId],
     queryFn: async () => {
       const params = new URLSearchParams({ projectId });
-      const { data } = await api.get<ApiResponse<Phase[]>>(`/phases?${params}`);
-      return data.data;
+      const { data } = await api.get<ApiResponse<any[]>>(`/phases?${params}`);
+      const rows: any[] = data.data ?? [];
+      return rows.map((p) => ({
+        id: p.id,
+        projectId: p.projectId,
+        name: p.phaseName ?? p.name,
+        description: p.description,
+        status: p.status,
+        startDate: p.targetStart ?? p.startDate,
+        endDate: p.targetEnd ?? p.endDate,
+        progress:
+          p.progress ??
+          (p.status === "completed" ? 100 : p.status === "in_progress" ? 50 : p.status === "delayed" ? 50 : 0),
+        order: p.phaseOrder ?? p.order,
+      })) as Phase[];
     },
     enabled: !!projectId,
   });

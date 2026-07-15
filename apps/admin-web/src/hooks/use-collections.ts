@@ -540,13 +540,7 @@ export const CASE_PRIORITY_LABELS: Record<CollectionCasePriority, string> = {
   critical: "Critical",
 };
 
-export function formatCurrency(value?: number | null): string {
-  if (value === undefined || value === null) return "—";
-  return `$${value.toLocaleString(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })}`;
-}
+export { formatCurrency } from "../lib/settings-store";
 
 export function formatDate(value?: string | null): string {
   if (!value) return "—";
