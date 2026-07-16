@@ -15,15 +15,16 @@ import {
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { LeaseType } from "@elite-realty/shared-types";
 import { useProperties } from "@/hooks/use-properties";
+import { useUsers } from "@/hooks/use-users";
 import { useCreateLease, type Lease } from "@/hooks/use-leases";
 
 export default function NewLeasePage() {
   const navigate = useNavigate();
   const { data: propertiesData, isLoading: loadingProps } = useProperties({ limit: 100 });
+  const { data: usersData, isLoading: loadingUsers } = useUsers({ userType: "tenant", limit: 500 });
   const createLease = useCreateLease();
 
-  const [tenantName, setTenantName] = useState("");
-  const [tenantEmail, setTenantEmail] = useState("");
+  const [tenantUserId, setTenantUserId] = useState("");
   const [propertyId, setPropertyId] = useState("");
   const [leaseType, setLeaseType] = useState<LeaseType>(LeaseType.StandardRental);
   const [startDate, setStartDate] = useState("");
@@ -34,13 +35,12 @@ export default function NewLeasePage() {
   const [graceDays, setGraceDays] = useState("");
 
   const properties = propertiesData?.data ?? [];
+  const residents = (usersData?.data ?? []).filter((u) => u.userType === "tenant");
 
   const handleSubmit = async () => {
     const payload: Partial<Lease> = {
-      tenantName,
-      tenantEmail,
+      tenantUserId,
       propertyId: propertyId || undefined,
-      propertyName: properties.find((p) => p.id === propertyId)?.name,
       leaseType,
       startDate,
       endDate,
@@ -48,13 +48,12 @@ export default function NewLeasePage() {
       securityDeposit: deposit ? parseFloat(deposit) : undefined,
       penaltyPercent: penalty ? parseFloat(penalty) : undefined,
       graceDays: graceDays ? parseInt(graceDays, 10) : undefined,
-      status: "pending",
     };
     const created = await createLease.mutateAsync(payload);
     navigate({ to: `/leases/${created.id}` });
   };
 
-  const canSubmit = tenantName && tenantEmail && startDate && endDate && monthlyRent && !createLease.isPending;
+  const canSubmit = tenantUserId && startDate && endDate && monthlyRent && !createLease.isPending;
 
   return (
     <div className="space-y-6">
@@ -75,18 +74,19 @@ export default function NewLeasePage() {
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="tenantName">Tenant Name</Label>
-              <Input id="tenantName" value={tenantName} onChange={(e) => setTenantName(e.target.value)} placeholder="Jane Doe" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="tenantEmail">Tenant Email</Label>
-              <Input
-                id="tenantEmail"
-                type="email"
-                value={tenantEmail}
-                onChange={(e) => setTenantEmail(e.target.value)}
-                placeholder="jane@example.com"
-              />
+              <Label htmlFor="tenant">Tenant (Resident)</Label>
+              <Select value={tenantUserId} onValueChange={setTenantUserId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={loadingUsers ? "Loading residents..." : "Select resident"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {residents.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {[u.firstName, u.lastName].filter(Boolean).join(" ") || u.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="property">Property</Label>

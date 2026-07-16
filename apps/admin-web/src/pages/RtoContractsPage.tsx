@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { formatCurrency } from "@/lib/agent-meta";
 import {
   useReactTable,
   getCoreRowModel,
@@ -53,7 +54,7 @@ const statusLabel: Record<RtoStatus, string> = {
 };
 
 function money(n: number) {
-  return `$${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatCurrency(n ?? 0, 2);
 }
 
 export default function RtoContractsPage() {

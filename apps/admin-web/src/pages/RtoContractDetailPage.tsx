@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
+import { formatCurrency } from "@/lib/agent-meta";
 import * as Tabs from "@radix-ui/react-tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,7 @@ const ledgerLabel: Record<string, string> = {
 };
 
 function money(n: number | null | undefined) {
-  return `$${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatCurrency(n ?? 0, 2);
 }
 
 export default function RtoContractDetailPage() {

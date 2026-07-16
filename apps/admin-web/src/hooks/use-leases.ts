@@ -72,7 +72,7 @@ export function transformLease(l: any): Lease {
     tenantEmail: l.tenant?.email ?? "",
     tenantUserId: l.tenantUserId,
     propertyId: l.propertyId,
-    propertyName: l.property?.propertyCode ?? "",
+    propertyName: l.property?.name ?? l.property?.propertyCode ?? "",
     unitLabel: l.unitLabel,
     leaseType: l.leaseType,
     startDate: l.startDate,
@@ -117,11 +117,25 @@ export function useLease(id: string) {
   });
 }
 
+export function toCreateLeasePayload(lease: Partial<Lease>): Record<string, unknown> {
+  return {
+    propertyId: lease.propertyId,
+    tenantUserId: lease.tenantUserId,
+    leaseType: lease.leaseType,
+    startDate: lease.startDate,
+    endDate: lease.endDate,
+    monthlyRentAmount: Number(lease.monthlyRent),
+    securityDepositAmount: lease.securityDeposit != null ? String(lease.securityDeposit) : undefined,
+    latePaymentPenaltyPercent: lease.penaltyPercent != null ? String(lease.penaltyPercent) : undefined,
+    gracePeriodDays: lease.graceDays,
+  };
+}
+
 export function useCreateLease() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<Lease>) => {
-      const { data } = await api.post<ApiResponse<Lease>>("/leases", payload);
+      const { data } = await api.post<ApiResponse<Lease>>("/leases", toCreateLeasePayload(payload));
       return data.data;
     },
     onSuccess: () => {
@@ -134,7 +148,7 @@ export function useUpdateLease() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...payload }: Partial<Lease> & { id: string }) => {
-      const { data } = await api.patch<ApiResponse<Lease>>(`/leases/${id}`, payload);
+      const { data } = await api.patch<ApiResponse<Lease>>(`/leases/${id}`, toCreateLeasePayload(payload));
       return data.data;
     },
     onSuccess: (result, variables) => {

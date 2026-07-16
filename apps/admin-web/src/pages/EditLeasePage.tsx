@@ -16,6 +16,7 @@ import {
 import { ArrowLeft, Loader2, Save, AlertCircle } from "lucide-react";
 import { LeaseType } from "@elite-realty/shared-types";
 import { useProperties } from "@/hooks/use-properties";
+import { useUsers } from "@/hooks/use-users";
 import { useLease, useUpdateLease, type Lease } from "@/hooks/use-leases";
 
 export default function EditLeasePage() {
@@ -23,10 +24,10 @@ export default function EditLeasePage() {
   const navigate = useNavigate();
   const { data: lease, isLoading, error } = useLease(id);
   const { data: propertiesData, isLoading: loadingProps } = useProperties({ limit: 100 });
+  const { data: usersData, isLoading: loadingUsers } = useUsers({ userType: "tenant", limit: 500 });
   const updateLease = useUpdateLease();
 
-  const [tenantName, setTenantName] = useState("");
-  const [tenantEmail, setTenantEmail] = useState("");
+  const [tenantUserId, setTenantUserId] = useState("");
   const [propertyId, setPropertyId] = useState("");
   const [leaseType, setLeaseType] = useState<LeaseType>(LeaseType.StandardRental);
   const [startDate, setStartDate] = useState("");
@@ -37,6 +38,7 @@ export default function EditLeasePage() {
   const [graceDays, setGraceDays] = useState("");
 
   const properties = propertiesData?.data ?? [];
+  const residents = (usersData?.data ?? []).filter((u) => u.userType === "tenant");
 
   if (isLoading || !lease) {
     return (
@@ -64,9 +66,8 @@ export default function EditLeasePage() {
   }
 
   const initializeOnce = () => {
-    if (tenantName || tenantEmail || startDate || endDate || monthlyRent) return;
-    setTenantName(lease.tenantName);
-    setTenantEmail(lease.tenantEmail);
+    if (tenantUserId || startDate || endDate || monthlyRent) return;
+    setTenantUserId(lease.tenantUserId ?? "");
     setPropertyId(lease.propertyId ?? "");
     setLeaseType(lease.leaseType);
     setStartDate(lease.startDate?.slice(0, 10));
@@ -81,10 +82,8 @@ export default function EditLeasePage() {
   const handleSubmit = async () => {
     const payload: Partial<Lease> & { id: string } = {
       id,
-      tenantName,
-      tenantEmail,
+      tenantUserId,
       propertyId: propertyId || undefined,
-      propertyName: properties.find((p) => p.id === propertyId)?.name,
       leaseType,
       startDate,
       endDate,
@@ -97,7 +96,7 @@ export default function EditLeasePage() {
     navigate({ to: `/leases/${id}` });
   };
 
-  const canSubmit = tenantName && tenantEmail && startDate && endDate && monthlyRent && !updateLease.isPending;
+  const canSubmit = tenantUserId && startDate && endDate && monthlyRent && !updateLease.isPending;
 
   return (
     <div className="space-y-6">
@@ -118,12 +117,19 @@ export default function EditLeasePage() {
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="tenantName">Tenant Name</Label>
-              <Input id="tenantName" value={tenantName} onChange={(e) => setTenantName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="tenantEmail">Tenant Email</Label>
-              <Input id="tenantEmail" type="email" value={tenantEmail} onChange={(e) => setTenantEmail(e.target.value)} />
+              <Label htmlFor="tenant">Tenant (Resident)</Label>
+              <Select value={tenantUserId} onValueChange={setTenantUserId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={loadingUsers ? "Loading residents..." : "Select resident"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {residents.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {[u.firstName, u.lastName].filter(Boolean).join(" ") || u.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="property">Property</Label>

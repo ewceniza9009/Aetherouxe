@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
+import { formatCurrency } from "@/lib/agent-meta";
 import * as Tabs from "@radix-ui/react-tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -257,11 +258,11 @@ export default function LeaseDetailPage() {
               <Detail label="End Date" value={new Date(lease.endDate).toLocaleDateString()} />
               <Detail
                 label="Monthly Rent"
-                value={`$${lease.monthlyRent.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                value={formatCurrency(lease.monthlyRent, 2)}
               />
               <Detail
                 label="Security Deposit"
-                value={lease.securityDeposit != null ? `$${lease.securityDeposit.toLocaleString()}` : "—"}
+                value={lease.securityDeposit != null ? formatCurrency(lease.securityDeposit, 2) : "—"}
               />
               <Detail label="Penalty %" value={lease.penaltyPercent != null ? `${lease.penaltyPercent}%` : "—"} />
               <Detail label="Grace Days" value={lease.graceDays != null ? String(lease.graceDays) : "—"} />
