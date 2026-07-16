@@ -93,6 +93,7 @@ services:
       S3_BUCKET: "elite-realty"
       DEFAULT_TENANT_DOMAIN: "localhost"
       PORT: "4000"
+      ALLOWED_ORIGINS: "http://admin.localhost:8080,http://owner.localhost:8080,http://resident.localhost:8080,http://api.localhost:8080,http://localhost:8080,http://admin.localhost,http://owner.localhost,http://resident.localhost,http://api.localhost,http://localhost:3000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s

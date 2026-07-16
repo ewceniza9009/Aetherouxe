@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/agent-meta";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -54,7 +55,7 @@ function computeSchedule(
 }
 
 function money(n: number) {
-  return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatCurrency(Number(n));
 }
 
 export default function MortgageScenarioPage() {

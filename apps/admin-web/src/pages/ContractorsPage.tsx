@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { useContractors, useEngagements } from "@/hooks/use-contractors";
 import type { Contractor } from "@/hooks/use-contractors";
+import { formatCurrency } from "@/lib/agent-meta";
 
 const columnHelper = createColumnHelper<Contractor>();
 
@@ -221,7 +222,7 @@ export default function ContractorsPage() {
               </p>
             </div>
           ) : (
-            <div className="rounded-md border overflow-x-auto">
+            <div className="rounded-md border scroll-grid">
               <table className="w-full">
                 <thead>
                   {table.getHeaderGroups().map((headerGroup) => (
@@ -269,11 +270,11 @@ export default function ContractorsPage() {
                                   <div key={eng.id} className="flex items-center justify-between bg-background rounded-md border p-3">
                                     <div>
                                       <p className="text-sm font-medium">{eng.projectName || `Project ${eng.projectId}`}</p>
-                                      <p className="text-xs text-muted-foreground">${eng.contractAmount.toLocaleString()} contract</p>
+                                       <p className="text-xs text-muted-foreground">{formatCurrency(Number(eng.contractAmount))} contract</p>
                                     </div>
                                     <div className="flex items-center gap-3">
                                       <div className="text-right">
-                                        <p className="text-sm">${eng.paidAmount.toLocaleString()} paid</p>
+                                         <p className="text-sm">{formatCurrency(Number(eng.paidAmount))} paid</p>
                                         <p className="text-xs text-muted-foreground">
                                           {eng.contractAmount > 0
                                             ? `${((eng.paidAmount / eng.contractAmount) * 100).toFixed(0)}%`

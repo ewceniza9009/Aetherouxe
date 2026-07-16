@@ -46,6 +46,21 @@ import {
   type ServicePriority,
   type ServiceStatus,
 } from "@/hooks/use-service-requests";
+import { useProperties } from "@/hooks/use-properties";
+import { useUnits } from "@/hooks/use-units";
+
+function getTenantId(): string {
+  try {
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed.tenantId) return parsed.tenantId;
+    }
+  } catch {
+    // ignore
+  }
+  return "";
+}
 
 const priorityMeta: Record<
   ServicePriority,
@@ -83,6 +98,8 @@ const categoryMeta: Record<ServiceCategory, string> = {
 
 export default function ServiceRequestsPage() {
   const navigate = useNavigate();
+  const { data: propertiesData } = useProperties({ limit: 200 });
+  const { data: unitsData } = useUnits({ limit: 200 });
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -106,8 +123,8 @@ export default function ServiceRequestsPage() {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    tenantName: "",
-    unitLabel: "",
+    tenantId: getTenantId(),
+    unitId: "",
     propertyId: "",
     category: "general" as ServiceCategory,
     priority: "medium" as ServicePriority,
@@ -123,8 +140,8 @@ export default function ServiceRequestsPage() {
     setSaving(true);
     try {
       await createRequest.mutateAsync({
-        tenantName: form.tenantName || undefined,
-        unitLabel: form.unitLabel || undefined,
+        tenantId: form.tenantId || undefined,
+        unitId: form.unitId || undefined,
         propertyId: form.propertyId || undefined,
         category: form.category,
         priority: form.priority,
@@ -134,8 +151,8 @@ export default function ServiceRequestsPage() {
       });
       setOpen(false);
       setForm({
-        tenantName: "",
-        unitLabel: "",
+        tenantId: getTenantId(),
+        unitId: "",
         propertyId: "",
         category: "general",
         priority: "medium",
@@ -249,7 +266,7 @@ export default function ServiceRequestsPage() {
             </div>
           ) : (
             <>
-              <div className="rounded-md border overflow-x-auto">
+              <div className="rounded-md border scroll-grid">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b bg-muted/50">
@@ -300,9 +317,9 @@ export default function ServiceRequestsPage() {
                           {new Date(r.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3 text-sm">
-                          <div>{r.tenantName || "—"}</div>
+                          <div>{r.tenant?.name || "—"}</div>
                           <div className="text-xs text-muted-foreground">
-                            {r.unitLabel || "—"}
+                            {r.unit?.unitNumber || "—"}
                           </div>
                         </td>
                       </tr>
@@ -348,32 +365,47 @@ export default function ServiceRequestsPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="tenantName">Tenant</Label>
-                <Input
-                  id="tenantName"
-                  value={form.tenantName}
-                  onChange={(e) => setForm((f) => ({ ...f, tenantName: e.target.value }))}
-                  placeholder="Tenant name"
-                />
+                <Label>Unit</Label>
+                <Select
+                  value={form.unitId}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, unitId: v === "none" ? "" : v }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {(unitsData?.data ?? []).map((u) => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.unitNumber}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="unitLabel">Unit</Label>
-                <Input
-                  id="unitLabel"
-                  value={form.unitLabel}
-                  onChange={(e) => setForm((f) => ({ ...f, unitLabel: e.target.value }))}
-                  placeholder="e.g. Unit 12A"
-                />
+                <Label>Property</Label>
+                <Select
+                  value={form.propertyId}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, propertyId: v === "none" ? "" : v }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select property" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {(propertiesData?.data ?? []).map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="propertyId">Property ID</Label>
-              <Input
-                id="propertyId"
-                value={form.propertyId}
-                onChange={(e) => setForm((f) => ({ ...f, propertyId: e.target.value }))}
-                placeholder="Property reference"
-              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

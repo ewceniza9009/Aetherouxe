@@ -41,6 +41,7 @@ import {
   CalendarDays,
   Megaphone,
 } from "lucide-react";
+import { formatCurrency } from "@/lib/agent-meta";
 import {
   useAmenity,
   useBookings,
@@ -87,10 +88,7 @@ const audienceMeta: Record<string, { label: string; className: string }> = {
 const META_FALLBACK = { label: "Unknown", className: "bg-slate-100 text-slate-700 border-slate-200" };
 
 function money(n: number) {
-  return `$${Number(n ?? 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  return formatCurrency(Number(n ?? 0));
 }
 
 function SummaryCard({
@@ -609,3 +607,4 @@ export default function AmenityDetailPage() {
     </div>
   );
 }
+

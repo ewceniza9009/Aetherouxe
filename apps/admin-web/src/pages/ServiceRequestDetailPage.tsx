@@ -44,6 +44,7 @@ import {
   User,
   FileText,
 } from "lucide-react";
+import { formatCurrency } from "@/lib/agent-meta";
 import {
   useServiceRequest,
   useAssignRequest,
@@ -92,7 +93,6 @@ const categoryMeta: Record<ServiceCategory, string> = {
 };
 
 const woStatusMeta: Record<WorkOrderStatus, { label: string; variant: any }> = {
-  pending: { label: "Pending", variant: "default" },
   scheduled: { label: "Scheduled", variant: "secondary" },
   in_progress: { label: "In Progress", variant: "warning" },
   completed: { label: "Completed", variant: "success" },
@@ -100,10 +100,7 @@ const woStatusMeta: Record<WorkOrderStatus, { label: string; variant: any }> = {
 };
 
 function money(n: number) {
-  return `$${Number(n ?? 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  return formatCurrency(Number(n ?? 0));
 }
 
 function SummaryCard({
@@ -146,15 +143,15 @@ export default function ServiceRequestDetailPage() {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [woOpen, setWoOpen] = useState(false);
 
-  const [assignForm, setAssignForm] = useState({ assignedToId: "", assignedToName: "" });
+  const [assignForm, setAssignForm] = useState({ assignedToId: "", assignedToType: "" });
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [woForm, setWoForm] = useState({
-    vendor: "",
+    vendorId: "",
     estimatedCost: "",
     actualCost: "",
     scheduledDate: "",
     notes: "",
-    status: "pending" as WorkOrderStatus,
+    status: "scheduled" as WorkOrderStatus,
   });
 
   const workOrders = useMemo(
@@ -196,10 +193,10 @@ export default function ServiceRequestDetailPage() {
     await assign.mutateAsync({
       id: request.id,
       assignedToId: assignForm.assignedToId,
-      assignedToName: assignForm.assignedToName || undefined,
+      assignedToType: assignForm.assignedToType,
     });
     setAssignOpen(false);
-    setAssignForm({ assignedToId: "", assignedToName: "" });
+    setAssignForm({ assignedToId: "", assignedToType: "" });
   };
 
   const handleComplete = async () => {
@@ -217,7 +214,7 @@ export default function ServiceRequestDetailPage() {
   const handleCreateWo = async () => {
     await createWorkOrder.mutateAsync({
       serviceRequestId: request.id,
-      vendor: woForm.vendor || undefined,
+      vendorId: woForm.vendorId || undefined,
       estimatedCost: woForm.estimatedCost ? Number(woForm.estimatedCost) : undefined,
       actualCost: woForm.actualCost ? Number(woForm.actualCost) : undefined,
       scheduledDate: woForm.scheduledDate || undefined,
@@ -226,12 +223,12 @@ export default function ServiceRequestDetailPage() {
     });
     setWoOpen(false);
     setWoForm({
-      vendor: "",
+      vendorId: "",
       estimatedCost: "",
       actualCost: "",
       scheduledDate: "",
       notes: "",
-      status: "pending",
+      status: "scheduled",
     });
   };
 
@@ -364,7 +361,7 @@ export default function ServiceRequestDetailPage() {
                   <TableBody>
                     {workOrders.map((w: WorkOrder) => (
                       <TableRow key={w.id}>
-                        <TableCell className="font-medium">{w.vendor || "—"}</TableCell>
+                        <TableCell className="font-medium">{w.vendorId || "—"}</TableCell>
                         <TableCell className="text-right tabular-nums">
                           {w.estimatedCost != null ? money(w.estimatedCost) : "—"}
                         </TableCell>
@@ -408,9 +405,9 @@ export default function ServiceRequestDetailPage() {
                   {workOrders.map((w: WorkOrder) => (
                     <li key={w.id} className="relative">
                       <span className="absolute -left-[27px] top-1.5 h-3 w-3 rounded-full bg-accent" />
-                      <p className="text-sm font-medium">
-                        Work order created{ w.vendor ? ` · ${w.vendor}` : "" }
-                      </p>
+                       <p className="text-sm font-medium">
+                         Work order created{ w.vendorId ? ` · ${w.vendorId}` : "" }
+                       </p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(w.createdAt).toLocaleString()} ·{" "}
                         {woStatusMeta[w.status].label}
@@ -443,15 +440,22 @@ export default function ServiceRequestDetailPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="assignedToName">Assignee Name</Label>
-              <Input
-                id="assignedToName"
-                value={assignForm.assignedToName}
-                onChange={(e) =>
-                  setAssignForm((f) => ({ ...f, assignedToName: e.target.value }))
+              <Label>Assignee Type</Label>
+              <Select
+                value={assignForm.assignedToType}
+                onValueChange={(v) =>
+                  setAssignForm((f) => ({ ...f, assignedToType: v }))
                 }
-                placeholder="Display name"
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="vendor">Vendor</SelectItem>
+                  <SelectItem value="team">Team</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>
@@ -535,12 +539,12 @@ export default function ServiceRequestDetailPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="vendor">Vendor</Label>
+              <Label htmlFor="vendorId">Vendor</Label>
               <Input
-                id="vendor"
-                value={woForm.vendor}
-                onChange={(e) => setWoForm((f) => ({ ...f, vendor: e.target.value }))}
-                placeholder="Vendor name"
+                id="vendorId"
+                value={woForm.vendorId}
+                onChange={(e) => setWoForm((f) => ({ ...f, vendorId: e.target.value }))}
+                placeholder="Vendor ID"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -628,3 +632,4 @@ export default function ServiceRequestDetailPage() {
     </div>
   );
 }
+

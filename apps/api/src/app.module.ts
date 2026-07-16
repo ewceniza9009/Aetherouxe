@@ -42,6 +42,7 @@ import { ReportsModule } from './reports/reports.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SettingsModule } from './settings/settings.module';
 import { UsersModule } from './users/users.module';
+import { SalesModule } from './sales/sales.module';
 
 @Module({
   imports: [
@@ -83,6 +84,7 @@ import { UsersModule } from './users/users.module';
     NotificationsModule,
     SettingsModule,
     UsersModule,
+    SalesModule,
     ...(process.env.MONGODB_URI ? [MongodbModule] : []),
     ThrottlerModule.forRoot([
       {

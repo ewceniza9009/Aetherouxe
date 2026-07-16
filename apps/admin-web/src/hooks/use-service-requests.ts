@@ -21,7 +21,6 @@ export type ServiceStatus =
   | "cancelled";
 
 export type WorkOrderStatus =
-  | "pending"
   | "scheduled"
   | "in_progress"
   | "completed"
@@ -40,6 +39,8 @@ export interface ServiceRequest {
   unitLabel?: string | null;
   tenantName?: string | null;
   tenantId?: string | null;
+  tenant?: { id: string; name?: string } | null;
+  unit?: { id: string; unitNumber?: string } | null;
   requestedById?: string | null;
   assignedToId?: string | null;
   assignedToName?: string | null;
@@ -53,7 +54,7 @@ export interface ServiceRequest {
 export interface WorkOrder {
   id: string;
   serviceRequestId: string;
-  vendor?: string | null;
+  vendorId?: string | null;
   estimatedCost?: number | null;
   actualCost?: number | null;
   scheduledDate?: string | null;
@@ -140,15 +141,15 @@ export function useAssignRequest() {
     mutationFn: async ({
       id,
       assignedToId,
-      assignedToName,
+      assignedToType,
     }: {
       id: string;
       assignedToId: string;
-      assignedToName?: string;
+      assignedToType: string;
     }) => {
       const { data } = await api.post<ApiResponse<ServiceRequest>>(
         `/service-requests/${id}/assign`,
-        { assignedToId, assignedToName }
+        { assignedToId, assignedToType }
       );
       return data.data;
     },

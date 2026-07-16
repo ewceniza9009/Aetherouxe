@@ -49,6 +49,7 @@ import CollectionCasesPage from "./pages/CollectionCasesPage";
 import CollectionCaseDetailPage from "./pages/CollectionCaseDetailPage";
 import PaymentRemindersPage from "./pages/PaymentRemindersPage";
 import MetersPage from "./pages/MetersPage";
+import SalesPage from "./pages/SalesPage";
 import MeterDetailPage from "./pages/MeterDetailPage";
 import ReadingsPage from "./pages/ReadingsPage";
 import UtilityBillsPage from "./pages/UtilityBillsPage";
@@ -375,6 +376,12 @@ const utilityBillsRoute = createRoute({
   component: UtilityBillsPage,
 });
 
+const salesRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/sales",
+  component: SalesPage,
+});
+
 const amenitiesRoute = createRoute({
   getParentRoute: () => protectedLayout,
   path: "/amenities",
@@ -491,6 +498,7 @@ const routeTree = rootRoute.addChildren([
     meterDetailRoute,
     readingsRoute,
     utilityBillsRoute,
+    salesRoute,
     amenitiesRoute,
     amenityDetailRoute,
     communityPostsRoute,

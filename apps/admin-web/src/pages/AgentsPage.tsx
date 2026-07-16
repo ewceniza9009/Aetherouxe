@@ -204,8 +204,8 @@ export default function AgentsPage() {
                   <SelectItem value="all">All Tiers</SelectItem>
                   <SelectItem value="junior">Junior</SelectItem>
                   <SelectItem value="senior">Senior</SelectItem>
-                  <SelectItem value="lead">Lead</SelectItem>
-                  <SelectItem value="director">Director</SelectItem>
+                  <SelectItem value="team_lead">Team Lead</SelectItem>
+                  <SelectItem value="external_broker">External Broker</SelectItem>
                 </SelectContent>
               </Select>
               <label className="flex items-center gap-2 text-sm text-muted-foreground">

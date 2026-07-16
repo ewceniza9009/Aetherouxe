@@ -5,7 +5,7 @@ export interface CurrencyMeta {
   symbol: string;
 }
 
-let currencyMeta: CurrencyMeta = { code: "PHP", symbol: "" };
+let currencyMeta: CurrencyMeta = { code: "PHP", symbol: "₱" };
 
 export function getCurrencyMeta(): CurrencyMeta {
   return currencyMeta;
@@ -39,9 +39,10 @@ export function bootstrapSettings(): Promise<void> {
 export function formatCurrency(value?: number | null): string {
   if (value === undefined || value === null) return "—";
   const { code, symbol } = getCurrencyMeta();
-  const num = value.toLocaleString(undefined, {
+  const num = value.toLocaleString("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
+    useGrouping: true,
   });
   if (symbol) return `${symbol}${num}`;
   try {

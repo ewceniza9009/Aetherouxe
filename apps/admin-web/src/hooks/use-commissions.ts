@@ -3,7 +3,11 @@ import api from "@/lib/api";
 import { AgentTier, PropertyType } from "@elite-realty/shared-types";
 import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
 
-export type CommissionRuleType = "percentage" | "flat";
+export type CommissionRuleType =
+  | "flat_amount"
+  | "percentage_of_sale"
+  | "percentage_of_rent"
+  | "tiered";
 export type CommissionRuleScope = "all" | AgentTier;
 export type CommissionRulePropertyScope = "all" | PropertyType;
 
@@ -13,7 +17,7 @@ export interface CommissionRule {
   tier: CommissionRuleScope;
   propertyType: CommissionRulePropertyScope;
   type: CommissionRuleType;
-  value: number;
+  value: number | Array<{ upto: number | null; rate: number }>;
   status: "active" | "inactive";
   createdAt: string;
   updatedAt?: string;
@@ -24,21 +28,22 @@ export interface CommissionRulePayload {
   tier: CommissionRuleScope;
   propertyType: CommissionRulePropertyScope;
   type: CommissionRuleType;
-  value: number;
+  value: number | Array<{ upto: number | null; rate: number }>;
   status?: "active" | "inactive";
 }
 
 export type AgentTransactionType =
   | "sale"
-  | "lease"
-  | "rental"
-  | "referral"
-  | "renewal";
+  | "rental_lease"
+  | "rto_contract"
+  | "lease_renewal";
 
 export type AgentTransactionStatus =
   | "pending"
   | "approved"
   | "paid"
+  | "partially_paid"
+  | "fully_paid"
   | "rejected"
   | "cancelled";
 
@@ -49,7 +54,9 @@ export interface AgentTransaction {
   type: AgentTransactionType;
   propertyId?: string;
   propertyName?: string;
-  clientName?: string;
+  transactionAmount: number;
+  commissionRuleId?: string;
+  leaseAgreementId?: string;
   amount: number;
   commissionRate?: number;
   commissionAmount: number;
@@ -235,8 +242,9 @@ export interface AgentTransactionPayload {
   agentId: string;
   type: AgentTransactionType;
   propertyId?: string;
-  propertyName?: string;
-  clientName?: string;
+  leaseAgreementId?: string;
+  transactionAmount: number;
+  commissionRuleId?: string;
   amount: number;
   commissionRate?: number;
   commissionAmount: number;

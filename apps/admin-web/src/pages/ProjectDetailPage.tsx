@@ -25,6 +25,7 @@ import { useProject, useProjectTimeline, useDeleteProject } from "@/hooks/use-pr
 import { usePhases } from "@/hooks/use-phases";
 import { useBudgets } from "@/hooks/use-budgets";
 import type { ProjectStatus, ProjectType } from "@/hooks/use-projects";
+import { formatCurrency } from "@/lib/agent-meta";
 
 const statusVariant: Record<ProjectStatus, "default" | "secondary" | "success" | "destructive" | "warning"> = {
   planning: "secondary",
@@ -219,7 +220,7 @@ export default function ProjectDetailPage() {
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-muted-foreground" />
                   <span className="text-2xl font-bold">
-                    {project.totalBudget ? `$${project.totalBudget.toLocaleString()}` : "—"}
+                     {project.totalBudget ? formatCurrency(Number(project.totalBudget)) : "—"}
                   </span>
                 </div>
               </CardContent>
@@ -232,7 +233,7 @@ export default function ProjectDetailPage() {
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-muted-foreground" />
                   <span className="text-2xl font-bold">
-                    {project.totalSpent ? `$${project.totalSpent.toLocaleString()}` : "—"}
+                     {project.totalSpent ? formatCurrency(Number(project.totalSpent)) : "—"}
                   </span>
                 </div>
               </CardContent>
@@ -344,11 +345,11 @@ export default function ProjectDetailPage() {
                     <div className="grid grid-cols-3 gap-4 text-sm">
                       <div>
                         <p className="text-muted-foreground">Planned</p>
-                        <p className="font-medium">${budget.totalPlanned.toLocaleString()}</p>
+                         <p className="font-medium">{formatCurrency(Number(budget.totalPlanned))}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Actual</p>
-                        <p className="font-medium">${budget.totalActual.toLocaleString()}</p>
+                         <p className="font-medium">{formatCurrency(Number(budget.totalActual))}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Variance</p>
@@ -431,3 +432,4 @@ export default function ProjectDetailPage() {
     </div>
   );
 }
+

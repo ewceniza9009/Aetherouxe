@@ -73,3 +73,31 @@ export class MaintenanceWorkOrderController {
   @Delete(':id') @ApiOperation({ summary: 'Delete a maintenance work order' })
   remove(@Param('id') id: string) { return this.service.removeWorkOrder(id); }
 }
+
+@ApiTags('Service Requests')
+@Controller('work-orders')
+export class WorkOrderAliasController {
+  constructor(private readonly service: ServiceRequestsService) {}
+
+  @Post() @ApiOperation({ summary: 'Create a maintenance work order (alias)' })
+  createAlias(@Body() dto: CreateWorkOrderDto) { return this.service.createWorkOrder(dto); }
+
+  @Get() @ApiOperation({ summary: 'List maintenance work orders (alias)' })
+  findAllAlias(@Query('requestId') requestId: string) { return this.service.findAllWorkOrders(requestId); }
+
+  @Get('request/:requestId') @ApiOperation({ summary: 'List work orders for a service request (alias)' })
+  getByRequestAlias(@Param('requestId') requestId: string) {
+    return this.service.getWorkOrdersByRequest(requestId);
+  }
+
+  @Get(':id') @ApiOperation({ summary: 'Get a maintenance work order by ID (alias)' })
+  findOneAlias(@Param('id') id: string) { return this.service.findOneWorkOrder(id); }
+
+  @Patch(':id') @ApiOperation({ summary: 'Update a maintenance work order (alias)' })
+  updateAlias(@Param('id') id: string, @Body() dto: UpdateWorkOrderDto) {
+    return this.service.updateWorkOrder(id, dto);
+  }
+
+  @Delete(':id') @ApiOperation({ summary: 'Delete a maintenance work order (alias)' })
+  removeAlias(@Param('id') id: string) { return this.service.removeWorkOrder(id); }
+}

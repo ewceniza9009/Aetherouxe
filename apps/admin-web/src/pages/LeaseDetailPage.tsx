@@ -228,7 +228,7 @@ export default function LeaseDetailPage() {
                   <DollarSign className="h-4 w-4" /> Monthly Rent
                 </p>
                 <p className="text-lg font-bold">
-                  ${lease.monthlyRent.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  {formatCurrency(Number(lease.monthlyRent))}
                 </p>
               </div>
             </div>
@@ -237,12 +237,25 @@ export default function LeaseDetailPage() {
       </Card>
 
       <Tabs.Root defaultValue="overview">
-        <Tabs.List>
-          <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
-          <Tabs.Trigger value="payments">
+        <Tabs.List className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted p-1">
+          <Tabs.Trigger
+            value="overview"
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+          >
+            Overview
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="payments"
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+          >
             Payments {overdue.length > 0 && <Badge variant="destructive" className="ml-2">{overdue.length} overdue</Badge>}
           </Tabs.Trigger>
-          <Tabs.Trigger value="mortgage">Mortgage Options</Tabs.Trigger>
+          <Tabs.Trigger
+            value="mortgage"
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+          >
+            Mortgage Options
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="overview" className="mt-4">
@@ -258,11 +271,11 @@ export default function LeaseDetailPage() {
               <Detail label="End Date" value={new Date(lease.endDate).toLocaleDateString()} />
               <Detail
                 label="Monthly Rent"
-                value={formatCurrency(lease.monthlyRent, 2)}
+                value={formatCurrency(lease.monthlyRent)}
               />
               <Detail
                 label="Security Deposit"
-                value={lease.securityDeposit != null ? formatCurrency(lease.securityDeposit, 2) : "—"}
+                value={lease.securityDeposit != null ? formatCurrency(lease.securityDeposit) : "—"}
               />
               <Detail label="Penalty %" value={lease.penaltyPercent != null ? `${lease.penaltyPercent}%` : "—"} />
               <Detail label="Grace Days" value={lease.graceDays != null ? String(lease.graceDays) : "—"} />
@@ -290,7 +303,7 @@ export default function LeaseDetailPage() {
               ) : (payments ?? []).length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">No payments recorded yet.</p>
               ) : (
-                <div className="rounded-md border overflow-x-auto">
+                <div className="rounded-md border scroll-grid">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b bg-muted/50">
@@ -308,7 +321,7 @@ export default function LeaseDetailPage() {
                         <tr key={p.id} className="border-b hover:bg-muted/30">
                           <td className="px-4 py-3 text-sm">{p.period ?? "—"}</td>
                           <td className="px-4 py-3 text-sm text-right">
-                            ${p.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {formatCurrency(Number(p.amount))}
                           </td>
                           <td className="px-4 py-3 text-sm">{p.method.replace(/_/g, " ")}</td>
                           <td className="px-4 py-3 text-sm">{p.dueDate ? new Date(p.dueDate).toLocaleDateString() : "—"}</td>
@@ -381,13 +394,13 @@ export default function LeaseDetailPage() {
                           {sc.termMonths / 12} yr · {sc.downPaymentPercent}% down · {sc.interestRate}% APR
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Loan ${sc.loanAmount.toLocaleString()} · Monthly ${sc.monthlyPayment.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          Loan {formatCurrency(Number(sc.loanAmount))} · Monthly {formatCurrency(Number(sc.monthlyPayment))}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-right">
                           <p className="text-xs text-muted-foreground">Total Interest</p>
-                          <p className="font-semibold text-yellow-700">${sc.totalInterest.toLocaleString()}</p>
+                          <p className="font-semibold text-yellow-700">{formatCurrency(Number(sc.totalInterest))}</p>
                         </div>
                         <Button variant="outline" size="sm">View Schedule</Button>
                       </div>
@@ -514,3 +527,4 @@ function Detail({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+

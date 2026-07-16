@@ -22,6 +22,7 @@ import { useServiceRequests } from "@/hooks/use-service-requests";
 import { useDocuments } from "@/hooks/use-documents";
 import { usePortfolioKpis, useRevenueTrend } from "@/hooks/use-reports";
 import type { PortfolioKpis } from "@/hooks/use-reports";
+import { formatCurrency } from "@/lib/agent-meta";
 import api from "@/lib/api";
 import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
 import {
@@ -35,7 +36,7 @@ export default function DashboardPage() {
   const { data: revenueTrend } = useRevenueTrend(6);
 
   const money = (n: number) =>
-    `$${(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+    formatCurrency(Number(n ?? 0));
 
   const stats = [
     { title: "Total Properties", value: (k.totalProperties ?? 0).toLocaleString(), icon: Building2, accent: "text-primary", sub: "Across portfolio" },
@@ -378,11 +379,11 @@ export default function DashboardPage() {
               {revenueTrend && revenueTrend.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={revenueTrend} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-                    <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-                    <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip
-                      contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 13 }}
-                      formatter={(v: any) => [`$${Number(v).toLocaleString()}`, "Revenue"]}
+                     <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
+                     <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} width={56} tickFormatter={(v) => `₱${(Number(v) / 1000).toFixed(0)}k`} />
+                     <Tooltip
+                       contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 13 }}
+                       formatter={(v: any) => [formatCurrency(Number(v)), "Revenue"]}
                     />
                     <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={48} />
                   </BarChart>

@@ -104,18 +104,53 @@ export class UtilityBillsService {
       if (query.toDate) where.issuedDate.lte = new Date(query.toDate);
     }
 
-    const [data, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       this.prisma.utilityBill.findMany({
         where,
         skip,
         take: limit,
         orderBy: { issuedDate: 'desc' },
-        include: { meter: true },
+        include: { meter: true, tenant: true, unit: true },
       }),
       this.prisma.utilityBill.count({ where }),
     ]);
 
+    const data = await this.attachResidents(
+      rows.map((b) => ({
+        ...b,
+        periodStart: b.billingPeriodStart,
+        periodEnd: b.billingPeriodEnd,
+      })),
+    );
+
     return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  private async attachResidents(rows: any[]) {
+    const unitIds = [...new Set(rows.map((r) => r.unitId).filter(Boolean))];
+    const leases = unitIds.length
+      ? await this.prisma.leaseAgreement.findMany({
+          where: { unitId: { in: unitIds }, isActive: true },
+          include: { tenant: true },
+        })
+      : [];
+    const byUnit = new Map(leases.map((l) => [l.unitId, l]));
+    return rows.map((r) => {
+      const lease = r.unitId ? byUnit.get(r.unitId) : null;
+      const u = lease?.tenant;
+      return {
+        ...r,
+        resident: u
+          ? {
+              id: u.id,
+              firstName: u.firstName,
+              lastName: u.lastName,
+              email: u.email,
+              name: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email,
+            }
+          : null,
+      };
+    });
   }
 
   async findOne(id: string) {
@@ -272,3 +307,4 @@ export class UtilityBillsService {
     return { count };
   }
 }
+

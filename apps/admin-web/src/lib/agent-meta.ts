@@ -12,15 +12,15 @@ type BadgeVariant =
 export const TIER_LABELS: Record<AgentTierValue, string> = {
   junior: "Junior",
   senior: "Senior",
-  lead: "Lead",
-  director: "Director",
+  team_lead: "Team Lead",
+  external_broker: "External Broker",
 };
 
 export function tierBadgeVariant(tier: AgentTierValue): BadgeVariant {
   switch (tier) {
-    case "director":
+    case "external_broker":
       return "default";
-    case "lead":
+    case "team_lead":
       return "success";
     case "senior":
       return "secondary";
@@ -83,6 +83,8 @@ export const TRANSACTION_STATUS_LABELS: Record<AgentTransactionStatus, string> =
   pending: "Pending",
   approved: "Approved",
   paid: "Paid",
+  partially_paid: "Partially Paid",
+  fully_paid: "Fully Paid",
   rejected: "Rejected",
   cancelled: "Cancelled",
 };
@@ -92,7 +94,10 @@ export function transactionStatusVariant(
 ): BadgeVariant {
   switch (status) {
     case "paid":
+    case "fully_paid":
       return "success";
+    case "partially_paid":
+      return "default";
     case "approved":
       return "default";
     case "pending":
@@ -106,10 +111,16 @@ export function transactionStatusVariant(
 
 export const TRANSACTION_TYPE_LABELS: Record<string, string> = {
   sale: "Sale",
-  lease: "Lease",
-  rental: "Rental",
-  referral: "Referral",
-  renewal: "Renewal",
+  rental_lease: "Rental Lease",
+  rto_contract: "RTO Contract",
+  lease_renewal: "Lease Renewal",
+};
+
+export const COMMISSION_TYPE_LABELS: Record<string, string> = {
+  flat_amount: "Flat Amount",
+  percentage_of_sale: "Percentage of Sale",
+  percentage_of_rent: "Percentage of Rent",
+  tiered: "Tiered",
 };
 
 export const RELEASE_TYPE_LABELS: Record<CommissionReleaseType, string> = {

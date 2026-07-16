@@ -43,6 +43,7 @@ export interface UtilityMeter {
   unit?: UtilityMeterUnit | null;
   property?: UtilityMeterProperty | null;
   tenant?: UtilityMeterTenant | null;
+  resident?: { id: string; firstName?: string | null; lastName?: string | null; email: string; name?: string } | null;
   readingsCount?: number;
   lastReading?: string | null;
 }
@@ -92,6 +93,7 @@ export interface UtilityBill {
   meter?: { id: string; meterNumber: string } | null;
   tenant?: UtilityBillTenant | null;
   unit?: UtilityBillUnit | null;
+  resident?: { id: string; firstName?: string | null; lastName?: string | null; email: string; name?: string } | null;
 }
 
 export interface MeterQuery {

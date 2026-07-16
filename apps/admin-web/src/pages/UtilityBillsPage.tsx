@@ -49,8 +49,8 @@ import { useUnits } from "@/hooks/use-units";
 import { utilityTypeMeta, billStatusMeta, money, formatDate } from "@/lib/utility-meta";
 
 function tenantUnitLabel(bill: UtilityBill): string {
-  const tenant = bill.tenant
-    ? [bill.tenant.firstName, bill.tenant.lastName].filter(Boolean).join(" ") || bill.tenant.email
+  const tenant = bill.resident
+    ? [bill.resident.firstName, bill.resident.lastName].filter(Boolean).join(" ") || bill.resident.email
     : null;
   const unit = bill.unit?.unitLabel;
   if (tenant && unit) return `${tenant} · ${unit}`;

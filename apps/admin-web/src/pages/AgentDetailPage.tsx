@@ -270,16 +270,15 @@ export default function AgentDetailPage() {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Property</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Commission</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
+                     <TableRow>
+                       <TableHead>Type</TableHead>
+                       <TableHead>Property</TableHead>
+                       <TableHead>Amount</TableHead>
+                       <TableHead>Commission</TableHead>
+                       <TableHead>Date</TableHead>
+                       <TableHead>Status</TableHead>
+                       <TableHead></TableHead>
+                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {txList.map((tx) => (
@@ -291,9 +290,6 @@ export default function AgentDetailPage() {
                         </TableCell>
                         <TableCell className="text-sm">
                           {tx.propertyName ?? "—"}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {tx.clientName ?? "—"}
                         </TableCell>
                         <TableCell className="font-medium tabular-nums">
                           {formatCurrency(tx.amount)}
@@ -563,3 +559,4 @@ export default function AgentDetailPage() {
     </div>
   );
 }
+

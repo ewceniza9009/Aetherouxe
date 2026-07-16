@@ -570,6 +570,8 @@ async function main() {
   let mortgageCount = 0;
   let rtoCount = 0;
   const rtoLeases: any[] = [];
+  const residentLeases: Record<string, any> = {};
+  const leasedUnitIds = new Set<string>();
 
   for (const target of leaseTargets) {
     const resident = pick(residents);
@@ -582,6 +584,8 @@ async function main() {
     const lease = await prisma.leaseAgreement.create({
       data: {
         propertyId: target.property.id,
+        unitId: target.unit?.id,
+        unitLabel: target.unit?.unitNumber,
         tenantUserId: resident.id,
         leaseType,
         startDate,
@@ -595,6 +599,8 @@ async function main() {
       },
     });
     leaseCount++;
+    residentLeases[resident.id] = lease;
+    if (target.unit?.id) leasedUnitIds.add(target.unit.id);
 
     // Rental payment history
     const months = faker.number.int({ min: 3, max: 8 });
@@ -705,7 +711,8 @@ async function main() {
 
   /* ── Utility Meters, Readings, Bills ── */
   let billCount = 0;
-  for (const unit of pickN(allUnits, Math.min(40, allUnits.length))) {
+  const billedUnits = allUnits.filter((u) => leasedUnitIds.has(u.id));
+  for (const unit of pickN(billedUnits, Math.min(40, billedUnits.length))) {
     for (const meterType of [UtilityType.water, UtilityType.electricity]) {
       const meter = await prisma.utilityMeter.create({
         data: {
@@ -973,13 +980,20 @@ async function main() {
   }
   console.log('Community posts, amenities & bookings created');
 
-  /* ── Service Requests ── */
+  /* ── Service Requests + Work Orders ── */
   const serviceCats = [ServiceCategory.plumbing, ServiceCategory.electrical, ServiceCategory.hvac, ServiceCategory.general, ServiceCategory.pest, ServiceCategory.elevator];
+  const woStatusByRequest: Record<string, string> = {
+    open: 'scheduled',
+    assigned: 'scheduled',
+    in_progress: 'in_progress',
+    completed: 'completed',
+    cancelled: 'cancelled',
+  };
   for (let s = 0; s < 18; s++) {
     const resident = pick(residents);
     const unit = pick(allUnits);
     const status = pick([ServiceStatus.open, ServiceStatus.assigned, ServiceStatus.in_progress, ServiceStatus.completed, ServiceStatus.cancelled]);
-    await prisma.serviceRequest.create({
+    const req = await prisma.serviceRequest.create({
       data: {
         tenantId: tenant.id,
         unitId: unit.id,
@@ -996,8 +1010,24 @@ async function main() {
         resolutionNotes: status === ServiceStatus.completed ? faker.lorem.sentence() : null,
       },
     });
+
+    if (chance(0.85)) {
+      const woStatus = woStatusByRequest[status] ?? 'scheduled';
+      const est = money(1500, 85000);
+      await prisma.maintenanceWorkOrder.create({
+        data: {
+          serviceRequestId: req.id,
+          scheduledDate: chance(0.7) ? faker.date.soon({ days: 21 }) : null,
+          estimatedCost: est,
+          actualCost: woStatus === 'completed' ? Math.round(est * (0.8 + Math.random() * 0.4)) : null,
+          status: woStatus as any,
+          completedDate: woStatus === 'completed' ? faker.date.recent({ days: 20 }) : null,
+          notes: chance(0.5) ? faker.lorem.sentence() : null,
+        },
+      });
+    }
   }
-  console.log('Service requests created');
+  console.log('Service requests + work orders created');
 
   /* ── Documents (owner + resident) ── */
   for (const owner of owners) {
@@ -1074,10 +1104,23 @@ async function main() {
   /* ── Collection Cases + Activities ── */
   const overdueResidents = pickN(residents, Math.min(6, residents.length));
   for (const resident of overdueResidents) {
+    const lease = residentLeases[resident.id];
+    let totalOutstanding = money(5000, 80000);
+    if (lease) {
+      const payments = await prisma.rentalPayment.findMany({
+        where: { leaseAgreementId: lease.id, status: { in: ['overdue', 'pending'] } },
+      });
+      const outstanding = payments.reduce(
+        (sum, p) => sum + (Number(p.amountDue) - Number(p.amountPaid ?? 0)),
+        0,
+      );
+      if (outstanding > 0) totalOutstanding = outstanding;
+    }
     const c = await prisma.collectionCase.create({
       data: {
         tenantId: tenant.id,
-        totalOutstanding: money(5000, 80000),
+        leaseId: lease?.id ?? null,
+        totalOutstanding,
         priority: pick([CollectionCasePriority.medium, CollectionCasePriority.high, CollectionCasePriority.critical]),
         status: pick([CollectionCaseStatus.open, CollectionCaseStatus.in_progress, CollectionCaseStatus.escalated]),
         assignedToId: pick(agents).user.id,

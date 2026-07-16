@@ -57,7 +57,7 @@ export class CommissionReleasesService {
       where.transaction = { agentId: query.agentId };
     }
 
-    const [data, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       this.prisma.agentCommissionRelease.findMany({
         where,
         skip,
@@ -72,7 +72,19 @@ export class CommissionReleasesService {
       this.prisma.agentCommissionRelease.count({ where }),
     ]);
 
+    const data = rows.map((r) => this.serializeRelease(r));
     return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  serializeRelease(r: any) {
+    return {
+      ...r,
+      type: r.releaseType,
+      agentName: r.transaction?.agent?.user
+        ? [r.transaction.agent.user.firstName, r.transaction.agent.user.lastName].filter(Boolean).join(' ') ||
+          r.transaction.agent.user.email
+        : null,
+    };
   }
 
   async findOne(id: string) {
@@ -85,7 +97,7 @@ export class CommissionReleasesService {
       },
     });
     if (!release) throw new NotFoundException('Commission release not found');
-    return release;
+    return this.serializeRelease(release);
   }
 
   async update(id: string, dto: UpdateReleaseDto) {
@@ -111,10 +123,11 @@ export class CommissionReleasesService {
     const agent = await this.prisma.realEstateAgent.findUnique({ where: { id: agentId } });
     if (!agent) throw new NotFoundException('Agent not found');
 
-    return this.prisma.agentCommissionRelease.findMany({
+    const rows = await this.prisma.agentCommissionRelease.findMany({
       where: { transaction: { agentId } },
       include: { transaction: { include: { property: true } } },
       orderBy: { releaseDate: 'desc' },
     });
+    return rows.map((r) => this.serializeRelease(r));
   }
 }

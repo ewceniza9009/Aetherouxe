@@ -22,9 +22,21 @@ async function bootstrap() {
     .map((o) => o.trim())
     .filter(Boolean);
 
+  // Compare origins ignoring the port (host:port vs host), so that
+  // http://admin.localhost:8080 is treated as http://admin.localhost.
+  const normalizeOrigin = (o: string) => {
+    try {
+      const u = new URL(o);
+      return `${u.protocol}//${u.hostname}`;
+    } catch {
+      return o;
+    }
+  };
+  const allowedHosts = new Set(allowedOrigins.map(normalizeOrigin));
+
   app.enableCors({
     origin: (origin, cb) => {
-      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      if (!origin || allowedHosts.has(normalizeOrigin(origin))) return cb(null, true);
       cb(new Error(`CORS: origin '${origin}' not allowed`));
     },
     credentials: true,

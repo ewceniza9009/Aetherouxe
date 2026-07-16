@@ -38,6 +38,7 @@ import {
   Dumbbell,
   Loader2,
 } from "lucide-react";
+import { formatCurrency } from "@/lib/agent-meta";
 import {
   useAmenities,
   useCreateAmenity,
@@ -64,10 +65,7 @@ const amenityTypeMeta: Record<
 };
 
 function money(n: number) {
-  return `$${Number(n ?? 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  return formatCurrency(Number(n ?? 0));
 }
 
 export default function AmenitiesPage() {
@@ -195,7 +193,7 @@ export default function AmenitiesPage() {
             </div>
           ) : (
             <>
-              <div className="rounded-md border overflow-x-auto">
+              <div className="rounded-md border scroll-grid">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b bg-muted/50">

@@ -39,7 +39,7 @@ import {
   type CommissionRulePropertyScope,
   type CommissionRuleType,
 } from "@/hooks/use-commissions";
-import { TIER_LABELS } from "@/lib/agent-meta";
+import { TIER_LABELS, COMMISSION_TYPE_LABELS, formatCurrency } from "@/lib/agent-meta";
 import { PropertyType } from "@elite-realty/shared-types";
 
 const PROPERTY_LABELS: Record<string, string> = {
@@ -55,7 +55,7 @@ const EMPTY_FORM: CommissionRulePayload = {
   name: "",
   tier: "all",
   propertyType: "all",
-  type: "percentage",
+  type: "percentage_of_sale",
   value: 0,
   status: "active",
 };
@@ -168,11 +168,19 @@ export default function CommissionsPage() {
                     <TableCell>
                       {PROPERTY_LABELS[rule.propertyType] ?? rule.propertyType}
                     </TableCell>
-                    <TableCell className="capitalize">{rule.type}</TableCell>
+                    <TableCell>
+                      {(COMMISSION_TYPE_LABELS as Record<string, string>)[rule.type] ?? rule.type}
+                    </TableCell>
                     <TableCell className="font-semibold tabular-nums text-primary">
-                      {rule.type === "flat"
-                        ? `$${rule.value.toLocaleString()}`
-                        : `${rule.value}%`}
+                      {rule.type === "flat_amount" ? (
+                        formatCurrency(Number(rule.value ?? 0))
+                      ) : rule.type === "tiered" ? (
+                        Array.isArray(rule.value)
+                          ? rule.value.map((t: any) => `${t.rate}%`).join(" / ")
+                          : "—"
+                      ) : (
+                        `${Number(rule.value ?? 0)}%`
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={rule.status === "active" ? "success" : "secondary"}>
@@ -235,7 +243,7 @@ export default function CommissionsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Tiers</SelectItem>
-                    {(["junior", "senior", "lead", "director"] as CommissionRuleScope[]).map(
+                    {(["junior", "senior", "team_lead", "external_broker"] as CommissionRuleScope[]).map(
                       (t) => (
                         <SelectItem key={t} value={t}>
                           {(TIER_LABELS as Record<string, string>)[t]}
@@ -267,7 +275,7 @@ export default function CommissionsPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
+               <div className="space-y-2">
                 <Label>Type</Label>
                 <Select
                   value={form.type}
@@ -277,26 +285,34 @@ export default function CommissionsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="percentage">Percentage</SelectItem>
-                    <SelectItem value="flat">Flat</SelectItem>
+                    <SelectItem value="flat_amount">Flat Amount</SelectItem>
+                    <SelectItem value="percentage_of_sale">Percentage of Sale</SelectItem>
+                    <SelectItem value="percentage_of_rent">Percentage of Rent</SelectItem>
+                    <SelectItem value="tiered">Tiered</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="c-value">
-                  Value {form.type === "flat" ? "($)" : "(%)"}
+                  {form.type === "tiered" ? "Tier Rates (auto)" : "Value"}
                 </Label>
-                <Input
-                  id="c-value"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  required
-                  value={form.value}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, value: Number(e.target.value) }))
-                  }
-                />
+                {form.type === "tiered" ? (
+                  <p className="text-sm text-muted-foreground">
+                    Tiered rates are generated automatically from the sale price brackets.
+                  </p>
+                ) : (
+                  <Input
+                    id="c-value"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    value={typeof form.value === "number" ? form.value : 0}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, value: Number(e.target.value) }))
+                    }
+                  />
+                )}
               </div>
             </div>
             <div className="space-y-2">

@@ -57,34 +57,50 @@ export interface PaymentReminder {
   createdAt: string;
 }
 
-export type StatementStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
+export type StatementStatus = "draft" | "sent" | "disputed";
+
+export interface StatementUser {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+}
+
+export interface StatementTenant {
+  name?: string | null;
+}
 
 export interface Statement {
   id: string;
   tenantId?: string | null;
-  ownerName: string;
-  propertyName?: string | null;
-  period: string;
+  ownerId?: string | null;
+  propertyId?: string | null;
+  owner?: StatementUser | null;
+  tenant?: StatementTenant | null;
+  property?: unknown | null;
   periodStart?: string | null;
   periodEnd?: string | null;
-  billedAmount: number;
-  paidAmount: number;
-  closingBalance: number;
+  openingBalance?: string | number | null;
+  totalBilled?: string | number | null;
+  totalPaid?: string | number | null;
+  closingBalance?: string | number | null;
   status: StatementStatus;
+  pdfUrl?: string | null;
   generatedAt?: string | null;
   createdAt: string;
 }
 
 export interface StatementPayload {
-  tenantId: string;
-  ownerName: string;
-  propertyName?: string;
-  period: string;
-  periodStart?: string;
-  periodEnd?: string;
-  billedAmount: number;
-  paidAmount?: number;
-  closingBalance?: number;
+  tenantId?: string;
+  ownerId: string;
+  propertyId?: string;
+  periodStart: string;
+  periodEnd: string;
+  openingBalance: number;
+  totalBilled: number;
+  totalPaid: number;
+  status?: StatementStatus;
+  pdfUrl?: string;
 }
 
 export type CollectionCaseStatus =
@@ -92,22 +108,33 @@ export type CollectionCaseStatus =
   | "in_progress"
   | "escalated"
   | "resolved"
-  | "closed";
+  | "written_off";
 
 export type CollectionCasePriority = "low" | "medium" | "high" | "critical";
+
+export interface CollectionCaseTenant {
+  id?: string;
+  name?: string | null;
+}
+
+export interface CollectionCaseAssignedTo {
+  id?: string;
+  firstName?: string | null;
+  lastName?: string | null;
+}
 
 export interface CollectionCase {
   id: string;
   caseNumber: string;
   tenantId?: string | null;
-  tenantName: string;
+  tenant?: CollectionCaseTenant | null;
   leaseId?: string | null;
-  leaseNumber?: string | null;
+  lease?: unknown | null;
   priority: CollectionCasePriority;
   status: CollectionCaseStatus;
-  outstandingAmount: number;
-  assignedTo?: string | null;
-  assignedToName?: string | null;
+  totalOutstanding?: string | number | null;
+  assignedToId?: string | null;
+  assignedTo?: CollectionCaseAssignedTo | null;
   nextActionDate?: string | null;
   openedAt?: string | null;
   lastActivityAt?: string | null;
@@ -138,12 +165,11 @@ export interface CollectionCaseDetail extends CollectionCase {
 }
 
 export interface CollectionCasePayload {
-  tenantId: string;
-  tenantName: string;
+  tenantId?: string;
   leaseId?: string;
   priority: CollectionCasePriority;
-  outstandingAmount: number;
-  assignedTo?: string;
+  totalOutstanding: number;
+  assignedToId?: string;
   nextActionDate?: string;
 }
 
@@ -283,7 +309,7 @@ export function useCreateStatement() {
 export function useGenerateStatement() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { tenantId: string; period: string }) => {
+    mutationFn: async (payload: { tenantId?: string; period?: string }) => {
       const { data } = await api.post<ApiResponse<Statement>>(
         `/statements/generate`,
         payload
@@ -313,6 +339,18 @@ export function useCollectionCases(query?: {
   });
 }
 
+function mapActivity(a: any): CollectionActivity {
+  return {
+    id: a.id,
+    collectionCaseId: a.collectionCaseId,
+    type: a.activityType ?? a.type ?? "activity",
+    date: a.performedAt ?? a.date ?? a.createdAt ?? null,
+    outcome: a.outcome ?? null,
+    notes: a.notes ?? null,
+    createdAt: a.createdAt,
+  };
+}
+
 export function useCollectionCase(id: string) {
   return useQuery({
     queryKey: ["collection-case", id],
@@ -320,7 +358,11 @@ export function useCollectionCase(id: string) {
       const { data } = await api.get<ApiResponse<CollectionCaseDetail>>(
         `/collection-cases/${id}`
       );
-      return data.data;
+      const detail = data.data;
+      if (detail?.activities) {
+        detail.activities = detail.activities.map(mapActivity);
+      }
+      return detail;
     },
     enabled: !!id,
   });
@@ -491,17 +533,13 @@ export const STATEMENT_STATUS_VARIANT: Record<
 > = {
   draft: "outline",
   sent: "secondary",
-  paid: "success",
-  overdue: "destructive",
-  cancelled: "default",
+  disputed: "destructive",
 };
 
 export const STATEMENT_STATUS_LABELS: Record<StatementStatus, string> = {
   draft: "Draft",
   sent: "Sent",
-  paid: "Paid",
-  overdue: "Overdue",
-  cancelled: "Cancelled",
+  disputed: "Disputed",
 };
 
 export const CASE_STATUS_VARIANT: Record<
@@ -512,7 +550,7 @@ export const CASE_STATUS_VARIANT: Record<
   in_progress: "warning",
   escalated: "destructive",
   resolved: "success",
-  closed: "secondary",
+  written_off: "secondary",
 };
 
 export const CASE_STATUS_LABELS: Record<CollectionCaseStatus, string> = {
@@ -520,7 +558,7 @@ export const CASE_STATUS_LABELS: Record<CollectionCaseStatus, string> = {
   in_progress: "In Progress",
   escalated: "Escalated",
   resolved: "Resolved",
-  closed: "Closed",
+  written_off: "Written Off",
 };
 
 export const CASE_PRIORITY_VARIANT: Record<

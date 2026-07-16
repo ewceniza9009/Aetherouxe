@@ -13,12 +13,10 @@ import {
   Percent,
 } from "lucide-react";
 import { usePnlStatement, type PnlLineItem } from "@/hooks/use-owner-pnl";
+import { formatCurrency } from "@/lib/agent-meta";
 
 function money(n: number) {
-  return `$${Number(n ?? 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  return formatCurrency(Number(n ?? 0));
 }
 
 const lineItemMeta: Record<string, { label: string; sign: number }> = {
@@ -210,3 +208,4 @@ export default function PnlDetailPage() {
     </div>
   );
 }
+

@@ -206,7 +206,7 @@ export default function CommunityPostsPage() {
             </div>
           ) : (
             <>
-              <div className="rounded-md border overflow-x-auto">
+              <div className="rounded-md border scroll-grid">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b bg-muted/50">

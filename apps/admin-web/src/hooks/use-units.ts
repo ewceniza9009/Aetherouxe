@@ -18,6 +18,7 @@ export interface Unit {
   features?: string[];
   createdAt: string;
   updatedAt: string;
+  property?: { id: string; name?: string | null; propertyCode?: string | null } | null;
 }
 
 export interface UnitQuery {

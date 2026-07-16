@@ -20,6 +20,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -36,45 +43,83 @@ import {
   STATEMENT_STATUS_LABELS,
   formatCurrency,
   formatDate,
+  type Statement,
 } from "@/hooks/use-collections";
+import { useUsers } from "@/hooks/use-users";
+
+function getTenantId(): string | undefined {
+  try {
+    const stored = localStorage.getItem("user");
+    if (!stored) return undefined;
+    const parsed = JSON.parse(stored) as { tenantId?: string };
+    return parsed.tenantId || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function recipientName(s: Statement): string {
+  if (s.owner) {
+    const name = `${s.owner.firstName ?? ""} ${s.owner.lastName ?? ""}`.trim();
+    if (name) return name;
+    if (s.owner.email) return s.owner.email;
+  }
+  return "—";
+}
+
+function formatPeriodRange(start?: string | null, end?: string | null): string {
+  if (!start && !end) return "—";
+  const fmt = (v?: string | null) => {
+    if (!v) return "—";
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return v;
+    const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
+    if (d.getFullYear() !== new Date().getFullYear()) opts.year = "numeric";
+    return d.toLocaleDateString(undefined, opts);
+  };
+  if (start && end) return `${fmt(start)} \u2013 ${fmt(end)}`;
+  return fmt(start) ?? fmt(end) ?? "—";
+}
 
 export default function StatementsPage() {
   const navigate = useNavigate();
   const { data, isLoading, isError } = useStatements();
   const createStatement = useCreateStatement();
   const generateStatement = useGenerateStatement();
+  const { data: ownersData } = useUsers({ userType: "owner" });
 
   const [open, setOpen] = useState(false);
-  const [ownerName, setOwnerName] = useState("");
-  const [tenantId, setTenantId] = useState("");
-  const [propertyName, setPropertyName] = useState("");
-  const [period, setPeriod] = useState("");
+  const [ownerId, setOwnerId] = useState("");
+  const [periodStart, setPeriodStart] = useState("");
+  const [periodEnd, setPeriodEnd] = useState("");
+  const [openingBalance, setOpeningBalance] = useState("0");
   const [billed, setBilled] = useState("");
   const [paid, setPaid] = useState("0");
 
   const statements = data ?? [];
+  const owners = ownersData?.data ?? [];
 
   const resetForm = () => {
-    setOwnerName("");
-    setTenantId("");
-    setPropertyName("");
-    setPeriod("");
+    setOwnerId("");
+    setPeriodStart("");
+    setPeriodEnd("");
+    setOpeningBalance("0");
     setBilled("");
     setPaid("0");
   };
 
   const submit = async () => {
-    if (!ownerName || !period || !billed) return;
-    const billedAmount = Number(billed) || 0;
-    const paidAmount = Number(paid) || 0;
+    const totalBilled = Number(billed) || 0;
+    const totalPaid = Number(paid) || 0;
+    if (!ownerId || !periodStart || !periodEnd || !billed) return;
     await createStatement.mutateAsync({
-      ownerName,
-      tenantId: tenantId || "—",
-      propertyName: propertyName || undefined,
-      period,
-      billedAmount,
-      paidAmount,
-      closingBalance: billedAmount - paidAmount,
+      ownerId,
+      tenantId: getTenantId(),
+      periodStart,
+      periodEnd,
+      openingBalance: Number(openingBalance) || 0,
+      totalBilled,
+      totalPaid,
     });
     setOpen(false);
     resetForm();
@@ -96,7 +141,7 @@ export default function StatementsPage() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => generateStatement.mutate({ tenantId: "", period: "" })}
+            onClick={() => generateStatement.mutate({ tenantId: getTenantId(), period: "" })}
             disabled={generateStatement.isPending}
           >
             {generateStatement.isPending ? (
@@ -135,7 +180,7 @@ export default function StatementsPage() {
               <p className="text-sm text-muted-foreground">No statements yet.</p>
             </div>
           ) : (
-            <div className="rounded-md border overflow-x-auto">
+            <div className="rounded-md border scroll-grid">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -151,22 +196,24 @@ export default function StatementsPage() {
                   {statements.map((s) => (
                     <TableRow key={s.id}>
                       <TableCell>
-                        <div className="font-medium">{s.ownerName}</div>
-                        {s.propertyName && (
+                        <div className="font-medium">{recipientName(s)}</div>
+                        {s.tenant?.name && (
                           <div className="text-xs text-muted-foreground">
-                            {s.propertyName}
+                            {s.tenant.name}
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm">{s.period}</TableCell>
+                      <TableCell className="text-sm">
+                        {formatPeriodRange(s.periodStart, s.periodEnd)}
+                      </TableCell>
                       <TableCell className="tabular-nums">
-                        {formatCurrency(s.billedAmount)}
+                        {formatCurrency(Number(s.totalBilled ?? 0))}
                       </TableCell>
                       <TableCell className="tabular-nums text-green-700">
-                        {formatCurrency(s.paidAmount)}
+                        {formatCurrency(Number(s.totalPaid ?? 0))}
                       </TableCell>
                       <TableCell className="tabular-nums font-semibold">
-                        {formatCurrency(s.closingBalance)}
+                        {formatCurrency(Number(s.closingBalance ?? 0))}
                       </TableCell>
                       <TableCell>
                         <Badge variant={STATEMENT_STATUS_VARIANT[s.status]}>
@@ -192,44 +239,51 @@ export default function StatementsPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="owner">Recipient Name</Label>
-              <Input
-                id="owner"
-                value={ownerName}
-                onChange={(e) => setOwnerName(e.target.value)}
-                placeholder="e.g. Jane Doe"
-              />
+              <Label htmlFor="owner">Recipient (Owner)</Label>
+              <Select value={ownerId} onValueChange={setOwnerId}>
+                <SelectTrigger id="owner">
+                  <SelectValue placeholder="Select owner" />
+                </SelectTrigger>
+                <SelectContent>
+                  {owners.map((o) => (
+                    <SelectItem key={o.id} value={o.id}>
+                      {`${o.firstName ?? ""} ${o.lastName ?? ""}`.trim() || o.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="tenantId">Tenant ID</Label>
+                <Label htmlFor="periodStart">Period Start</Label>
                 <Input
-                  id="tenantId"
-                  value={tenantId}
-                  onChange={(e) => setTenantId(e.target.value)}
-                  placeholder="tenant uuid"
+                  id="periodStart"
+                  type="date"
+                  value={periodStart}
+                  onChange={(e) => setPeriodStart(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="property">Property</Label>
+                <Label htmlFor="periodEnd">Period End</Label>
                 <Input
-                  id="property"
-                  value={propertyName}
-                  onChange={(e) => setPropertyName(e.target.value)}
-                  placeholder="Property code"
+                  id="periodEnd"
+                  type="date"
+                  value={periodEnd}
+                  onChange={(e) => setPeriodEnd(e.target.value)}
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="period">Period</Label>
-              <Input
-                id="period"
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-                placeholder="2026-01"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="opening">Opening Balance</Label>
+                <Input
+                  id="opening"
+                  type="number"
+                  value={openingBalance}
+                  onChange={(e) => setOpeningBalance(e.target.value)}
+                  placeholder="0"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="billed">Billed Amount</Label>
                 <Input
@@ -258,7 +312,13 @@ export default function StatementsPage() {
             </Button>
             <Button
               onClick={submit}
-              disabled={createStatement.isPending || !ownerName || !period || !billed}
+              disabled={
+                createStatement.isPending ||
+                !ownerId ||
+                !periodStart ||
+                !periodEnd ||
+                !billed
+              }
             >
               {createStatement.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

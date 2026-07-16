@@ -61,7 +61,7 @@ const ledgerLabel: Record<string, string> = {
 };
 
 function money(n: number | null | undefined) {
-  return formatCurrency(n ?? 0, 2);
+  return formatCurrency(n ?? 0);
 }
 
 export default function RtoContractDetailPage() {
@@ -262,7 +262,7 @@ export default function RtoContractDetailPage() {
                   No payment allocations recorded yet.
                 </p>
               ) : (
-                <div className="rounded-md border overflow-x-auto">
+                <div className="rounded-md border scroll-grid">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b bg-muted/50">
@@ -396,3 +396,4 @@ function LedgerRow({ entry }: { entry: RtoLedgerEntry }) {
     </div>
   );
 }
+

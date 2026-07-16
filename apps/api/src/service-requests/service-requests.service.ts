@@ -42,12 +42,41 @@ export class ServiceRequestsService {
     if (query.propertyId) where.propertyId = query.propertyId;
     if (query.unitId) where.unitId = query.unitId;
 
-    const [data, total] = await Promise.all([
-      this.prisma.serviceRequest.findMany({ where, skip, take: limit, orderBy: { requestedAt: 'desc' } }),
+    const [rows, total] = await Promise.all([
+      this.prisma.serviceRequest.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { requestedAt: 'desc' },
+      }),
       this.prisma.serviceRequest.count({ where }),
     ]);
 
+    const data = await this.attachRelations(rows);
     return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  private async attachRelations(rows: any[]) {
+    const tenantIds = [...new Set(rows.map((r) => r.tenantId).filter(Boolean))];
+    const unitIds = [...new Set(rows.map((r) => r.unitId).filter(Boolean))];
+
+    const [tenants, units] = await Promise.all([
+      tenantIds.length
+        ? this.prisma.tenant.findMany({ where: { id: { in: tenantIds } } })
+        : Promise.resolve([]),
+      unitIds.length
+        ? this.prisma.unit.findMany({ where: { id: { in: unitIds } } })
+        : Promise.resolve([]),
+    ]);
+
+    const tenantMap = new Map(tenants.map((t) => [t.id, t]));
+    const unitMap = new Map(units.map((u) => [u.id, u]));
+
+    return rows.map((r) => ({
+      ...r,
+      tenant: r.tenantId ? { id: r.tenantId, name: tenantMap.get(r.tenantId)?.name ?? null } : null,
+      unit: r.unitId ? { id: r.unitId, unitNumber: unitMap.get(r.unitId)?.unitNumber ?? null } : null,
+    }));
   }
 
   async findOneServiceRequest(id: string) {
@@ -58,7 +87,8 @@ export class ServiceRequestsService {
       },
     });
     if (!request) throw new NotFoundException('Service request not found');
-    return request;
+    const [withRelations] = await this.attachRelations([request]);
+    return withRelations;
   }
 
   async updateServiceRequest(id: string, dto: UpdateServiceRequestDto) {

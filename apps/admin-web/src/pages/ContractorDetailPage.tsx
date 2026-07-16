@@ -36,6 +36,7 @@ import {
   useEngagements,
   useCreatePayment,
 } from "@/hooks/use-contractors";
+import { formatCurrency } from "@/lib/agent-meta";
 
 export default function ContractorDetailPage() {
   const { id } = useParams({ from: "/protected/contractors/$id" });
@@ -191,15 +192,15 @@ export default function ContractorDetailPage() {
               <div className="grid grid-cols-3 gap-4 mt-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Contract Amount</p>
-                  <p className="font-semibold">${eng.contractAmount.toLocaleString()}</p>
+                  <p className="font-semibold">{formatCurrency(Number(eng.contractAmount))}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Paid Amount</p>
-                  <p className="font-semibold">${eng.paidAmount.toLocaleString()}</p>
+                  <p className="font-semibold">{formatCurrency(Number(eng.paidAmount))}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Balance</p>
-                  <p className="font-semibold">${(eng.contractAmount - eng.paidAmount).toLocaleString()}</p>
+                  <p className="font-semibold">{formatCurrency(Number(eng.contractAmount - eng.paidAmount))}</p>
                 </div>
               </div>
 
@@ -278,3 +279,4 @@ export default function ContractorDetailPage() {
     </div>
   );
 }
+

@@ -233,7 +233,7 @@ export default function CollectionsPage() {
               <p className="text-sm text-muted-foreground">No collection cases yet.</p>
             </div>
           ) : (
-            <div className="rounded-md border overflow-x-auto">
+            <div className="rounded-md border scroll-grid">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -252,8 +252,10 @@ export default function CollectionsPage() {
                       className="cursor-pointer"
                       onClick={() => navigate({ to: `/collections/cases/${c.id}` })}
                     >
-                      <TableCell className="font-mono text-sm">{c.caseNumber}</TableCell>
-                      <TableCell className="font-medium">{c.tenantName}</TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {c.caseNumber ? `#${c.caseNumber}` : `#${c.id.slice(0, 8).toUpperCase()}`}
+                      </TableCell>
+                      <TableCell className="font-medium">{c.tenant?.name ?? "—"}</TableCell>
                       <TableCell>
                         <Badge variant={CASE_PRIORITY_VARIANT[c.priority]}>
                           {CASE_PRIORITY_LABELS[c.priority]}
@@ -265,7 +267,7 @@ export default function CollectionsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="tabular-nums font-semibold">
-                        {formatCurrency(c.outstandingAmount)}
+                        {formatCurrency(Number(c.totalOutstanding ?? 0))}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {c.nextActionDate

@@ -5,8 +5,8 @@ import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
 export type AgentTierValue =
   | "junior"
   | "senior"
-  | "lead"
-  | "director";
+  | "team_lead"
+  | "external_broker";
 
 export type LicenseStatus = "compliant" | "expired" | "pending" | "suspended";
 export type AgentStatus = "active" | "inactive" | "probation";
@@ -14,8 +14,9 @@ export type AgentStatus = "active" | "inactive" | "probation";
 export interface Agent {
   id: string;
   userId?: string;
-  name: string;
-  email: string;
+  tenantId?: string;
+  name?: string;
+  email?: string;
   phone?: string;
   avatarUrl?: string;
   licenseNumber?: string;
@@ -74,10 +75,9 @@ export interface AgentQuery {
 }
 
 export interface AgentPayload {
-  name: string;
-  email: string;
+  userId: string;
+  tenantId: string;
   phone?: string;
-  userId?: string;
   licenseNumber?: string;
   tin?: string;
   tier: AgentTierValue;

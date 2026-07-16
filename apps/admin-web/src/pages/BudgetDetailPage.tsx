@@ -31,6 +31,7 @@ import {
   X,
 } from "lucide-react";
 import { useBudget, useBudgetHealth, useCreateLineItem } from "@/hooks/use-budgets";
+import { formatCurrency } from "@/lib/agent-meta";
 
 function HealthBanner({ health }: { health: { healthScore: string; variancePercentage: number; totalPlanned: number; totalActual: number } }) {
   const isGreen = health.healthScore === "green";
@@ -67,11 +68,11 @@ function HealthBanner({ health }: { health: { healthScore: string; variancePerce
       <div className="grid grid-cols-2 gap-4 mt-3">
         <div>
           <p className="text-sm text-muted-foreground">Planned</p>
-          <p className="font-semibold">${health.totalPlanned.toLocaleString()}</p>
+          <p className="font-semibold">{formatCurrency(Number(health.totalPlanned))}</p>
         </div>
         <div>
           <p className="text-sm text-muted-foreground">Actual</p>
-          <p className="font-semibold">${health.totalActual.toLocaleString()}</p>
+          <p className="font-semibold">{formatCurrency(Number(health.totalActual))}</p>
         </div>
       </div>
     </div>
@@ -155,7 +156,7 @@ export default function BudgetDetailPage() {
               {budget.status}
             </Badge>
           </div>
-          <p className="text-muted-foreground">Version {budget.version} &middot; ${budget.totalPlanned.toLocaleString()} total planned</p>
+          <p className="text-muted-foreground">Version {budget.version} &middot; {formatCurrency(Number(budget.totalPlanned))} total planned</p>
         </div>
       </div>
 
@@ -169,7 +170,7 @@ export default function BudgetDetailPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-muted-foreground" />
-              <span className="text-2xl font-bold">${health?.totalPlanned.toLocaleString() ?? budget.totalPlanned.toLocaleString()}</span>
+              <span className="text-2xl font-bold">{formatCurrency(Number(health?.totalPlanned ?? budget.totalPlanned))}</span>
             </div>
           </CardContent>
         </Card>
@@ -180,7 +181,7 @@ export default function BudgetDetailPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-muted-foreground" />
-              <span className="text-2xl font-bold">${health?.totalActual.toLocaleString() ?? budget.totalActual.toLocaleString()}</span>
+              <span className="text-2xl font-bold">{formatCurrency(Number(health?.totalActual ?? budget.totalActual))}</span>
             </div>
           </CardContent>
         </Card>
@@ -196,7 +197,7 @@ export default function BudgetDetailPage() {
                 <TrendingDown className="h-5 w-5 text-green-500" />
               )}
               <span className={`text-2xl font-bold ${health && health.variance > 0 ? "text-red-600" : "text-green-600"}`}>
-                ${health ? Math.abs(health.variance).toLocaleString() : "0"}
+                 {health ? formatCurrency(Number(Math.abs(health.variance))) : "0"}
               </span>
             </div>
           </CardContent>
@@ -287,7 +288,7 @@ export default function BudgetDetailPage() {
               <p className="text-sm text-muted-foreground mt-1">Add your first budget line item.</p>
             </div>
           ) : (
-            <div className="rounded-md border overflow-x-auto">
+            <div className="rounded-md border scroll-grid">
               <table className="w-full">
                 <thead>
                   <tr className="border-b bg-muted/50">
@@ -309,10 +310,10 @@ export default function BudgetDetailPage() {
                       <tr key={i} className="border-b hover:bg-muted/30">
                         <td className="px-4 py-3 text-sm font-medium">{item.category}</td>
                         <td className="px-4 py-3 text-sm text-muted-foreground">{item.category}</td>
-                        <td className="px-4 py-3 text-sm text-right">${item.planned.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-sm text-right">${item.actual.toLocaleString()}</td>
-                        <td className={`px-4 py-3 text-sm text-right ${variance > 0 ? "text-red-600" : "text-green-600"}`}>
-                          {variance >= 0 ? "+" : ""}${variance.toLocaleString()}
+                         <td className="px-4 py-3 text-sm text-right">{formatCurrency(Number(item.planned))}</td>
+                         <td className="px-4 py-3 text-sm text-right">{formatCurrency(Number(item.actual))}</td>
+                         <td className={`px-4 py-3 text-sm text-right ${variance > 0 ? "text-red-600" : "text-green-600"}`}>
+                           {variance >= 0 ? "+" : ""}{formatCurrency(Number(variance))}
                         </td>
                         <td className="px-4 py-3 text-sm text-right">
                           <span className={`font-medium ${pct > 100 ? "text-red-600" : pct > 80 ? "text-yellow-600" : "text-green-600"}`}>
@@ -337,3 +338,4 @@ export default function BudgetDetailPage() {
     </div>
   );
 }
+

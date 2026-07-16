@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Edit, Building2, MapPin, Users, DollarSign, Plus, FileText, Calendar } from "lucide-react";
 import { useProperty, usePropertySpecs } from "@/hooks/use-properties";
 import { useUnits } from "@/hooks/use-units";
+import { formatCurrency } from "@/lib/agent-meta";
 
 export default function PropertyDetailPage() {
   const { id } = useParams({ from: "/protected/properties/$id" });
@@ -127,7 +128,7 @@ export default function PropertyDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {property.monthlyRevenue != null ? `$${(property.monthlyRevenue).toLocaleString()}` : "--"}
+              {property.monthlyRevenue != null ? formatCurrency(Number(property.monthlyRevenue)) : "--"}
             </div>
           </CardContent>
         </Card>
@@ -321,7 +322,7 @@ export default function PropertyDetailPage() {
               </p>
             </div>
           ) : (
-            <div className="rounded-md border overflow-x-auto">
+            <div className="rounded-md border scroll-grid">
               <table className="w-full">
                 <thead>
                   <tr className="border-b bg-muted/50">
@@ -361,3 +362,4 @@ export default function PropertyDetailPage() {
     </div>
   );
 }
+

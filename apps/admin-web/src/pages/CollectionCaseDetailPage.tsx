@@ -129,8 +129,10 @@ export default function CollectionCaseDetailPage() {
             </Badge>
           </div>
           <p className="mt-1 text-muted-foreground flex items-center gap-1">
-            <User className="h-4 w-4" /> {data.tenantName}
-            {data.leaseNumber ? ` · Lease ${data.leaseNumber}` : ""}
+            <User className="h-4 w-4" /> {data.tenant?.name ?? "—"}
+            {data.lease && typeof data.lease === "object" && "leaseNumber" in data.lease
+              ? ` · Lease ${(data.lease as { leaseNumber?: string }).leaseNumber}`
+              : ""}
           </p>
         </div>
         <Button variant="outline" onClick={() => navigate({ to: "/collections/cases" })}>
@@ -139,7 +141,7 @@ export default function CollectionCaseDetailPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <SummaryCard title="Total Outstanding" value={formatCurrency(data.outstandingAmount)} tone="text-rose-700" />
+        <SummaryCard title="Total Outstanding" value={formatCurrency(Number(data.totalOutstanding ?? 0))} tone="text-rose-700" />
         <SummaryCard
           title="Opened"
           value={formatDate(data.openedAt ?? data.createdAt)}
@@ -190,7 +192,7 @@ export default function CollectionCaseDetailPage() {
                       <span className="absolute -left-[14px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent" />
                       <div className="rounded-lg border p-3">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium capitalize">{a.type.replace(/_/g, " ")}</span>
+                          <span className="font-medium capitalize">{a.type?.replace(/_/g, " ") ?? "activity"}</span>
                           <span className="text-xs text-muted-foreground">
                             {formatDate(a.date ?? a.createdAt)}
                           </span>
@@ -346,3 +348,4 @@ function SummaryCard({
     </Card>
   );
 }
+

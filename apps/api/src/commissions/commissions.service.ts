@@ -42,7 +42,7 @@ export class CommissionsService {
     if (query.propertyType) where.propertyType = query.propertyType;
     if (query.isActive !== undefined && query.isActive !== null) where.isActive = query.isActive;
 
-    const [data, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       this.prisma.agentCommission.findMany({
         where,
         skip,
@@ -52,7 +52,21 @@ export class CommissionsService {
       this.prisma.agentCommission.count({ where }),
     ]);
 
+    const data = rows.map((r) => this.serializeRule(r));
     return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  serializeRule(r: any) {
+    return {
+      ...r,
+      tier: r.agentTier,
+      type: r.commissionType,
+      value:
+        typeof r.commissionValue === 'string'
+          ? this.parseTieredBrackets(r.commissionValue) ?? r.commissionValue
+          : r.commissionValue,
+      status: r.isActive ? 'active' : 'inactive',
+    };
   }
 
   async findOne(id: string) {

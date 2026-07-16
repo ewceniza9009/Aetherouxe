@@ -83,7 +83,7 @@ export class AgentTransactionsService {
     if (query.status) where.status = query.status;
     if (query.propertyId) where.propertyId = query.propertyId;
 
-    const [data, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       this.prisma.agentTransaction.findMany({
         where,
         skip,
@@ -98,7 +98,21 @@ export class AgentTransactionsService {
       this.prisma.agentTransaction.count({ where }),
     ]);
 
+    const data = rows.map((r) => this.serializeTransaction(r));
     return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  serializeTransaction(t: any) {
+    return {
+      ...t,
+      type: t.transactionType,
+      amount: t.transactionAmount,
+      commissionAmount: t.calculatedCommission,
+      propertyName: t.property?.name ?? t.property?.propertyCode ?? null,
+      agentName: t.agent?.user
+        ? [t.agent.user.firstName, t.agent.user.lastName].filter(Boolean).join(' ') || t.agent.user.email
+        : null,
+    };
   }
 
   async findOne(id: string) {
@@ -113,12 +127,12 @@ export class AgentTransactionsService {
       },
     });
     if (!tx) throw new NotFoundException('Transaction not found');
-    return tx;
+    return this.serializeTransaction(tx);
   }
 
   async update(id: string, dto: UpdateTransactionDto) {
     await this.findOne(id);
-    return this.prisma.agentTransaction.update({
+    const tx = await this.prisma.agentTransaction.update({
       where: { id },
       data: {
         status: dto.status as any,
@@ -126,15 +140,17 @@ export class AgentTransactionsService {
       },
       include: { agent: { include: { user: true } }, property: true, commissionRule: true },
     });
+    return this.serializeTransaction(tx);
   }
 
   async approve(id: string) {
     await this.findOne(id);
-    return this.prisma.agentTransaction.update({
+    const tx = await this.prisma.agentTransaction.update({
       where: { id },
       data: { status: 'approved' },
       include: { agent: { include: { user: true } }, property: true, commissionRule: true },
     });
+    return this.serializeTransaction(tx);
   }
 
   async remove(id: string) {
@@ -144,10 +160,11 @@ export class AgentTransactionsService {
   }
 
   async getByAgent(agentId: string) {
-    return this.prisma.agentTransaction.findMany({
+    const rows = await this.prisma.agentTransaction.findMany({
       where: { agentId },
       include: { property: true, commissionRule: true },
       orderBy: { transactionDate: 'desc' },
     });
+    return rows.map((r) => this.serializeTransaction(r));
   }
 }

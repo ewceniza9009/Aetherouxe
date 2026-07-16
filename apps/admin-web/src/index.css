@@ -147,3 +147,42 @@
 .notifications-scroll::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--primary) / 0.35);
 }
+
+/* ── Data grid: scrollable body with sticky header ──
+   Wrap a <table> in <div className="scroll-grid">. The container gets a
+   max-height and its own scrollbar; the <thead> sticks while the body scrolls,
+   so hundreds of rows scroll inside the table instead of the whole page. */
+.scroll-grid {
+  max-height: calc(100vh - 13rem);
+  overflow: auto;
+  border-radius: 0.5rem;
+}
+/* The shadcn <Table> wraps itself in an inner overflow-auto div; neutralize
+   it so the outer .scroll-grid owns the scroll and the header can stick. */
+.scroll-grid > div[class*="overflow-auto"] {
+  overflow: visible !important;
+}
+.scroll-grid table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+.scroll-grid table > thead > tr > th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: hsl(var(--card));
+  backdrop-filter: blur(6px);
+}
+.scroll-grid table > thead > tr > th::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: hsl(var(--border));
+}
+.scroll-grid table > tbody > tr:first-child > td {
+  border-top: none;
+}

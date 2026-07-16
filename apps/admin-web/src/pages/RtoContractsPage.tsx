@@ -54,7 +54,7 @@ const statusLabel: Record<RtoStatus, string> = {
 };
 
 function money(n: number) {
-  return formatCurrency(n ?? 0, 2);
+  return formatCurrency(n ?? 0);
 }
 
 export default function RtoContractsPage() {
@@ -260,7 +260,7 @@ export default function RtoContractsPage() {
             </div>
           ) : (
             <>
-              <div className="rounded-md border overflow-x-auto">
+              <div className="rounded-md border scroll-grid">
                 <table className="w-full">
                   <thead>
                     {table.getHeaderGroups().map((hg) => (

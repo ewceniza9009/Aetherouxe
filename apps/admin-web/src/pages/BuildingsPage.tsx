@@ -225,7 +225,7 @@ export default function BuildingsPage() {
             </div>
           ) : (
             <>
-              <div className="rounded-md border overflow-x-auto">
+              <div className="rounded-md border scroll-grid">
                 <table className="w-full">
                   <thead>
                     {table.getHeaderGroups().map((headerGroup) => (

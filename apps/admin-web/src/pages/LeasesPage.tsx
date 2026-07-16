@@ -29,6 +29,7 @@ import {
   type LeaseQuery,
   type LeaseStatus,
 } from "@/hooks/use-leases";
+import { formatCurrency } from "@/lib/agent-meta";
 
 const statusVariant: Record<LeaseStatus, "success" | "warning" | "destructive" | "default" | "secondary"> = {
   active: "success",
@@ -120,7 +121,7 @@ export default function LeasesPage() {
         header: "Monthly Rent",
         cell: (info) => (
           <span className="text-sm font-medium">
-            ${info.getValue().toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatCurrency(Number(info.getValue()))}
           </span>
         ),
       }),
@@ -250,7 +251,7 @@ export default function LeasesPage() {
             </div>
           ) : (
             <>
-              <div className="rounded-md border overflow-x-auto">
+              <div className="rounded-md border scroll-grid">
                 <table className="w-full">
                   <thead>
                     {table.getHeaderGroups().map((hg) => (

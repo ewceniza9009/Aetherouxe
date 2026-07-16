@@ -73,7 +73,7 @@ export function transformLease(l: any): Lease {
     tenantUserId: l.tenantUserId,
     propertyId: l.propertyId,
     propertyName: l.property?.name ?? l.property?.propertyCode ?? "",
-    unitLabel: l.unitLabel,
+    unitLabel: l.unitLabel ?? l.unit?.unitNumber ?? "",
     leaseType: l.leaseType,
     startDate: l.startDate,
     endDate: l.endDate,

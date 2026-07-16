@@ -21,7 +21,21 @@ import {
   type AgentTierValue,
   type LicenseStatus,
 } from "@/hooks/use-agents";
+import { useUsers } from "@/hooks/use-users";
 import { TIER_LABELS, LICENSE_STATUS_LABELS } from "@/lib/agent-meta";
+
+function getTenantId(): string {
+  try {
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed.tenantId) return parsed.tenantId;
+    }
+  } catch {
+    // ignore
+  }
+  return "";
+}
 
 export default function EditAgentPage() {
   const { id } = useParams({ from: "/protected/agents/$id/edit" });
@@ -29,10 +43,10 @@ export default function EditAgentPage() {
   const { data: agent, isLoading } = useAgent(id);
   const updateAgent = useUpdateAgent();
   const { data: agentsData } = useAgents({ limit: 200 });
+  const { data: usersData } = useUsers({ limit: 200 });
 
   const [form, setForm] = useState<null | {
-    name: string;
-    email: string;
+    userId: string;
     phone: string;
     licenseNumber: string;
     tin: string;
@@ -45,8 +59,7 @@ export default function EditAgentPage() {
   }>(null);
 
   const values = form ?? {
-    name: agent?.name ?? "",
-    email: agent?.email ?? "",
+    userId: agent?.userId ?? "",
     phone: agent?.phone ?? "",
     licenseNumber: agent?.licenseNumber ?? "",
     tin: agent?.tin ?? "",
@@ -64,8 +77,8 @@ export default function EditAgentPage() {
     e.preventDefault();
     await updateAgent.mutateAsync({
       id,
-      name: values.name,
-      email: values.email,
+      userId: values.userId,
+      tenantId: agent?.tenantId ?? getTenantId(),
       phone: values.phone || undefined,
       licenseNumber: values.licenseNumber || undefined,
       tin: values.tin || undefined,
@@ -110,22 +123,31 @@ export default function EditAgentPage() {
           <CardContent className="space-y-5">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
-                <Input
-                  id="name"
-                  required
-                  value={values.name}
-                  onChange={(e) => set({ name: e.target.value })}
-                />
+                <Label>Linked User *</Label>
+                <Select
+                  value={values.userId}
+                  onValueChange={(v) => set({ userId: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select user" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(usersData?.data ?? []).map((u) => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.firstName || u.lastName
+                          ? `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim()
+                          : u.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="phone">Phone</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  required
-                  value={values.email}
-                  onChange={(e) => set({ email: e.target.value })}
+                  id="phone"
+                  value={values.phone}
+                  onChange={(e) => set({ phone: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -171,7 +193,7 @@ export default function EditAgentPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(["junior", "senior", "lead", "director"] as AgentTierValue[]).map(
+                    {(["junior", "senior", "team_lead", "external_broker"] as AgentTierValue[]).map(
                       (t) => (
                         <SelectItem key={t} value={t}>
                           {TIER_LABELS[t]}
@@ -227,7 +249,7 @@ export default function EditAgentPage() {
                       .filter((a) => a.id !== id)
                       .map((a) => (
                         <SelectItem key={a.id} value={a.id}>
-                          {a.name}
+                          {a.name || a.email || a.id}
                         </SelectItem>
                       ))}
                   </SelectContent>

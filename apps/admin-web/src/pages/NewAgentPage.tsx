@@ -14,16 +14,30 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 import { useAgents, useCreateAgent, type AgentTierValue } from "@/hooks/use-agents";
+import { useUsers } from "@/hooks/use-users";
 import { TIER_LABELS } from "@/lib/agent-meta";
+
+function getTenantId(): string {
+  try {
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed.tenantId) return parsed.tenantId;
+    }
+  } catch {
+    // ignore
+  }
+  return "";
+}
 
 export default function NewAgentPage() {
   const navigate = useNavigate();
   const createAgent = useCreateAgent();
   const { data: agentsData } = useAgents({ limit: 200 });
+  const { data: usersData } = useUsers({ limit: 200 });
 
   const [form, setForm] = useState({
-    name: "",
-    email: "",
+    userId: "",
     phone: "",
     licenseNumber: "",
     tin: "",
@@ -37,8 +51,8 @@ export default function NewAgentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const created = await createAgent.mutateAsync({
-      name: form.name,
-      email: form.email,
+      userId: form.userId,
+      tenantId: getTenantId(),
       phone: form.phone || undefined,
       licenseNumber: form.licenseNumber || undefined,
       tin: form.tin || undefined,
@@ -73,24 +87,32 @@ export default function NewAgentPage() {
           <CardContent className="space-y-5">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
-                <Input
-                  id="name"
-                  required
-                  value={form.name}
-                  onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                  placeholder="Jane Doe"
-                />
+                <Label>Linked User *</Label>
+                <Select
+                  value={form.userId}
+                  onValueChange={(v) => setForm((p) => ({ ...p, userId: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select user" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(usersData?.data ?? []).map((u) => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.firstName || u.lastName
+                          ? `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim()
+                          : u.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="phone">Phone</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                  placeholder="jane@elite-realty.com"
+                  id="phone"
+                  value={form.phone}
+                  onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+                  placeholder="(503) 555-0000"
                 />
               </div>
               <div className="space-y-2">
@@ -143,7 +165,7 @@ export default function NewAgentPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(["junior", "senior", "lead", "director"] as AgentTierValue[]).map(
+                    {(["junior", "senior", "team_lead", "external_broker"] as AgentTierValue[]).map(
                       (t) => (
                         <SelectItem key={t} value={t}>
                           {TIER_LABELS[t]}
@@ -182,7 +204,7 @@ export default function NewAgentPage() {
                     <SelectItem value="none">None</SelectItem>
                     {(agentsData?.data ?? []).map((a) => (
                       <SelectItem key={a.id} value={a.id}>
-                        {a.name}
+                        {a.name || a.email || a.id}
                       </SelectItem>
                     ))}
                   </SelectContent>

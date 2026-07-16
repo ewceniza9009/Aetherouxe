@@ -61,7 +61,7 @@ function UtilityPill({ type }: { type: UtilityType }) {
   );
 }
 
-function tenantName(meter?: UtilityMeter["tenant"]) {
+function tenantName(meter?: UtilityMeter["resident"]) {
   if (!meter) return null;
   const full = [meter.firstName, meter.lastName].filter(Boolean).join(" ").trim();
   return full || meter.email;
@@ -98,7 +98,7 @@ export default function MetersPage() {
         m.meterNumber.toLowerCase().includes(q) ||
         (m.property?.name ?? "").toLowerCase().includes(q) ||
         (m.property?.propertyCode ?? "").toLowerCase().includes(q) ||
-        (tenantName(m.tenant) ?? "").toLowerCase().includes(q)
+        (tenantName(m.resident) ?? "").toLowerCase().includes(q)
     );
   }, [data, search]);
 
@@ -199,7 +199,7 @@ export default function MetersPage() {
                       <UtilityPill type={m.utilityType} />
                     </TableCell>
                     <TableCell className="text-sm">{unitPropertyLabel(m)}</TableCell>
-                    <TableCell className="text-sm">{tenantName(m.tenant) ?? "—"}</TableCell>
+                    <TableCell className="text-sm">{tenantName(m.resident) ?? "—"}</TableCell>
                     <TableCell>
                       {m.isActive ? (
                         <Badge variant="success">Active</Badge>
@@ -372,3 +372,4 @@ function NewMeterDialog({ properties }: { properties: { id: string; name: string
     </Dialog>
   );
 }
+

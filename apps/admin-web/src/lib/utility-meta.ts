@@ -1,4 +1,5 @@
 import type { UtilityType, UtilityBillStatus } from "@/hooks/use-utilities";
+import { formatCurrency } from "./settings-store";
 
 export const utilityTypeMeta: Record<
   UtilityType,
@@ -45,11 +46,10 @@ export function billStatusLabel(status?: UtilityBillStatus | string): string {
   return billStatusMeta[status as UtilityBillStatus]?.label ?? String(status);
 }
 
+export { formatCurrency };
+
 export function money(n: number | null | undefined): string {
-  return `$${Number(n ?? 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  return formatCurrency(Number(n ?? 0));
 }
 
 export function formatDate(value?: string | null): string {

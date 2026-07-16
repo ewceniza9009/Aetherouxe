@@ -56,6 +56,7 @@ const navItems: NavItem[] = [
   { label: "Statements", icon: <Inbox size={20} />, path: "/statements" },
   { label: "Finance", icon: <DollarSign size={20} />, path: "/finance" },
   { label: "Meters & Billing", icon: <Droplet size={20} />, path: "/meters" },
+  { label: "Sales & Schemes", icon: <Building2 size={20} />, path: "/sales" },
   {
     label: "Community",
     icon: <Megaphone size={20} />,

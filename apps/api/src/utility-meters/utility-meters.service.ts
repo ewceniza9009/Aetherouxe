@@ -38,7 +38,7 @@ export class UtilityMetersService {
     if (query.tenantId) where.tenantId = query.tenantId;
     if (query.isActive !== undefined) where.isActive = query.isActive;
 
-    const [data, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       this.prisma.utilityMeter.findMany({
         where,
         skip,
@@ -54,7 +54,35 @@ export class UtilityMetersService {
       this.prisma.utilityMeter.count({ where }),
     ]);
 
+    const data = await this.attachResidents(rows);
     return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  private async attachResidents(rows: any[]) {
+    const unitIds = [...new Set(rows.map((r) => r.unitId).filter(Boolean))];
+    const leases = unitIds.length
+      ? await this.prisma.leaseAgreement.findMany({
+          where: { unitId: { in: unitIds }, isActive: true },
+          include: { tenant: true },
+        })
+      : [];
+    const byUnit = new Map(leases.map((l) => [l.unitId, l]));
+    return rows.map((r) => {
+      const lease = r.unitId ? byUnit.get(r.unitId) : null;
+      const u = lease?.tenant;
+      return {
+        ...r,
+        resident: u
+          ? {
+              id: u.id,
+              firstName: u.firstName,
+              lastName: u.lastName,
+              email: u.email,
+              name: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email,
+            }
+          : null,
+      };
+    });
   }
 
   async findOne(id: string) {
@@ -66,7 +94,8 @@ export class UtilityMetersService {
       },
     });
     if (!meter) throw new NotFoundException('Utility meter not found');
-    return meter;
+    const [withResident] = await this.attachResidents([meter]);
+    return withResident;
   }
 
   async update(id: string, dto: UpdateMeterDto) {
@@ -102,3 +131,4 @@ export class UtilityMetersService {
     return { deleted: true };
   }
 }
+

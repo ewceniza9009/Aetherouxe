@@ -100,7 +100,7 @@ export default function PaymentRemindersPage() {
               <p className="text-sm text-muted-foreground">No reminders found.</p>
             </div>
           ) : (
-            <div className="rounded-md border overflow-x-auto">
+            <div className="rounded-md border scroll-grid">
               <Table>
                 <TableHeader>
                   <TableRow>

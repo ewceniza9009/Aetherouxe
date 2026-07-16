@@ -161,6 +161,9 @@ enum InvoiceType {
   late_fee
   damage_charge
   misc
+  downpayment
+  reservation
+  equity_credit
 }
 
 enum InvoiceStatus {
@@ -513,7 +516,9 @@ model ContractorPayment {
 model LeaseAgreement {
   id                         String    @id @default(uuid())
   propertyId                 String
+  unitId                     String?
   tenantUserId               String
+  unitLabel                  String?
   leaseType                  LeaseType
   startDate                  DateTime
   endDate                    DateTime

@@ -52,6 +52,34 @@ interface PaginatedResult<T> {
   meta: PaginationMeta;
 }
 
+// Map the API budget object (budgetName / totalBudgetAmount / versionNumber /
+// lineItems[].plannedAmount) onto the frontend Budget interface
+// (name / totalPlanned / totalActual / version).
+function mapBudget(raw: any): Budget {
+  const lineItems: any[] = Array.isArray(raw?.lineItems) ? raw.lineItems : [];
+  const plannedFromLines = lineItems.reduce(
+    (sum, li) => sum + (Number(li?.plannedAmount) || 0),
+    0
+  );
+  const actualFromLines = lineItems.reduce(
+    (sum, li) => sum + (Number(li?.actualAmount) || 0),
+    0
+  );
+  const totalPlanned = Number(raw?.totalBudgetAmount) || plannedFromLines || 0;
+  const totalActual = actualFromLines || 0;
+  return {
+    id: raw?.id,
+    projectId: raw?.projectId,
+    name: raw?.budgetName ?? raw?.name ?? "Untitled Budget",
+    version: raw?.versionNumber ?? raw?.version ?? 1,
+    totalPlanned,
+    totalActual,
+    status: raw?.status ?? "draft",
+    createdAt: raw?.createdAt,
+    updatedAt: raw?.updatedAt,
+  };
+}
+
 export function useBudgets(query: BudgetQuery) {
   return useQuery({
     queryKey: ["budgets", query],
@@ -60,10 +88,13 @@ export function useBudgets(query: BudgetQuery) {
       if (query.page) params.set("page", String(query.page));
       if (query.limit) params.set("limit", String(query.limit));
       if (query.projectId) params.set("projectId", query.projectId);
-      if (query.sort) params.set("sort", query.sort);
-      if (query.order) params.set("order", query.order);
-      const { data } = await api.get<ApiResponse<Budget[]>>(`/budgets?${params}`);
-      return { data: data.data, meta: data.meta } as PaginatedResult<Budget>;
+      if (query.sort) params.set("sort", String(query.sort));
+      if (query.order) params.set("order", String(query.order));
+      const { data } = await api.get<ApiResponse<any[]>>(`/budgets?${params}`);
+      return {
+        data: (data.data ?? []).map(mapBudget),
+        meta: data.meta,
+      } as PaginatedResult<Budget>;
     },
   });
 }
@@ -72,8 +103,8 @@ export function useBudget(id: string) {
   return useQuery({
     queryKey: ["budget", id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Budget>>(`/budgets/${id}`);
-      return data.data;
+      const { data } = await api.get<ApiResponse<any>>(`/budgets/${id}`);
+      return mapBudget(data.data);
     },
     enabled: !!id,
   });
