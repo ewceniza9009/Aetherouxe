@@ -181,19 +181,15 @@ function renderItem(
           "relative flex",
           active && !collapsed ? "text-sidebar-primary-foreground" : "",
           active && collapsed ? "text-sidebar-primary drop-shadow-md" : "",
-          !active && "text-sidebar-foreground/60 group-hover:text-sidebar-accent-foreground",
         )}
       >
         {item.icon}
-        {!collapsed && (
-          <span
-            className={cn(
-              "absolute -right-1.5 -top-1 h-1.5 w-1.5 rounded-full",
-              kindDot[item.kind],
-              active && "opacity-90",
-            )}
-          />
-        )}
+        <span
+          className={cn(
+            "absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full",
+            active && !collapsed ? "bg-sidebar-primary-foreground/70 shadow-none" : kindDot[item.kind],
+          )}
+        />
       </span>
       {!collapsed && <span>{item.label}</span>}
     </Link>
