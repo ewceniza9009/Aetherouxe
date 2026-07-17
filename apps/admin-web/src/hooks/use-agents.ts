@@ -2,6 +2,36 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
 
+function mapAgent(a: any): Agent {
+  const user = a.user ?? {};
+  const first = user.firstName ?? "";
+  const last = user.lastName ?? "";
+  const composed = `${first} ${last}`.trim();
+  const managerUser = a.manager?.user;
+  return {
+    id: a.id,
+    userId: a.userId,
+    tenantId: a.tenantId,
+    name: composed || user.email || a.email || undefined,
+    email: user.email ?? a.email,
+    phone: user.phone ?? a.phone,
+    licenseNumber: a.licenseNumber,
+    tier: a.tier,
+    commissionRateDefault: a.commissionRateDefault,
+    isInternal: a.isInternal,
+    managerId: a.managerId,
+    managerName: managerUser
+      ? `${managerUser.firstName ?? ""} ${managerUser.lastName ?? ""}`.trim() ||
+        managerUser.email
+      : undefined,
+    licenseStatus: a.licenseStatus ?? "compliant",
+    status: a.status ?? "active",
+    transactionCount: a.transactionCount,
+    createdAt: a.createdAt,
+    updatedAt: a.updatedAt,
+  } as Agent;
+}
+
 export type AgentTierValue =
   | "junior"
   | "senior"
@@ -109,7 +139,9 @@ export function useAgents(query: AgentQuery) {
         params.set("isInternal", String(query.isInternal));
       if (query.status) params.set("status", query.status);
       const { data } = await api.get<ApiResponse<Agent[]>>(`/agents?${params}`);
-      return { data: data.data, meta: data.meta } as PaginatedResult<Agent>;
+      const raw = (data.data ?? []) as any[];
+      const mapped: Agent[] = raw.map((a) => mapAgent(a));
+      return { data: mapped, meta: data.meta } as PaginatedResult<Agent>;
     },
   });
 }
@@ -119,7 +151,7 @@ export function useAgent(id: string) {
     queryKey: ["agent", id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<Agent>>(`/agents/${id}`);
-      return data.data;
+      return mapAgent(data.data ?? {});
     },
     enabled: !!id,
   });

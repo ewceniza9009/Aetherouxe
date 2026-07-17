@@ -1,11 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,7 +26,10 @@ import {
   useMeters,
   type UtilityType,
 } from "@/hooks/use-utilities";
-import { AddReadingDialog, BulkReadingsDialog } from "@/components/utilities/ReadingDialogs";
+import {
+  AddReadingDialog,
+  BulkReadingsDialog,
+} from "@/components/utilities/ReadingDialogs";
 import { utilityTypeMeta, formatDate } from "@/lib/utility-meta";
 
 export default function ReadingsPage() {
@@ -52,7 +50,8 @@ export default function ReadingsPage() {
   const readings = useMemo(() => {
     const all = data?.data ?? [];
     return [...all].sort(
-      (a, b) => new Date(b.readingDate).getTime() - new Date(a.readingDate).getTime()
+      (a, b) =>
+        new Date(b.readingDate).getTime() - new Date(a.readingDate).getTime(),
     );
   }, [data]);
 
@@ -60,8 +59,12 @@ export default function ReadingsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="font-serif text-3xl font-bold tracking-tight">Consumption Readings</h1>
-          <p className="text-muted-foreground">All meter readings across properties</p>
+          <h1 className="font-serif text-3xl font-bold tracking-tight">
+            Consumption Readings
+          </h1>
+          <p className="text-muted-foreground">
+            All meter readings across properties
+          </p>
         </div>
         <div className="flex gap-2">
           <AddReadingDialog meters={meters} />
@@ -77,7 +80,7 @@ export default function ReadingsPage() {
             </CardTitle>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Select value={meterId} onValueChange={setMeterId}>
-                <SelectTrigger className="w-full sm:w-56">
+                <SelectTrigger className="w-full sm:w-76">
                   <SelectValue placeholder="Meter" />
                 </SelectTrigger>
                 <SelectContent>
@@ -89,8 +92,18 @@ export default function ReadingsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full sm:w-40" />
-              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full sm:w-40" />
+              <Input
+                type="date"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                className="w-full sm:w-40"
+              />
+              <Input
+                type="date"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                className="w-full sm:w-40"
+              />
             </div>
           </div>
         </CardHeader>
@@ -98,7 +111,9 @@ export default function ReadingsPage() {
           {isError ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
               <AlertCircle className="h-8 w-8 text-destructive" />
-              <p className="text-sm text-muted-foreground">Failed to load readings.</p>
+              <p className="text-sm text-muted-foreground">
+                Failed to load readings.
+              </p>
               <Button variant="outline" size="sm" onClick={() => refetch()}>
                 Retry
               </Button>
@@ -112,7 +127,9 @@ export default function ReadingsPage() {
           ) : readings.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
               <Gauge className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No readings found.</p>
+              <p className="text-sm text-muted-foreground">
+                No readings found.
+              </p>
             </div>
           ) : (
             <Table>
@@ -136,20 +153,34 @@ export default function ReadingsPage() {
                     <TableRow
                       key={r.id}
                       className="cursor-pointer"
-                      onClick={() => r.meterId && navigate({ to: `/meters/${r.meterId}` })}
+                      onClick={() =>
+                        r.meterId && navigate({ to: `/meters/${r.meterId}` })
+                      }
                     >
-                      <TableCell className="font-mono text-sm">{r.meter?.meterNumber ?? "—"}</TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {r.meter?.meterNumber ?? "—"}
+                      </TableCell>
                       <TableCell>
                         {type ? (
-                          <Badge className={utilityTypeMeta[type].className}>{utilityTypeMeta[type].label}</Badge>
+                          <Badge className={utilityTypeMeta[type].className}>
+                            {utilityTypeMeta[type].label}
+                          </Badge>
                         ) : (
                           "—"
                         )}
                       </TableCell>
-                      <TableCell className="text-sm">{formatDate(r.readingDate)}</TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">{r.value}</TableCell>
-                      <TableCell className="text-sm">{r.reader ?? "—"}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{r.note ?? "—"}</TableCell>
+                      <TableCell className="text-sm">
+                        {formatDate(r.readingDate)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">
+                        {r.value}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {r.reader ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {r.note ?? "—"}
+                      </TableCell>
                     </TableRow>
                   );
                 })}

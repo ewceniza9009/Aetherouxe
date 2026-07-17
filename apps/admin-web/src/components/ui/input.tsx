@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DatePicker } from "@/components/ui/date-picker";
-import { AmountInput, QuantityInput } from "@/components/ui/number-input";
+import { AmountInput, QuantityInput, NumberInput } from "@/components/ui/number-input";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
@@ -32,10 +32,17 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     if (isNumber) {
       const stepStr = step !== undefined ? String(step) : "";
       const hasDecimalStep = stepStr !== "" && stepStr.includes(".");
+      const decimals = hasDecimalStep ? stepStr.split(".")[1].length : 2;
+      // Explicit money markers: data-amount attribute OR step="0.01".
+      const isAmount =
+        (props as any)["data-amount"] === "true" ||
+        (props as any)["data-amount"] === true ||
+        stepStr === "0.01";
+      // Whole-number step (e.g. step="1") → integer quantity, no decimals.
+      const isQuantity = stepStr !== "" && !hasDecimalStep && !isAmount;
       const handleChange = onChange as ((e: { target: { value: string } }) => void) | undefined;
 
-      // No decimal step → whole number quantity (n0); otherwise money-style n2.
-      if (!hasDecimalStep && stepStr !== "") {
+      if (isQuantity) {
         return (
           <QuantityInput
             value={value === undefined || value === null ? "" : (value as string | number)}
@@ -46,9 +53,22 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         );
       }
 
+      if (isAmount) {
+        return (
+          <AmountInput
+            value={value === undefined || value === null ? "" : (value as string | number)}
+            onChange={(raw) => handleChange?.({ target: { value: raw } } as any)}
+            className={className}
+            {...(props as any)}
+          />
+        );
+      }
+
+      // Default: masked number with decimals (no ₱). Best of both worlds.
       return (
-        <AmountInput
+        <NumberInput
           value={value === undefined || value === null ? "" : (value as string | number)}
+          decimals={decimals}
           onChange={(raw) => handleChange?.({ target: { value: raw } } as any)}
           className={className}
           {...(props as any)}
@@ -90,5 +110,3 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = "Input";
 
 export { Input };
-
-

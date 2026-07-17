@@ -36,7 +36,7 @@ export default function FloorListPage() {
     try {
       await createFloor.mutateAsync({
         buildingId,
-        floorNumber: parseInt(newFloorNumber),
+        floorNumber: newFloorNumber,
         sortOrder: (floors?.length ?? 0) + 1,
       });
       setNewFloorNumber("");
@@ -122,8 +122,8 @@ export default function FloorListPage() {
               <Label htmlFor="floorNumber">Floor Number</Label>
               <Input
                 id="floorNumber"
-                type="number"
-                placeholder="e.g. 1"
+                type="text"
+                placeholder="e.g. 1, Ground, Basement"
                 value={newFloorNumber}
                 onChange={(e) => setNewFloorNumber(e.target.value)}
               />

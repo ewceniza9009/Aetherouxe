@@ -5,9 +5,10 @@ import type { ApiResponse } from "@elite-realty/shared-types";
 export interface Floor {
   id: string;
   buildingId: string;
-  floorNumber: number;
+  floorNumber: string;
   sortOrder: number;
-  unitsCount: number;
+  units?: any[];
+  unitsCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -17,7 +18,11 @@ export function useFloors(buildingId: string) {
     queryKey: ["floors", buildingId],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<Floor[]>>(`/buildings/${buildingId}/floors`);
-      return data.data;
+      const floors = data.data ?? [];
+      return floors.map((f: any) => ({
+        ...f,
+        unitsCount: Array.isArray(f.units) ? f.units.length : (f.unitsCount ?? 0),
+      })) as Floor[];
     },
     enabled: !!buildingId,
   });
@@ -26,8 +31,11 @@ export function useFloors(buildingId: string) {
 export function useCreateFloor() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: Partial<Floor>) => {
-      const { data } = await api.post<ApiResponse<Floor>>(`/buildings/${payload.buildingId}/floors`, payload);
+    mutationFn: async (payload: Partial<Floor> & { buildingId: string }) => {
+      const { data } = await api.post<ApiResponse<Floor>>(`/buildings/${payload.buildingId}/floors`, {
+        ...payload,
+        floorNumber: payload.floorNumber !== undefined ? String(payload.floorNumber) : undefined,
+      });
       return data.data;
     },
     onSuccess: (result) => {

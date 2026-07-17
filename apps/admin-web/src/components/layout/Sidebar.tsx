@@ -235,30 +235,61 @@ export default function Sidebar() {
         collapsed ? "w-16" : "w-64",
       )}
     >
-      {/* Logo */}
-      <div className="flex h-14 items-center justify-between px-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-2">
-          <img src="/favicon.png" alt="Logo" className="h-8 w-8 rounded-lg object-cover" />
-          {!collapsed && (
+      {/* Logo + brand */}
+      <div
+        className={cn(
+          "flex h-16 items-center border-b border-sidebar-border",
+          collapsed ? "justify-center px-2" : "justify-between px-4",
+        )}
+      >
+        {!collapsed && (
+          <div className="flex min-w-0 items-center gap-3">
+            <img
+              src="/favicon.png"
+              alt="Logo"
+              className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-primary/40"
+            />
             <div className="leading-tight">
-              <span className="font-serif text-lg font-bold gold-text">
+              <span className="block truncate font-serif text-base font-bold gold-text">
                 Aetherouxe
               </span>
-              <span className="block text-[10px] uppercase tracking-widest text-sidebar-foreground/60">
+              <span className="block truncate text-[10px] uppercase tracking-widest text-sidebar-foreground/60">
                 Estates
               </span>
             </div>
-          )}
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCollapsed((c) => !c)}
-          className="text-sidebar-foreground hover:bg-sidebar-accent"
-        >
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </Button>
+          </div>
+        )}
+        {collapsed && (
+          <img
+            src="/favicon.png"
+            alt="Logo"
+            className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-primary/40"
+          />
+        )}
+        {!collapsed && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCollapsed((c) => !c)}
+            className="shrink-0 text-sidebar-foreground hover:bg-sidebar-accent"
+            title="Collapse sidebar"
+          >
+            <ChevronLeft size={18} />
+          </Button>
+        )}
       </div>
+
+      {/* Expand toggle when collapsed (centered floating icon) */}
+      {collapsed && (
+        <button
+          type="button"
+          onClick={() => setCollapsed(false)}
+          className="mx-auto mt-2 flex h-7 w-7 items-center justify-center rounded-md border border-sidebar-border text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent"
+          title="Expand sidebar"
+        >
+          <ChevronRight size={14} />
+        </button>
+      )}
 
       {/* Navigation */}
       <nav

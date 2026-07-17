@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { getCurrencyMeta } from "@/lib/settings-store";
 
 interface NumberInputProps {
   value: string | number;
@@ -125,6 +126,7 @@ interface AmountInputProps {
 }
 
 export function AmountInput({ value, onChange, onBlur, placeholder, disabled, className, id }: AmountInputProps) {
+  const { symbol } = getCurrencyMeta();
   return (
     <NumberInputBase
       id={id}
@@ -133,7 +135,7 @@ export function AmountInput({ value, onChange, onBlur, placeholder, disabled, cl
       onBlur={onBlur}
       placeholder={placeholder}
       decimals={2}
-      prefix="₱"
+      prefix={symbol || undefined}
       className={className}
       disabled={disabled}
     />
