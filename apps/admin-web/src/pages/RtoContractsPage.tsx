@@ -213,10 +213,12 @@ export default function RtoContractsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <KeyRound className="h-5 w-5 text-accent" /> RTO Contracts
-            </CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <KeyRound className="h-5 w-5 text-accent" /> RTO Contracts
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4">
             <Select
               value={statusFilter}
               onValueChange={(v) => {
@@ -237,8 +239,6 @@ export default function RtoContractsPage() {
               </SelectContent>
             </Select>
           </div>
-        </CardHeader>
-        <CardContent>
           {isError ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
               <AlertCircle className="h-8 w-8 text-destructive" />

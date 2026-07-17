@@ -179,72 +179,70 @@ export default function ServiceRequestsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Wrench className="h-5 w-5 text-accent" /> Requests
-            </CardTitle>
-            <div className="flex flex-wrap gap-2">
-              <Select
-                value={statusFilter}
-                onValueChange={(v) => {
-                  setStatusFilter(v);
-                  setPage(1);
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-36">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  {(Object.keys(statusMeta) as ServiceStatus[]).map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {statusMeta[s].label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={priorityFilter}
-                onValueChange={(v) => {
-                  setPriorityFilter(v);
-                  setPage(1);
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-36">
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Priorities</SelectItem>
-                  {(Object.keys(priorityMeta) as ServicePriority[]).map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {priorityMeta[p].label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={categoryFilter}
-                onValueChange={(v) => {
-                  setCategoryFilter(v);
-                  setPage(1);
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-40">
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {(Object.keys(categoryMeta) as ServiceCategory[]).map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {categoryMeta[c]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Wrench className="h-5 w-5 text-accent" /> Requests
+          </CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => {
+                setStatusFilter(v);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-36">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {(Object.keys(statusMeta) as ServiceStatus[]).map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {statusMeta[s].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={priorityFilter}
+              onValueChange={(v) => {
+                setPriorityFilter(v);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-36">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priorities</SelectItem>
+                {(Object.keys(priorityMeta) as ServicePriority[]).map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {priorityMeta[p].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={categoryFilter}
+              onValueChange={(v) => {
+                setCategoryFilter(v);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {(Object.keys(categoryMeta) as ServiceCategory[]).map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {categoryMeta[c]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {isError ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
               <AlertCircle className="h-8 w-8 text-destructive" />

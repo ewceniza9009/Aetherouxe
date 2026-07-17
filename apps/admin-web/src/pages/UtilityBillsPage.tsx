@@ -120,47 +120,57 @@ export default function UtilityBillsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5 text-accent" /> Bills
-            </CardTitle>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-full sm:w-44">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="partially_paid">Partially Paid</SelectItem>
-                  <SelectItem value="waived">Waived</SelectItem>
-                  <SelectItem value="disputed">Disputed</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={utilityType} onValueChange={setUtilityType}>
-                <SelectTrigger className="w-full sm:w-44">
-                  <SelectValue placeholder="Utility" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Utilities</SelectItem>
-                  <SelectItem value="water">Water</SelectItem>
-                  <SelectItem value="electricity">Electricity</SelectItem>
-                  <SelectItem value="gas">Gas</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="Tenant ID"
-                value={tenantId}
-                onChange={(e) => setTenantId(e.target.value)}
-                className="w-full sm:w-40"
-              />
-              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full sm:w-40" />
-              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full sm:w-40" />
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Receipt className="h-5 w-5 text-accent" /> Bills
+          </CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="flex flex-wrap gap-2 sm:items-center mb-4">
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="w-full sm:w-44">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="partially_paid">Partially Paid</SelectItem>
+                <SelectItem value="waived">Waived</SelectItem>
+                <SelectItem value="disputed">Disputed</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={utilityType} onValueChange={setUtilityType}>
+              <SelectTrigger className="w-full sm:w-44">
+                <SelectValue placeholder="Utility" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Utilities</SelectItem>
+                <SelectItem value="water">Water</SelectItem>
+                <SelectItem value="electricity">Electricity</SelectItem>
+                <SelectItem value="gas">Gas</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              placeholder="Tenant ID"
+              value={tenantId}
+              onChange={(e) => setTenantId(e.target.value)}
+              className="w-full sm:w-40"
+            />
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full sm:w-40" />
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full sm:w-40" />
+            <Button
+              variant="outline"
+              onClick={() => {
+                setStatus("all");
+                setUtilityType("all");
+                setTenantId("");
+                setFrom("");
+                setTo("");
+              }}
+            >
+              Reset
+            </Button>
+          </div>
           {isError ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
               <AlertCircle className="h-8 w-8 text-destructive" />

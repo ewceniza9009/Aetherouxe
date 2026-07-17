@@ -74,46 +74,44 @@ export default function ReadingsPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Gauge className="h-5 w-5 text-accent" /> Readings
-            </CardTitle>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Select value={meterId} onValueChange={setMeterId}>
-                <SelectTrigger className="w-full sm:w-72">
-                  <SelectValue placeholder="Meter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Meters</SelectItem>
-                  {meters.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.meterNumber} · {m.utilityType}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <span className="text-sm font-medium text-muted-foreground">From</span>
-                <Input
-                  type="date"
-                  value={from}
-                  onChange={(e) => setFrom(e.target.value)}
-                  className="w-full sm:w-40"
-                />
-              </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <span className="text-sm font-medium text-muted-foreground">To</span>
-                <Input
-                  type="date"
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                  className="w-full sm:w-40"
-                />
-              </div>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Gauge className="h-5 w-5 text-accent" /> Readings
+          </CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center mb-4">
+            <Select value={meterId} onValueChange={setMeterId}>
+              <SelectTrigger className="w-full sm:w-72">
+                <SelectValue placeholder="Meter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Meters</SelectItem>
+                {meters.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.meterNumber} · {m.utilityType}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <span className="text-sm font-medium text-muted-foreground">From</span>
+              <Input
+                type="date"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                className="w-full sm:w-40"
+              />
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <span className="text-sm font-medium text-muted-foreground">To</span>
+              <Input
+                type="date"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                className="w-full sm:w-40"
+              />
+            </div>
+          </div>
           {isError ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
               <AlertCircle className="h-8 w-8 text-destructive" />
