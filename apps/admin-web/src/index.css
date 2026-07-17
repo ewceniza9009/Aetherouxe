@@ -113,6 +113,71 @@
   .after\:bg-white::after { background-color: hsl(var(--foreground)); }
 }
 
+/* ── Native date / time picker theming ──
+    The browser's default calendar/clock indicator renders as a solid black
+    glyph, which looks broken on the dark theme (a black box in the field).
+    Recolor it to a muted-gold tint, keep it right-aligned, and make it obvious
+    it's clickable. Applies to date, time, datetime-local, month, week. */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
+  color-scheme: dark;
+  position: relative;
+}
+
+/* The black native glyph is fully hidden. Our own themed lucide icon is
+   overlaid by the Input component. The native indicator is stretched to cover
+   the whole field so the entire input remains clickable to open the picker. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator,
+input[type="week"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+  background: transparent;
+}
+
+/* Placeholder-ish text for empty date fields + editable segments. */
+input[type="date"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit,
+input[type="datetime-local"]::-webkit-datetime-edit,
+input[type="month"]::-webkit-datetime-edit,
+input[type="week"]::-webkit-datetime-edit {
+  color: hsl(var(--foreground));
+}
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="time"]::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+input[type="date"]:in-range::-webkit-datetime-edit-year-field,
+input[type="date"]:in-range::-webkit-datetime-edit-month-field,
+input[type="date"]:in-range::-webkit-datetime-edit-day-field {
+  color: hsl(var(--foreground));
+}
+
+/* Firefox: it renders a small native icon; keep it aligned and themed. */
+@supports (-moz-appearance: none) {
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="week"] {
+    color: hsl(var(--foreground));
+  }
+}
+
 /* Custom scrollbar — elite dark gold */
 ::-webkit-scrollbar {
   width: 6px;

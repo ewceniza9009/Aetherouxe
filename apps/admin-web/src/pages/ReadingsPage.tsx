@@ -128,7 +128,10 @@ export default function ReadingsPage() {
               </TableHeader>
               <TableBody>
                 {readings.map((r) => {
-                  const type = r.meter?.meterNumber ? (meters.find((m) => m.id === r.meterId)?.utilityType as UtilityType) : undefined;
+                  const type = (r.meter?.utilityType ??
+                    meters.find((m) => m.id === r.meterId)?.utilityType) as
+                    | UtilityType
+                    | undefined;
                   return (
                     <TableRow
                       key={r.id}

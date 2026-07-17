@@ -60,6 +60,9 @@ export interface AgentTransaction {
   amount: number;
   commissionRate?: number;
   commissionAmount: number;
+  owedCommission?: number;
+  paidCommission?: number;
+  remainingCommission?: number;
   status: AgentTransactionStatus;
   transactionDate: string;
   reference?: string;
@@ -341,6 +344,39 @@ export function useCreateRelease() {
         queryClient.invalidateQueries({ queryKey: ["agent", result.agentId] });
         queryClient.invalidateQueries({ queryKey: ["agent-performance", result.agentId] });
       }
+    },
+  });
+}
+
+export interface PayCommissionPayload {
+  amount: number;
+  releaseType?: "full_payout" | "partial_payout" | "advance" | "adjustment" | "clawback";
+  paymentDate?: string;
+  paymentMethod?: string;
+  paymentReference?: string;
+  approvedByUserId?: string;
+  notes?: string;
+}
+
+export function usePayCommission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      agentTransactionId,
+      ...payload
+    }: PayCommissionPayload & { agentTransactionId: string }) => {
+      const { data } = await api.post<ApiResponse<unknown>>(
+        `/commission-releases/pay/${agentTransactionId}`,
+        payload
+      );
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agent-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["commission-releases"] });
+      queryClient.invalidateQueries({ queryKey: ["commission-aging"] });
+      queryClient.invalidateQueries({ queryKey: ["agent"] });
+      queryClient.invalidateQueries({ queryKey: ["agent-performance"] });
     },
   });
 }

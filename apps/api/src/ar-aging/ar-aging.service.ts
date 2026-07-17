@@ -79,6 +79,23 @@ export class ArAgingService {
 
     let totalReceivable = 0;
 
+    const invoiceRows: Array<{
+      invoiceId: string;
+      invoiceNumber: string;
+      invoiceType: string;
+      userId: string;
+      userName: string;
+      propertyId: string | null;
+      propertyCode: string | null;
+      amount: number;
+      paid: number;
+      outstanding: number;
+      dueDate: Date;
+      daysOverdue: number;
+      bucket: BucketName;
+      status: string;
+    }> = [];
+
     for (const invoice of invoices) {
       const paid = (invoice.payments || []).reduce(
         (sum, p) => sum + Number(p.amount),
@@ -138,7 +155,26 @@ export class ArAgingService {
       const typeEntry = byInvoiceTypeMap.get(invoice.invoiceType)!;
       typeEntry.totalOutstanding += outstanding;
       typeEntry.buckets[bucketName] += outstanding;
+
+      invoiceRows.push({
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.invoiceNumber ?? invoice.id,
+        invoiceType: invoice.invoiceType,
+        userId: invoice.userId,
+        userName,
+        propertyId: property?.id ?? null,
+        propertyCode: property?.propertyCode ?? null,
+        amount: Number(invoice.amount),
+        paid,
+        outstanding,
+        dueDate,
+        daysOverdue,
+        bucket: bucketName,
+        status: invoice.status,
+      });
     }
+
+    invoiceRows.sort((a, b) => b.daysOverdue - a.daysOverdue);
 
     let activePaymentArrangements: any[] = [];
     if (tenantId) {
@@ -164,6 +200,7 @@ export class ArAgingService {
       byUser: Array.from(byUserMap.values()),
       byProperty: Array.from(byPropertyMap.values()),
       byInvoiceType: Array.from(byInvoiceTypeMap.values()),
+      invoices: invoiceRows,
       activePaymentArrangements,
     };
   }

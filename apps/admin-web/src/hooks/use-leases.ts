@@ -40,6 +40,8 @@ export interface RentalPayment {
   id: string;
   leaseAgreementId: string;
   amount: number;
+  amountDue?: number;
+  amountPaid?: number;
   method: PaymentMethod;
   status: PaymentStatus;
   period?: string;
@@ -240,6 +242,8 @@ export function useLeasePayments(leaseId: string) {
         id: p.id,
         leaseAgreementId: p.leaseAgreementId,
         amount: Number(p.amountDue),
+        amountDue: Number(p.amountDue),
+        amountPaid: Number(p.amountPaid ?? 0),
         method: p.paymentMethod || "card",
         status: p.status,
         period: p.period ?? (p.billingPeriodStart ? new Date(p.billingPeriodStart).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : null),
@@ -281,9 +285,9 @@ export function useRecordPayment() {
       paidDate?: string;
     }) => {
       const { data } = await api.post<ApiResponse<RentalPayment>>(`/rental-payments/${id}/record`, {
-        amount,
-        method,
-        paidDate,
+        amountPaid: amount,
+        paymentMethod: method,
+        paymentDate: paidDate ?? new Date().toISOString().slice(0, 10),
       });
       return data.data;
     },

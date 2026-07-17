@@ -271,6 +271,12 @@ model User {
   activitiesPerformed     CollectionActivity[]
   pnlStatements           OwnerPnlStatement[]
   communityPostsAuthored  CommunityPost[]
+  postsModerated          CommunityPost[]       @relation("PostModeratedBy")
+  commentsAuthored        PostComment[]         @relation("CommentAuthor")
+  commentsModerated       PostComment[]         @relation("CommentModeratedBy")
+  reportsFiled            PostReport[]          @relation("ReportReporter")
+  reportsResolved         PostReport[]          @relation("ReportResolvedBy")
+  moderationActions       ModerationLog[]       @relation("ModerationPerformer")
   notificationsOwned      Notification[]
   paymentArrangements     ArPaymentArrangement[]
   titleTransfersAsBuyer   TitleTransfer[]        @relation("TitleTransferBuyer")
@@ -802,6 +808,11 @@ model AgentCommissionRelease {
   releaseType        String
   agingBucket        String?
   paymentReference   String?
+  paymentMethod      String?
+  paymentDate        DateTime?
+  status             String   @default("paid")
+  approvedByUserId   String?
+  receiptUrl         String?
   notes              String?
   createdAt          DateTime @default(now())
 
@@ -1159,22 +1170,112 @@ model MaintenanceWorkOrder {
   @@map("maintenance_work_orders")
 }
 
-model CommunityPost {
-  id          String    @id @default(cuid())
-  title       String
-  body        String
-  postType    PostType  @default(announcement)
-  audience    Audience  @default(all)
-  propertyId  String?
-  scheduledAt DateTime?
-  authorId    String?
-  isPublished Boolean   @default(true)
-  createdAt   DateTime  @default(now())
+enum ModerationStatus {
+  published
+  hidden
+  archived
+}
 
-  property Property? @relation(fields: [propertyId], references: [id])
-  author   User?     @relation(fields: [authorId], references: [id])
+enum ReportStatus {
+  open
+  reviewed
+  dismissed
+  actioned
+}
+
+enum ModerationTargetType {
+  post
+  comment
+}
+
+enum ModerationAction {
+  publish
+  hide
+  archive
+  restore
+  delete
+  dismiss_report
+  action_report
+}
+
+model CommunityPost {
+  id               String           @id @default(cuid())
+  title            String
+  body             String
+  postType         PostType         @default(announcement)
+  audience         Audience         @default(all)
+  propertyId       String?
+  scheduledAt      DateTime?
+  authorId         String?
+  isPublished      Boolean          @default(true)
+  moderationStatus ModerationStatus @default(published)
+  moderatedById    String?
+  moderatedAt      DateTime?
+  moderationReason String?
+  createdAt        DateTime         @default(now())
+
+  property    Property?      @relation(fields: [propertyId], references: [id])
+  author      User?          @relation(fields: [authorId], references: [id])
+  moderatedBy User?          @relation("PostModeratedBy", fields: [moderatedById], references: [id])
+  comments    PostComment[]
+  reports     PostReport[]
 
   @@map("community_posts")
+}
+
+model PostComment {
+  id               String           @id @default(cuid())
+  postId           String
+  authorId         String?
+  authorName       String?
+  body             String
+  moderationStatus ModerationStatus @default(published)
+  moderatedById    String?
+  moderatedAt      DateTime?
+  createdAt        DateTime         @default(now())
+
+  post        CommunityPost @relation(fields: [postId], references: [id])
+  author      User?         @relation("CommentAuthor", fields: [authorId], references: [id])
+  moderatedBy User?         @relation("CommentModeratedBy", fields: [moderatedById], references: [id])
+  reports     PostReport[]
+
+  @@map("post_comments")
+}
+
+model PostReport {
+  id            String       @id @default(cuid())
+  postId        String?
+  commentId     String?
+  reportedById  String?
+  reporterName  String?
+  reason        String
+  details       String?
+  status        ReportStatus @default(open)
+  resolvedById  String?
+  resolvedAt    DateTime?
+  resolutionNote String?
+  createdAt     DateTime     @default(now())
+
+  post       CommunityPost? @relation(fields: [postId], references: [id])
+  comment    PostComment?   @relation(fields: [commentId], references: [id])
+  reportedBy User?          @relation("ReportReporter", fields: [reportedById], references: [id])
+  resolvedBy User?          @relation("ReportResolvedBy", fields: [resolvedById], references: [id])
+
+  @@map("post_reports")
+}
+
+model ModerationLog {
+  id           String               @id @default(cuid())
+  targetType   ModerationTargetType
+  targetId     String
+  action       ModerationAction
+  reason       String?
+  performedById String?
+  createdAt    DateTime             @default(now())
+
+  performedBy User? @relation("ModerationPerformer", fields: [performedById], references: [id])
+
+  @@map("moderation_logs")
 }
 
 enum DocOwnerType {
@@ -1388,6 +1489,7 @@ enum CollectionCasePriority {
 
 model CollectionCase {
   id               String                 @id @default(uuid())
+  caseNumber       String?                @unique
   tenantId         String?
   leaseId          String?
   totalOutstanding Decimal                @db.Decimal(14, 2)

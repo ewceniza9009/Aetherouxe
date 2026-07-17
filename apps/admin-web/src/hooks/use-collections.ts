@@ -25,21 +25,32 @@ export interface ArAgingByProperty {
   outstanding: number;
 }
 
+export interface ArAgingInvoice {
+  invoiceId: string;
+  invoiceNumber: string;
+  invoiceType: string;
+  tenantName: string;
+  propertyCode: string | null;
+  amount: number;
+  paid: number;
+  outstanding: number;
+  dueDate: string;
+  daysOverdue: number;
+  bucket: string;
+  status: string;
+}
+
 export interface ArAgingReport {
   totalReceivable: number;
   buckets: ArAgingBucket[];
   byTenant: ArAgingByTenant[];
   byProperty: ArAgingByProperty[];
+  invoices: ArAgingInvoice[];
 }
 
-export type ReminderType =
-  | "rent_due"
-  | "overdue"
-  | "late_fee"
-  | "notice"
-  | "statement";
+export type ReminderType = "pre_due" | "post_due" | "final_notice";
 
-export type ReminderChannel = "email" | "sms" | "push" | "letter";
+export type ReminderChannel = "email" | "sms" | "portal" | "letter";
 
 export type ReminderStatus = "pending" | "sent" | "failed" | "cancelled";
 
@@ -123,13 +134,33 @@ export interface CollectionCaseAssignedTo {
   lastName?: string | null;
 }
 
+export interface CollectionCaseLease {
+  id: string;
+  leaseNumber?: string | null;
+  leaseType?: string | null;
+  schemeType?: string | null;
+  unitLabel?: string | null;
+  monthlyRentAmount?: string | number | null;
+  tenant?: {
+    id?: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+  } | null;
+  property?: {
+    id?: string;
+    propertyCode?: string | null;
+  } | null;
+}
+
 export interface CollectionCase {
   id: string;
   caseNumber: string;
   tenantId?: string | null;
   tenant?: CollectionCaseTenant | null;
   leaseId?: string | null;
-  lease?: unknown | null;
+  lease?: CollectionCaseLease | null;
   priority: CollectionCasePriority;
   status: CollectionCaseStatus;
   totalOutstanding?: string | number | null;
@@ -244,6 +275,20 @@ export function useArAging(params?: { propertyId?: string }) {
           propertyId: p.propertyId,
           propertyName: p.propertyCode ?? p.propertyName ?? "—",
           outstanding: Number(p.totalOutstanding ?? 0),
+        })),
+        invoices: (raw.invoices ?? []).map((i: any) => ({
+          invoiceId: i.invoiceId,
+          invoiceNumber: i.invoiceNumber ?? i.invoiceId,
+          invoiceType: i.invoiceType,
+          tenantName: i.userName ?? "—",
+          propertyCode: i.propertyCode ?? null,
+          amount: Number(i.amount ?? 0),
+          paid: Number(i.paid ?? 0),
+          outstanding: Number(i.outstanding ?? 0),
+          dueDate: i.dueDate,
+          daysOverdue: Number(i.daysOverdue ?? 0),
+          bucket: AR_BUCKET_LABELS[i.bucket] ?? i.bucket,
+          status: i.status,
         })),
       };
       return report;
@@ -418,9 +463,8 @@ export function useOpenOverdueCases() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const { data } = await api.post<ApiResponse<{ opened: number }>>(
-        `/collection-cases/open-overdue`,
-        {}
+      const { data } = await api.get<ApiResponse<{ count: number }>>(
+        `/collection-cases/open-overdue`
       );
       return data.data;
     },
@@ -485,16 +529,25 @@ export function useAddCaseActivity() {
       date,
       outcome,
       notes,
+      nextActionDate,
     }: {
       caseId: string;
       type: string;
       date?: string;
       outcome?: string;
       notes?: string;
+      nextActionDate?: string;
     }) => {
       const { data } = await api.post<ApiResponse<CollectionActivity>>(
-        `/collection-cases/${caseId}/activities`,
-        { type, date, outcome, notes }
+        `/collection-activities`,
+        {
+          collectionCaseId: caseId,
+          activityType: type,
+          performedAt: date,
+          outcome,
+          notes,
+          nextActionDate,
+        }
       );
       return data.data;
     },
@@ -502,6 +555,7 @@ export function useAddCaseActivity() {
       queryClient.invalidateQueries({
         queryKey: ["collection-case", variables.caseId],
       });
+      queryClient.invalidateQueries({ queryKey: ["collection-activities"] });
     },
   });
 }
@@ -535,6 +589,21 @@ export function useCreateCase() {
   });
 }
 
+export function useDeleteCase() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.delete<ApiResponse<{ deleted: boolean }>>(
+        `/collection-cases/${id}`
+      );
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["collection-cases"] });
+    },
+  });
+}
+
 /* --------------------------- Shared Display Maps --------------------------- */
 
 export const AR_BUCKETS: { label: string; tone: string; bar: string; soft: string }[] = [
@@ -556,11 +625,9 @@ export function bucketTone(label: string) {
 }
 
 export const REMINDER_TYPE_LABELS: Record<ReminderType, string> = {
-  rent_due: "Rent Due",
-  overdue: "Overdue",
-  late_fee: "Late Fee",
-  notice: "Notice",
-  statement: "Statement",
+  pre_due: "Pre-Due",
+  post_due: "Post-Due",
+  final_notice: "Final Notice",
 };
 
 export const REMINDER_STATUS_VARIANT: Record<
@@ -623,6 +690,22 @@ export const CASE_PRIORITY_LABELS: Record<CollectionCasePriority, string> = {
   high: "High",
   critical: "Critical",
 };
+
+export const LEASE_TYPE_LABELS: Record<string, string> = {
+  standard_rental: "Rent",
+  corporate_lease: "Corporate Rent",
+  short_term: "Short-term Rent",
+  rent_to_own: "Rent-to-Own",
+};
+
+export function personName(
+  lease?: CollectionCaseLease | null,
+): string {
+  const t = lease?.tenant;
+  if (!t) return "—";
+  const full = `${t.firstName ?? ""} ${t.lastName ?? ""}`.trim();
+  return full || t.email || "—";
+}
 
 export { formatCurrency } from "../lib/settings-store";
 

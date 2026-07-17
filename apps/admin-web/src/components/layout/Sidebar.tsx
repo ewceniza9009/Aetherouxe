@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
   LayoutDashboard,
@@ -26,6 +26,11 @@ import {
   IdCard,
   ClipboardList,
   ScrollText,
+  Home,
+  Briefcase,
+  Wallet,
+  Activity,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,98 +40,192 @@ interface NavItem {
   label: string;
   icon: ReactNode;
   path: string;
+  /** "setup" = master/configuration data (roots); "txn" = operational records (leaves) */
+  kind: "setup" | "txn";
 }
 
 interface NavGroup {
   label: string;
+  icon: ReactNode;
   items: NavItem[];
 }
 
 const navGroups: NavGroup[] = [
   {
     label: "Overview",
+    icon: <Home size={16} />,
     items: [
-      { label: "Dashboard", icon: <LayoutDashboard size={18} />, path: "/dashboard" },
+      { label: "Dashboard", icon: <LayoutDashboard size={18} />, path: "/dashboard", kind: "setup" },
     ],
   },
   {
     label: "Property",
+    icon: <Building2 size={16} />,
     items: [
-      { label: "Properties", icon: <Building2 size={18} />, path: "/properties" },
-      { label: "Buildings", icon: <Building2 size={18} />, path: "/buildings" },
-      { label: "Tenants", icon: <Users size={18} />, path: "/tenants" },
-      { label: "Leases", icon: <FileText size={18} />, path: "/leases" },
-      { label: "Rent-to-Own", icon: <KeyRound size={18} />, path: "/rto" },
-      { label: "Title Transfers", icon: <ScrollText size={18} />, path: "/title-transfers" },
-      { label: "Projects", icon: <Hammer size={18} />, path: "/projects" },
-      { label: "Amenities", icon: <Droplet size={18} />, path: "/amenities" },
+      { label: "Properties", icon: <Building2 size={18} />, path: "/properties", kind: "setup" },
+      { label: "Buildings", icon: <Building2 size={18} />, path: "/buildings", kind: "setup" },
+      { label: "Projects", icon: <Hammer size={18} />, path: "/projects", kind: "setup" },
+      { label: "Amenities", icon: <Droplet size={18} />, path: "/amenities", kind: "setup" },
+      { label: "Tenants", icon: <Users size={18} />, path: "/tenants", kind: "txn" },
+      { label: "Leases", icon: <FileText size={18} />, path: "/leases", kind: "txn" },
+      { label: "Rent-to-Own", icon: <KeyRound size={18} />, path: "/rto", kind: "txn" },
+      { label: "Title Transfers", icon: <ScrollText size={18} />, path: "/title-transfers", kind: "txn" },
     ],
   },
   {
     label: "Sales",
+    icon: <Briefcase size={16} />,
     items: [
-      { label: "Sales & Schemes", icon: <BadgeDollarSign size={18} />, path: "/sales" },
-      { label: "Schemes", icon: <ClipboardList size={18} />, path: "/schemes" },
-      { label: "Agents", icon: <UserCheck size={18} />, path: "/agents" },
-      { label: "Commissions", icon: <DollarSign size={18} />, path: "/commissions" },
+      { label: "Schemes", icon: <ClipboardList size={18} />, path: "/schemes", kind: "setup" },
+      { label: "Agents", icon: <UserCheck size={18} />, path: "/agents", kind: "setup" },
+      { label: "Sales & Schemes", icon: <BadgeDollarSign size={18} />, path: "/sales", kind: "txn" },
+      { label: "Commissions", icon: <DollarSign size={18} />, path: "/commissions", kind: "txn" },
     ],
   },
   {
     label: "Finance",
+    icon: <Wallet size={16} />,
     items: [
-      { label: "Finance", icon: <DollarSign size={18} />, path: "/finance" },
-      { label: "Collections", icon: <BellRing size={18} />, path: "/collections" },
-      { label: "Collection Cases", icon: <ClipboardList size={18} />, path: "/collections/cases" },
-      { label: "AR Aging", icon: <BarChart3 size={18} />, path: "/collections/ar-aging" },
-      { label: "Commission Aging", icon: <BarChart3 size={18} />, path: "/finance/commission-aging" },
-      { label: "Statements", icon: <Inbox size={18} />, path: "/statements" },
-      { label: "Meters & Billing", icon: <Droplet size={18} />, path: "/meters" },
-      { label: "Owner P&L", icon: <PieChart size={18} />, path: "/owner-pnl" },
+      { label: "Finance", icon: <DollarSign size={18} />, path: "/finance", kind: "setup" },
+      { label: "Meters & Billing", icon: <Droplet size={18} />, path: "/meters", kind: "setup" },
+      { label: "Collections", icon: <BellRing size={18} />, path: "/collections", kind: "txn" },
+      { label: "Collection Cases", icon: <ClipboardList size={18} />, path: "/collections/cases", kind: "txn" },
+      { label: "AR Aging", icon: <BarChart3 size={18} />, path: "/collections/ar-aging", kind: "txn" },
+      { label: "Commission Aging", icon: <BarChart3 size={18} />, path: "/finance/commission-aging", kind: "txn" },
+      { label: "Statements", icon: <Inbox size={18} />, path: "/statements", kind: "txn" },
+      { label: "Owner P&L", icon: <PieChart size={18} />, path: "/owner-pnl", kind: "txn" },
     ],
   },
   {
     label: "Operations",
+    icon: <Activity size={16} />,
     items: [
-      { label: "Community", icon: <Megaphone size={18} />, path: "/community-posts" },
-      { label: "Service Requests", icon: <Wrench size={18} />, path: "/service-requests" },
-      { label: "Documents", icon: <FileText size={18} />, path: "/documents" },
-      { label: "Payment Reminders", icon: <BellRing size={18} />, path: "/payment-reminders" },
-      { label: "Readings", icon: <Droplet size={18} />, path: "/readings" },
+      { label: "Documents", icon: <FileText size={18} />, path: "/documents", kind: "setup" },
+      { label: "Community", icon: <Megaphone size={18} />, path: "/community-posts", kind: "txn" },
+      { label: "Service Requests", icon: <Wrench size={18} />, path: "/service-requests", kind: "txn" },
+      { label: "Payment Reminders", icon: <BellRing size={18} />, path: "/payment-reminders", kind: "txn" },
+      { label: "Readings", icon: <Droplet size={18} />, path: "/readings", kind: "txn" },
     ],
   },
   {
     label: "Reports",
+    icon: <BarChart3 size={16} />,
     items: [
-      { label: "Analytics", icon: <BarChart3 size={18} />, path: "/analytics" },
+      { label: "Analytics", icon: <BarChart3 size={18} />, path: "/analytics", kind: "txn" },
     ],
   },
   {
     label: "Admin",
+    icon: <ShieldCheck size={16} />,
     items: [
-      { label: "Users", icon: <UserCog size={18} />, path: "/users" },
-      { label: "Profile", icon: <IdCard size={18} />, path: "/profile" },
-      { label: "Settings", icon: <Settings size={18} />, path: "/settings" },
+      { label: "Users", icon: <UserCog size={18} />, path: "/users", kind: "setup" },
+      { label: "Settings", icon: <Settings size={18} />, path: "/settings", kind: "setup" },
+      { label: "Profile", icon: <IdCard size={18} />, path: "/profile", kind: "txn" },
     ],
   },
 ];
 
+const STORAGE_KEY = "sidebar:openGroups";
+
+function loadOpenState(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw) as Record<string, boolean>;
+  } catch {
+    /* ignore */
+  }
+  return {};
+}
+
+const kindDot: Record<NavItem["kind"], string> = {
+  setup: "bg-amber-400/80 shadow-[0_0_6px_rgba(251,191,36,0.5)]",
+  txn: "bg-cyan-400/70 shadow-[0_0_6px_rgba(34,211,238,0.45)]",
+};
+
+function renderItem(
+  item: NavItem,
+  collapsed: boolean,
+  isActivePath: (path: string) => boolean,
+) {
+  const active = isActivePath(item.path);
+  return (
+    <Link
+      key={item.path}
+      to={item.path}
+      title={collapsed ? item.label : undefined}
+      className={cn(
+        "group relative flex items-center rounded-lg text-sm font-medium transition-colors",
+        collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
+        active
+          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+      )}
+    >
+      {active && !collapsed && (
+        <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-primary" />
+      )}
+      <span
+        className={cn(
+          "relative flex",
+          active
+            ? "text-sidebar-primary-foreground"
+            : "text-sidebar-foreground/60 group-hover:text-sidebar-accent-foreground",
+        )}
+      >
+        {item.icon}
+        {!collapsed && (
+          <span
+            className={cn(
+              "absolute -right-1.5 -top-1 h-1.5 w-1.5 rounded-full",
+              kindDot[item.kind],
+              active && "opacity-90",
+            )}
+          />
+        )}
+      </span>
+      {!collapsed && <span>{item.label}</span>}
+    </Link>
+  );
+}
+
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const { pathname } = useLocation();
   const { logout } = useAuth();
 
+  const isActivePath = (path: string) => pathname.startsWith(path);
+
+  const groupHasActive = (group: NavGroup) =>
+    group.items.some((i) => isActivePath(i.path));
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const stored = loadOpenState();
+    // Default: open all groups the first time; otherwise honor stored state.
+    if (Object.keys(stored).length === 0) {
+      return Object.fromEntries(navGroups.map((g) => [g.label, true]));
+    }
+    return stored;
+  });
+
+  // Always keep the group containing the current route expanded.
+  useEffect(() => {
+    const active = navGroups.find((g) => groupHasActive(g));
+    if (active && !openGroups[active.label]) {
+      setOpenGroups((prev) => ({ ...prev, [active.label]: true }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
   const toggleGroup = (label: string) => {
-    setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
-  };
-
-  const isGroupActive = (items: NavItem[]) =>
-    items.some((item) => pathname.startsWith(item.path));
-
-  const expandAll = () => {
-    const next: Record<string, boolean> = {};
-    navGroups.forEach((g) => (next[g.label] = true));
-    setOpenGroups(next);
+    setOpenGroups((prev) => {
+      const next = { ...prev, [label]: !prev[label] };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
   };
 
   return (
@@ -154,14 +253,7 @@ export default function Sidebar() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => {
-            if (collapsed) {
-              setCollapsed(false);
-              expandAll();
-            } else {
-              setCollapsed(true);
-            }
-          }}
+          onClick={() => setCollapsed((c) => !c)}
           className="text-sidebar-foreground hover:bg-sidebar-accent"
         >
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -169,74 +261,82 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+      <nav
+        className={cn(
+          "flex-1 overflow-y-auto py-4 px-2",
+          collapsed ? "space-y-4" : "space-y-1.5",
+        )}
+      >
         {navGroups.map((group) => {
-          const isOpen = collapsed ? false : (openGroups[group.label] ?? isGroupActive(group.items));
-          const active = isGroupActive(group.items);
-
-          if (collapsed) {
-            return group.items.map((item) => {
-              const isActive = pathname.startsWith(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex items-center justify-center px-2 py-2 rounded-lg transition-colors",
-                    isActive
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent",
-                  )}
-                  title={item.label}
-                >
-                  {item.icon}
-                </Link>
-              );
-            });
-          }
+          const open = collapsed || openGroups[group.label];
+          const hasActive = groupHasActive(group);
 
           return (
-            <div key={group.label}>
-              <button
-                onClick={() => toggleGroup(group.label)}
+            <div key={group.label} className="space-y-1">
+              {!collapsed ? (
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.label)}
+                  className={cn(
+                    "group/head flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest transition-colors",
+                    hasActive
+                      ? "text-primary"
+                      : "text-sidebar-foreground/40 hover:text-sidebar-foreground/70",
+                  )}
+                >
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        hasActive
+                          ? "text-primary"
+                          : "text-sidebar-foreground/40 group-hover/head:text-sidebar-foreground/70",
+                      )}
+                    >
+                      {group.icon}
+                    </span>
+                    {group.label}
+                  </span>
+                  <ChevronDown
+                    size={14}
+                    className={cn(
+                      "transition-transform duration-200",
+                      open ? "rotate-0" : "-rotate-90",
+                    )}
+                  />
+                </button>
+              ) : (
+                group.label !== navGroups[0].label && (
+                  <div className="mx-2 my-2 border-t border-sidebar-border/60" />
+                )
+              )}
+
+              <div
                 className={cn(
-                  "flex items-center justify-between w-full px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wider transition-colors",
-                  active
-                    ? "text-primary"
-                    : "text-sidebar-foreground/50 hover:text-sidebar-foreground/80",
+                  "grid transition-all duration-200 ease-in-out",
+                  open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
                 )}
               >
-                <span>{group.label}</span>
-                <ChevronDown
-                  size={12}
-                  className={cn(
-                    "transition-transform duration-200",
-                    isOpen && "rotate-180",
-                  )}
-                />
-              </button>
-              {isOpen && (
-                <div className="mt-0.5 space-y-0.5">
-                  {group.items.map((item) => {
-                    const isActive = pathname.startsWith(item.path);
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2 ml-1 rounded-lg text-sm font-medium transition-colors",
-                          isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                        )}
-                      >
-                        {item.icon}
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
+                  <div className="overflow-hidden">
+                   <div className={cn("space-y-0.5", !collapsed && "pl-1")}>
+                     {group.items
+                       .filter((i) => i.kind === "setup" || collapsed)
+                       .map((item) => renderItem(item, collapsed, isActivePath))}
+                     {!collapsed &&
+                       group.items.some((i) => i.kind === "txn") && (
+                         <>
+                           {group.items.some((i) => i.kind === "setup") && (
+                             <div className="px-3 pt-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-sidebar-foreground/30">
+                               Transactions
+                             </div>
+                           )}
+                           {group.items
+                             .filter((i) => i.kind === "txn")
+                             .map((item) => renderItem(item, collapsed, isActivePath))}
+                         </>
+                       )}
+                   </div>
+                 </div>
+              </div>
             </div>
           );
         })}
@@ -246,7 +346,11 @@ export default function Sidebar() {
       <div className="p-2 border-t border-sidebar-border">
         <button
           onClick={logout}
-          className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+          title={collapsed ? "Logout" : undefined}
+          className={cn(
+            "flex items-center rounded-md text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors w-full",
+            collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
+          )}
         >
           <LogOut size={18} />
           {!collapsed && <span>Logout</span>}

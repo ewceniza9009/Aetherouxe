@@ -40,13 +40,18 @@ export function formatCurrency(value?: number | null): string {
   if (value === undefined || value === null || Number.isNaN(value)) return "—";
   const { code, symbol } = getCurrencyMeta();
   const num = value.toLocaleString("en-US", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
     useGrouping: true,
   });
   if (symbol) return `${symbol}${num}`;
   try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency: code }).format(value);
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: code,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
   } catch {
     return `${code} ${num}`;
   }

@@ -91,6 +91,7 @@ export class ConsumptionReadingsService {
         skip,
         take: limit,
         orderBy: { readingDate: 'desc' },
+        include: { meter: { select: { id: true, meterNumber: true, utilityType: true } } },
       }),
       this.prisma.consumptionReading.count({ where }),
     ]);
@@ -118,6 +119,7 @@ export class ConsumptionReadingsService {
         skip,
         take: limit,
         orderBy: { readingDate: 'desc' },
+        include: { meter: { select: { id: true, meterNumber: true, utilityType: true } } },
       }),
       this.prisma.consumptionReading.count({ where }),
     ]);
@@ -126,7 +128,10 @@ export class ConsumptionReadingsService {
   }
 
   async findOne(id: string) {
-    const reading = await this.prisma.consumptionReading.findUnique({ where: { id } });
+    const reading = await this.prisma.consumptionReading.findUnique({
+      where: { id },
+      include: { meter: { select: { id: true, meterNumber: true, utilityType: true } } },
+    });
     if (!reading) throw new NotFoundException('Consumption reading not found');
     return reading;
   }

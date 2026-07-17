@@ -1,11 +1,25 @@
 import { Module } from '@nestjs/common';
-import { AmenityController, AmenityBookingController, CommunityPostController } from './community.controller';
+import {
+  AmenityController,
+  AmenityBookingController,
+  CommunityPostController,
+  PostCommentController,
+  PostReportController,
+  ModerationLogController,
+} from './community.controller';
 import { CommunityService } from './community.service';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
-  controllers: [AmenityController, AmenityBookingController, CommunityPostController],
+  controllers: [
+    AmenityController,
+    AmenityBookingController,
+    CommunityPostController,
+    PostCommentController,
+    PostReportController,
+    ModerationLogController,
+  ],
   providers: [CommunityService],
   exports: [CommunityService],
 })

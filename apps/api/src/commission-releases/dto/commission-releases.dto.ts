@@ -36,6 +36,22 @@ export class CreateReleaseDto {
   @ApiPropertyOptional() @IsOptional() @IsISO8601() releaseDate?: string;
   @ApiProperty({ enum: RELEASE_TYPES }) @IsEnum(RELEASE_TYPES) releaseType: ReleaseTypeType;
   @ApiPropertyOptional() @IsOptional() @IsString() paymentReference?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() paymentMethod?: string;
+  @ApiPropertyOptional() @IsOptional() @IsISO8601() paymentDate?: string;
+  @ApiPropertyOptional({ enum: RELEASE_STATUSES }) @IsOptional() @IsEnum(RELEASE_STATUSES) status?: ReleaseStatusType;
+  @ApiPropertyOptional() @IsOptional() @IsString() approvedByUserId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() receiptUrl?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() notes?: string;
+}
+
+export class PayCommissionDto {
+  @ApiProperty() @IsNumber() amount: number;
+  @ApiPropertyOptional({ enum: RELEASE_TYPES }) @IsOptional() @IsEnum(RELEASE_TYPES) releaseType?: ReleaseTypeType;
+  @ApiPropertyOptional() @IsOptional() @IsISO8601() paymentDate?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() paymentMethod?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() paymentReference?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() approvedByUserId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() receiptUrl?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() notes?: string;
 }
 

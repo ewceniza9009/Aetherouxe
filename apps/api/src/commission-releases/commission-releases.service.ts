@@ -4,6 +4,7 @@ import {
   CreateReleaseDto,
   UpdateReleaseDto,
   ReleaseQueryDto,
+  PayCommissionDto,
   AgingBucketType,
 } from './dto/commission-releases.dto';
 
@@ -32,7 +33,7 @@ export class CommissionReleasesService {
     const days = Math.floor((now.getTime() - releaseDate.getTime()) / DAY_MS);
     const agingBucket = bucketForDays(days);
 
-    return this.prisma.agentCommissionRelease.create({
+    const release = await this.prisma.agentCommissionRelease.create({
       data: {
         agentTransactionId: dto.agentTransactionId,
         amount: dto.amount,
@@ -40,10 +41,117 @@ export class CommissionReleasesService {
         releaseType: dto.releaseType,
         agingBucket,
         paymentReference: dto.paymentReference,
+        paymentMethod: dto.paymentMethod,
+        paymentDate: dto.paymentDate ? new Date(dto.paymentDate) : releaseDate,
+        status: dto.status ?? 'paid',
+        approvedByUserId: dto.approvedByUserId,
+        receiptUrl: dto.receiptUrl,
         notes: dto.notes,
       },
       include: { transaction: { include: { agent: { include: { user: true } } } } },
     });
+
+    await this.reconcileTransactionStatus(dto.agentTransactionId);
+    return release;
+  }
+
+  /**
+   * Records an actual commission disbursement to an agent and reconciles the
+   * parent transaction's paid status. This is the "pay the agent" workflow.
+   */
+  async payCommission(agentTransactionId: string, dto: PayCommissionDto) {
+    const tx = await this.prisma.agentTransaction.findUnique({
+      where: { id: agentTransactionId },
+    });
+    if (!tx) throw new NotFoundException('Agent transaction not found');
+    if (tx.status === 'disputed') {
+      throw new BadRequestException('Cannot pay a disputed commission');
+    }
+
+    const owed = Number(tx.finalCommission ?? tx.calculatedCommission ?? 0);
+    const alreadyPaid = await this.totalReleasedFor(agentTransactionId);
+    const remaining = Math.max(0, owed - alreadyPaid);
+
+    if (remaining <= 0) {
+      throw new BadRequestException('This commission is already fully paid');
+    }
+    if (dto.amount <= 0) {
+      throw new BadRequestException('Payment amount must be greater than zero');
+    }
+    if (dto.amount > remaining + 0.01) {
+      throw new BadRequestException(
+        `Payment (${dto.amount}) exceeds remaining balance (${remaining.toFixed(2)})`,
+      );
+    }
+
+    const paymentDate = dto.paymentDate ? new Date(dto.paymentDate) : new Date();
+    const willBeFullyPaid = alreadyPaid + dto.amount >= owed - 0.01;
+    const releaseType =
+      dto.releaseType ?? (willBeFullyPaid ? 'full_payout' : 'partial_payout');
+
+    const release = await this.prisma.agentCommissionRelease.create({
+      data: {
+        agentTransactionId,
+        amount: dto.amount,
+        releaseDate: paymentDate,
+        releaseType,
+        agingBucket: 'Current',
+        paymentMethod: dto.paymentMethod,
+        paymentDate,
+        paymentReference: dto.paymentReference,
+        status: 'paid',
+        approvedByUserId: dto.approvedByUserId,
+        receiptUrl: dto.receiptUrl,
+        notes: dto.notes,
+      },
+      include: { transaction: { include: { agent: { include: { user: true } } } } },
+    });
+
+    const newStatus = await this.reconcileTransactionStatus(agentTransactionId);
+
+    return {
+      release: this.serializeRelease(release),
+      transactionStatus: newStatus,
+      totalPaid: alreadyPaid + dto.amount,
+      owed,
+      remaining: Math.max(0, owed - (alreadyPaid + dto.amount)),
+    };
+  }
+
+  private async totalReleasedFor(agentTransactionId: string): Promise<number> {
+    const releases = await this.prisma.agentCommissionRelease.findMany({
+      where: { agentTransactionId, status: { not: 'cancelled' } },
+      select: { amount: true },
+    });
+    return releases.reduce((sum, r) => sum + Number(r.amount), 0);
+  }
+
+  private async reconcileTransactionStatus(agentTransactionId: string) {
+    const tx = await this.prisma.agentTransaction.findUnique({
+      where: { id: agentTransactionId },
+    });
+    if (!tx) return null;
+    if (tx.status === 'disputed') return tx.status;
+
+    const owed = Number(tx.finalCommission ?? tx.calculatedCommission ?? 0);
+    const paid = await this.totalReleasedFor(agentTransactionId);
+
+    let status: string;
+    if (paid <= 0) {
+      status = tx.status === 'approved' ? 'approved' : 'pending';
+    } else if (paid >= owed - 0.01) {
+      status = 'fully_paid';
+    } else {
+      status = 'partially_paid';
+    }
+
+    if (status !== tx.status) {
+      await this.prisma.agentTransaction.update({
+        where: { id: agentTransactionId },
+        data: { status: status as any },
+      });
+    }
+    return status;
   }
 
   async findAll(query: ReleaseQueryDto) {
@@ -101,8 +209,9 @@ export class CommissionReleasesService {
   }
 
   async update(id: string, dto: UpdateReleaseDto) {
-    await this.findOne(id);
-    return this.prisma.agentCommissionRelease.update({
+    const existing = await this.prisma.agentCommissionRelease.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Commission release not found');
+    const updated = await this.prisma.agentCommissionRelease.update({
       where: { id },
       data: {
         amount: dto.amount,
@@ -111,11 +220,15 @@ export class CommissionReleasesService {
       },
       include: { transaction: true },
     });
+    await this.reconcileTransactionStatus(existing.agentTransactionId);
+    return updated;
   }
 
   async remove(id: string) {
-    await this.findOne(id);
+    const existing = await this.prisma.agentCommissionRelease.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Commission release not found');
     await this.prisma.agentCommissionRelease.delete({ where: { id } });
+    await this.reconcileTransactionStatus(existing.agentTransactionId);
     return { deleted: true };
   }
 

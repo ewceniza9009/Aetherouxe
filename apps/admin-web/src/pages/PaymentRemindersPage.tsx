@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, BellRing, Loader2, CheckCircle2, Mail, MessageSquare, Smartphone } from "lucide-react";
+import { ArrowLeft, BellRing, Loader2, CheckCircle2, Mail, MessageSquare, Globe } from "lucide-react";
 import {
   usePaymentReminders,
   useGenerateReminders,
@@ -31,7 +31,7 @@ import {
 const channelIcon: Record<ReminderChannel, React.ReactNode> = {
   email: <Mail className="h-3.5 w-3.5" />,
   sms: <MessageSquare className="h-3.5 w-3.5" />,
-  push: <Smartphone className="h-3.5 w-3.5" />,
+  portal: <Globe className="h-3.5 w-3.5" />,
   letter: <BellRing className="h-3.5 w-3.5" />,
 };
 

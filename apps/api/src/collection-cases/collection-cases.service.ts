@@ -11,6 +11,20 @@ import {
 export class CollectionCasesService {
   constructor(private prisma: PrismaService) {}
 
+  private async generateCaseNumber() {
+    const year = new Date().getFullYear();
+    const prefix = `CC-${year}-`;
+    const last = await this.prisma.collectionCase.findFirst({
+      where: { caseNumber: { startsWith: prefix } },
+      orderBy: { caseNumber: 'desc' },
+      select: { caseNumber: true },
+    });
+    const lastSeq = last?.caseNumber
+      ? parseInt(last.caseNumber.slice(prefix.length), 10) || 0
+      : 0;
+    return `${prefix}${String(lastSeq + 1).padStart(5, '0')}`;
+  }
+
   private async resolveTenantId(dto: CreateCaseDto) {
     if (dto.tenantId) return dto.tenantId;
     if (dto.leaseId) {
@@ -25,8 +39,10 @@ export class CollectionCasesService {
 
   async create(dto: CreateCaseDto) {
     const tenantId = await this.resolveTenantId(dto);
+    const caseNumber = await this.generateCaseNumber();
     return this.prisma.collectionCase.create({
       data: {
+        caseNumber,
         tenantId,
         leaseId: dto.leaseId,
         totalOutstanding: dto.totalOutstanding,
@@ -58,7 +74,16 @@ export class CollectionCasesService {
         where,
         skip,
         take: limit,
-        include: { tenant: true, lease: true, assignedTo: true },
+        include: {
+          tenant: true,
+          assignedTo: true,
+          lease: {
+            include: {
+              tenant: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
+              property: { select: { id: true, propertyCode: true } },
+            },
+          },
+        },
         orderBy: { lastActivityAt: 'desc' },
       }),
       this.prisma.collectionCase.count({ where }),
@@ -72,8 +97,13 @@ export class CollectionCasesService {
       where: { id },
       include: {
         tenant: true,
-        lease: true,
         assignedTo: true,
+        lease: {
+          include: {
+            tenant: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
+            property: { select: { id: true, propertyCode: true } },
+          },
+        },
         activities: { orderBy: { performedAt: 'desc' } },
         notes: { orderBy: { createdAt: 'desc' } },
       },
@@ -96,7 +126,12 @@ export class CollectionCasesService {
 
   async remove(id: string) {
     await this.findOne(id);
-    await this.prisma.collectionCase.delete({ where: { id } });
+    await this.prisma.$transaction([
+      this.prisma.collectionActivity.deleteMany({ where: { collectionCaseId: id } }),
+      this.prisma.collectionCaseNote.deleteMany({ where: { caseId: id } }),
+      this.prisma.arCollectionAction.deleteMany({ where: { collectionCaseId: id } }),
+      this.prisma.collectionCase.delete({ where: { id } }),
+    ]);
     return { deleted: true };
   }
 
@@ -168,6 +203,7 @@ export class CollectionCasesService {
 
       const collectionCase = await this.prisma.collectionCase.create({
         data: {
+          caseNumber: await this.generateCaseNumber(),
           tenantId: lease.property?.tenantId,
           leaseId: lease.id,
           totalOutstanding,

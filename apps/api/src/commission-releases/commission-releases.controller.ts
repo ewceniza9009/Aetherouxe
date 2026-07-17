@@ -5,6 +5,7 @@ import {
   CreateReleaseDto,
   UpdateReleaseDto,
   ReleaseQueryDto,
+  PayCommissionDto,
 } from './dto/commission-releases.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -23,6 +24,12 @@ export class CommissionReleasesController {
 
   @Post() @ApiOperation({ summary: 'Create a commission release' })
   create(@Body() dto: CreateReleaseDto) { return this.service.create(dto); }
+
+  @Post('pay/:agentTransactionId')
+  @ApiOperation({ summary: 'Pay (disburse) commission for an agent transaction and reconcile its paid status' })
+  pay(@Param('agentTransactionId') agentTransactionId: string, @Body() dto: PayCommissionDto) {
+    return this.service.payCommission(agentTransactionId, dto);
+  }
 
   @Patch(':id') @ApiOperation({ summary: 'Update a commission release' })
   update(@Param('id') id: string, @Body() dto: UpdateReleaseDto) {

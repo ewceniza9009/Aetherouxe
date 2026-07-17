@@ -92,6 +92,7 @@ export class AgentTransactionsService {
           agent: { include: { user: true } },
           property: true,
           commissionRule: true,
+          commissionReleases: true,
         },
         orderBy: { transactionDate: 'desc' },
       }),
@@ -103,11 +104,21 @@ export class AgentTransactionsService {
   }
 
   serializeTransaction(t: any) {
+    const owed = Number(t.finalCommission ?? t.calculatedCommission ?? 0);
+    const paidAmount = Array.isArray(t.commissionReleases)
+      ? t.commissionReleases
+          .filter((r: any) => r.status !== 'cancelled')
+          .reduce((s: number, r: any) => s + Number(r.amount), 0)
+      : undefined;
     return {
       ...t,
       type: t.transactionType,
       amount: t.transactionAmount,
       commissionAmount: t.calculatedCommission,
+      owedCommission: owed,
+      ...(paidAmount !== undefined
+        ? { paidCommission: paidAmount, remainingCommission: Math.max(0, owed - paidAmount) }
+        : {}),
       propertyName: t.property?.name ?? t.property?.propertyCode ?? null,
       agentName: t.agent?.user
         ? [t.agent.user.firstName, t.agent.user.lastName].filter(Boolean).join(' ') || t.agent.user.email
@@ -162,7 +173,7 @@ export class AgentTransactionsService {
   async getByAgent(agentId: string) {
     const rows = await this.prisma.agentTransaction.findMany({
       where: { agentId },
-      include: { property: true, commissionRule: true },
+      include: { property: true, commissionRule: true, commissionReleases: true },
       orderBy: { transactionDate: 'desc' },
     });
     return rows.map((r) => this.serializeTransaction(r));

@@ -11,6 +11,13 @@ import {
   CreatePostDto,
   UpdatePostDto,
   PostQueryDto,
+  ModeratePostDto,
+  CreateCommentDto,
+  ModerateCommentDto,
+  CommentQueryDto,
+  CreateReportDto,
+  ResolveReportDto,
+  ReportQueryDto,
 } from './dto/community.dto';
 
 @ApiTags('Community')
@@ -81,6 +88,57 @@ export class CommunityPostController {
     return this.service.updatePost(id, dto);
   }
 
+  @Patch(':id/moderate') @ApiOperation({ summary: 'Moderate a post (publish/hide/archive)' })
+  moderate(@Param('id') id: string, @Body() dto: ModeratePostDto) {
+    return this.service.moderatePost(id, dto);
+  }
+
   @Delete(':id') @ApiOperation({ summary: 'Delete a community post' })
   remove(@Param('id') id: string) { return this.service.removePost(id); }
+}
+
+@ApiTags('Community')
+@Controller('post-comments')
+export class PostCommentController {
+  constructor(private readonly service: CommunityService) {}
+
+  @Post() @ApiOperation({ summary: 'Create a comment on a post' })
+  create(@Body() dto: CreateCommentDto) { return this.service.createComment(dto); }
+
+  @Get() @ApiOperation({ summary: 'List comments (filter by post / moderation status)' })
+  findAll(@Query() query: CommentQueryDto) { return this.service.findAllComments(query); }
+
+  @Patch(':id/moderate') @ApiOperation({ summary: 'Moderate a comment (publish/hide/archive)' })
+  moderate(@Param('id') id: string, @Body() dto: ModerateCommentDto) {
+    return this.service.moderateComment(id, dto);
+  }
+
+  @Delete(':id') @ApiOperation({ summary: 'Delete a comment' })
+  remove(@Param('id') id: string) { return this.service.removeComment(id); }
+}
+
+@ApiTags('Community')
+@Controller('post-reports')
+export class PostReportController {
+  constructor(private readonly service: CommunityService) {}
+
+  @Post() @ApiOperation({ summary: 'File a report against a post or comment' })
+  create(@Body() dto: CreateReportDto) { return this.service.createReport(dto); }
+
+  @Get() @ApiOperation({ summary: 'List reports (moderation queue)' })
+  findAll(@Query() query: ReportQueryDto) { return this.service.findAllReports(query); }
+
+  @Patch(':id/resolve') @ApiOperation({ summary: 'Resolve/dismiss a report' })
+  resolve(@Param('id') id: string, @Body() dto: ResolveReportDto) {
+    return this.service.resolveReport(id, dto);
+  }
+}
+
+@ApiTags('Community')
+@Controller('moderation-logs')
+export class ModerationLogController {
+  constructor(private readonly service: CommunityService) {}
+
+  @Get() @ApiOperation({ summary: 'List recent moderation actions' })
+  findAll(@Query('limit') limit?: number) { return this.service.findModerationLogs(limit); }
 }

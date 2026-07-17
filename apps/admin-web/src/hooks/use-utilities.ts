@@ -56,7 +56,7 @@ export interface ConsumptionReading {
   reader?: string | null;
   note?: string | null;
   createdAt: string;
-  meter?: { id: string; meterNumber: string } | null;
+  meter?: { id: string; meterNumber: string; utilityType?: UtilityType } | null;
 }
 
 export interface UtilityBillTenant {

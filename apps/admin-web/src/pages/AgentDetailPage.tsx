@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import * as Tabs from "@radix-ui/react-tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -54,6 +54,8 @@ import {
   useAgentTransactions,
   useCommissionReleases,
   useApproveTransaction,
+  usePayCommission,
+  type AgentTransaction,
 } from "@/hooks/use-commissions";
 import {
   TIER_LABELS,
@@ -80,7 +82,45 @@ export default function AgentDetailPage() {
   const { data: releases } = useCommissionReleases({ agentId: id });
   const { data: renewals } = useAgentLicenseRenewals(id);
   const approve = useApproveTransaction();
+  const payCommission = usePayCommission();
   const createRenewal = useCreateLicenseRenewal(id);
+
+  const [payTx, setPayTx] = useState<AgentTransaction | null>(null);
+  const [payForm, setPayForm] = useState({
+    amount: "",
+    paymentDate: new Date().toISOString().split("T")[0],
+    paymentMethod: "bank_transfer",
+    paymentReference: "",
+    notes: "",
+  });
+
+  const openPayDialog = (tx: AgentTransaction) => {
+    const remaining =
+      tx.remainingCommission ??
+      Math.max(0, (tx.owedCommission ?? tx.commissionAmount ?? 0) - (tx.paidCommission ?? 0));
+    setPayForm({
+      amount: String(remaining),
+      paymentDate: new Date().toISOString().split("T")[0],
+      paymentMethod: "bank_transfer",
+      paymentReference: "",
+      notes: "",
+    });
+    setPayTx(tx);
+  };
+
+  const handlePay = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!payTx) return;
+    await payCommission.mutateAsync({
+      agentTransactionId: payTx.id,
+      amount: Number(payForm.amount),
+      paymentDate: payForm.paymentDate,
+      paymentMethod: payForm.paymentMethod || undefined,
+      paymentReference: payForm.paymentReference || undefined,
+      notes: payForm.notes || undefined,
+    });
+    setPayTx(null);
+  };
 
   const [renewalDialog, setRenewalDialog] = useState(false);
   const [renewalForm, setRenewalForm] = useState({
@@ -261,6 +301,13 @@ export default function AgentDetailPage() {
                   {txList.length} total
                 </span>
               </div>
+              <CardDescription className="mt-1">
+                Payout workflow: <span className="font-medium text-foreground">Pending</span> →
+                click <span className="font-medium text-foreground">Approve</span> →
+                then <span className="font-medium text-foreground">Pay</span> to
+                record a payout (full or partial). Paid amounts appear in the
+                Releases tab.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {txList.length === 0 ? (
@@ -275,9 +322,10 @@ export default function AgentDetailPage() {
                        <TableHead>Property</TableHead>
                        <TableHead>Amount</TableHead>
                        <TableHead>Commission</TableHead>
+                       <TableHead>Paid</TableHead>
                        <TableHead>Date</TableHead>
                        <TableHead>Status</TableHead>
-                       <TableHead></TableHead>
+                       <TableHead className="text-right">Actions</TableHead>
                      </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -299,7 +347,17 @@ export default function AgentDetailPage() {
                           {formatCurrency(tx.amount)}
                         </TableCell>
                         <TableCell className="tabular-nums text-primary">
-                          {formatCurrency(tx.commissionAmount)}
+                          {formatCurrency(tx.owedCommission ?? tx.commissionAmount)}
+                        </TableCell>
+                        <TableCell className="tabular-nums text-sm">
+                          <span className="text-emerald-500">
+                            {formatCurrency(tx.paidCommission ?? 0)}
+                          </span>
+                          {(tx.remainingCommission ?? 0) > 0 && (
+                            <span className="ml-1 text-xs text-muted-foreground">
+                              ({formatCurrency(tx.remainingCommission)} left)
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {formatDate(tx.transactionDate)}
@@ -309,8 +367,8 @@ export default function AgentDetailPage() {
                             {TRANSACTION_STATUS_LABELS[tx.status]}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          {tx.status === "pending" && (
+                        <TableCell className="text-right">
+                          {tx.status === "pending" ? (
                             <Button
                               size="sm"
                               variant="outline"
@@ -319,7 +377,18 @@ export default function AgentDetailPage() {
                             >
                               <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Approve
                             </Button>
-                          )}
+                          ) : (tx.status === "approved" ||
+                              tx.status === "partially_paid") &&
+                            (tx.remainingCommission ??
+                              (tx.owedCommission ?? tx.commissionAmount ?? 0) -
+                                (tx.paidCommission ?? 0)) > 0 ? (
+                            <Button
+                              size="sm"
+                              onClick={() => openPayDialog(tx)}
+                            >
+                              <Wallet className="mr-1 h-3.5 w-3.5" /> Pay
+                            </Button>
+                          ) : null}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -560,6 +629,123 @@ export default function AgentDetailPage() {
           </Card>
         </Tabs.Content>
       </Tabs.Root>
+
+      <Dialog open={!!payTx} onOpenChange={(o) => !o && setPayTx(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Pay Commission</DialogTitle>
+          </DialogHeader>
+          {payTx && (
+            <form onSubmit={handlePay} className="space-y-4">
+              <div className="rounded-lg border bg-muted/40 p-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Owed</span>
+                  <span className="tabular-nums font-medium">
+                    {formatCurrency(payTx.owedCommission ?? payTx.commissionAmount)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Already paid</span>
+                  <span className="tabular-nums text-emerald-500">
+                    {formatCurrency(payTx.paidCommission ?? 0)}
+                  </span>
+                </div>
+                <div className="mt-1 flex justify-between border-t pt-1">
+                  <span className="text-muted-foreground">Remaining</span>
+                  <span className="tabular-nums font-semibold">
+                    {formatCurrency(
+                      payTx.remainingCommission ??
+                        (payTx.owedCommission ?? payTx.commissionAmount ?? 0) -
+                          (payTx.paidCommission ?? 0)
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="payAmount">Amount</Label>
+                <Input
+                  id="payAmount"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={payForm.amount}
+                  onChange={(e) =>
+                    setPayForm((f) => ({ ...f, amount: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="payDate">Payment Date</Label>
+                  <Input
+                    id="payDate"
+                    type="date"
+                    value={payForm.paymentDate}
+                    onChange={(e) =>
+                      setPayForm((f) => ({ ...f, paymentDate: e.target.value }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Method</Label>
+                  <Select
+                    value={payForm.paymentMethod}
+                    onValueChange={(v) =>
+                      setPayForm((f) => ({ ...f, paymentMethod: v }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="check">Check</SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="gcash">GCash</SelectItem>
+                      <SelectItem value="payroll">Payroll</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="payRef">Reference (check #, txn #)</Label>
+                <Input
+                  id="payRef"
+                  value={payForm.paymentReference}
+                  onChange={(e) =>
+                    setPayForm((f) => ({ ...f, paymentReference: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="payNotes">Notes</Label>
+                <Input
+                  id="payNotes"
+                  value={payForm.notes}
+                  onChange={(e) =>
+                    setPayForm((f) => ({ ...f, notes: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setPayTx(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={payCommission.isPending}>
+                  {payCommission.isPending ? "Paying..." : "Record Payment"}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

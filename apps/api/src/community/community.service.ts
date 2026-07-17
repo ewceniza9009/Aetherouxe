@@ -10,7 +10,19 @@ import {
   CreatePostDto,
   UpdatePostDto,
   PostQueryDto,
+  ModeratePostDto,
+  CreateCommentDto,
+  ModerateCommentDto,
+  CommentQueryDto,
+  CreateReportDto,
+  ResolveReportDto,
+  ReportQueryDto,
 } from './dto/community.dto';
+import {
+  ModerationStatus,
+  ModerationTargetType,
+  ModerationAction,
+} from '@prisma/client';
 
 @Injectable()
 export class CommunityService {
@@ -174,9 +186,23 @@ export class CommunityService {
     const where: any = {};
     if (query.postType) where.postType = query.postType;
     if (query.audience) where.audience = query.audience;
+    if (query.moderationStatus) where.moderationStatus = query.moderationStatus;
 
     const [data, total] = await Promise.all([
-      this.prisma.communityPost.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }),
+      this.prisma.communityPost.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          _count: {
+            select: {
+              comments: true,
+              reports: { where: { status: 'open' } },
+            },
+          },
+        },
+      }),
       this.prisma.communityPost.count({ where }),
     ]);
 
@@ -184,7 +210,10 @@ export class CommunityService {
   }
 
   async findOnePost(id: string) {
-    const post = await this.prisma.communityPost.findUnique({ where: { id } });
+    const post = await this.prisma.communityPost.findUnique({
+      where: { id },
+      include: { _count: { select: { comments: true, reports: true } } },
+    });
     if (!post) throw new NotFoundException('Community post not found');
     return post;
   }
@@ -208,7 +237,216 @@ export class CommunityService {
 
   async removePost(id: string) {
     await this.findOnePost(id);
-    await this.prisma.communityPost.delete({ where: { id } });
+    await this.prisma.$transaction([
+      this.prisma.postReport.deleteMany({ where: { postId: id } }),
+      this.prisma.postComment.deleteMany({ where: { postId: id } }),
+      this.prisma.communityPost.delete({ where: { id } }),
+    ]);
+    await this.logModeration(ModerationTargetType.post, id, ModerationAction.delete);
     return { deleted: true };
+  }
+
+  // ─── Post Moderation ───────────────────────
+  async moderatePost(id: string, dto: ModeratePostDto) {
+    const post = await this.findOnePost(id);
+    const updated = await this.prisma.communityPost.update({
+      where: { id },
+      data: {
+        moderationStatus: dto.moderationStatus,
+        isPublished: dto.moderationStatus === ModerationStatus.published,
+        moderationReason: dto.reason,
+        moderatedById: dto.moderatedById,
+        moderatedAt: new Date(),
+      },
+    });
+    await this.logModeration(
+      ModerationTargetType.post,
+      id,
+      this.statusToAction(dto.moderationStatus, post.moderationStatus),
+      dto.reason,
+      dto.moderatedById,
+    );
+    return updated;
+  }
+
+  // ─── Comments ──────────────────────────────
+  async createComment(dto: CreateCommentDto) {
+    const post = await this.prisma.communityPost.findUnique({ where: { id: dto.postId } });
+    if (!post) throw new NotFoundException('Community post not found');
+    return this.prisma.postComment.create({
+      data: {
+        postId: dto.postId,
+        body: dto.body,
+        authorId: dto.authorId,
+        authorName: dto.authorName,
+      },
+    });
+  }
+
+  async findAllComments(query: CommentQueryDto) {
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (query.postId) where.postId = query.postId;
+    if (query.moderationStatus) where.moderationStatus = query.moderationStatus;
+
+    const [data, total] = await Promise.all([
+      this.prisma.postComment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          author: { select: { id: true, firstName: true, lastName: true } },
+          post: { select: { id: true, title: true } },
+          _count: { select: { reports: { where: { status: 'open' } } } },
+        },
+      }),
+      this.prisma.postComment.count({ where }),
+    ]);
+
+    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async moderateComment(id: string, dto: ModerateCommentDto) {
+    const comment = await this.prisma.postComment.findUnique({ where: { id } });
+    if (!comment) throw new NotFoundException('Comment not found');
+    const updated = await this.prisma.postComment.update({
+      where: { id },
+      data: {
+        moderationStatus: dto.moderationStatus,
+        moderatedById: dto.moderatedById,
+        moderatedAt: new Date(),
+      },
+    });
+    await this.logModeration(
+      ModerationTargetType.comment,
+      id,
+      this.statusToAction(dto.moderationStatus, comment.moderationStatus),
+      undefined,
+      dto.moderatedById,
+    );
+    return updated;
+  }
+
+  async removeComment(id: string) {
+    const comment = await this.prisma.postComment.findUnique({ where: { id } });
+    if (!comment) throw new NotFoundException('Comment not found');
+    await this.prisma.$transaction([
+      this.prisma.postReport.deleteMany({ where: { commentId: id } }),
+      this.prisma.postComment.delete({ where: { id } }),
+    ]);
+    await this.logModeration(ModerationTargetType.comment, id, ModerationAction.delete);
+    return { deleted: true };
+  }
+
+  // ─── Reports ───────────────────────────────
+  async createReport(dto: CreateReportDto) {
+    if (!dto.postId && !dto.commentId) {
+      throw new NotFoundException('A report must target a post or a comment');
+    }
+    if (dto.postId) {
+      const post = await this.prisma.communityPost.findUnique({ where: { id: dto.postId } });
+      if (!post) throw new NotFoundException('Community post not found');
+    }
+    if (dto.commentId) {
+      const comment = await this.prisma.postComment.findUnique({ where: { id: dto.commentId } });
+      if (!comment) throw new NotFoundException('Comment not found');
+    }
+    return this.prisma.postReport.create({
+      data: {
+        postId: dto.postId,
+        commentId: dto.commentId,
+        reason: dto.reason,
+        details: dto.details,
+        reportedById: dto.reportedById,
+        reporterName: dto.reporterName,
+      },
+    });
+  }
+
+  async findAllReports(query: ReportQueryDto) {
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (query.status) where.status = query.status;
+
+    const [data, total] = await Promise.all([
+      this.prisma.postReport.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          post: { select: { id: true, title: true, moderationStatus: true } },
+          comment: { select: { id: true, body: true, moderationStatus: true } },
+          reportedBy: { select: { id: true, firstName: true, lastName: true } },
+        },
+      }),
+      this.prisma.postReport.count({ where }),
+    ]);
+
+    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async resolveReport(id: string, dto: ResolveReportDto) {
+    const report = await this.prisma.postReport.findUnique({ where: { id } });
+    if (!report) throw new NotFoundException('Report not found');
+    const updated = await this.prisma.postReport.update({
+      where: { id },
+      data: {
+        status: dto.status,
+        resolutionNote: dto.resolutionNote,
+        resolvedById: dto.resolvedById,
+        resolvedAt: new Date(),
+      },
+    });
+    await this.logModeration(
+      report.commentId ? ModerationTargetType.comment : ModerationTargetType.post,
+      report.commentId ?? report.postId ?? id,
+      dto.status === 'dismissed'
+        ? ModerationAction.dismiss_report
+        : ModerationAction.action_report,
+      dto.resolutionNote,
+      dto.resolvedById,
+    );
+    return updated;
+  }
+
+  // ─── Moderation Log ────────────────────────
+  async findModerationLogs(limit = 50) {
+    return this.prisma.moderationLog.findMany({
+      take: Number(limit) || 50,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        performedBy: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
+  }
+
+  private statusToAction(
+    next: ModerationStatus,
+    prev?: ModerationStatus,
+  ): ModerationAction {
+    if (next === ModerationStatus.hidden) return ModerationAction.hide;
+    if (next === ModerationStatus.archived) return ModerationAction.archive;
+    if (prev && prev !== ModerationStatus.published) return ModerationAction.restore;
+    return ModerationAction.publish;
+  }
+
+  private async logModeration(
+    targetType: ModerationTargetType,
+    targetId: string,
+    action: ModerationAction,
+    reason?: string,
+    performedById?: string,
+  ) {
+    await this.prisma.moderationLog.create({
+      data: { targetType, targetId, action, reason, performedById },
+    });
   }
 }

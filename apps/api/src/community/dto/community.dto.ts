@@ -1,6 +1,13 @@
 import { IsString, IsOptional, IsNumber, IsDateString, IsEnum, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AmenityType, BookingStatus, PostType, Audience } from '@prisma/client';
+import {
+  AmenityType,
+  BookingStatus,
+  PostType,
+  Audience,
+  ModerationStatus,
+  ReportStatus,
+} from '@prisma/client';
 
 export class CreateAmenityDto {
   @ApiProperty() @IsString() name: string;
@@ -89,4 +96,53 @@ export class PostQueryDto {
   @ApiPropertyOptional() @IsOptional() limit?: number;
   @ApiPropertyOptional({ enum: PostType }) @IsOptional() @IsEnum(PostType) postType?: PostType;
   @ApiPropertyOptional({ enum: Audience }) @IsOptional() @IsEnum(Audience) audience?: Audience;
+  @ApiPropertyOptional({ enum: ModerationStatus }) @IsOptional() @IsEnum(ModerationStatus) moderationStatus?: ModerationStatus;
+}
+
+export class ModeratePostDto {
+  @ApiProperty({ enum: ModerationStatus }) @IsEnum(ModerationStatus) moderationStatus: ModerationStatus;
+  @ApiPropertyOptional() @IsOptional() @IsString() reason?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() moderatedById?: string;
+}
+
+// ─── Comments ───────────────────────────────
+export class CreateCommentDto {
+  @ApiProperty() @IsString() postId: string;
+  @ApiProperty() @IsString() body: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() authorId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() authorName?: string;
+}
+
+export class ModerateCommentDto {
+  @ApiProperty({ enum: ModerationStatus }) @IsEnum(ModerationStatus) moderationStatus: ModerationStatus;
+  @ApiPropertyOptional() @IsOptional() @IsString() moderatedById?: string;
+}
+
+export class CommentQueryDto {
+  @ApiPropertyOptional() @IsOptional() page?: number;
+  @ApiPropertyOptional() @IsOptional() limit?: number;
+  @ApiPropertyOptional() @IsOptional() @IsString() postId?: string;
+  @ApiPropertyOptional({ enum: ModerationStatus }) @IsOptional() @IsEnum(ModerationStatus) moderationStatus?: ModerationStatus;
+}
+
+// ─── Reports ────────────────────────────────
+export class CreateReportDto {
+  @ApiPropertyOptional() @IsOptional() @IsString() postId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() commentId?: string;
+  @ApiProperty() @IsString() reason: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() details?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() reportedById?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() reporterName?: string;
+}
+
+export class ResolveReportDto {
+  @ApiProperty({ enum: ReportStatus }) @IsEnum(ReportStatus) status: ReportStatus;
+  @ApiPropertyOptional() @IsOptional() @IsString() resolutionNote?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() resolvedById?: string;
+}
+
+export class ReportQueryDto {
+  @ApiPropertyOptional() @IsOptional() page?: number;
+  @ApiPropertyOptional() @IsOptional() limit?: number;
+  @ApiPropertyOptional({ enum: ReportStatus }) @IsOptional() @IsEnum(ReportStatus) status?: ReportStatus;
 }

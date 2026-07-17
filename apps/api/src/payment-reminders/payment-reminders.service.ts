@@ -2,9 +2,46 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReminderDto, UpdateReminderDto, ReminderQueryDto } from './dto/payment-reminders.dto';
 
+const REMINDER_INCLUDE = {
+  tenant: true,
+  owner: true,
+  lease: { include: { tenant: true, property: true } },
+  rentalPayment: true,
+} as const;
+
 @Injectable()
 export class PaymentRemindersService {
   constructor(private prisma: PrismaService) {}
+
+  private serialize(reminder: any) {
+    if (!reminder) return reminder;
+    const leaseUser = reminder.lease?.tenant;
+    const owner = reminder.owner;
+    let recipientName: string | null = null;
+    let recipientEmail: string | null = null;
+
+    if (leaseUser) {
+      recipientName =
+        [leaseUser.firstName, leaseUser.lastName].filter(Boolean).join(' ').trim() ||
+        leaseUser.email ||
+        null;
+      recipientEmail = leaseUser.email ?? null;
+    } else if (owner) {
+      recipientName =
+        [owner.firstName, owner.lastName].filter(Boolean).join(' ').trim() ||
+        owner.email ||
+        null;
+      recipientEmail = owner.email ?? null;
+    } else if (reminder.tenant?.name) {
+      recipientName = reminder.tenant.name;
+    }
+
+    return {
+      ...reminder,
+      recipientName: recipientName ?? 'Unknown recipient',
+      recipientEmail,
+    };
+  }
 
   async create(dto: CreateReminderDto) {
     const data: any = {
@@ -19,7 +56,11 @@ export class PaymentRemindersService {
     if (dto.leaseId) data.leaseId = dto.leaseId;
     if (dto.rentalPaymentId) data.rentalPaymentId = dto.rentalPaymentId;
 
-    return this.prisma.paymentReminder.create({ data });
+    const created = await this.prisma.paymentReminder.create({
+      data,
+      include: REMINDER_INCLUDE,
+    });
+    return this.serialize(created);
   }
 
   async findAll(query: ReminderQueryDto) {
@@ -39,20 +80,24 @@ export class PaymentRemindersService {
         skip,
         take: limit,
         orderBy: { scheduledAt: 'desc' },
+        include: REMINDER_INCLUDE,
       }),
       this.prisma.paymentReminder.count({ where }),
     ]);
 
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      data: data.map((r) => this.serialize(r)),
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async findOne(id: string) {
     const reminder = await this.prisma.paymentReminder.findUnique({
       where: { id },
-      include: { lease: true, tenant: true, owner: true },
+      include: REMINDER_INCLUDE,
     });
     if (!reminder) throw new NotFoundException('Payment reminder not found');
-    return reminder;
+    return this.serialize(reminder);
   }
 
   async update(id: string, dto: UpdateReminderDto) {
@@ -68,7 +113,12 @@ export class PaymentRemindersService {
     if (dto.message !== undefined) data.message = dto.message;
     if (dto.status !== undefined) data.status = dto.status;
 
-    return this.prisma.paymentReminder.update({ where: { id }, data });
+    const updated = await this.prisma.paymentReminder.update({
+      where: { id },
+      data,
+      include: REMINDER_INCLUDE,
+    });
+    return this.serialize(updated);
   }
 
   async remove(id: string) {
@@ -87,14 +137,25 @@ export class PaymentRemindersService {
 
     const payments = await this.prisma.rentalPayment.findMany({
       where,
-      include: { leaseAgreement: { include: { property: true } } },
+      include: { leaseAgreement: { include: { property: true, tenant: true } } },
     });
 
     const created: any[] = [];
     for (const payment of payments) {
       const outstanding = Number(payment.amountDue) - Number(payment.amountPaid ?? 0);
       if (outstanding <= 0) continue;
-      if (tenantId && payment.leaseAgreement?.property?.tenantId !== tenantId) continue;
+      const recipientUserId = payment.leaseAgreement?.tenantUserId;
+      if (tenantId && recipientUserId !== tenantId) continue;
+      if (!recipientUserId) continue;
+
+      const existing = await this.prisma.paymentReminder.findFirst({
+        where: {
+          rentalPaymentId: payment.id,
+          type: 'post_due',
+          status: 'pending',
+        },
+      });
+      if (existing) continue;
 
       const daysOverdue = Math.max(
         0,
@@ -104,8 +165,7 @@ export class PaymentRemindersService {
 
       const reminder = await this.prisma.paymentReminder.create({
         data: {
-          tenantId: payment.leaseAgreement?.property?.tenantId,
-          ownerId: undefined,
+          ownerId: recipientUserId,
           leaseId: payment.leaseAgreementId,
           rentalPaymentId: payment.id,
           type: 'post_due',
@@ -114,11 +174,12 @@ export class PaymentRemindersService {
           message,
           status: 'pending',
         },
+        include: REMINDER_INCLUDE,
       });
-      created.push(reminder);
+      created.push(this.serialize(reminder));
     }
 
-    return { count: created.length, reminders: created };
+    return { count: created.length, generated: created.length, reminders: created };
   }
 
   async findDue(now?: Date) {
@@ -131,9 +192,11 @@ export class PaymentRemindersService {
 
   async markSent(id: string) {
     await this.findOne(id);
-    return this.prisma.paymentReminder.update({
+    const updated = await this.prisma.paymentReminder.update({
       where: { id },
       data: { status: 'sent', sentAt: new Date() },
+      include: REMINDER_INCLUDE,
     });
+    return this.serialize(updated);
   }
 }
