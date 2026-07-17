@@ -381,9 +381,9 @@ model Floor {
 
 model Unit {
   id              String     @id @default(uuid())
-  propertyId      String
+  propertyId      String?
   buildingId      String
-  floorId         String
+  floorId         String?
   unitNumber      String
   unitType        UnitType
   status          UnitStatus @default(available)
@@ -398,9 +398,9 @@ model Unit {
   buildingValue   Decimal?   @db.Decimal(14, 2)
   createdAt       DateTime   @default(now())
 
-  property Property  @relation(fields: [propertyId], references: [id])
+  property Property? @relation(fields: [propertyId], references: [id])
   building Building  @relation(fields: [buildingId], references: [id])
-  floor    Floor     @relation(fields: [floorId], references: [id])
+  floor    Floor?    @relation(fields: [floorId], references: [id])
   utilityMeters      UtilityMeter[]
   utilityBills       UtilityBill[]
   serviceRequests    ServiceRequest[]

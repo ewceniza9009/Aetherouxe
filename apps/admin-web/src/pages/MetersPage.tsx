@@ -26,6 +26,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -346,11 +347,9 @@ function NewMeterDialog({ properties }: { properties: { id: string; name: string
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
-              className="h-4 w-4 rounded border-input accent-primary"
+              onCheckedChange={(checked) => setIsActive(checked === true)}
             />
             <Label>Active</Label>
           </div>

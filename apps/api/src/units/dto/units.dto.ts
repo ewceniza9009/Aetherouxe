@@ -2,9 +2,9 @@ import { IsString, IsOptional, IsEnum, IsBoolean, IsNumber, IsUUID } from 'class
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateUnitDto {
-  @ApiProperty() @IsString() @IsUUID() propertyId: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @IsUUID() propertyId?: string;
   @ApiProperty() @IsString() @IsUUID() buildingId: string;
-  @ApiProperty() @IsString() @IsUUID() floorId: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @IsUUID() floorId?: string;
   @ApiProperty() @IsString() unitNumber: string;
   @ApiProperty({ enum: ['studio', 'one_br', 'two_br', 'three_br', 'penthouse', 'commercial', 'parking'] })
   @IsEnum(['studio', 'one_br', 'two_br', 'three_br', 'penthouse', 'commercial', 'parking'])

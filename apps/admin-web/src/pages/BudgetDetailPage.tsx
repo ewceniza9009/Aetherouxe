@@ -39,9 +39,9 @@ function HealthBanner({ health }: { health: { healthScore: string; variancePerce
   return (
     <div
       className={`rounded-lg border p-4 ${
-        isGreen ? "bg-green-50 border-green-200" :
-        isYellow ? "bg-yellow-50 border-yellow-200" :
-        "bg-red-50 border-red-200"
+        isGreen ? "bg-green-500/10 border-green-500/20" :
+        isYellow ? "bg-yellow-500/10 border-yellow-500/20" :
+        "bg-red-500/10 border-red-500/20"
       }`}
     >
       <div className="flex items-center justify-between">
@@ -54,13 +54,13 @@ function HealthBanner({ health }: { health: { healthScore: string; variancePerce
             <AlertTriangle className="h-5 w-5 text-red-600" />
           )}
           <span className={`font-semibold ${
-            isGreen ? "text-green-800" : isYellow ? "text-yellow-800" : "text-red-800"
+            isGreen ? "text-green-700 dark:text-green-400" : isYellow ? "text-yellow-700 dark:text-yellow-400" : "text-red-700 dark:text-red-400"
           }`}>
             {isGreen ? "On Budget" : isYellow ? "Over Budget (Warning)" : "Over Budget (Critical)"}
           </span>
         </div>
         <span className={`text-lg font-bold ${
-          isGreen ? "text-green-700" : isYellow ? "text-yellow-700" : "text-red-700"
+          isGreen ? "text-green-600 dark:text-green-400" : isYellow ? "text-yellow-600 dark:text-yellow-400" : "text-red-600 dark:text-red-400"
         }`}>
           {(health.variancePercentage ?? 0) >= 0 ? "+" : ""}{(health.variancePercentage ?? 0).toFixed(1)}%
         </span>

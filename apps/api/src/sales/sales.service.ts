@@ -69,7 +69,7 @@ export class SalesService {
     if (!scheme) throw new NotFoundException('Scheme template not found');
     if (!scheme.isActive) throw new BadRequestException('Scheme template is inactive');
 
-    const tenantId = unit.property.tenantId;
+    const tenantId = unit.property!.tenantId;
     const value = dto.totalContractValue ?? 0;
     if (scheme.schemeType !== 'standard_rental' && scheme.schemeType !== 'rent_to_own') {
       if (!value || value <= 0) {
@@ -100,7 +100,7 @@ export class SalesService {
       schemeName: scheme.name,
       unitId: unit.id,
       unitLabel: unit.unitNumber,
-      propertyId: unit.propertyId,
+      propertyId: unit.propertyId!,
       propertyName: (unit.property as any)?.propertyCode ?? '—',
       buyerName: [buyer.firstName, buyer.lastName].filter(Boolean).join(' ') || buyer.email,
       agentName: agent.user?.firstName
@@ -112,7 +112,7 @@ export class SalesService {
       // ── 1. Create LeaseAgreement ──
       const lease = await tx.leaseAgreement.create({
         data: {
-          propertyId: unit.propertyId,
+          propertyId: unit.propertyId!,
           unitId: unit.id,
           tenantUserId: buyer.id,
           agentId: agent.id,
@@ -158,7 +158,7 @@ export class SalesService {
           data: {
             agentId: agent.id,
             transactionType: this.mapTransactionType(scheme.schemeType) as any,
-            propertyId: unit.propertyId,
+            propertyId: unit.propertyId!,
             leaseAgreementId: lease.id,
             transactionAmount: value,
             calculatedCommission,

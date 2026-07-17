@@ -38,6 +38,8 @@ import {
   Hash,
   Loader2,
   Trash2,
+  MoreHorizontal,
+  Pencil,
 } from "lucide-react";
 import {
   useMeter,
@@ -45,9 +47,10 @@ import {
   useMeters,
   useBills,
   useDeleteMeter,
+  useDeleteReading,
   type UtilityType,
 } from "@/hooks/use-utilities";
-import { AddReadingDialog, BulkReadingsDialog } from "@/components/utilities/ReadingDialogs";
+import { AddReadingDialog, BulkReadingsDialog, EditReadingDialog } from "@/components/utilities/ReadingDialogs";
 import { utilityTypeMeta, billStatusMeta, money, formatDate } from "@/lib/utility-meta";
 
 const utilityIcons: Record<UtilityType, React.ReactNode> = {
@@ -86,6 +89,7 @@ export default function MeterDetailPage() {
   const { data: billsData } = useBills({ meterId: id });
   const { data: metersData } = useMeters({ limit: 500 });
   const deleteMeter = useDeleteMeter();
+  const deleteReading = useDeleteReading();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const meters = metersData?.data ?? [];
@@ -231,6 +235,7 @@ export default function MeterDetailPage() {
                       <TableHead className="text-right">Value</TableHead>
                       <TableHead>Reader</TableHead>
                       <TableHead>Note</TableHead>
+                      <TableHead className="w-10"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -240,6 +245,28 @@ export default function MeterDetailPage() {
                         <TableCell className="text-right tabular-nums font-medium">{r.value}</TableCell>
                         <TableCell className="text-sm">{r.reader ?? "—"}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{r.note ?? "—"}</TableCell>
+                        <TableCell className="flex items-center gap-1">
+                          <EditReadingDialog
+                            reading={r}
+                            trigger={
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            }
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={async () => {
+                              if (window.confirm("Are you sure you want to delete this reading?")) {
+                                await deleteReading.mutateAsync(r.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

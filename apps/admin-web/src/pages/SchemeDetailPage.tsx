@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -268,11 +269,11 @@ export default function SchemeDetailPage() {
               </div>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.blIsChangeOrder ?? false} onChange={(e) => set("blIsChangeOrder", e.target.checked)} className="rounded" />
+                  <Checkbox checked={form.blIsChangeOrder ?? false} onCheckedChange={(checked) => set("blIsChangeOrder", checked === true)} />
                   Change Order
                 </label>
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.blIncludeDpAmort ?? false} onChange={(e) => set("blIncludeDpAmort", e.target.checked)} className="rounded" />
+                  <Checkbox checked={form.blIncludeDpAmort ?? false} onCheckedChange={(checked) => set("blIncludeDpAmort", checked === true)} />
                   Include DP Amort
                 </label>
               </div>

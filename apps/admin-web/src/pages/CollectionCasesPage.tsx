@@ -24,6 +24,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -303,11 +305,10 @@ export default function CollectionCasesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 cursor-pointer accent-primary"
+                      <Checkbox
+                        className="cursor-pointer"
                         checked={allSelected}
-                        onChange={toggleAll}
+                        onCheckedChange={() => toggleAll()}
                       />
                     </TableHead>
                     <TableHead>Case</TableHead>
@@ -330,11 +331,10 @@ export default function CollectionCasesPage() {
                       onClick={() => navigate({ to: `/collections/cases/${c.id}` })}
                     >
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 cursor-pointer accent-primary"
+                        <Checkbox
+                          className="cursor-pointer"
                           checked={selected.has(c.id)}
-                          onChange={() => toggleOne(c.id)}
+                          onCheckedChange={() => toggleOne(c.id)}
                         />
                       </TableCell>
                       <TableCell className="font-mono text-sm">

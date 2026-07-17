@@ -251,6 +251,43 @@ export function useCreateReading() {
   });
 }
 
+export function useUpdateReading() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: Partial<ConsumptionReading> & { id: string }) => {
+      const { data } = await api.patch<ApiResponse<ConsumptionReading>>(
+        `/consumption-readings/${id}`,
+        payload
+      );
+      return data.data;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["consumption-readings"] });
+      if (result?.meterId) {
+        queryClient.invalidateQueries({ queryKey: ["utility-meter-readings", result.meterId] });
+        queryClient.invalidateQueries({ queryKey: ["utility-meter", result.meterId] });
+      }
+    },
+  });
+}
+
+export function useDeleteReading() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.delete<ApiResponse<{ deleted: boolean }>>(
+        `/consumption-readings/${id}`
+      );
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["consumption-readings"] });
+      queryClient.invalidateQueries({ queryKey: ["utility-meter-readings"] });
+      queryClient.invalidateQueries({ queryKey: ["utility-meter"] });
+    },
+  });
+}
+
 export function useBulkReadings() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -56,6 +57,9 @@ import {
   type PhaseStatus,
 } from "@/hooks/use-phases";
 import { useBudgets } from "@/hooks/use-budgets";
+import { useProperty, usePropertySpecs, useCreateProperty } from "@/hooks/use-properties";
+import { useUnits, useCreateUnit, useUpdateUnit } from "@/hooks/use-units";
+import { useCreateBuilding } from "@/hooks/use-buildings";
 import { useProjectInventory } from "@/hooks/use-project-inventory";
 import { formatCurrency } from "@/lib/agent-meta";
 
@@ -525,22 +529,171 @@ const unitStatusVariant: Record<string, "default" | "secondary" | "success" | "d
 function InventoryTab({ projectId }: { projectId: string }) {
   const navigate = useNavigate();
   const { data: inventory, isLoading } = useProjectInventory(projectId);
+  const createBuilding = useCreateBuilding();
+  const createUnit = useCreateUnit();
+  const createProperty = useCreateProperty();
+  const updateUnit = useUpdateUnit();
+  
+  const [openNewBuilding, setOpenNewBuilding] = React.useState(false);
+  const [buildingForm, setBuildingForm] = React.useState({
+    name: "",
+    buildingType: "tower",
+    floorCount: "",
+    unitCount: "",
+    address: "",
+  });
+
+  const [activeBuildingId, setActiveBuildingId] = React.useState<string | null>(null);
+  const [openGenerateUnits, setOpenGenerateUnits] = React.useState(false);
+  const [generateForm, setGenerateForm] = React.useState({
+    startFloor: 1,
+    endFloor: 10,
+    unitsPerFloor: 5,
+    unitType: "studio",
+  });
+  const [isGenerating, setIsGenerating] = React.useState(false);
+
+  const handleGenerateUnits = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeBuildingId) return;
+    
+    setIsGenerating(true);
+    try {
+      const unitsToCreate = [];
+      for (let floor = generateForm.startFloor; floor <= generateForm.endFloor; floor++) {
+        for (let unit = 1; unit <= generateForm.unitsPerFloor; unit++) {
+          const unitNumberStr = `${floor}${unit.toString().padStart(2, "0")}`;
+          unitsToCreate.push({
+            buildingId: activeBuildingId,
+            unitNumber: unitNumberStr,
+            unitType: generateForm.unitType,
+            status: "available",
+          });
+        }
+      }
+      
+      // Batch promises in chunks of 5 to avoid overwhelming the server
+      const chunkSize = 5;
+      for (let i = 0; i < unitsToCreate.length; i += chunkSize) {
+        const chunk = unitsToCreate.slice(i, i + chunkSize);
+        await Promise.all(chunk.map(u => createUnit.mutateAsync(u)));
+      }
+      
+      setOpenGenerateUnits(false);
+    } catch (error) {
+      console.error("Failed to generate units:", error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleListAsProperty = async (e: React.MouseEvent, unit: any, buildingName: string) => {
+    e.stopPropagation();
+    try {
+      const propertyTypeMap: Record<string, string> = {
+        studio: 'condo_unit', one_br: 'condo_unit', two_br: 'condo_unit', three_br: 'condo_unit',
+        penthouse: 'condo_unit', commercial: 'commercial_space', parking: 'parking_slot'
+      };
+      
+      const newProperty = await createProperty.mutateAsync({
+        projectId,
+        propertyType: propertyTypeMap[unit.unitType] || 'condo_unit',
+        status: 'available' as any,
+        propertyCode: `${buildingName.substring(0,3).toUpperCase()}-${unit.unitNumber}`,
+      } as any);
+      
+      await updateUnit.mutateAsync({
+        id: unit.id,
+        propertyId: newProperty.id
+      });
+    } catch (error) {
+      console.error("Failed to list property:", error);
+    }
+  };
+
+  const handleCreateBuilding = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await createBuilding.mutateAsync({
+      projectId,
+      name: buildingForm.name,
+      type: buildingForm.buildingType,
+      floorCount: buildingForm.floorCount ? parseInt(buildingForm.floorCount) : undefined,
+      units: buildingForm.unitCount ? parseInt(buildingForm.unitCount) : undefined,
+      address: buildingForm.address || undefined,
+    });
+    setOpenNewBuilding(false);
+    setBuildingForm({ name: "", buildingType: "tower", floorCount: "", unitCount: "", address: "" });
+  };
 
   if (isLoading) return <Skeleton className="h-64 w-full" />;
-  if (!inventory || inventory.buildings.length === 0) {
-    return <EmptyState icon={<Building2 className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />} text="No buildings or units in this project yet" />;
-  }
 
-  const { totals } = inventory;
+  const isEmpty = !inventory || inventory.buildings.length === 0;
+  const totals = inventory?.totals ?? { buildings: 0, units: 0, byStatus: {} };
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard icon={<Building2 className="h-5 w-5 text-muted-foreground" />} label="Buildings" value={String(totals.buildings)} />
-        <StatCard icon={<Package className="h-5 w-5 text-muted-foreground" />} label="Total Units" value={String(totals.units)} />
-        <StatCard icon={<Home className="h-5 w-5 text-muted-foreground" />} label="Available" value={String(totals.byStatus.available ?? 0)} />
-        <StatCard icon={<Home className="h-5 w-5 text-muted-foreground" />} label="Sold / Occupied" value={String((totals.byStatus.occupied ?? 0))} />
+      <div className="flex justify-end">
+        <Dialog open={openNewBuilding} onOpenChange={setOpenNewBuilding}>
+          <DialogTrigger asChild>
+            <Button><Plus className="mr-2 h-4 w-4" /> Add Building</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Building</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateBuilding} className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>Building Name *</Label>
+                <Input required value={buildingForm.name} onChange={(e) => setBuildingForm((f) => ({ ...f, name: e.target.value }))} placeholder="e.g. Tower 1, Block A" />
+              </div>
+              <div className="space-y-2">
+                <Label>Building Type</Label>
+                <Select value={buildingForm.buildingType} onValueChange={(v) => setBuildingForm((f) => ({ ...f, buildingType: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="tower">Tower (High-rise)</SelectItem>
+                    <SelectItem value="mid_rise">Mid-rise</SelectItem>
+                    <SelectItem value="low_rise">Low-rise</SelectItem>
+                    <SelectItem value="cluster">Cluster / Townhouse</SelectItem>
+                    <SelectItem value="block">Block / Lot</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Floor Count</Label>
+                  <Input type="number" min="1" value={buildingForm.floorCount} onChange={(e) => setBuildingForm((f) => ({ ...f, floorCount: e.target.value }))} placeholder="e.g. 50" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Total Units (Approx)</Label>
+                  <Input type="number" min="1" value={buildingForm.unitCount} onChange={(e) => setBuildingForm((f) => ({ ...f, unitCount: e.target.value }))} placeholder="e.g. 500" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Address (Optional)</Label>
+                <Input value={buildingForm.address} onChange={(e) => setBuildingForm((f) => ({ ...f, address: e.target.value }))} placeholder="Specific building address" />
+              </div>
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={() => setOpenNewBuilding(false)}>Cancel</Button>
+                <Button type="submit" disabled={createBuilding.isPending}>
+                  {createBuilding.isPending ? "Creating..." : "Create Building"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
+
+      {isEmpty ? (
+        <EmptyState icon={<Building2 className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />} text="No buildings or units in this project yet" />
+      ) : (
+        <>
+          <div className="grid gap-4 md:grid-cols-4">
+            <StatCard icon={<Building2 className="h-5 w-5 text-muted-foreground" />} label="Buildings" value={String(totals.buildings)} />
+            <StatCard icon={<Package className="h-5 w-5 text-muted-foreground" />} label="Total Units" value={String(totals.units)} />
+            <StatCard icon={<Home className="h-5 w-5 text-muted-foreground" />} label="Available" value={String(totals.byStatus?.available ?? 0)} />
+            <StatCard icon={<Home className="h-5 w-5 text-muted-foreground" />} label="Sold / Occupied" value={String(totals.byStatus?.occupied ?? 0)} />
+          </div>
 
       {inventory.buildings.map((b) => (
         <Card key={b.id}>
@@ -551,6 +704,12 @@ function InventoryTab({ projectId }: { projectId: string }) {
               </CardTitle>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">{b.unitCount} units</Badge>
+                <Button variant="outline" size="sm" onClick={() => {
+                  setActiveBuildingId(b.id);
+                  setOpenGenerateUnits(true);
+                }}>
+                  <Plus className="h-3 w-3 mr-1" /> Generate Units
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => navigate({ to: `/buildings/${b.id}` })}>Open</Button>
               </div>
             </div>
@@ -568,6 +727,7 @@ function InventoryTab({ projectId }: { projectId: string }) {
                       <th className="text-left">Type</th>
                       <th className="text-left">Status</th>
                       <th className="text-left">Property (Title)</th>
+                      <th className="text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -582,6 +742,13 @@ function InventoryTab({ projectId }: { projectId: string }) {
                         <td>{u.unitType.replace(/_/g, " ")}</td>
                         <td><Badge variant={unitStatusVariant[u.status] ?? "secondary"}>{u.status.replace(/_/g, " ")}</Badge></td>
                         <td className="text-primary">{u.propertyCode ?? "—"}</td>
+                        <td className="text-right">
+                          {!u.propertyId && (
+                            <Button size="sm" variant="outline" onClick={(e) => handleListAsProperty(e, u, b.name)}>
+                              List as Property
+                            </Button>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -590,7 +757,58 @@ function InventoryTab({ projectId }: { projectId: string }) {
             )}
           </CardContent>
         </Card>
-      ))}
+          ))}
+        </>
+      )}
+
+      {/* Bulk Generate Modal */}
+      <Dialog open={openGenerateUnits} onOpenChange={setOpenGenerateUnits}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bulk Generate Units</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleGenerateUnits} className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Floor</Label>
+                <Input type="number" min="1" required value={generateForm.startFloor} onChange={(e) => setGenerateForm(f => ({ ...f, startFloor: parseInt(e.target.value) || 1 }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>End Floor</Label>
+                <Input type="number" min="1" required value={generateForm.endFloor} onChange={(e) => setGenerateForm(f => ({ ...f, endFloor: parseInt(e.target.value) || 1 }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Units per Floor</Label>
+                <Input type="number" min="1" max="100" required value={generateForm.unitsPerFloor} onChange={(e) => setGenerateForm(f => ({ ...f, unitsPerFloor: parseInt(e.target.value) || 1 }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Default Unit Type</Label>
+                <Select value={generateForm.unitType} onValueChange={(v) => setGenerateForm(f => ({ ...f, unitType: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="studio">Studio</SelectItem>
+                    <SelectItem value="one_br">1 Bedroom</SelectItem>
+                    <SelectItem value="two_br">2 Bedroom</SelectItem>
+                    <SelectItem value="three_br">3 Bedroom</SelectItem>
+                    <SelectItem value="penthouse">Penthouse</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              This will automatically generate {Math.max(0, generateForm.endFloor - generateForm.startFloor + 1) * generateForm.unitsPerFloor} units numbered automatically (e.g. 1001, 1002...).
+            </p>
+            <DialogFooter>
+              <Button variant="outline" type="button" onClick={() => setOpenGenerateUnits(false)}>Cancel</Button>
+              <Button type="submit" disabled={isGenerating}>
+                {isGenerating ? "Generating..." : "Generate Units"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

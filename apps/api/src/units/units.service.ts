@@ -7,20 +7,24 @@ export class UnitsService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateUnitDto, tenantId: string) {
-    const property = await this.prisma.property.findUnique({
-      where: { id: dto.propertyId, tenantId },
-    });
-    if (!property) throw new BadRequestException('Property does not belong to your tenant');
+    if (dto.propertyId) {
+      const property = await this.prisma.property.findUnique({
+        where: { id: dto.propertyId, tenantId },
+      });
+      if (!property) throw new BadRequestException('Property does not belong to your tenant');
+    }
 
     const building = await this.prisma.building.findUnique({
       where: { id: dto.buildingId, tenantId },
     });
     if (!building) throw new BadRequestException('Building does not belong to your tenant');
 
-    const floor = await this.prisma.floor.findUnique({
-      where: { id: dto.floorId, building: { tenantId } },
-    });
-    if (!floor) throw new BadRequestException('Floor does not belong to your tenant');
+    if (dto.floorId) {
+      const floor = await this.prisma.floor.findUnique({
+        where: { id: dto.floorId, building: { tenantId } },
+      });
+      if (!floor) throw new BadRequestException('Floor does not belong to your tenant');
+    }
 
     return this.prisma.unit.create({
       data: { ...(dto as any) },

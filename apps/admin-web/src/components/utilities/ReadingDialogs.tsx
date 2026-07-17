@@ -6,6 +6,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,8 +22,10 @@ import {
 import { Plus, Loader2, Trash2 } from "lucide-react";
 import {
   useCreateReading,
+  useUpdateReading,
   useBulkReadings,
   type UtilityMeter,
+  type ConsumptionReading,
 } from "@/hooks/use-utilities";
 
 export function AddReadingDialog({
@@ -241,6 +244,103 @@ export function BulkReadingsDialog({
             Save {rows.filter((r) => r.meterId && r.readingDate && r.value !== "").length} Readings
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function EditReadingDialog({
+  reading,
+  trigger,
+}: {
+  reading: ConsumptionReading;
+  trigger?: React.ReactNode;
+}) {
+  const updateReading = useUpdateReading();
+  const [open, setOpen] = useState(false);
+  const [readingDate, setReadingDate] = useState(
+    reading.readingDate ? new Date(reading.readingDate).toISOString().split("T")[0] : ""
+  );
+  const [value, setValue] = useState(String(reading.value ?? ""));
+  const [reader, setReader] = useState(reading.reader ?? "");
+  const [note, setNote] = useState(reading.note ?? "");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!readingDate || !value) return;
+
+    await updateReading.mutateAsync({
+      id: reading.id,
+      readingDate: new Date(readingDate).toISOString(),
+      value: Number(value),
+      reader: reader || null,
+      note: note || null,
+    });
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger}
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Reading</DialogTitle>
+          <DialogDescription>Modify the consumption reading</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-readingDate">Date</Label>
+              <Input
+                id="edit-readingDate"
+                type="date"
+                required
+                value={readingDate}
+                onChange={(e) => setReadingDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-value">Reading Value</Label>
+              <Input
+                id="edit-value"
+                type="number"
+                step="0.01"
+                required
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-reader">Reader (Optional)</Label>
+            <Input
+              id="edit-reader"
+              value={reader}
+              onChange={(e) => setReader(e.target.value)}
+              placeholder="e.g. John Doe, Smart Meter"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-note">Note (Optional)</Label>
+            <Textarea
+              id="edit-note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Any notes or anomalies"
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={updateReading.isPending}>
+              {updateReading.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
