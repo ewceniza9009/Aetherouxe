@@ -80,7 +80,7 @@ export default function ReadingsPage() {
             </CardTitle>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Select value={meterId} onValueChange={setMeterId}>
-                <SelectTrigger className="w-full sm:w-76">
+                <SelectTrigger className="w-full sm:w-72">
                   <SelectValue placeholder="Meter" />
                 </SelectTrigger>
                 <SelectContent>
@@ -92,18 +92,24 @@ export default function ReadingsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Input
-                type="date"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                className="w-full sm:w-40"
-              />
-              <Input
-                type="date"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className="w-full sm:w-40"
-              />
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <span className="text-sm font-medium text-muted-foreground">From</span>
+                <Input
+                  type="date"
+                  value={from}
+                  onChange={(e) => setFrom(e.target.value)}
+                  className="w-full sm:w-40"
+                />
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <span className="text-sm font-medium text-muted-foreground">To</span>
+                <Input
+                  type="date"
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                  className="w-full sm:w-40"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>

@@ -30,13 +30,13 @@ export class BuildingQueryDto {
 }
 
 export class CreateFloorDto {
-  @ApiProperty() floorNumber: string | number;
+  @ApiProperty() @IsString() floorNumber: string;
   @ApiPropertyOptional() @IsOptional() @IsInt() sortOrder?: number;
   @ApiPropertyOptional() @IsOptional() @IsString() floorPlanUrl?: string;
 }
 
 export class UpdateFloorDto {
-  @ApiPropertyOptional() @IsOptional() floorNumber?: string | number;
+  @ApiPropertyOptional() @IsOptional() @IsString() floorNumber?: string;
   @ApiPropertyOptional() @IsOptional() @IsInt() sortOrder?: number;
   @ApiPropertyOptional() @IsOptional() @IsString() floorPlanUrl?: string;
 }

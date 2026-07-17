@@ -36,10 +36,13 @@ export function bootstrapSettings(): Promise<void> {
   return bootstrapPromise;
 }
 
-export function formatCurrency(value?: number | null): string {
-  if (value === undefined || value === null || Number.isNaN(value)) return "—";
+export function formatCurrency(value?: number | string | null): string {
+  if (value === undefined || value === null) return "—";
+  const numericValue = typeof value === "string" ? Number(value) : value;
+  if (Number.isNaN(numericValue)) return "—";
+  
   const { code, symbol } = getCurrencyMeta();
-  const num = value.toLocaleString("en-US", {
+  const num = numericValue.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
     useGrouping: true,
@@ -51,7 +54,7 @@ export function formatCurrency(value?: number | null): string {
       currency: code,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(value);
+    }).format(numericValue);
   } catch {
     return `${code} ${num}`;
   }

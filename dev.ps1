@@ -8,6 +8,11 @@ if (-not (Test-Path ".env")) {
     Write-Host ".env file found." -ForegroundColor Green
 }
 
+if (-not (Test-Path "apps\api\.env")) {
+    Write-Host "Copying .env to API app for Prisma..." -ForegroundColor Yellow
+    Copy-Item ".env" "apps\api\.env"
+}
+
 Write-Host "Starting infrastructure services (Postgres, MongoDB, Redis, MinIO) in Docker..." -ForegroundColor Cyan
 # This starts only the backend infrastructure and skips the 'app' container, 
 # keeping the ports available for your host workstation.
