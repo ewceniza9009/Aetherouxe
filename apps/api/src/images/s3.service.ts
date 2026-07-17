@@ -1,10 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
+  CreateBucketCommand,
+  HeadBucketCommand,
+  PutBucketPolicyCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
@@ -16,7 +19,7 @@ export interface UploadFile {
 }
 
 @Injectable()
-export class S3Service {
+export class S3Service implements OnModuleInit {
   private readonly logger = new Logger(S3Service.name);
   private readonly s3: S3Client;
   private readonly bucket: string;
@@ -32,7 +35,43 @@ export class S3Service {
       },
       forcePathStyle: true,
     });
-    this.logger.log(`S3 service initialized — bucket: ${this.bucket}`);
+  }
+
+  async onModuleInit() {
+    try {
+      await this.s3.send(new HeadBucketCommand({ Bucket: this.bucket }));
+      this.logger.log(`S3 bucket '${this.bucket}' already exists.`);
+    } catch (error: any) {
+      if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+        this.logger.log(`S3 bucket '${this.bucket}' not found. Creating it...`);
+        await this.s3.send(new CreateBucketCommand({ Bucket: this.bucket }));
+        this.logger.log(`S3 bucket '${this.bucket}' created successfully.`);
+      } else {
+        this.logger.error(`Error checking S3 bucket: ${error.message}`);
+      }
+    }
+
+    // Always apply public read policy to ensure images are accessible in the browser
+    try {
+      const policy = {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Principal: '*',
+            Action: ['s3:GetObject'],
+            Resource: [`arn:aws:s3:::${this.bucket}/*`],
+          },
+        ],
+      };
+      await this.s3.send(new PutBucketPolicyCommand({
+        Bucket: this.bucket,
+        Policy: JSON.stringify(policy),
+      }));
+      this.logger.log(`S3 bucket '${this.bucket}' policy set to public-read.`);
+    } catch (err: any) {
+      this.logger.error(`Failed to set bucket policy: ${err.message}`);
+    }
   }
 
   async upload(file: UploadFile, folder: string): Promise<{ key: string; url: string }> {

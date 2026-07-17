@@ -77,7 +77,12 @@ export class PropertiesService {
   async findOne(id: string, tenantId: string) {
     const property = await this.prisma.property.findUnique({
       where: { id, tenantId },
-      include: { project: true, units: { include: { building: true, floor: true } }, childProperties: true },
+      include: { 
+        project: true, 
+        units: { include: { building: true, floor: true } }, 
+        childProperties: true,
+        images: { orderBy: { sortOrder: 'asc' } }
+      },
     });
     if (!property) throw new NotFoundException('Property not found');
     return property;

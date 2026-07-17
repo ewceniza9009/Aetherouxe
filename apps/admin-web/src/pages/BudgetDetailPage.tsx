@@ -62,7 +62,7 @@ function HealthBanner({ health }: { health: { healthScore: string; variancePerce
         <span className={`text-lg font-bold ${
           isGreen ? "text-green-700" : isYellow ? "text-yellow-700" : "text-red-700"
         }`}>
-          {health.variancePercentage >= 0 ? "+" : ""}{health.variancePercentage.toFixed(1)}%
+          {(health.variancePercentage ?? 0) >= 0 ? "+" : ""}{(health.variancePercentage ?? 0).toFixed(1)}%
         </span>
       </div>
       <div className="grid grid-cols-2 gap-4 mt-3">

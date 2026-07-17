@@ -2,6 +2,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import type { ApiResponse, PaginationMeta, PropertyType, PropertyStatus } from "@elite-realty/shared-types";
 
+export interface PropertyImage {
+  id: string;
+  url: string;
+  alt?: string;
+  isPrimary: boolean;
+  sortOrder: number;
+}
+
 export interface Property {
   id: string;
   code: string;
@@ -21,6 +29,7 @@ export interface Property {
   totalSquareFeet?: string;
   monthlyRevenue?: number;
   occupancyRate?: number;
+  images?: PropertyImage[];
   createdAt: string;
   updatedAt: string;
 }
@@ -84,6 +93,7 @@ export function transformProperty(p: any): Property {
     totalSquareFeet: p.totalSquareFeet,
     monthlyRevenue: p.monthlyRevenue,
     occupancyRate: p.occupancyRate,
+    images: p.images || [],
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
   };

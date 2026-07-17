@@ -1,17 +1,23 @@
+import React from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Edit, Building2, MapPin, Users, DollarSign, Plus, FileText, Calendar } from "lucide-react";
+import { ArrowLeft, Edit, Building2, MapPin, Users, DollarSign, Plus, FileText, Calendar, Image as ImageIcon, Upload, Trash2, ZoomIn } from "lucide-react";
+import * as Tabs from "@radix-ui/react-tabs";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useProperty, usePropertySpecs } from "@/hooks/use-properties";
 import { useUnits } from "@/hooks/use-units";
 import { formatCurrency } from "@/lib/agent-meta";
+import api from "@/lib/api";
 
 export default function PropertyDetailPage() {
   const { id } = useParams({ from: "/protected/properties/$id" });
   const navigate = useNavigate();
+  const [tab, setTab] = React.useState("overview");
 
   const { data: property, isLoading, error } = useProperty(id);
   const { data: specs } = usePropertySpecs(id);
@@ -134,7 +140,14 @@ export default function PropertyDetailPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <Tabs.Root value={tab} onValueChange={setTab} className="space-y-6">
+        <Tabs.List className="flex border-b overflow-x-auto gap-2 pb-1">
+          <Tabs.Trigger value="overview" className="px-4 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-colors">Overview</Tabs.Trigger>
+          <Tabs.Trigger value="showcase" className="px-4 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-colors">Showcase</Tabs.Trigger>
+        </Tabs.List>
+
+        <Tabs.Content value="overview" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Property Details</CardTitle>
@@ -366,6 +379,113 @@ export default function PropertyDetailPage() {
           <Building2 className="h-4 w-4" /> Manage Units
         </Button>
       </div>
+        </Tabs.Content>
+        <Tabs.Content value="showcase">
+          <ShowcaseTab property={property} />
+        </Tabs.Content>
+      </Tabs.Root>
+    </div>
+  );
+}
+
+function ShowcaseTab({ property }: { property: any }) {
+  const [uploading, setUploading] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const queryClient = useQueryClient();
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      // Let's make the first image uploaded automatically the primary image
+      const isPrimary = (!property.images || property.images.length === 0).toString();
+      formData.append("isPrimary", isPrimary);
+
+      await api.post(`/images/property/${property.id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      
+      // Silently refresh the property data without reloading the page
+      queryClient.invalidateQueries({ queryKey: ["property", property.id] });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to upload image.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async (imageId: string) => {
+    if (!window.confirm("Are you sure you want to delete this image?")) return;
+    try {
+      await api.delete(`/images/${imageId}`);
+      queryClient.invalidateQueries({ queryKey: ["property", property.id] });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete image.");
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold">Property Showcase</h2>
+        <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+          {uploading ? "Uploading..." : <><Upload className="mr-2 h-4 w-4" /> Upload Image</>}
+        </Button>
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept="image/*" 
+          onChange={handleUpload} 
+        />
+      </div>
+
+      {!property.images || property.images.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center">
+            <ImageIcon className="h-12 w-12 mb-4 opacity-50" />
+            <h3 className="text-lg font-medium text-foreground">No images uploaded yet</h3>
+            <p className="mt-1 max-w-md">Upload high-quality images to showcase this property to potential buyers and tenants.</p>
+            <Button variant="outline" className="mt-6" onClick={() => fileInputRef.current?.click()}>
+              Select a Photo
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {property.images.map((img: any) => (
+            <Dialog key={img.id}>
+              <div className="relative group rounded-lg overflow-hidden border aspect-video bg-muted">
+                <img src={img.url} alt={img.alt || "Property image"} className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105" />
+                {img.isPrimary && (
+                  <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded font-medium shadow-sm">
+                    Primary
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <DialogTrigger asChild>
+                    <Button variant="secondary" size="icon" className="h-8 w-8">
+                      <ZoomIn className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDelete(img.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <DialogContent className="max-w-4xl p-1 bg-transparent border-none shadow-none">
+                <img src={img.url} alt={img.alt || "Property image"} className="w-full h-auto max-h-[85vh] object-contain rounded-md" />
+              </DialogContent>
+            </Dialog>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
