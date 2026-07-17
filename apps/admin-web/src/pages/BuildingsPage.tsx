@@ -36,6 +36,7 @@ import {
   Eye,
   Trash2,
   Layers,
+  Building as BuildingIcon,
 } from "lucide-react";
 import { useBuildings, useDeleteBuilding, type Building, type BuildingQuery } from "@/hooks/use-buildings";
 
@@ -76,7 +77,14 @@ export default function BuildingsPage() {
       {
         accessorKey: "name",
         header: "Name",
-        cell: ({ row }) => <span className="font-medium">{row.getValue("name")}</span>,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+              <BuildingIcon className="h-4 w-4 text-primary" />
+            </div>
+            <span className="font-medium">{row.getValue("name")}</span>
+          </div>
+        ),
       },
       {
         accessorKey: "type",
@@ -187,31 +195,26 @@ export default function BuildingsPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <CardTitle>All Buildings</CardTitle>
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="relative w-56">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search buildings..."
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                  className="pl-8"
-                />
-              </div>
-              <Select value={projectFilter} onValueChange={(v) => { setProjectFilter(v); setPage(1); }}>
-                <SelectTrigger className="w-36">
-                  <SelectValue placeholder="Project" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Projects</SelectItem>
-                </SelectContent>
-              </Select>
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search buildings..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                className="pl-9 bg-transparent"
+              />
             </div>
+            <Select value={projectFilter} onValueChange={(v) => { setProjectFilter(v); setPage(1); }}>
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="Project" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Projects</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </CardHeader>
-        <CardContent>
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (

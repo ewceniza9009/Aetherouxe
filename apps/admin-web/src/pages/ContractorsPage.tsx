@@ -28,6 +28,7 @@ import {
   ChevronDown,
   ChevronRight,
   Building2,
+  HardHat,
   Phone,
   Mail,
   Eye,
@@ -64,8 +65,8 @@ export default function ContractorsPage() {
       header: "Company",
       cell: (info) => (
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-            <Building2 className="h-4 w-4 text-primary" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+            <HardHat className="h-4 w-4 text-primary" />
           </div>
           <span className="font-medium">{info.getValue()}</span>
         </div>

@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, ClipboardList, Lock, Unlock } from "lucide-react";
+import { Plus, Search, ClipboardList, Lock, Unlock, FileCode } from "lucide-react";
 import { useSchemes, useDeleteScheme, SCHEME_TYPES, type Scheme } from "@/hooks/use-schemes";
 
 const schemeTypeMeta: Record<string, { label: string; className: string }> = {
@@ -57,8 +57,8 @@ export default function SchemesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Schemes</h1>
-          <p className="text-sm text-muted-foreground">Payment plan templates for all transaction types</p>
+          <h1 className="text-3xl font-bold tracking-tight">Schemes</h1>
+          <p className="text-muted-foreground">Payment plan templates for all transaction types</p>
         </div>
         <Button onClick={() => navigate({ to: "/schemes/$id", params: { id: "new" } })}>
           <Plus className="mr-2 h-4 w-4" /> New Scheme
@@ -66,26 +66,24 @@ export default function SchemesPage() {
       </div>
 
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-sm">
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search schemes..." className="pl-8" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input placeholder="Search schemes..." className="pl-9 bg-transparent" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {SCHEME_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {SCHEME_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           {isLoading ? (
             <div className="p-4 space-y-3">
               {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
@@ -121,7 +119,14 @@ export default function SchemesPage() {
                         className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
                         onClick={() => navigate({ to: `/schemes/${s.id}` })}
                       >
-                        <td className="px-4 py-3 font-mono font-semibold">{s.code}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                              <FileCode className="h-4 w-4 text-primary" />
+                            </div>
+                            <span className="font-mono text-xs font-medium">{s.code}</span>
+                          </div>
+                        </td>
                         <td className="px-4 py-3">{s.name ?? "—"}</td>
                         <td className="px-4 py-3">
                           <Badge variant="outline" className={meta.className}>{meta.label}</Badge>

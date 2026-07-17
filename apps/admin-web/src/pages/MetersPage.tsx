@@ -35,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Droplets, Zap, Flame, AlertCircle, Loader2, Search } from "lucide-react";
+import { Plus, Droplets, Flame, AlertCircle, Loader2, Search, Zap } from "lucide-react";
 import {
   useMeters,
   useCreateMeter,
@@ -114,49 +114,42 @@ export default function MetersPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Droplets className="h-5 w-5 text-accent" /> Utility Meters
-            </CardTitle>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="relative w-full sm:w-56">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search meters..."
-                  className="pl-8"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <Select value={utilityType} onValueChange={setUtilityType}>
-                <SelectTrigger className="w-full sm:w-44">
-                  <SelectValue placeholder="Utility type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="water">Water</SelectItem>
-                  <SelectItem value="electricity">Electricity</SelectItem>
-                  <SelectItem value="gas">Gas</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={propertyId} onValueChange={setPropertyId}>
-                <SelectTrigger className="w-full sm:w-56">
-                  <SelectValue placeholder="Property" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Properties</SelectItem>
-                  {properties.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.code || p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search meters..."
+                className="pl-9 bg-transparent"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
+            <Select value={utilityType} onValueChange={setUtilityType}>
+              <SelectTrigger className="w-full sm:w-44">
+                <SelectValue placeholder="Utility type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="water">Water</SelectItem>
+                <SelectItem value="electricity">Electricity</SelectItem>
+                <SelectItem value="gas">Gas</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={propertyId} onValueChange={setPropertyId}>
+              <SelectTrigger className="w-full sm:w-56">
+                <SelectValue placeholder="Property" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Properties</SelectItem>
+                {properties.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </CardHeader>
-        <CardContent>
           {isError ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
               <AlertCircle className="h-8 w-8 text-destructive" />
@@ -197,7 +190,12 @@ export default function MetersPage() {
                   >
                     <TableCell className="font-medium font-mono">{m.meterNumber}</TableCell>
                     <TableCell>
-                      <UtilityPill type={m.utilityType} />
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                          <Zap className="h-4 w-4 text-primary" />
+                        </div>
+                        <UtilityPill type={m.utilityType} />
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm">{unitPropertyLabel(m)}</TableCell>
                     <TableCell className="text-sm">{tenantName(m.resident) ?? "—"}</TableCell>

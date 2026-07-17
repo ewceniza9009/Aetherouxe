@@ -36,6 +36,7 @@ import {
   ChevronRight,
   Eye,
   Trash2,
+  Building2,
 } from "lucide-react";
 import { useProperties, useDeleteProperty, type Property, type PropertyQuery } from "@/hooks/use-properties";
 import { useProjects } from "@/hooks/use-projects";
@@ -84,7 +85,14 @@ export default function PropertiesPage() {
       {
         accessorKey: "code",
         header: "Property Code",
-        cell: ({ row }) => <span className="font-mono text-xs font-medium">{row.getValue("code")}</span>,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+              <Building2 className="h-4 w-4 text-primary" />
+            </div>
+            <span className="font-mono text-xs font-medium">{row.getValue("code")}</span>
+          </div>
+        ),
       },
       {
         accessorKey: "type",
@@ -208,22 +216,20 @@ export default function PropertiesPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <CardTitle>All Properties</CardTitle>
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="relative w-56">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by code..."
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setPage(1);
-                  }}
-                  className="pl-8"
-                />
-              </div>
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search properties..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-9 bg-transparent"
+              />
+            </div>
               <Select
                 value={typeFilter}
                 onValueChange={(v) => {
@@ -282,9 +288,6 @@ export default function PropertiesPage() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (

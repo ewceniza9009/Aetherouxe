@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { Plus, Search, ChevronLeft, ChevronRight, AlertCircle, FileText } from "lucide-react";
 import { LeaseType } from "@elite-realty/shared-types";
 import {
   useLeases,
@@ -91,9 +91,14 @@ export default function LeasesPage() {
       columnHelper.accessor("tenantName", {
         header: "Tenant",
         cell: (info) => (
-          <div>
-            <div className="font-medium">{info.getValue()}</div>
-            <div className="text-xs text-muted-foreground">{info.row.original.tenantEmail}</div>
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+              <FileText className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <div className="font-medium text-sm">{info.row.original.tenantName}</div>
+              <div className="text-xs text-muted-foreground">{info.row.original.tenantEmail}</div>
+            </div>
           </div>
         ),
       }),
@@ -181,22 +186,20 @@ export default function LeasesPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <CardTitle>Leases</CardTitle>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search tenant email or name..."
-                  className="pl-8"
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setPage(1);
-                  }}
-                />
-              </div>
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search leases..."
+                className="pl-9 bg-transparent"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
               <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
                 <SelectTrigger className="w-full sm:w-44">
                   <SelectValue placeholder="Lease Type" />
@@ -225,9 +228,6 @@ export default function LeasesPage() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
           {isError ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
               <AlertCircle className="h-8 w-8 text-destructive" />

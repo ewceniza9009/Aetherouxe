@@ -187,10 +187,10 @@ export default function AnalyticsPage() {
           ) : (
             <div className="flex h-44 items-end justify-between gap-3">
               {revenue.map((r) => (
-                <div key={r.month} className="flex flex-1 flex-col items-center gap-2">
-                  <div className="flex w-full flex-1 items-end">
+                <div key={r.month} className="flex flex-1 flex-col items-center gap-2 h-full">
+                  <div className="relative w-full flex-1">
                     <div
-                      className="gold-gradient w-full rounded-t-md transition-all duration-500"
+                      className="gold-gradient absolute bottom-0 left-0 w-full rounded-t-md transition-all duration-500"
                       style={{ height: `${(r.revenue / maxRevenue) * 100}%` }}
                       title={formatCurrency(r.revenue)}
                     />

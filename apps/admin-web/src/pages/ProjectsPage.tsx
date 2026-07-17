@@ -21,7 +21,7 @@ import {
   flexRender,
   createColumnHelper,
 } from "@tanstack/react-table";
-import { Plus, Search, ArrowUpDown, Eye, Hammer } from "lucide-react";
+import { Plus, Search, MapPin, SearchX, CheckCircle2, ChevronRight, ExternalLink, Calendar, Building2, Hammer, ArrowUpDown, Eye } from "lucide-react";
 import { useProjects, useDeleteProject, projectTypeLabels, projectStatusLabels } from "@/hooks/use-projects";
 import type { Project, ProjectType, ProjectStatus } from "@/hooks/use-projects";
 
@@ -61,11 +61,16 @@ export default function ProjectsPage() {
     columnHelper.accessor("name", {
       header: "Name",
       cell: (info) => (
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-            <Hammer className="h-4 w-4 text-primary" />
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+            <Building2 className="h-4 w-4 text-primary" />
           </div>
-          <span className="font-medium">{info.getValue()}</span>
+          <div>
+            <div className="font-medium">{info.getValue()}</div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <MapPin className="h-3 w-3" /> {info.row.original.address || "No address provided"}
+            </div>
+          </div>
         </div>
       ),
     }),
@@ -162,14 +167,14 @@ export default function ProjectsPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search projects..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+                className="pl-9 bg-transparent"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>

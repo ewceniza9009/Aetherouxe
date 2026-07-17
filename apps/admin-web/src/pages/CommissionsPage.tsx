@@ -155,7 +155,14 @@ export default function CommissionsPage() {
               <TableBody>
                 {rules.map((rule) => (
                   <TableRow key={rule.id}>
-                    <TableCell className="font-medium">{rule.name}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                          <Percent className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="font-medium">{rule.name}</span>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       {rule.tier === "all" ? (
                         <Badge variant="outline">All Tiers</Badge>

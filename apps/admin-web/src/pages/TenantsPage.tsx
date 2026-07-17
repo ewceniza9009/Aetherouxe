@@ -79,21 +79,18 @@ export default function TenantsPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>All Tenants</CardTitle>
-            <div className="relative w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search tenants..."
-                className="pl-8"
+                className="pl-9 bg-transparent"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
           {isLoading ? (
             <p className="text-sm text-muted-foreground p-4">Loading tenants…</p>
           ) : filtered.length === 0 ? (

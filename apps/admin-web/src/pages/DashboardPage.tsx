@@ -40,7 +40,7 @@ export default function DashboardPage() {
 
   const stats = [
     { title: "Total Properties", value: (k.totalProperties ?? 0).toLocaleString(), icon: Building2, accent: "text-primary", sub: "Across portfolio" },
-    { title: "Occupied Units", value: `${(k.occupiedUnits ?? 0)}/${(k.totalUnits ?? 0)}`, icon: Users, accent: "text-accent", sub: `${k.occupancyRate ?? 0}% occupancy` },
+    { title: "Occupied Units", value: `${(k.occupiedUnits ?? 0)}/${(k.totalUnits ?? 0)}`, icon: Users, accent: "text-cyan-400", sub: `${k.occupancyRate ?? 0}% occupancy` },
     { title: "Active Leases", value: (k.activeLeases ?? 0).toLocaleString(), icon: FileText, accent: "text-success", sub: "Currently generating revenue" },
     { title: "Monthly Revenue", value: money(k.monthlyRecurringRevenue ?? 0), icon: DollarSign, accent: "text-warning", sub: "Recurring MRR" },
     { title: "Total Receivable", value: money(k.totalReceivable ?? 0), icon: TrendingUp, accent: "text-destructive", sub: "Outstanding AR" },
@@ -190,15 +190,15 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-accent">Active Leases</CardTitle>
-            <FileText className="h-4 w-4 text-accent" />
+            <CardTitle className="text-sm font-medium text-cyan-400">Active Leases</CardTitle>
+            <FileText className="h-4 w-4 text-cyan-400" />
           </CardHeader>
           <CardContent>
             {loadingLeases ? (
               <Skeleton className="h-8 w-16" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-accent">{activeLeaseCount}</div>
+                <div className="text-3xl font-bold text-cyan-400">{activeLeaseCount}</div>
                 <p className="text-xs text-muted-foreground">Currently generating revenue</p>
               </>
             )}
@@ -296,7 +296,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-border bg-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-accent flex items-center gap-1">
+            <CardTitle className="text-sm text-cyan-400 flex items-center gap-1">
               <Hammer className="h-4 w-4" /> Active Projects
             </CardTitle>
           </CardHeader>
@@ -305,7 +305,7 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-16" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-accent">{activeProjects}</div>
+                <div className="text-3xl font-bold text-cyan-400">{activeProjects}</div>
                 <p className="text-xs text-muted-foreground">Currently in progress</p>
               </>
             )}
@@ -327,8 +327,8 @@ export default function DashboardPage() {
                   <span className="font-semibold text-success">{completedProjects}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-accent">In Progress</span>
-                  <span className="font-semibold text-accent">{activeProjects}</span>
+                  <span className="text-cyan-400">In Progress</span>
+                  <span className="font-semibold text-cyan-400">{activeProjects}</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-warning">Planning</span>
@@ -535,8 +535,8 @@ export default function DashboardPage() {
         </Card>
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-accent">Quick Links</CardTitle>
-            <BellRing className="h-4 w-4 text-accent" />
+            <CardTitle className="text-sm font-medium text-cyan-400">Quick Links</CardTitle>
+            <BellRing className="h-4 w-4 text-cyan-400" />
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate({ to: "/collections" })}>
@@ -549,7 +549,7 @@ export default function DashboardPage() {
         </Card>
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-accent flex items-center gap-1">
+            <CardTitle className="text-sm font-medium text-cyan-400 flex items-center gap-1">
               <Droplets className="h-4 w-4" /> Unpaid Utility Bills
             </CardTitle>
           </CardHeader>
@@ -558,7 +558,7 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-16" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-accent">{unpaidUtilityBills}</div>
+                <div className="text-3xl font-bold text-cyan-400">{unpaidUtilityBills}</div>
                 <p className="text-xs text-muted-foreground">
                   {money(unpaidUtilityAmount)} outstanding
                 </p>

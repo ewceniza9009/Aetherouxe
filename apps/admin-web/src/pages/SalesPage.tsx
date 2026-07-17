@@ -146,22 +146,17 @@ export default function SalesPage() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="space-y-6">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-8 py-5 border-b border-border/60 bg-card/50 backdrop-blur-sm shrink-0">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate({ to: "/" })}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Sales & Schemes</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Apply a scheme to a unit in a few steps.</p>
-          </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Sales & Schemes</h1>
+          <p className="text-muted-foreground">Apply a scheme to a unit in a few steps.</p>
         </div>
       </div>
 
       {/* ── Step Indicator ── */}
-      <div className="px-8 py-5 border-b border-border/40 shrink-0 bg-card/30">
+      <div className="py-2">
         <div className="flex items-center justify-center gap-0 max-w-xl mx-auto">
           {STEPS.map((s, i) => {
             const Icon = s.icon;
@@ -203,7 +198,7 @@ export default function SalesPage() {
       </div>
 
       {/* ── Content ── */}
-      <div className="flex-1 overflow-auto p-8">
+      <div>
 
         {/* ════════════════════════════════════════════ */}
         {/* Step 1: Select Scheme                        */}
@@ -221,11 +216,11 @@ export default function SalesPage() {
               </Button>
             </div>
 
-            <div className="relative max-w-md">
+            <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by code, name, or type..."
-                className="pl-10 h-11 text-sm"
+                className="pl-9 h-11 text-sm bg-transparent"
                 value={schemeSearch}
                 onChange={(e) => setSchemeSearch(e.target.value)}
               />
@@ -293,11 +288,11 @@ export default function SalesPage() {
               </Button>
             </div>
 
-            <div className="relative max-w-md">
+            <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search units or property codes..."
-                className="pl-10 h-11 text-sm"
+                placeholder="Search units by block, lot, or code..."
+                className="pl-9 h-11 text-sm bg-transparent"
                 value={unitSearch}
                 onChange={(e) => setUnitSearch(e.target.value)}
               />

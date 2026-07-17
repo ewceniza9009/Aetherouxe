@@ -181,45 +181,40 @@ export default function AgentsPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <CardTitle>Agent Roster</CardTitle>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative w-full md:w-64">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search name or license..."
-                  className="pl-8"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <Select
-                value={tier}
-                onValueChange={(v) => setTier(v as AgentTierValue | "all")}
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Tier" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Tiers</SelectItem>
-                  <SelectItem value="junior">Junior</SelectItem>
-                  <SelectItem value="senior">Senior</SelectItem>
-                  <SelectItem value="team_lead">Team Lead</SelectItem>
-                  <SelectItem value="external_broker">External Broker</SelectItem>
-                </SelectContent>
-              </Select>
-              <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Switch
-                  checked={internalOnly}
-                  onChange={(e) => setInternalOnly(e.target.checked)}
-                />
-                Internal only
-              </label>
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search name or license..."
+                className="pl-9 bg-transparent"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
+            <Select
+              value={tier}
+              onValueChange={(v) => setTier(v as AgentTierValue | "all")}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Tier" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Tiers</SelectItem>
+                <SelectItem value="junior">Junior</SelectItem>
+                <SelectItem value="senior">Senior</SelectItem>
+                <SelectItem value="team_lead">Team Lead</SelectItem>
+                <SelectItem value="external_broker">External Broker</SelectItem>
+              </SelectContent>
+            </Select>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Switch
+                checked={internalOnly}
+                onCheckedChange={(checked) => setInternalOnly(checked)}
+              />
+              Internal only
+            </label>
           </div>
-        </CardHeader>
-        <CardContent>
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 6 }).map((_, i) => (

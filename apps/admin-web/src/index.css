@@ -24,8 +24,8 @@
     --muted: 215 25% 16%;
     --muted-foreground: 215 15% 60%;
 
-    --accent: 215 30% 16%;             /* muted charcoal/blue for hovers */
-    --accent-foreground: 210 20% 92%;  /* light text on hover */
+    --accent: 179 100% 37%;            /* #00BFA5 teal */
+    --accent-foreground: 222 64% 9%;
 
     --destructive: 0 72% 56%;          /* muted #EF4444 */
     --destructive-foreground: 210 20% 98%;
