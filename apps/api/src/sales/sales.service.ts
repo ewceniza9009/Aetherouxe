@@ -162,6 +162,7 @@ export class SalesService {
             leaseAgreementId: lease.id,
             transactionAmount: value,
             calculatedCommission,
+            finalCommission: calculatedCommission,
             status: 'pending',
             transactionDate: new Date(),
           },

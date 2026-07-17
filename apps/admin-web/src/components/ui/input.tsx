@@ -1,36 +1,82 @@
 import { forwardRef } from "react";
-import { Calendar, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DatePicker } from "@/components/ui/date-picker";
+import { AmountInput, QuantityInput } from "@/components/ui/number-input";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
 const DATE_TYPES = ["date", "datetime-local", "month", "week"];
 const TIME_TYPES = ["time"];
+const NUMBER_TYPES = ["number"];
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, ...props }, ref) => {
+  ({ className, type, value, onChange, step, ...props }, ref) => {
     const isDate = type ? DATE_TYPES.includes(type) : false;
     const isTime = type ? TIME_TYPES.includes(type) : false;
+    const isNumber = type ? NUMBER_TYPES.includes(type) : false;
+
+    if (isDate) {
+      const handleChange = onChange as ((e: { target: { value: string } }) => void) | undefined;
+      return (
+        <DatePicker
+          value={typeof value === "string" ? value : undefined}
+          includeTime={type === "datetime-local"}
+          onChange={(v) => handleChange?.({ target: { value: v } } as any)}
+          className={className}
+          {...(props as any)}
+        />
+      );
+    }
+
+    if (isNumber) {
+      const stepStr = step !== undefined ? String(step) : "";
+      const hasDecimalStep = stepStr !== "" && stepStr.includes(".");
+      const handleChange = onChange as ((e: { target: { value: string } }) => void) | undefined;
+
+      // No decimal step → whole number quantity (n0); otherwise money-style n2.
+      if (!hasDecimalStep && stepStr !== "") {
+        return (
+          <QuantityInput
+            value={value === undefined || value === null ? "" : (value as string | number)}
+            onChange={(raw) => handleChange?.({ target: { value: raw } } as any)}
+            className={className}
+            {...(props as any)}
+          />
+        );
+      }
+
+      return (
+        <AmountInput
+          value={value === undefined || value === null ? "" : (value as string | number)}
+          onChange={(raw) => handleChange?.({ target: { value: raw } } as any)}
+          className={className}
+          {...(props as any)}
+        />
+      );
+    }
 
     const inputEl = (
       <input
         type={type}
         className={cn(
           "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          (isDate || isTime) && "date-input pr-10",
+          isTime && "date-input pr-10",
           className
         )}
         ref={ref}
+        value={value}
+        onChange={onChange}
+        step={step}
         {...props}
       />
     );
 
-    if (isDate || isTime) {
-      const Icon = isTime ? Clock : Calendar;
+    if (isTime) {
       return (
         <div className="relative w-full">
           {inputEl}
-          <Icon
+          <Clock
             className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/80"
             aria-hidden="true"
           />
@@ -44,3 +90,5 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = "Input";
 
 export { Input };
+
+

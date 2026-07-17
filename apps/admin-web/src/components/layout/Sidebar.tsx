@@ -62,9 +62,9 @@ const navGroups: NavGroup[] = [
     label: "Property",
     icon: <Building2 size={16} />,
     items: [
-      { label: "Properties", icon: <Building2 size={18} />, path: "/properties", kind: "setup" },
-      { label: "Buildings", icon: <Building2 size={18} />, path: "/buildings", kind: "setup" },
       { label: "Projects", icon: <Hammer size={18} />, path: "/projects", kind: "setup" },
+      { label: "Buildings", icon: <Building2 size={18} />, path: "/buildings", kind: "setup" },
+      { label: "Properties", icon: <Building2 size={18} />, path: "/properties", kind: "setup" },
       { label: "Amenities", icon: <Droplet size={18} />, path: "/amenities", kind: "setup" },
       { label: "Tenants", icon: <Users size={18} />, path: "/tenants", kind: "txn" },
       { label: "Leases", icon: <FileText size={18} />, path: "/leases", kind: "txn" },
@@ -76,8 +76,8 @@ const navGroups: NavGroup[] = [
     label: "Sales",
     icon: <Briefcase size={16} />,
     items: [
-      { label: "Schemes", icon: <ClipboardList size={18} />, path: "/schemes", kind: "setup" },
       { label: "Agents", icon: <UserCheck size={18} />, path: "/agents", kind: "setup" },
+      { label: "Schemes", icon: <ClipboardList size={18} />, path: "/schemes", kind: "setup" },
       { label: "Sales & Schemes", icon: <BadgeDollarSign size={18} />, path: "/sales", kind: "txn" },
       { label: "Commissions", icon: <DollarSign size={18} />, path: "/commissions", kind: "txn" },
     ],

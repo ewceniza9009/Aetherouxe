@@ -31,6 +31,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
@@ -431,11 +432,7 @@ export default function CollectionCasesPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="outstanding">Total Outstanding</Label>
-              <Input
-                id="outstanding"
-                type="number"
-                min="0"
-                step="0.01"
+              <CurrencyInput
                 value={
                   amountEdited || !form.leaseId
                     ? form.totalOutstanding
@@ -443,12 +440,11 @@ export default function CollectionCasesPage() {
                       ? String(computedOutstanding.toFixed(2))
                       : ""
                 }
-                onChange={(e) => {
+                onChange={(v) => {
                   setAmountEdited(true);
-                  setForm((f) => ({ ...f, totalOutstanding: e.target.value }));
+                  setForm((f) => ({ ...f, totalOutstanding: v }));
                 }}
                 placeholder={form.leaseId ? "0.00" : "Select a lease first"}
-                required
               />
               {form.leaseId && (
                 <p className="text-xs text-muted-foreground">

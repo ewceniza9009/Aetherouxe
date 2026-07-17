@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { InvoiceStatus } from '@prisma/client';
 
 export interface PortfolioKpis {
   totalProperties: number;
@@ -36,16 +37,13 @@ export class ReportsService {
     const leaseWhere = tenantId
       ? { property: { tenantId }, isActive: true }
       : { isActive: true };
-    const rentalWhere = tenantId
-      ? { leaseAgreement: { property: { tenantId } } }
-      : {};
     const rtoWhere = tenantId
       ? { leaseAgreement: { property: { tenantId } }, status: 'active' as any }
       : { status: 'active' as any };
     const srWhere = tenantId ? { tenantId } : {};
     const ccWhere = tenantId ? { tenantId } : {};
 
-    const outstandingStatuses = ['pending', 'overdue', 'partially_paid'];
+    const outstandingStatuses: InvoiceStatus[] = ['pending', 'overdue', 'partially_paid'];
 
     const totalProperties = await this.prisma.property.count({ where: propertyWhere });
     const totalUnits = await this.prisma.unit.count({ where: unitWhere });
@@ -75,16 +73,22 @@ export class ReportsService {
     });
     const monthlyRecurringRevenue = this.toNum(mrrAgg._sum.monthlyRentAmount);
 
-    const receivableAgg = await this.prisma.rentalPayment.aggregate({
+    // Single source of truth for receivables = the AR ledger (ar_invoices),
+    // exactly as the AR Aging report computes it. rental_payments is the billing
+    // schedule; it is NOT a parallel receivable ledger.
+    const invoices = await this.prisma.arInvoice.findMany({
       where: {
         status: { in: outstandingStatuses },
-        ...rentalWhere,
+        ...(tenantId ? { tenantId } : {}),
       },
-      _sum: { amountDue: true, amountPaid: true },
+      include: { payments: true },
     });
-    const totalReceivable =
-      this.toNum(receivableAgg._sum.amountDue) -
-      this.toNum(receivableAgg._sum.amountPaid);
+    let totalReceivable = 0;
+    for (const inv of invoices) {
+      const paid = (inv.payments ?? []).reduce((sum: number, p: { amount: any }) => sum + this.toNum(p.amount), 0);
+      const outstanding = this.toNum(inv.amount) - paid;
+      if (outstanding > 0) totalReceivable += outstanding;
+    }
 
     const openServiceRequests = await this.prisma.serviceRequest.count({
       where: { status: { in: ['open', 'assigned', 'in_progress'] }, ...srWhere },

@@ -9,6 +9,7 @@ export class RtoService {
   async createFromLease(lease: {
     id: string;
     monthlyRentAmount: any;
+    termMonths?: number;
   }) {
     const monthlyRent = Number(lease.monthlyRentAmount);
     if (monthlyRent <= 0) {
@@ -16,6 +17,12 @@ export class RtoService {
     }
     const monthlyRentPortion = Number((monthlyRent * 0.7).toFixed(2));
     const monthlyEquityPortion = Number((monthlyRent * 0.3).toFixed(2));
+
+    // totalContractValue must be a real figure: equity is capped at this value
+    // downstream, so leaving it 0 silently discards all accumulated equity.
+    // Estimate from rent * term (default 120 months = 10y) when not supplied.
+    const term = Number(lease.termMonths) > 0 ? Number(lease.termMonths) : 120;
+    const totalContractValue = Number((monthlyRent * term).toFixed(2));
 
     const existing = await this.prisma.rtoContract.findFirst({
       where: { leaseAgreementId: lease.id },
@@ -27,7 +34,7 @@ export class RtoService {
     return this.prisma.rtoContract.create({
       data: {
         leaseAgreementId: lease.id,
-        totalContractValue: 0,
+        totalContractValue,
         monthlyRentPortion,
         monthlyEquityPortion,
         accumulatedEquity: 0,

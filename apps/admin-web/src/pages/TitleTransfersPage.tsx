@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -543,18 +544,18 @@ function TransferDialog({
             </div>
 
             <div className="space-y-2">
-              <Label>Contract Value (₱)</Label>
-              <Input type="number" step="0.01" value={form.contractValue} onChange={(e) => setForm((f) => ({ ...f, contractValue: e.target.value }))} placeholder="0.00" />
+              <Label>Contract Value</Label>
+              <CurrencyInput value={form.contractValue} onChange={(v) => setForm((f) => ({ ...f, contractValue: v }))} />
             </div>
 
             <div className="space-y-2">
-              <Label>Amount Settled (₱)</Label>
-              <Input type="number" step="0.01" value={form.amountSettled} onChange={(e) => setForm((f) => ({ ...f, amountSettled: e.target.value }))} placeholder="0.00" />
+              <Label>Amount Settled</Label>
+              <CurrencyInput value={form.amountSettled} onChange={(v) => setForm((f) => ({ ...f, amountSettled: v }))} />
             </div>
 
             <div className="space-y-2">
-              <Label>Transfer Fee (₱)</Label>
-              <Input type="number" step="0.01" value={form.transferFeeAmount} onChange={(e) => setForm((f) => ({ ...f, transferFeeAmount: e.target.value }))} placeholder="0.00" />
+              <Label>Transfer Fee</Label>
+              <CurrencyInput value={form.transferFeeAmount} onChange={(v) => setForm((f) => ({ ...f, transferFeeAmount: v }))} />
             </div>
           </div>
 
