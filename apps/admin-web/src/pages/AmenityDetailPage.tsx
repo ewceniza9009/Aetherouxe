@@ -266,7 +266,7 @@ export default function AmenityDetailPage() {
       </div>
 
       <Tabs defaultValue="bookings">
-        <TabsList>
+        <TabsList className="w-full justify-start">
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
           <TabsTrigger value="posts">Posts</TabsTrigger>
         </TabsList>

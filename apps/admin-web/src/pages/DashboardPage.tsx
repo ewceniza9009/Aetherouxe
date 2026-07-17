@@ -61,9 +61,11 @@ export default function DashboardPage() {
 
   const projects = projectsData?.data ?? [];
   const totalProjects = projectsData?.meta?.total ?? 0;
-  const activeProjects = projects.filter((p) => p.status === "in_progress").length;
+  const activeProjects = projects.filter((p) =>
+    p.status === "pre_selling" || p.status === "construction" || p.status === "fit_out"
+  ).length;
   const planningProjects = projects.filter((p) => p.status === "planning").length;
-  const delayedProjects = projects.filter((p) => p.status === "delayed").length;
+  const turnoverProjects = projects.filter((p) => p.status === "turnover").length;
   const completedProjects = projects.filter((p) => p.status === "completed").length;
 
   const greenBudgets = 0;
@@ -333,8 +335,8 @@ export default function DashboardPage() {
                   <span className="font-semibold text-warning">{planningProjects}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-destructive">Delayed</span>
-                  <span className="font-semibold text-destructive">{delayedProjects}</span>
+                  <span className="text-success">Turnover</span>
+                  <span className="font-semibold text-success">{turnoverProjects}</span>
                 </div>
               </div>
             )}

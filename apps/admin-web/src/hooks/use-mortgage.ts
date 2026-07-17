@@ -4,6 +4,7 @@ import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
 
 export interface AmortizationRow {
   period: number;
+  periodDate?: string;
   beginningBalance: number;
   payment: number;
   principal: number;
@@ -49,6 +50,19 @@ interface PaginatedResult<T> {
   meta: PaginationMeta;
 }
 
+function mapAmortizationRows(rows: any[]): AmortizationRow[] {
+  return (rows ?? []).map((r) => ({
+    period: r.periodNumber ?? r.period ?? 0,
+    periodDate: r.periodDate,
+    beginningBalance: Number(r.beginningBalance) || 0,
+    payment: Number(r.monthlyPayment ?? r.payment) || 0,
+    principal: Number(r.principalPayment ?? r.principal) || 0,
+    interest: Number(r.interestPayment ?? r.interest) || 0,
+    endingBalance: Number(r.endingBalance) || 0,
+    cumulativeInterest: Number(r.cumulativeInterestPaid ?? r.cumulativeInterest) || 0,
+  }));
+}
+
 export function useMortgageScenarios(query: MortgageScenarioQuery) {
   return useQuery({
     queryKey: ["mortgage-scenarios", query],
@@ -71,7 +85,7 @@ export function useMortgageScenarios(query: MortgageScenarioQuery) {
         monthlyPayment: Number(s.monthlyAmortization),
         totalInterest: Number(s.totalInterestPayable),
         totalPaid: s.totalPaid ? Number(s.totalPaid) : undefined,
-        amortizationSchedule: s.amortizationSchedule ?? [],
+        amortizationSchedule: mapAmortizationRows(s.amortizationSchedule),
         createdAt: s.createdAt,
         updatedAt: s.updatedAt,
       }));
@@ -100,7 +114,7 @@ export function useMortgageScenario(id: string) {
         monthlyPayment: Number(s.monthlyAmortization),
         totalInterest: Number(s.totalInterestPayable),
         totalPaid: s.totalPaid ? Number(s.totalPaid) : undefined,
-        amortizationSchedule: s.amortizationSchedule ?? [],
+        amortizationSchedule: mapAmortizationRows(s.amortizationSchedule),
         createdAt: s.createdAt,
         updatedAt: s.updatedAt,
       } as MortgageScenario;

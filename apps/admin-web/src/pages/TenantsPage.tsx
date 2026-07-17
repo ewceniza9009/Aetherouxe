@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,7 @@ interface TenantRow {
 }
 
 export default function TenantsPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const { data: usersData, isLoading } = useUsers({ userType: "tenant", limit: 200 });
   const { data: leasesData } = useLeases({ limit: 500 });
@@ -95,60 +97,70 @@ export default function TenantsPage() {
           ) : filtered.length === 0 ? (
             <p className="text-sm text-muted-foreground p-4">No tenants found.</p>
           ) : (
-            <div className="scroll-grid !max-h-[calc(100vh-13rem)]">
-              <div className="divide-y">
-                {filtered.map((tenant) => (
-                  <div
-                    key={tenant.id}
-                    className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <Avatar>
-                        <AvatarFallback>{(tenant as any).initials}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{tenant.name}</p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div
+              className="scroll-grid cursor-pointer"
+              onClick={(e) => {
+                const row = (e.target as HTMLElement).closest("[data-tenant-id]");
+                if (row) navigate({ to: `/tenants/${row.getAttribute("data-tenant-id")}` });
+              }}
+            >
+              <table className="w-full text-sm">
+                <thead>
+                  <tr>
+                    <th>Tenant</th>
+                    <th>Contact</th>
+                    <th>Property</th>
+                    <th>Unit</th>
+                    <th>Lease Until</th>
+                    <th className="text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((tenant) => (
+                    <tr key={tenant.id} data-tenant-id={tenant.id} className="cursor-pointer">
+                      <td className="font-medium">
+                        <span className="flex items-center gap-3">
+                          <Avatar className="h-7 w-7">
+                            <AvatarFallback className="text-xs">{(tenant as any).initials}</AvatarFallback>
+                          </Avatar>
+                          {tenant.name}
+                        </span>
+                      </td>
+                      <td className="text-muted-foreground">
+                        <div className="flex flex-col">
                           <span className="flex items-center gap-1">
-                            <Mail className="h-3 w-3" />
-                            {tenant.email}
+                            <Mail className="h-3 w-3" /> {tenant.email}
                           </span>
                           {tenant.phone && (
                             <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {tenant.phone}
+                              <Phone className="h-3 w-3" /> {tenant.phone}
                             </span>
                           )}
                         </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right text-sm">
-                        <p>
-                          {tenant.property} - {tenant.unit}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Lease until {tenant.leaseEnd}
-                        </p>
-                      </div>
-                      <Badge
-                        variant={
-                          tenant.status === "active"
-                            ? "success"
-                            : tenant.status === "late" ||
-                              tenant.status === "rto_delinquent"
-                            ? "destructive"
-                            : tenant.status === "no lease"
-                            ? "secondary"
-                            : "warning"
-                        }
-                      >
-                        {tenant.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      </td>
+                      <td>{tenant.property}</td>
+                      <td>{tenant.unit}</td>
+                      <td>{tenant.leaseEnd}</td>
+                      <td className="text-right">
+                        <Badge
+                          variant={
+                            tenant.status === "active"
+                              ? "success"
+                              : tenant.status === "late" ||
+                                tenant.status === "rto_delinquent"
+                              ? "destructive"
+                              : tenant.status === "no lease"
+                              ? "secondary"
+                              : "warning"
+                          }
+                        >
+                          {tenant.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>

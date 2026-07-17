@@ -14,23 +14,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
-import { useProject, useUpdateProject } from "@/hooks/use-projects";
+import { useProject, useUpdateProject, projectTypeLabels, projectStatusLabels } from "@/hooks/use-projects";
 import type { ProjectType, ProjectStatus } from "@/hooks/use-projects";
 
-const projectTypes: { value: ProjectType; label: string }[] = [
-  { value: "land_development", label: "Land Development" },
-  { value: "new_construction", label: "New Construction" },
-  { value: "renovation", label: "Renovation" },
-  { value: "maintenance", label: "Maintenance" },
-];
-
-const statuses: { value: ProjectStatus; label: string }[] = [
-  { value: "planning", label: "Planning" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "delayed", label: "Delayed" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
-];
+const projectTypes = (Object.keys(projectTypeLabels) as ProjectType[]).map((value) => ({ value, label: projectTypeLabels[value] }));
+const statuses = (Object.keys(projectStatusLabels) as ProjectStatus[]).map((value) => ({ value, label: projectStatusLabels[value] }));
 
 export default function EditProjectPage() {
   const { projectId: id } = useParams({ from: "/protected/projects/$projectId/edit" });
@@ -43,10 +31,10 @@ export default function EditProjectPage() {
     projectType: "" as string,
     status: "planning" as string,
     description: "",
-    startDate: "",
-    targetEndDate: "",
+    targetStartDate: "",
+    targetCompletionDate: "",
     address: "",
-    logoUrl: "",
+    projectLogoUrl: "",
   });
 
   useEffect(() => {
@@ -56,10 +44,10 @@ export default function EditProjectPage() {
         projectType: project.projectType || "",
         status: project.status || "planning",
         description: project.description || "",
-        startDate: project.startDate ? project.startDate.split("T")[0] : "",
-        targetEndDate: project.targetEndDate ? project.targetEndDate.split("T")[0] : "",
+        targetStartDate: project.targetStartDate ? project.targetStartDate.split("T")[0] : "",
+        targetCompletionDate: project.targetCompletionDate ? project.targetCompletionDate.split("T")[0] : "",
         address: project.address || "",
-        logoUrl: project.logoUrl || "",
+        projectLogoUrl: project.projectLogoUrl || "",
       });
     }
   }, [project]);
@@ -162,12 +150,12 @@ export default function EditProjectPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="startDate">Start Date</Label>
-                    <Input id="startDate" type="date" value={form.startDate} onChange={(e) => update("startDate", e.target.value)} />
+                    <Label htmlFor="targetStartDate">Target Start Date</Label>
+                    <Input id="targetStartDate" type="date" value={form.targetStartDate} onChange={(e) => update("targetStartDate", e.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="targetEndDate">Target End Date</Label>
-                    <Input id="targetEndDate" type="date" value={form.targetEndDate} onChange={(e) => update("targetEndDate", e.target.value)} />
+                    <Label htmlFor="targetCompletionDate">Target Completion Date</Label>
+                    <Input id="targetCompletionDate" type="date" value={form.targetCompletionDate} onChange={(e) => update("targetCompletionDate", e.target.value)} />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -175,8 +163,8 @@ export default function EditProjectPage() {
                   <Input id="address" value={form.address} onChange={(e) => update("address", e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="logoUrl">Logo URL</Label>
-                  <Input id="logoUrl" value={form.logoUrl} onChange={(e) => update("logoUrl", e.target.value)} placeholder="https://..." />
+                  <Label htmlFor="projectLogoUrl">Logo URL</Label>
+                  <Input id="projectLogoUrl" value={form.projectLogoUrl} onChange={(e) => update("projectLogoUrl", e.target.value)} placeholder="https://..." />
                 </div>
               </CardContent>
             </Card>

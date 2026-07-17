@@ -2,7 +2,7 @@ import { IsString, IsOptional, IsEnum, IsInt, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateBuildingDto {
-  @ApiPropertyOptional() @IsOptional() @IsString() projectId?: string;
+  @ApiProperty() @IsString() @IsUUID() projectId: string;
   @ApiProperty() @IsString() name: string;
   @ApiProperty({ enum: ['tower', 'mid_rise', 'low_rise', 'cluster', 'block'] })
   @IsEnum(['tower', 'mid_rise', 'low_rise', 'cluster', 'block'])
@@ -27,4 +27,16 @@ export class BuildingQueryDto {
   @ApiPropertyOptional() @IsOptional() limit?: number;
   @ApiPropertyOptional() @IsOptional() @IsString() projectId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() search?: string;
+}
+
+export class CreateFloorDto {
+  @ApiProperty() floorNumber: string | number;
+  @ApiPropertyOptional() @IsOptional() @IsInt() sortOrder?: number;
+  @ApiPropertyOptional() @IsOptional() @IsString() floorPlanUrl?: string;
+}
+
+export class UpdateFloorDto {
+  @ApiPropertyOptional() @IsOptional() floorNumber?: string | number;
+  @ApiPropertyOptional() @IsOptional() @IsInt() sortOrder?: number;
+  @ApiPropertyOptional() @IsOptional() @IsString() floorPlanUrl?: string;
 }

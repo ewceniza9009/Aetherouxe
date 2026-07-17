@@ -28,6 +28,7 @@ import {
 import { ArrowLeft, Plus, Eye, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useUnits, useDeleteUnit, type Unit, type UnitQuery } from "@/hooks/use-units";
 import { useProperty } from "@/hooks/use-properties";
+import { formatCurrency } from "@/lib/agent-meta";
 
 export default function UnitListPage() {
   const { propertyId } = useParams({ from: "/protected/properties/$propertyId/units" });
@@ -81,6 +82,14 @@ export default function UnitListPage() {
         accessorKey: "bathrooms",
         header: "Bath",
         cell: ({ row }) => <span>{row.getValue("bathrooms") ?? "--"}</span>,
+      },
+      {
+        accessorKey: "listPrice",
+        header: "List Price",
+        cell: ({ row }) => {
+          const price = row.getValue("listPrice") as number;
+          return price ? <span className="tabular-nums">{formatCurrency(price)}</span> : <span className="text-muted-foreground">--</span>;
+        },
       },
       {
         accessorKey: "status",

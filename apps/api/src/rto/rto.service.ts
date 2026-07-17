@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RtoQueryDto } from './dto/rto.dto';
 
@@ -11,8 +11,18 @@ export class RtoService {
     monthlyRentAmount: any;
   }) {
     const monthlyRent = Number(lease.monthlyRentAmount);
+    if (monthlyRent <= 0) {
+      throw new BadRequestException('Monthly rent must be positive to create RTO contract');
+    }
     const monthlyRentPortion = Number((monthlyRent * 0.7).toFixed(2));
     const monthlyEquityPortion = Number((monthlyRent * 0.3).toFixed(2));
+
+    const existing = await this.prisma.rtoContract.findFirst({
+      where: { leaseAgreementId: lease.id },
+    });
+    if (existing) {
+      throw new BadRequestException('RTO contract already exists for this lease');
+    }
 
     return this.prisma.rtoContract.create({
       data: {
@@ -20,6 +30,7 @@ export class RtoService {
         totalContractValue: 0,
         monthlyRentPortion,
         monthlyEquityPortion,
+        accumulatedEquity: 0,
         status: 'active',
       },
     });
@@ -151,22 +162,66 @@ export class RtoService {
     const prevBalance = latest ? Number(latest.runningBalance) : 0;
     const newBalance = Number((prevBalance + equityPortion).toFixed(2));
 
+    const contractValue = Number(contract.totalContractValue) || Infinity;
+    const cappedBalance = Math.min(newBalance, contractValue);
+
     await this.prisma.rtoEquityLedger.create({
       data: {
         rtoContractId: contract.id,
         transactionType: 'payment_credit',
         amount: equityPortion,
-        runningBalance: newBalance,
+        runningBalance: cappedBalance,
         reference: rentalPaymentId,
       },
     });
 
     await this.prisma.rtoContract.update({
       where: { id: contract.id },
-      data: { accumulatedEquity: newBalance },
+      data: { accumulatedEquity: cappedBalance },
     });
 
     return allocation;
+  }
+
+  async recordEquityPayment(contractId: string, amount: number, userId: string, reference?: string) {
+    if (amount <= 0) {
+      throw new BadRequestException('Equity payment amount must be positive');
+    }
+
+    const contract = await this.prisma.rtoContract.findUnique({
+      where: { id: contractId },
+    });
+    if (!contract) throw new NotFoundException('RTO contract not found');
+    if (contract.status !== 'active' && contract.status !== 'grace_period') {
+      throw new BadRequestException(`Cannot record equity payment on contract with status "${contract.status}"`);
+    }
+
+    const latest = await this.prisma.rtoEquityLedger.findFirst({
+      where: { rtoContractId: contractId },
+      orderBy: { createdAt: 'desc' },
+    });
+    const prevBalance = latest ? Number(latest.runningBalance) : 0;
+    const newBalance = Number((prevBalance + amount).toFixed(2));
+    const contractValue = Number(contract.totalContractValue) || Infinity;
+    const cappedBalance = Math.min(newBalance, contractValue);
+
+    await this.prisma.rtoEquityLedger.create({
+      data: {
+        rtoContractId: contractId,
+        transactionType: 'manual_credit',
+        amount,
+        runningBalance: cappedBalance,
+        reference: reference ?? `EQUITY-${Date.now()}`,
+        createdByUserId: userId,
+      },
+    });
+
+    await this.prisma.rtoContract.update({
+      where: { id: contractId },
+      data: { accumulatedEquity: cappedBalance },
+    });
+
+    return { newBalance: cappedBalance, capped: newBalance > contractValue };
   }
 
   async checkDefaultStatus(contractId?: string) {
@@ -250,6 +305,15 @@ export class RtoService {
       where: { id: contractId },
     });
     if (!contract) throw new NotFoundException('RTO contract not found');
+    if (contract.status === 'exercised') {
+      throw new BadRequestException('Option has already been exercised');
+    }
+    if (contract.status === 'defaulted') {
+      throw new BadRequestException('Cannot exercise option on a defaulted contract');
+    }
+    if (contract.isOptionExercised) {
+      throw new BadRequestException('Option was already exercised');
+    }
 
     let newBalance = Number(contract.accumulatedEquity);
 

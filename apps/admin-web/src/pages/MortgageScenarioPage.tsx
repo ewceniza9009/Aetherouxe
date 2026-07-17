@@ -153,6 +153,7 @@ export default function MortgageScenarioPage() {
               <thead className="sticky top-0 bg-muted/80 backdrop-blur">
                 <tr className="border-b">
                   <th className="px-4 py-3 text-right font-medium text-muted-foreground">Period</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Date</th>
                   <th className="px-4 py-3 text-right font-medium text-muted-foreground">Beginning Balance</th>
                   <th className="px-4 py-3 text-right font-medium text-muted-foreground">Payment</th>
                   <th className="px-4 py-3 text-right font-medium text-muted-foreground">Principal</th>
@@ -165,6 +166,9 @@ export default function MortgageScenarioPage() {
                 {schedule.map((row) => (
                   <tr key={row.period} className="border-b hover:bg-muted/30">
                     <td className="px-4 py-2 text-right font-medium">{row.period}</td>
+                    <td className="px-4 py-2 text-left text-muted-foreground">
+                      {row.periodDate ? new Date(row.periodDate).toLocaleDateString(undefined, { year: "numeric", month: "short" }) : "—"}
+                    </td>
                     <td className="px-4 py-2 text-right tabular-nums">{money(row.beginningBalance)}</td>
                     <td className="px-4 py-2 text-right tabular-nums">{money(row.payment)}</td>
                     <td className="px-4 py-2 text-right tabular-nums">{money(row.principal)}</td>

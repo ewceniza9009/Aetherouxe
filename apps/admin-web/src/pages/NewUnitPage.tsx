@@ -43,6 +43,9 @@ export default function NewUnitPage() {
     buildingId: "",
     floorId: "",
     propertyId,
+    listPrice: "",
+    lotValue: "",
+    buildingValue: "",
   });
 
   useEffect(() => {
@@ -69,6 +72,9 @@ export default function NewUnitPage() {
         bathrooms: form.bathrooms ? parseInt(form.bathrooms) : undefined,
         hasBalcony: form.features ? form.features.toLowerCase().includes("balcony") : undefined,
         hasParking: form.features ? form.features.toLowerCase().includes("parking") : undefined,
+        listPrice: form.listPrice ? parseFloat(form.listPrice) : undefined,
+        lotValue: form.lotValue ? parseFloat(form.lotValue) : undefined,
+        buildingValue: form.buildingValue ? parseFloat(form.buildingValue) : undefined,
       };
       Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
       await createUnit.mutateAsync(payload);
@@ -173,6 +179,45 @@ export default function NewUnitPage() {
                 onChange={(e) => setForm((p) => ({ ...p, features: e.target.value }))}
                 placeholder="e.g. Balcony, Parking, Storage"
               />
+            </div>
+
+            <div className="border-t pt-4 space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pricing</p>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>List Price</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.listPrice}
+                    onChange={(e) => setForm((p) => ({ ...p, listPrice: e.target.value }))}
+                    placeholder="Total selling price"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Lot Value</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.lotValue}
+                    onChange={(e) => setForm((p) => ({ ...p, lotValue: e.target.value }))}
+                    placeholder="Land share"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Building Value</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.buildingValue}
+                    onChange={(e) => setForm((p) => ({ ...p, buildingValue: e.target.value }))}
+                    placeholder="Improvement value"
+                  />
+                </div>
+              </div>
             </div>
 
             {property?.code && (

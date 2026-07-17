@@ -36,6 +36,8 @@ export class CreateBookingDto {
   @ApiProperty() @IsString() amenityId: string;
   @ApiPropertyOptional() @IsOptional() @IsString() tenantId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() unitId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() tenantName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() unitLabel?: string;
   @ApiProperty() @IsDateString() bookingStart: string;
   @ApiProperty() @IsDateString() bookingEnd: string;
   @ApiPropertyOptional() @IsOptional() @IsNumber() totalAmount?: number;

@@ -201,7 +201,13 @@ export default function LeaseDetailPage() {
                 <Badge variant={statusVariant[lease.status]}>{statusLabel[lease.status]}</Badge>
               </div>
               <p className="text-muted-foreground flex items-center gap-1 mt-1">
-                <Home className="h-4 w-4" /> {lease.propertyName ?? "Unassigned property"}
+                <Home className="h-4 w-4" />
+                <Button variant="link" className="p-0 h-auto text-muted-foreground" onClick={() => navigate({ to: `/properties/${lease.propertyId}` })}>
+                  {lease.propertyName ?? "Unassigned property"}
+                </Button>
+                {lease.unitLabel && (
+                  <span className="text-xs ml-1">/ Unit {lease.unitLabel}</span>
+                )}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm md:text-right">
@@ -359,7 +365,7 @@ export default function LeaseDetailPage() {
                   <CardTitle className="flex items-center gap-2">
                     <Calculator className="h-5 w-5" /> Mortgage Scenarios
                   </CardTitle>
-                  <CardDescription>Estimate purchase financing for this tenant</CardDescription>
+                  <CardDescription>Estimate purchase financing for this buyer</CardDescription>
                 </div>
                 <Button size="sm" onClick={() => setGenerateOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" /> Generate New Scenario

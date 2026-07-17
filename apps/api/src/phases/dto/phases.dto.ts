@@ -21,6 +21,8 @@ export class UpdatePhaseDto {
   status?: PhaseStatus;
   @ApiPropertyOptional() @IsOptional() @IsDateString() targetStart?: string;
   @ApiPropertyOptional() @IsOptional() @IsDateString() targetEnd?: string;
+  @ApiPropertyOptional() @IsOptional() @IsDateString() actualStart?: string;
+  @ApiPropertyOptional() @IsOptional() @IsDateString() actualEnd?: string;
 }
 
 export class PhaseQueryDto {

@@ -13,23 +13,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
-import { useCreateProject } from "@/hooks/use-projects";
+import { useCreateProject, projectTypeLabels, projectStatusLabels } from "@/hooks/use-projects";
 import type { ProjectType, ProjectStatus } from "@/hooks/use-projects";
 
-const projectTypes: { value: ProjectType; label: string }[] = [
-  { value: "land_development", label: "Land Development" },
-  { value: "new_construction", label: "New Construction" },
-  { value: "renovation", label: "Renovation" },
-  { value: "maintenance", label: "Maintenance" },
-];
+function getTenantId(): string {
+  try {
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed.tenantId) return parsed.tenantId;
+    }
+  } catch {
+    // ignore
+  }
+  return "";
+}
 
-const statuses: { value: ProjectStatus; label: string }[] = [
-  { value: "planning", label: "Planning" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "delayed", label: "Delayed" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
-];
+const projectTypes = (Object.keys(projectTypeLabels) as ProjectType[]).map((value) => ({ value, label: projectTypeLabels[value] }));
+const statuses = (Object.keys(projectStatusLabels) as ProjectStatus[]).map((value) => ({ value, label: projectStatusLabels[value] }));
 
 export default function NewProjectPage() {
   const navigate = useNavigate();
@@ -40,17 +41,17 @@ export default function NewProjectPage() {
     projectType: "" as string,
     status: "planning" as string,
     description: "",
-    startDate: "",
-    targetEndDate: "",
+    targetStartDate: "",
+    targetCompletionDate: "",
     address: "",
-    logoUrl: "",
+    projectLogoUrl: "",
   });
 
   const update = (field: string, value: string) => setForm((p) => ({ ...p, [field]: value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload: Record<string, unknown> = { ...form };
+    const payload: Record<string, unknown> = { ...form, tenantId: getTenantId() };
     Object.keys(payload).forEach((k) => {
       if (payload[k] === "") payload[k] = undefined;
     });
@@ -120,12 +121,12 @@ export default function NewProjectPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="startDate">Start Date</Label>
-                    <Input id="startDate" type="date" value={form.startDate} onChange={(e) => update("startDate", e.target.value)} />
+                    <Label htmlFor="targetStartDate">Target Start Date</Label>
+                    <Input id="targetStartDate" type="date" value={form.targetStartDate} onChange={(e) => update("targetStartDate", e.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="targetEndDate">Target End Date</Label>
-                    <Input id="targetEndDate" type="date" value={form.targetEndDate} onChange={(e) => update("targetEndDate", e.target.value)} />
+                    <Label htmlFor="targetCompletionDate">Target Completion Date</Label>
+                    <Input id="targetCompletionDate" type="date" value={form.targetCompletionDate} onChange={(e) => update("targetCompletionDate", e.target.value)} />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -133,8 +134,8 @@ export default function NewProjectPage() {
                   <Input id="address" value={form.address} onChange={(e) => update("address", e.target.value)} placeholder="123 Main St, City" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="logoUrl">Logo URL</Label>
-                  <Input id="logoUrl" value={form.logoUrl} onChange={(e) => update("logoUrl", e.target.value)} placeholder="https://..." />
+                  <Label htmlFor="projectLogoUrl">Logo URL</Label>
+                  <Input id="projectLogoUrl" value={form.projectLogoUrl} onChange={(e) => update("projectLogoUrl", e.target.value)} placeholder="https://..." />
                 </div>
               </CardContent>
             </Card>

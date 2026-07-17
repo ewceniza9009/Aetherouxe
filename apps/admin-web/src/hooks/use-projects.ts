@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
 
-export type ProjectType = "land_development" | "new_construction" | "renovation" | "maintenance";
-export type ProjectStatus = "planning" | "in_progress" | "delayed" | "completed" | "cancelled";
+export type ProjectType = "high_rise" | "mid_rise" | "village" | "township" | "commercial_complex";
+export type ProjectStatus = "planning" | "pre_selling" | "construction" | "fit_out" | "completed" | "turnover";
 
 export interface Project {
   id: string;
@@ -11,17 +11,31 @@ export interface Project {
   projectType: ProjectType;
   status: ProjectStatus;
   description?: string;
-  startDate?: string;
-  targetEndDate?: string;
-  actualEndDate?: string;
+  totalPhases?: number;
+  targetStartDate?: string;
+  targetCompletionDate?: string;
+  actualCompletionDate?: string;
   address?: string;
-  logoUrl?: string;
-  completionPercentage: number;
-  totalBudget?: number;
-  totalSpent?: number;
+  projectLogoUrl?: string;
   createdAt: string;
-  updatedAt: string;
 }
+
+export const projectTypeLabels: Record<ProjectType, string> = {
+  high_rise: "High Rise",
+  mid_rise: "Mid Rise",
+  village: "Village",
+  township: "Township",
+  commercial_complex: "Commercial Complex",
+};
+
+export const projectStatusLabels: Record<ProjectStatus, string> = {
+  planning: "Planning",
+  pre_selling: "Pre-Selling",
+  construction: "Construction",
+  fit_out: "Fit-Out",
+  completed: "Completed",
+  turnover: "Turnover",
+};
 
 export interface ProjectQuery {
   page?: number;

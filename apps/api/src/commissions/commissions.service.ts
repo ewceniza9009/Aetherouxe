@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateCommissionDto,
@@ -17,6 +17,11 @@ export class CommissionsService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateCommissionDto) {
+    if (dto.effectiveFrom && dto.effectiveUntil) {
+      if (new Date(dto.effectiveFrom) >= new Date(dto.effectiveUntil)) {
+        throw new BadRequestException('effectiveFrom must be before effectiveUntil');
+      }
+    }
     return this.prisma.agentCommission.create({
       data: {
         tenantId: dto.tenantId,
@@ -80,6 +85,11 @@ export class CommissionsService {
 
   async update(id: string, dto: UpdateCommissionDto) {
     await this.findOne(id);
+    if (dto.effectiveFrom && dto.effectiveUntil) {
+      if (new Date(dto.effectiveFrom) >= new Date(dto.effectiveUntil)) {
+        throw new BadRequestException('effectiveFrom must be before effectiveUntil');
+      }
+    }
     return this.prisma.agentCommission.update({
       where: { id },
       data: {
@@ -124,13 +134,18 @@ export class CommissionsService {
   ): number {
     const raw = rule.commissionValue;
     const value = Number(raw);
+    if (isNaN(value) || value < 0) return 0;
+
     const brackets = this.parseTieredBrackets(raw);
 
     switch (rule.commissionType) {
       case 'flat_amount':
         return value;
-      case 'percentage_of_sale':
-        return Number(transactionAmount) * (value / 100);
+      case 'percentage_of_sale': {
+        const amt = Number(transactionAmount);
+        if (isNaN(amt) || amt <= 0) return 0;
+        return amt * (value / 100);
+      }
       case 'percentage_of_rent': {
         const rent = Number(leaseMonthlyRent ?? 0);
         if (!rent || rent <= 0) return 0;
@@ -139,12 +154,14 @@ export class CommissionsService {
       case 'tiered': {
         if (brackets && brackets.length > 0) {
           const amount = Number(transactionAmount);
+          if (isNaN(amount) || amount <= 0) return 0;
           let prevUpto = 0;
           let commission = 0;
           for (const bracket of brackets) {
             const upper =
               bracket.upto == null ? Infinity : Number(bracket.upto);
             const rate = Number(bracket.rate);
+            if (isNaN(rate)) continue;
             if (amount > prevUpto) {
               const portion = Math.min(amount, upper) - prevUpto;
               if (portion > 0) commission += portion * (rate / 100);
@@ -153,8 +170,9 @@ export class CommissionsService {
           }
           return commission;
         }
-        // plain number fallback -> percentage_of_sale behavior
-        return Number(transactionAmount) * (value / 100);
+        const amt = Number(transactionAmount);
+        if (isNaN(amt) || amt <= 0) return 0;
+        return amt * (value / 100);
       }
       default:
         return 0;

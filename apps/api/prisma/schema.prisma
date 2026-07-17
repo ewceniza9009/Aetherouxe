@@ -54,6 +54,15 @@ enum UnitType {
   parking
 }
 
+enum UnitStatus {
+  available
+  occupied
+  reserved
+  under_maintenance
+  rented
+  rto_active
+}
+
 enum ProjectType {
   high_rise
   mid_rise
@@ -227,6 +236,9 @@ model Tenant {
   statements           StatementOfAccount[]
   collectionCases      CollectionCase[]
   amenityBookings      AmenityBooking[]
+  serviceRequests      ServiceRequest[]
+  notifications        Notification[]
+  titleTransfers       TitleTransfer[]
 
   @@map("tenants")
 }
@@ -258,6 +270,12 @@ model User {
   caseNotesAuthored       CollectionCaseNote[]
   activitiesPerformed     CollectionActivity[]
   pnlStatements           OwnerPnlStatement[]
+  communityPostsAuthored  CommunityPost[]
+  notificationsOwned      Notification[]
+  paymentArrangements     ArPaymentArrangement[]
+  titleTransfersAsBuyer   TitleTransfer[]        @relation("TitleTransferBuyer")
+  titleTransfersAsPrevOwner TitleTransfer[]      @relation("TitleTransferPreviousOwner")
+  titleTransfersProcessed TitleTransfer[]        @relation("TitleTransferProcessedBy")
 
   @@map("users")
 }
@@ -279,6 +297,7 @@ model RealEstateAgent {
   manager             RealEstateAgent?       @relation("AgentHierarchy", fields: [managerId], references: [id])
   subordinates        RealEstateAgent[]      @relation("AgentHierarchy")
   transactions    AgentTransaction[]
+  leases           LeaseAgreement[]
   licenseRenewals AgentLicenseRenewal[]
 
   @@map("real_estate_agents")
@@ -291,6 +310,7 @@ model RealEstateAgent {
 model Property {
   id               String         @id @default(uuid())
   tenantId         String
+  projectId        String
   propertyCode     String         @unique
   propertyType     PropertyType
   status           PropertyStatus @default(available)
@@ -300,6 +320,7 @@ model Property {
   updatedAt        DateTime       @updatedAt
 
   tenant          Tenant               @relation(fields: [tenantId], references: [id])
+  project         Project              @relation(fields: [projectId], references: [id])
   parentProperty  Property?            @relation("PropertyHierarchy", fields: [parentPropertyId], references: [id])
   childProperties Property[]           @relation("PropertyHierarchy")
   units           Unit[]
@@ -311,6 +332,11 @@ model Property {
   statements      StatementOfAccount[]
   amenities       Amenity[]
   pnlStatements   OwnerPnlStatement[]
+  serviceRequests ServiceRequest[]
+  communityPosts  CommunityPost[]
+  documents       DocumentVault[]
+  images          PropertyImage[]
+  titleTransfers  TitleTransfer[]
 
   @@map("properties")
 }
@@ -318,7 +344,7 @@ model Property {
 model Building {
   id           String       @id @default(uuid())
   tenantId     String
-  projectId    String?
+  projectId    String
   name         String
   buildingType BuildingType
   floorCount   Int?
@@ -327,7 +353,7 @@ model Building {
   createdAt    DateTime     @default(now())
 
   tenant  Tenant  @relation(fields: [tenantId], references: [id])
-  project Project? @relation(fields: [projectId], references: [id])
+  project Project @relation(fields: [projectId], references: [id])
   floors  Floor[]
   units   Unit[]
 
@@ -348,27 +374,65 @@ model Floor {
 }
 
 model Unit {
-  id              String   @id @default(uuid())
+  id              String     @id @default(uuid())
   propertyId      String
   buildingId      String
   floorId         String
   unitNumber      String
   unitType        UnitType
-  squareMeters    Decimal? @db.Decimal(10, 2)
+  status          UnitStatus @default(available)
+  squareMeters    Decimal?   @db.Decimal(10, 2)
   bedrooms        Int?
   bathrooms       Int?
-  hasBalcony      Boolean  @default(false)
-  hasParking      Boolean  @default(false)
+  hasBalcony      Boolean    @default(false)
+  hasParking      Boolean    @default(false)
   facingDirection String?
-  createdAt       DateTime @default(now())
+  listPrice       Decimal?   @db.Decimal(14, 2)
+  lotValue        Decimal?   @db.Decimal(14, 2)
+  buildingValue   Decimal?   @db.Decimal(14, 2)
+  createdAt       DateTime   @default(now())
 
   property Property  @relation(fields: [propertyId], references: [id])
   building Building  @relation(fields: [buildingId], references: [id])
   floor    Floor     @relation(fields: [floorId], references: [id])
-  utilityMeters UtilityMeter[]
-  utilityBills  UtilityBill[]
+  utilityMeters      UtilityMeter[]
+  utilityBills       UtilityBill[]
+  serviceRequests    ServiceRequest[]
+  leaseAgreements    LeaseAgreement[]
+  documents          DocumentVault[]
+  bookings           AmenityBooking[]
+  images             UnitImage[]
+  titleTransfers     TitleTransfer[]
 
   @@map("units")
+}
+
+model PropertyImage {
+  id          String    @id @default(uuid())
+  propertyId  String
+  url         String
+  alt         String?
+  sortOrder   Int       @default(0)
+  isPrimary   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("property_images")
+}
+
+model UnitImage {
+  id          String    @id @default(uuid())
+  unitId      String
+  url         String
+  alt         String?
+  sortOrder   Int       @default(0)
+  isPrimary   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  unit Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@map("unit_images")
 }
 
 // ─────────────────────────────────────────────
@@ -390,10 +454,11 @@ model Project {
   address               String?
   createdAt             DateTime      @default(now())
 
-  tenant    Tenant    @relation(fields: [tenantId], references: [id])
-  buildings Building[]
-  phases    Phase[]
-  budgets   Budget[]
+  tenant     Tenant     @relation(fields: [tenantId], references: [id])
+  buildings  Building[]
+  properties Property[]
+  phases     Phase[]
+  budgets    Budget[]
 
   @@map("projects")
 }
@@ -518,8 +583,11 @@ model LeaseAgreement {
   propertyId                 String
   unitId                     String?
   tenantUserId               String
+  agentId                    String?
   unitLabel                  String?
   leaseType                  LeaseType
+  schemeType                 String?
+  schemeId                   String?
   startDate                  DateTime
   endDate                    DateTime
   monthlyRentAmount          Decimal   @db.Decimal(12, 2)
@@ -534,7 +602,10 @@ model LeaseAgreement {
   createdAt                  DateTime  @default(now())
 
   property Property  @relation(fields: [propertyId], references: [id])
+  unit     Unit?     @relation(fields: [unitId], references: [id])
   tenant   User      @relation("TenantLeaseAgreements", fields: [tenantUserId], references: [id])
+  agent    RealEstateAgent? @relation(fields: [agentId], references: [id])
+  scheme   Scheme?   @relation(fields: [schemeId], references: [id])
 
   rentalPayments       RentalPayment[]
   mortgageScenarios    MortgageScenario[]
@@ -542,6 +613,10 @@ model LeaseAgreement {
   agentTransactions    AgentTransaction[]
   paymentReminders     PaymentReminder[]
   collectionCases      CollectionCase[]
+  statements           StatementOfAccount[]
+  pnlStatements        OwnerPnlStatement[]
+  documents            DocumentVault[]
+  titleTransfers       TitleTransfer[]
 
   @@map("lease_agreements")
 }
@@ -599,6 +674,7 @@ model MortgageAmortizationSchedule {
   id                    String  @id @default(uuid())
   mortgageScenarioId    String
   periodNumber          Int
+  periodDate            DateTime? @map("perioddate")
   beginningBalance      Decimal @db.Decimal(14, 2)
   monthlyPayment        Decimal @db.Decimal(12, 2)
   principalPayment      Decimal @db.Decimal(12, 2)
@@ -807,6 +883,7 @@ model ArPaymentArrangement {
   termsDocumentUrl       String?
   createdAt              DateTime                  @default(now())
 
+  user         User                      @relation(fields: [userId], references: [id])
   installments ArArrangementInstallment[]
 
   @@map("ar_payment_arrangements")
@@ -831,6 +908,7 @@ model ArCollectionAction {
   id                String             @id @default(uuid())
   userId            String
   invoiceId         String
+  collectionCaseId  String?
   actionType        CollectionActionType
   actionDate        DateTime           @default(now())
   performedByUserId String?
@@ -838,7 +916,8 @@ model ArCollectionAction {
   notes             String?
   createdAt         DateTime           @default(now())
 
-  invoice ArInvoice @relation(fields: [invoiceId], references: [id])
+  invoice        ArInvoice       @relation(fields: [invoiceId], references: [id])
+  collectionCase CollectionCase? @relation(fields: [collectionCaseId], references: [id])
 
   @@map("ar_collection_actions")
 }
@@ -994,6 +1073,8 @@ model AmenityBooking {
   amenityId    String
   tenantId     String?
   unitId       String?
+  tenantName   String?
+  unitLabel    String?
   bookingStart DateTime
   bookingEnd   DateTime
   status       BookingStatus @default(pending)
@@ -1002,6 +1083,7 @@ model AmenityBooking {
   createdAt    DateTime      @default(now())
   amenity      Amenity       @relation(fields: [amenityId], references: [id], onDelete: Cascade)
   tenant       Tenant?       @relation(fields: [tenantId], references: [id])
+  unit         Unit?         @relation(fields: [unitId], references: [id])
 
   @@map("amenity_bookings")
 }
@@ -1052,7 +1134,11 @@ model ServiceRequest {
   assignedToType String?
   resolutionNotes String?
   createdAt     DateTime        @default(now())
-  workOrders    MaintenanceWorkOrder[]
+
+  tenant      Tenant?      @relation(fields: [tenantId], references: [id])
+  unit        Unit?        @relation(fields: [unitId], references: [id])
+  property    Property?    @relation(fields: [propertyId], references: [id])
+  workOrders  MaintenanceWorkOrder[]
 
   @@map("service_requests")
 }
@@ -1084,6 +1170,9 @@ model CommunityPost {
   authorId    String?
   isPublished Boolean   @default(true)
   createdAt   DateTime  @default(now())
+
+  property Property? @relation(fields: [propertyId], references: [id])
+  author   User?     @relation(fields: [authorId], references: [id])
 
   @@map("community_posts")
 }
@@ -1127,7 +1216,14 @@ model DocumentVault {
   uploadedAt    DateTime      @default(now())
   expiryDate    DateTime?
   isSigned      Boolean       @default(false)
+  propertyId    String?
+  unitId        String?
+  leaseId       String?
   signatures    DocumentSignature[]
+
+  property Property?      @relation(fields: [propertyId], references: [id])
+  unit     Unit?          @relation(fields: [unitId], references: [id])
+  lease    LeaseAgreement? @relation(fields: [leaseId], references: [id])
 
   @@map("document_vaults")
 }
@@ -1154,9 +1250,10 @@ enum PnlStatus {
 }
 
 model OwnerPnlStatement {
-  id             String       @id @default(cuid())
+  id             String       @id @default(uuid())
   ownerId        String
   propertyId     String?
+  leaseId        String?
   periodStart    DateTime
   periodEnd      DateTime
   grossRentalIncome Float     @default(0)
@@ -1168,6 +1265,7 @@ model OwnerPnlStatement {
   generatedAt    DateTime     @default(now())
   owner          User         @relation(fields: [ownerId], references: [id])
   property       Property?    @relation(fields: [propertyId], references: [id])
+  lease          LeaseAgreement? @relation(fields: [leaseId], references: [id])
 
   @@map("owner_pnl_statements")
 }
@@ -1229,6 +1327,7 @@ model StatementOfAccount {
   tenantId       String?
   ownerId        String?
   propertyId     String?
+  leaseId        String?
   periodStart    DateTime
   periodEnd      DateTime
   openingBalance Decimal        @db.Decimal(14, 2)
@@ -1239,9 +1338,10 @@ model StatementOfAccount {
   pdfUrl         String?
   createdAt      DateTime       @default(now())
 
-  tenant   Tenant?   @relation(fields: [tenantId], references: [id])
-  owner    User?     @relation(fields: [ownerId], references: [id])
-  property Property? @relation(fields: [propertyId], references: [id])
+  tenant   Tenant?        @relation(fields: [tenantId], references: [id])
+  owner    User?          @relation(fields: [ownerId], references: [id])
+  property Property?      @relation(fields: [propertyId], references: [id])
+  lease    LeaseAgreement? @relation(fields: [leaseId], references: [id])
 
   @@map("statements_of_account")
 }
@@ -1305,6 +1405,7 @@ model CollectionCase {
   assignedTo  User?           @relation(fields: [assignedToId], references: [id])
   activities  CollectionActivity[]
   notes       CollectionCaseNote[]
+  arActions   ArCollectionAction[]
 
   @@map("collection_cases")
 }
@@ -1320,6 +1421,138 @@ model CollectionCaseNote {
   author User?          @relation(fields: [authorId], references: [id])
 
   @@map("collection_case_notes")
+}
+
+// ─────────────────────────────────────────────
+// SALES SCHEMES (Master Data — All Transaction Types)
+// ─────────────────────────────────────────────
+
+enum SchemeType {
+  standard_rental    // Monthly lease with deposit + penalty terms
+  spot_cash          // Full upfront payment with optional discount
+  installment        // DP + Equity + Balance phases (in-house financing)
+  mortgage_assisted  // DP in-house, balance via bank mortgage
+  rent_to_own        // Rent with equity accumulation toward purchase
+}
+
+model Scheme {
+  id                String     @id @default(uuid())
+  code              String     @unique
+  name              String?
+  schemeType        SchemeType
+  remarks           String?
+  projectId         String?
+  isLocked          Boolean    @default(false)
+  isActive          Boolean    @default(true)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // ── Standard Rental ──
+  securityDepositPercent   Decimal? @db.Decimal(8, 4)   // % of monthly rent
+  penaltyPercent           Decimal? @db.Decimal(8, 4)   // late fee % per day
+  graceDays                Int?                         // days before penalty
+
+  // ── Spot Cash ──
+  discountPercent          Decimal? @db.Decimal(8, 4)   // cash discount %
+
+  // ── Installment (DP / Equity / Balance) ──
+  dpNumberOfPayments       Int?
+  dpNumberOfDaysFromDp     Int?
+  dpAmount                 Decimal? @db.Decimal(12, 2)
+  dpRemarks                String?
+
+  eqNumberOfPayments       Int?
+  eqNumberOfDaysFromDp     Int?
+  eqAmount                 Decimal? @db.Decimal(12, 2)
+  eqPaymentPercentage      Decimal? @db.Decimal(8, 4)   // % of selling price allocated to equity
+  eqDownpaymentPercentage  Decimal? @db.Decimal(8, 4)   // equity share used for DP computation
+  eqMonthlyAmortPercentage Decimal? @db.Decimal(8, 4)   // equity share spread monthly
+  eqDiscountPercentage     Decimal? @db.Decimal(8, 4)   // discount on equity portion
+  eqPaymentOrderNumber     Int?
+  eqRemarks                String?
+
+  blNumberOfPayments       Int?
+  blNumberOfDaysFromDp     Int?
+  blAmount                 Decimal? @db.Decimal(12, 2)
+  blPaymentPercentage      Decimal? @db.Decimal(8, 4)   // % of selling price allocated to balance
+  blMiscPercentage         Decimal? @db.Decimal(8, 4)   // transfer fees / misc
+  blIsChangeOrder          Boolean  @default(false)
+  blIncludeDpAmort         Boolean  @default(false)      // spread misc across DP+EQ months
+  blRemarks                String?
+
+  // ── Mortgage Assisted ──
+  mortgageDownPaymentPercent  Decimal? @db.Decimal(8, 4) // buyer's downpayment to bank
+  interestRatePercent         Decimal? @db.Decimal(8, 4) // annual interest rate
+  loanTermMonths              Int?                       // bank loan term
+
+  // ── Rent-to-Own ──
+  optionFeePercent            Decimal? @db.Decimal(8, 4) // option fee as % of contract value
+  equityAccumulationPercent   Decimal? @db.Decimal(8, 4) // % of rent that accumulates as equity
+  targetPurchaseYears         Int?                       // years until purchase option matures
+
+  // ── Commissions (all sale types) ──
+  agentCommissionPercentage     Decimal? @db.Decimal(8, 4)
+  companyCommissionPercentage   Decimal? @db.Decimal(8, 4)
+
+  leases LeaseAgreement[]
+
+  @@map("schemes")
+}
+
+// ─────────────────────────────────────────────
+// TITLE TRANSFER (Owner → Buyer handover)
+// ─────────────────────────────────────────────
+
+enum TitleTransferStatus {
+  pending          // Requested / initiated, awaiting requirements
+  in_progress      // Documents being processed (BIR, Registry of Deeds)
+  completed        // Title transferred; buyer is new owner of record
+  cancelled        // Transfer aborted
+}
+
+enum TitleTransferBasis {
+  spot_cash        // Fully paid in cash
+  installment_paid // In-house installment fully paid
+  rto_exercised    // Rent-to-own option exercised / equity complete
+  mortgage_settled // Bank/Pag-IBIG loan released to developer
+  manual           // Administrative / other
+}
+
+model TitleTransfer {
+  id                  String              @id @default(uuid())
+  tenantId            String
+  propertyId          String
+  unitId              String?
+  leaseAgreementId    String?
+  rtoContractId       String?
+  buyerUserId         String              // becomes the new owner of record
+  previousOwnerUserId String?             // prior owner (developer/landlord) if known
+  basis               TitleTransferBasis
+  status              TitleTransferStatus @default(pending)
+  titleNumber         String?             // TCT / CCT number issued
+  contractValue       Decimal?            @db.Decimal(14, 2)
+  amountSettled       Decimal?            @db.Decimal(14, 2)
+  transferFeeAmount   Decimal?            @db.Decimal(12, 2)
+  requestedDate       DateTime            @default(now())
+  completedDate       DateTime?
+  titleDocumentUrl    String?
+  notes               String?
+  processedByUserId   String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  tenant        Tenant          @relation(fields: [tenantId], references: [id])
+  property      Property        @relation(fields: [propertyId], references: [id])
+  unit          Unit?           @relation(fields: [unitId], references: [id])
+  lease         LeaseAgreement? @relation(fields: [leaseAgreementId], references: [id])
+  buyer         User            @relation("TitleTransferBuyer", fields: [buyerUserId], references: [id])
+  previousOwner User?           @relation("TitleTransferPreviousOwner", fields: [previousOwnerUserId], references: [id])
+  processedBy   User?           @relation("TitleTransferProcessedBy", fields: [processedByUserId], references: [id])
+
+  @@index([propertyId])
+  @@index([buyerUserId])
+  @@index([status])
+  @@map("title_transfers")
 }
 
 // ─────────────────────────────────────────────
@@ -1355,6 +1588,9 @@ model Notification {
   refId     String?
   isRead    Boolean           @default(false)
   createdAt DateTime          @default(now())
+
+  user   User?   @relation(fields: [userId], references: [id])
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
 
   @@map("notifications")
 }

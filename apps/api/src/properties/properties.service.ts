@@ -33,12 +33,13 @@ export class PropertiesService {
         return await this.prisma.property.create({
           data: {
             tenantId,
+            projectId: dto.projectId,
             propertyCode: candidateCode,
             propertyType: dto.propertyType as any,
             status: (dto.status as any) || 'available',
             parentPropertyId: dto.parentPropertyId,
           },
-          include: { units: { include: { building: true, floor: true } } },
+          include: { project: true, units: { include: { building: true, floor: true } } },
         });
       } catch (err) {
         if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
@@ -58,13 +59,14 @@ export class PropertiesService {
     const where: any = { tenantId };
     if (query.propertyType) where.propertyType = query.propertyType;
     if (query.status) where.status = query.status;
+    if (query.projectId) where.projectId = query.projectId;
     if (query.search) where.propertyCode = { contains: query.search, mode: 'insensitive' };
     const [data, total] = await Promise.all([
       this.prisma.property.findMany({
         where,
         skip,
         take: limit,
-        include: { _count: { select: { units: true } } },
+        include: { project: true, _count: { select: { units: true } } },
         orderBy: query.sortBy ? { [query.sortBy]: query.sortOrder || 'asc' } : { createdAt: 'desc' },
       }),
       this.prisma.property.count({ where }),
@@ -75,7 +77,7 @@ export class PropertiesService {
   async findOne(id: string, tenantId: string) {
     const property = await this.prisma.property.findUnique({
       where: { id, tenantId },
-      include: { units: { include: { building: true, floor: true } }, childProperties: true },
+      include: { project: true, units: { include: { building: true, floor: true } }, childProperties: true },
     });
     if (!property) throw new NotFoundException('Property not found');
     return property;

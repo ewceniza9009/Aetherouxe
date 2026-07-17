@@ -15,6 +15,9 @@ export class CreateUnitDto {
   @ApiPropertyOptional() @IsOptional() @IsBoolean() hasBalcony?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() hasParking?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsString() facingDirection?: string;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() listPrice?: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() lotValue?: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() buildingValue?: number;
 }
 
 export class UpdateUnitDto {
@@ -28,6 +31,9 @@ export class UpdateUnitDto {
   @ApiPropertyOptional() @IsOptional() @IsBoolean() hasBalcony?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() hasParking?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsString() facingDirection?: string;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() listPrice?: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() lotValue?: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() buildingValue?: number;
 }
 
 export class UnitQueryDto {

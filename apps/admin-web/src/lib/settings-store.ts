@@ -37,7 +37,7 @@ export function bootstrapSettings(): Promise<void> {
 }
 
 export function formatCurrency(value?: number | null): string {
-  if (value === undefined || value === null) return "—";
+  if (value === undefined || value === null || Number.isNaN(value)) return "—";
   const { code, symbol } = getCurrencyMeta();
   const num = value.toLocaleString("en-US", {
     minimumFractionDigits: 0,

@@ -33,7 +33,7 @@ import {
   Loader2,
   Plus,
   CalendarClock,
-  User,
+  Building2,
   AlertTriangle,
 } from "lucide-react";
 import {
@@ -129,7 +129,7 @@ export default function CollectionCaseDetailPage() {
             </Badge>
           </div>
           <p className="mt-1 text-muted-foreground flex items-center gap-1">
-            <User className="h-4 w-4" /> {data.tenant?.name ?? "—"}
+            <Building2 className="h-4 w-4" /> {data.tenant?.name ?? "—"}
             {data.lease && typeof data.lease === "object" && "leaseNumber" in data.lease
               ? ` · Lease ${(data.lease as { leaseNumber?: string }).leaseNumber}`
               : ""}

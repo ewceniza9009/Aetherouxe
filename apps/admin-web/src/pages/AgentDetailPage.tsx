@@ -289,7 +289,11 @@ export default function AgentDetailPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {tx.propertyName ?? "—"}
+                          {tx.propertyId ? (
+                            <Button variant="link" className="p-0 h-auto text-sm" onClick={() => navigate({ to: `/properties/${tx.propertyId}` })}>
+                              {tx.propertyName ?? "—"}
+                            </Button>
+                          ) : (tx.propertyName ?? "—")}
                         </TableCell>
                         <TableCell className="font-medium tabular-nums">
                           {formatCurrency(tx.amount)}

@@ -13,10 +13,14 @@ WORKDIR /app
 
 # Copy package files for workspace install
 COPY package*.json ./
+COPY turbo.json ./
 COPY apps/api/package*.json ./apps/api/
 COPY apps/admin-web/package*.json ./apps/admin-web/
 COPY apps/owner-web/package*.json ./apps/owner-web/
 COPY apps/resident-web/package*.json ./apps/resident-web/
+COPY packages/shared-types/package*.json ./packages/shared-types/
+COPY packages/config-eslint/package*.json ./packages/config-eslint/
+COPY packages/config-tsconfig/package*.json ./packages/config-tsconfig/
 
 # Install all dependencies (including devDependencies for build)
 RUN npm ci --workspaces --include-workspace-root
@@ -26,6 +30,9 @@ COPY . .
 
 # Generate the Prisma client (required for the API + seed to compile)
 RUN npx prisma generate --schema apps/api/prisma/schema.prisma
+
+# Build shared workspace packages first (compiled JS + d.ts consumed by API/web)
+RUN npm run build --workspace @elite-realty/shared-types
 
 # Build all applications
 RUN npm run build --workspaces --if-present
@@ -51,6 +58,10 @@ COPY --from=builder /app/apps/api/prisma ./api/prisma
 # npm workspaces hoist all dependencies into the root node_modules; copy that
 # so the API (run from /app/api) can resolve them via the parent directory.
 COPY --from=builder /app/node_modules ./node_modules
+
+# Workspace packages are symlinked from node_modules/@elite-realty/* into
+# packages/*; copy their built output so those symlinks resolve at runtime.
+COPY --from=builder /app/packages ./packages
 
 # Copy built web portals
 COPY --from=builder /app/apps/admin-web/dist ./admin-web/dist

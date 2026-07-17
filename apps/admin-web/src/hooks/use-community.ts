@@ -176,10 +176,25 @@ export function useBookings(query: BookingQuery = {}) {
   return useQuery({
     queryKey: ["amenity-bookings", query],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<AmenityBooking[]>>(
+      const { data } = await api.get<ApiResponse<any[]>>(
         `/amenity-bookings${buildParams(query as Record<string, unknown>)}`
       );
-      return { data: data.data, meta: data.meta } as Paginated<AmenityBooking>;
+      const mapped = (data.data ?? []).map((b: any) => ({
+        id: b.id,
+        amenityId: b.amenityId,
+        amenityName: b.amenity?.name ?? null,
+        tenantName: b.tenant ? `${b.tenant.firstName ?? ""} ${b.tenant.lastName ?? ""}`.trim() || null : b.tenantName ?? null,
+        tenantId: b.tenantId ?? null,
+        unitLabel: b.unit?.unitNumber ?? b.unitLabel ?? null,
+        unitId: b.unitId ?? null,
+        startDateTime: b.bookingStart ?? b.startDateTime,
+        endDateTime: b.bookingEnd ?? b.endDateTime,
+        amount: b.totalAmount ?? b.amount ?? null,
+        notes: b.notes ?? null,
+        status: b.status,
+        createdAt: b.createdAt,
+      }));
+      return { data: mapped, meta: data.meta } as Paginated<AmenityBooking>;
     },
   });
 }
@@ -190,7 +205,16 @@ export function useCreateBooking() {
     mutationFn: async (payload: Partial<AmenityBooking>) => {
       const { data } = await api.post<ApiResponse<AmenityBooking>>(
         "/amenity-bookings",
-        payload
+        {
+          amenityId: payload.amenityId,
+          tenantName: payload.tenantName,
+          unitLabel: payload.unitLabel,
+          bookingStart: payload.startDateTime,
+          bookingEnd: payload.endDateTime,
+          totalAmount: payload.amount,
+          notes: payload.notes,
+          status: payload.status,
+        }
       );
       return data.data;
     },

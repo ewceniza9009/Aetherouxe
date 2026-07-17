@@ -2,7 +2,7 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Re
 import { Request as ExpressRequest } from 'express';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { BuildingsService } from './buildings.service';
-import { CreateBuildingDto, UpdateBuildingDto, BuildingQueryDto } from './dto/buildings.dto';
+import { CreateBuildingDto, UpdateBuildingDto, BuildingQueryDto, CreateFloorDto, UpdateFloorDto } from './dto/buildings.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -38,5 +38,25 @@ export class BuildingsController {
   @Delete(':id') @Roles(UserType.super_admin, UserType.admin, UserType.property_manager) @ApiOperation({ summary: 'Delete a building' })
   remove(@Request() req: ExpressRequest & { user: { tenantId: string } }, @Param('id') id: string) {
     return this.service.remove(id, req.user.tenantId);
+  }
+
+  @Get(':id/floors') @ApiOperation({ summary: 'List floors for a building' })
+  findFloors(@Request() req: ExpressRequest & { user: { tenantId: string } }, @Param('id') id: string) {
+    return this.service.findFloors(id, req.user.tenantId);
+  }
+
+  @Post(':id/floors') @Roles(UserType.super_admin, UserType.admin, UserType.property_manager) @ApiOperation({ summary: 'Create a floor' })
+  createFloor(@Request() req: ExpressRequest & { user: { tenantId: string } }, @Param('id') id: string, @Body() dto: CreateFloorDto) {
+    return this.service.createFloor(id, dto, req.user.tenantId);
+  }
+
+  @Patch(':id/floors/:floorId') @Roles(UserType.super_admin, UserType.admin, UserType.property_manager) @ApiOperation({ summary: 'Update a floor' })
+  updateFloor(@Request() req: ExpressRequest & { user: { tenantId: string } }, @Param('id') id: string, @Param('floorId') floorId: string, @Body() dto: UpdateFloorDto) {
+    return this.service.updateFloor(id, floorId, dto, req.user.tenantId);
+  }
+
+  @Delete(':id/floors/:floorId') @Roles(UserType.super_admin, UserType.admin, UserType.property_manager) @ApiOperation({ summary: 'Delete a floor' })
+  removeFloor(@Request() req: ExpressRequest & { user: { tenantId: string } }, @Param('id') id: string, @Param('floorId') floorId: string) {
+    return this.service.removeFloor(id, floorId, req.user.tenantId);
   }
 }

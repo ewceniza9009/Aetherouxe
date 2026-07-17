@@ -117,7 +117,7 @@ export default function RtoContractsPage() {
       }),
       columnHelper.display({
         id: "tenant",
-        header: "Tenant",
+        header: "Buyer",
         cell: (info) => {
           const c = info.row.original;
           return (

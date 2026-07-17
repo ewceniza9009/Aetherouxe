@@ -331,6 +331,7 @@ export default function PropertyDetailPage() {
                     <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Size</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Bed</th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Bath</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -342,6 +343,7 @@ export default function PropertyDetailPage() {
                       <td className="px-4 py-2 text-sm">{unit.size ? `${unit.size} sq ft` : unit.squareMeters ? `${unit.squareMeters} m²` : "--"}</td>
                       <td className="px-4 py-2 text-sm">{unit.bedrooms ?? "--"}</td>
                       <td className="px-4 py-2 text-sm">{unit.bathrooms ?? "--"}</td>
+                      <td className="px-4 py-2 text-sm"><Badge variant={unit.status === "occupied" ? "success" : unit.status === "available" ? "default" : "secondary"}>{unit.status ?? "available"}</Badge></td>
                     </tr>
                   ))}
                 </tbody>
@@ -352,11 +354,11 @@ export default function PropertyDetailPage() {
       </Card>
 
       <div className="flex gap-2">
-        <Button variant="outline" className="gap-2" onClick={() => navigate({ to: "/leases" })}>
-          <FileText className="h-4 w-4" /> View Lease History
+        <Button variant="outline" className="gap-2" onClick={() => navigate({ to: `/leases?propertyId=${id}` })}>
+          <FileText className="h-4 w-4" /> View Leases
         </Button>
         <Button variant="outline" className="gap-2" onClick={() => navigate({ to: `/properties/${id}/units` })}>
-          <Calendar className="h-4 w-4" /> Manage Units
+          <Building2 className="h-4 w-4" /> Manage Units
         </Button>
       </div>
     </div>

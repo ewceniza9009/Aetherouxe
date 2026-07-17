@@ -16,6 +16,9 @@ export interface Unit {
   bathrooms: number;
   status: string;
   features?: string[];
+  listPrice?: number | null;
+  lotValue?: number | null;
+  buildingValue?: number | null;
   createdAt: string;
   updatedAt: string;
   property?: { id: string; name?: string | null; propertyCode?: string | null } | null;
@@ -59,8 +62,12 @@ export function useUnits(query: UnitQuery) {
         status: u.status || (u.unitType ? "available" : "unknown"),
         unitType: u.unitType,
         features: u.features,
+        listPrice: u.listPrice ? Number(u.listPrice) : null,
+        lotValue: u.lotValue ? Number(u.lotValue) : null,
+        buildingValue: u.buildingValue ? Number(u.buildingValue) : null,
         createdAt: u.createdAt,
         updatedAt: u.updatedAt,
+        property: u.property ?? null,
       }));
       return { data: transformed, meta: data.meta } as PaginatedResult<Unit>;
     },
@@ -87,6 +94,9 @@ export function useUnit(id: string) {
         status: u.status || "available",
         unitType: u.unitType,
         features: u.features,
+        listPrice: u.listPrice ? Number(u.listPrice) : null,
+        lotValue: u.lotValue ? Number(u.lotValue) : null,
+        buildingValue: u.buildingValue ? Number(u.buildingValue) : null,
         createdAt: u.createdAt,
         updatedAt: u.updatedAt,
       } as Unit;

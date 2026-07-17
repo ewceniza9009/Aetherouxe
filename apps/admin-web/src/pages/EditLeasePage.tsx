@@ -117,7 +117,7 @@ export default function EditLeasePage() {
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="tenant">Tenant (Resident)</Label>
+              <Label htmlFor="tenant">Tenant</Label>
               <Select value={tenantUserId} onValueChange={setTenantUserId}>
                 <SelectTrigger>
                   <SelectValue placeholder={loadingUsers ? "Loading residents..." : "Select resident"} />

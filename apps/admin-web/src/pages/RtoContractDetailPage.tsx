@@ -140,8 +140,16 @@ export default function RtoContractDetailPage() {
                 <Badge variant={statusVariant[contract.status]}>{statusLabel[contract.status]}</Badge>
               </div>
               <p className="text-muted-foreground flex items-center gap-1 mt-1">
-                <Home className="h-4 w-4" /> {propertyDisplayName(contract)}
+                <Home className="h-4 w-4" />
+                <Button variant="link" className="p-0 h-auto text-muted-foreground" onClick={() => navigate({ to: `/properties/${contract.leaseAgreement?.property?.id}` })}>
+                  {propertyDisplayName(contract)}
+                </Button>
               </p>
+              {contract.leaseAgreement && (
+                <Button variant="link" className="p-0 h-auto text-xs mt-1" onClick={() => navigate({ to: `/leases/${contract.leaseAgreement!.id}` })}>
+                  View Lease →
+                </Button>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm md:text-right">
               <div>

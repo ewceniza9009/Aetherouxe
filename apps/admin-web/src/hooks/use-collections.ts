@@ -193,14 +193,60 @@ function buildParams(query?: Record<string, string | number | undefined>): strin
 
 /* ----------------------------- AR Aging ----------------------------- */
 
+const AR_BUCKET_LABELS: Record<string, string> = {
+  Current: "Current (0-30)",
+  Bucket31_60: "31-60 days",
+  Bucket61_90: "61-90 days",
+  Bucket91_120: "91-120 days",
+  Bucket120Plus: "120+ days",
+};
+
+const AR_BUCKET_ORDER = [
+  "Bucket120Plus",
+  "Bucket91_120",
+  "Bucket61_90",
+  "Bucket31_60",
+  "Current",
+];
+
+function worstBucketOf(buckets: Record<string, number> | undefined): string {
+  if (!buckets) return AR_BUCKET_LABELS.Current;
+  for (const key of AR_BUCKET_ORDER) {
+    if ((buckets[key] ?? 0) > 0) return AR_BUCKET_LABELS[key];
+  }
+  return AR_BUCKET_LABELS.Current;
+}
+
 export function useArAging(params?: { propertyId?: string }) {
   return useQuery({
     queryKey: ["ar-aging", params],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<ArAgingReport>>(
+      const { data } = await api.get<ApiResponse<any>>(
         `/ar-aging/report${buildParams(params)}`
       );
-      return data.data;
+      const raw = data.data ?? {};
+      const report: ArAgingReport = {
+        totalReceivable: Number(raw.totalReceivable ?? 0),
+        buckets: (raw.buckets ?? []).map((b: any) => ({
+          label: AR_BUCKET_LABELS[b.name] ?? b.name,
+          minDays: 0,
+          maxDays: null,
+          total: Number(b.total ?? 0),
+          count: Number(b.count ?? 0),
+        })),
+        byTenant: (raw.byUser ?? []).map((u: any) => ({
+          tenantId: u.userId,
+          tenantName: u.userName,
+          outstanding: Number(u.totalOutstanding ?? 0),
+          worstBucket: worstBucketOf(u.buckets),
+        })),
+        byProperty: (raw.byProperty ?? []).map((p: any) => ({
+          propertyId: p.propertyId,
+          propertyName: p.propertyCode ?? p.propertyName ?? "—",
+          outstanding: Number(p.totalOutstanding ?? 0),
+        })),
+      };
+      return report;
     },
   });
 }

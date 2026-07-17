@@ -149,7 +149,7 @@ export default function StatementsPage() {
             ) : (
               <Sparkles className="mr-2 h-4 w-4" />
             )}
-            Generate for Tenant
+            Generate for Organization
           </Button>
           <Button onClick={() => setOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> New Statement
@@ -234,7 +234,7 @@ export default function StatementsPage() {
           <DialogHeader>
             <DialogTitle>New Statement</DialogTitle>
             <DialogDescription>
-              Create a statement for a tenant or owner.
+              Create a statement for an owner.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">

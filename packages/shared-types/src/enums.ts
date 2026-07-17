@@ -127,6 +127,36 @@ export enum TransactionType {
   LeaseRenewal = "lease_renewal",
 }
 
+export enum SalesSchemeType {
+  SALE_MORTGAGE = "sale_mortgage",
+  RENT_TO_OWN = "rent_to_own",
+  RESERVATION = "reservation",
+  LONG_TERM_RENTAL = "long_term_rental",
+}
+
+export interface SchemeListItem {
+  id: string;
+  schemeType: SalesSchemeType | null;
+  unitLabel: string | null;
+  unitId: string | null;
+  propertyId: string;
+  propertyName: string | null;
+  leaseType: LeaseType | null;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  mortgageScenarioId: string | null;
+  rtoContractId: string | null;
+  tenantUserId: string | null;
+  tenantName: string | null;
+  monthlyRentAmount: number | null;
+  agentId: string | null;
+  agentName: string | null;
+  schemeId: string | null;
+  schemeCode: string | null;
+  schemeName: string | null;
+}
+
 export enum CommissionStatus {
   Pending = "pending",
   Approved = "approved",

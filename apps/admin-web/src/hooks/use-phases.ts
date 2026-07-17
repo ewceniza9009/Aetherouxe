@@ -2,18 +2,78 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import type { ApiResponse } from "@elite-realty/shared-types";
 
+export type PhaseStatus = "planning" | "in_progress" | "completed" | "delayed" | "on_hold";
+
+export const phaseStatusLabels: Record<PhaseStatus, string> = {
+  planning: "Planning",
+  in_progress: "In Progress",
+  completed: "Completed",
+  delayed: "Delayed",
+  on_hold: "On Hold",
+};
+
 export interface Phase {
   id: string;
   projectId: string;
   name: string;
-  description?: string;
-  status: "not_started" | "in_progress" | "completed" | "delayed";
-  startDate?: string;
-  endDate?: string;
-  progress: number;
+  status: PhaseStatus;
+  targetStart?: string;
+  targetEnd?: string;
+  actualStart?: string;
+  actualEnd?: string;
   order: number;
+  progress: number;
   createdAt: string;
-  updatedAt: string;
+}
+
+export interface PhaseInput {
+  projectId?: string;
+  name?: string;
+  status?: PhaseStatus;
+  targetStart?: string;
+  targetEnd?: string;
+  actualStart?: string;
+  actualEnd?: string;
+  order?: number;
+}
+
+function progressFor(status: string): number {
+  switch (status) {
+    case "completed": return 100;
+    case "in_progress": return 50;
+    case "delayed": return 40;
+    case "on_hold": return 25;
+    default: return 0;
+  }
+}
+
+function mapPhase(p: any): Phase {
+  return {
+    id: p.id,
+    projectId: p.projectId,
+    name: p.phaseName ?? p.name,
+    status: p.status,
+    targetStart: p.targetStart ?? undefined,
+    targetEnd: p.targetEnd ?? undefined,
+    actualStart: p.actualStart ?? undefined,
+    actualEnd: p.actualEnd ?? undefined,
+    order: p.phaseOrder ?? p.order ?? 0,
+    progress: p.progress ?? progressFor(p.status),
+    createdAt: p.createdAt,
+  };
+}
+
+function toApiPayload(input: PhaseInput): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (input.projectId !== undefined) out.projectId = input.projectId;
+  if (input.name !== undefined) out.phaseName = input.name;
+  if (input.status !== undefined) out.status = input.status;
+  if (input.order !== undefined) out.phaseOrder = input.order;
+  if (input.targetStart !== undefined) out.targetStart = input.targetStart || undefined;
+  if (input.targetEnd !== undefined) out.targetEnd = input.targetEnd || undefined;
+  if (input.actualStart !== undefined) out.actualStart = input.actualStart || undefined;
+  if (input.actualEnd !== undefined) out.actualEnd = input.actualEnd || undefined;
+  return out;
 }
 
 export function usePhases(projectId: string) {
@@ -22,20 +82,7 @@ export function usePhases(projectId: string) {
     queryFn: async () => {
       const params = new URLSearchParams({ projectId });
       const { data } = await api.get<ApiResponse<any[]>>(`/phases?${params}`);
-      const rows: any[] = data.data ?? [];
-      return rows.map((p) => ({
-        id: p.id,
-        projectId: p.projectId,
-        name: p.phaseName ?? p.name,
-        description: p.description,
-        status: p.status,
-        startDate: p.targetStart ?? p.startDate,
-        endDate: p.targetEnd ?? p.endDate,
-        progress:
-          p.progress ??
-          (p.status === "completed" ? 100 : p.status === "in_progress" ? 50 : p.status === "delayed" ? 50 : 0),
-        order: p.phaseOrder ?? p.order,
-      })) as Phase[];
+      return (data.data ?? []).map(mapPhase);
     },
     enabled: !!projectId,
   });
@@ -45,8 +92,8 @@ export function usePhase(id: string) {
   return useQuery({
     queryKey: ["phase", id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Phase>>(`/phases/${id}`);
-      return data.data;
+      const { data } = await api.get<ApiResponse<any>>(`/phases/${id}`);
+      return mapPhase(data.data);
     },
     enabled: !!id,
   });
@@ -55,9 +102,9 @@ export function usePhase(id: string) {
 export function useCreatePhase() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: Partial<Phase>) => {
-      const { data } = await api.post<ApiResponse<Phase>>("/phases", payload);
-      return data.data;
+    mutationFn: async (input: PhaseInput) => {
+      const { data } = await api.post<ApiResponse<any>>("/phases", toApiPayload(input));
+      return mapPhase(data.data);
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["phases", result.projectId] });
@@ -68,9 +115,9 @@ export function useCreatePhase() {
 export function useUpdatePhase() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...payload }: Partial<Phase> & { id: string }) => {
-      const { data } = await api.patch<ApiResponse<Phase>>(`/phases/${id}`, payload);
-      return data.data;
+    mutationFn: async ({ id, ...input }: PhaseInput & { id: string }) => {
+      const { data } = await api.patch<ApiResponse<any>>(`/phases/${id}`, toApiPayload(input));
+      return mapPhase(data.data);
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["phases", result.projectId] });

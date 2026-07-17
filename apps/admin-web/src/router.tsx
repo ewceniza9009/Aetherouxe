@@ -19,6 +19,7 @@ import NewBuildingPage from "./pages/NewBuildingPage";
 import EditBuildingPage from "./pages/EditBuildingPage";
 import FloorListPage from "./pages/FloorListPage";
 import TenantsPage from "./pages/TenantsPage";
+import TenantDetailPage from "./pages/TenantDetailPage";
 import LeasesPage from "./pages/LeasesPage";
 import LeaseDetailPage from "./pages/LeaseDetailPage";
 import NewLeasePage from "./pages/NewLeasePage";
@@ -50,6 +51,9 @@ import CollectionCaseDetailPage from "./pages/CollectionCaseDetailPage";
 import PaymentRemindersPage from "./pages/PaymentRemindersPage";
 import MetersPage from "./pages/MetersPage";
 import SalesPage from "./pages/SalesPage";
+import SchemesPage from "./pages/SchemesPage";
+import SchemeDetailPage from "./pages/SchemeDetailPage";
+import TitleTransfersPage from "./pages/TitleTransfersPage";
 import MeterDetailPage from "./pages/MeterDetailPage";
 import ReadingsPage from "./pages/ReadingsPage";
 import UtilityBillsPage from "./pages/UtilityBillsPage";
@@ -176,6 +180,12 @@ const tenantsRoute = createRoute({
   getParentRoute: () => protectedLayout,
   path: "/tenants",
   component: TenantsPage,
+});
+
+const tenantDetailRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/tenants/$id",
+  component: TenantDetailPage,
 });
 
 const leasesRoute = createRoute({
@@ -448,6 +458,24 @@ const usersRoute = createRoute({
   component: UsersPage,
 });
 
+const schemesRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/schemes",
+  component: SchemesPage,
+});
+
+const schemeDetailRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/schemes/$id",
+  component: SchemeDetailPage,
+});
+
+const titleTransfersRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/title-transfers",
+  component: TitleTransfersPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -465,6 +493,7 @@ const routeTree = rootRoute.addChildren([
     editBuildingRoute,
     floorListRoute,
     tenantsRoute,
+    tenantDetailRoute,
     leasesRoute,
     newLeaseRoute,
     editLeaseRoute,
@@ -510,6 +539,9 @@ const routeTree = rootRoute.addChildren([
     pnlDetailRoute,
     analyticsRoute,
     usersRoute,
+    schemesRoute,
+    schemeDetailRoute,
+    titleTransfersRoute,
   ]),
 ]);
 

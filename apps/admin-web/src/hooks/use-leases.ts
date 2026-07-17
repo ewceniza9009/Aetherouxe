@@ -57,6 +57,7 @@ export interface LeaseQuery {
   search?: string;
   type?: LeaseType;
   status?: LeaseStatus;
+  unitId?: string;
 }
 
 interface PaginatedResult<T> {
@@ -99,9 +100,64 @@ export function useLeases(query: LeaseQuery) {
       if (query.search) params.set("search", query.search);
       if (query.type) params.set("type", query.type);
       if (query.status) params.set("status", query.status);
+      if (query.unitId) params.set("unitId", query.unitId);
       const { data } = await api.get<ApiResponse<any[]>>(`/leases?${params}`);
       const transformed = data.data.map(transformLease);
       return { data: transformed, meta: data.meta } as PaginatedResult<Lease>;
+    },
+  });
+}
+
+export interface TenantLease {
+  id: string;
+  unitLabel?: string;
+  unitId?: string;
+  leaseType: string;
+  schemeType?: string | null;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  monthlyRentAmount: number;
+  property: { id: string; propertyCode?: string; name?: string; propertyType?: string } | null;
+  mortgageScenarios?: { id: string; loanAmount: number; monthlyAmortization: number; loanTermMonths: number; interestRatePercent: number }[];
+  rtoContract?: { id: string; accumulatedEquity: number; totalContractValue: number } | null;
+  createdAt: string;
+}
+
+export function useTenantLeases(tenantUserId?: string) {
+  return useQuery({
+    queryKey: ["tenant-leases", tenantUserId],
+    enabled: !!tenantUserId,
+    queryFn: async () => {
+      const params = new URLSearchParams({ limit: "50" });
+      if (tenantUserId) params.set("tenantUserId", tenantUserId);
+      const { data } = await api.get<ApiResponse<any[]>>(`/leases?${params}`);
+      const leases: TenantLease[] = (data.data ?? []).map((l: any) => ({
+        id: l.id,
+        unitLabel: l.unitLabel ?? l.unit?.unitNumber ?? "—",
+        unitId: l.unitId,
+        leaseType: l.leaseType,
+        schemeType: l.schemeType ?? null,
+        startDate: l.startDate,
+        endDate: l.endDate,
+        isActive: l.isActive,
+        monthlyRentAmount: Number(l.monthlyRentAmount ?? 0),
+        property: l.property
+          ? { id: l.property.id, propertyCode: l.property.propertyCode, name: l.property.name, propertyType: l.property.propertyType }
+          : null,
+        mortgageScenarios: (l.mortgageScenarios ?? []).map((m: any) => ({
+          id: m.id,
+          loanAmount: Number(m.loanAmount ?? 0),
+          monthlyAmortization: Number(m.monthlyAmortization ?? 0),
+          loanTermMonths: m.loanTermMonths ?? 0,
+          interestRatePercent: Number(m.interestRatePercent ?? 0),
+        })),
+        rtoContract: l.rtoContract
+          ? { id: l.rtoContract.id, accumulatedEquity: Number(l.rtoContract.accumulatedEquity ?? 0), totalContractValue: Number(l.rtoContract.totalContractValue ?? 0) }
+          : null,
+        createdAt: l.createdAt ?? "",
+      }));
+      return leases;
     },
   });
 }
@@ -186,7 +242,7 @@ export function useLeasePayments(leaseId: string) {
         amount: Number(p.amountDue),
         method: p.paymentMethod || "card",
         status: p.status,
-        period: p.period,
+        period: p.period ?? (p.billingPeriodStart ? new Date(p.billingPeriodStart).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : null),
         dueDate: p.dueDate,
         paidDate: p.paymentDate,
         createdAt: p.createdAt,

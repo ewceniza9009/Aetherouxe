@@ -53,7 +53,8 @@ function computeSchedule(
   return { monthlyPayment, totalInterest: cumulativeInterest, schedule };
 }
 
-function money(n: number) {
+function money(n: number | null | undefined) {
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
   return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 

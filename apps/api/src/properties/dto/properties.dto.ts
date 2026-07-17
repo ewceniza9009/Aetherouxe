@@ -2,6 +2,7 @@ import { IsString, IsOptional, IsEnum, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePropertyDto {
+  @ApiProperty() @IsString() @IsUUID() projectId: string;
   @ApiProperty({ enum: ['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'] })
   @IsEnum(['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'])
   propertyType: string;
@@ -28,6 +29,7 @@ export class PropertyQueryDto {
   @ApiPropertyOptional() @IsOptional() @IsString() propertyType?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() status?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() buildingId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() projectId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() search?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() sortBy?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() sortOrder?: string;

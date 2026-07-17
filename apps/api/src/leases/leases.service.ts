@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RtoService } from '../rto/rto.service';
 import { CreateLeaseDto, UpdateLeaseDto, LeaseQueryDto } from './dto/leases.dto';
@@ -21,10 +21,32 @@ export class LeasesService {
     });
     if (!user) throw new NotFoundException('Tenant user not found');
 
+    if (new Date(dto.startDate) >= new Date(dto.endDate)) {
+      throw new BadRequestException('Start date must be before end date');
+    }
+    if (dto.monthlyRentAmount < 0) {
+      throw new BadRequestException('Monthly rent amount cannot be negative');
+    }
+
+    const overlapLease = await this.prisma.leaseAgreement.findFirst({
+      where: {
+        unitId: dto.unitId ?? undefined,
+        isActive: true,
+        startDate: { lte: new Date(dto.endDate) },
+        endDate: { gte: new Date(dto.startDate) },
+      },
+    });
+    if (overlapLease) {
+      throw new BadRequestException(
+        `Active lease already exists for this unit during the requested period (lease ${overlapLease.id}).`,
+      );
+    }
+
     const lease = await this.prisma.leaseAgreement.create({
       data: {
         propertyId: dto.propertyId,
         tenantUserId: dto.tenantUserId,
+        unitId: dto.unitId,
         leaseType: dto.leaseType as any,
         startDate: new Date(dto.startDate),
         endDate: new Date(dto.endDate),
@@ -55,6 +77,7 @@ export class LeasesService {
     const where: any = {};
     if (query.leaseType) where.leaseType = query.leaseType;
     if (query.tenantUserId) where.tenantUserId = query.tenantUserId;
+    if (query.unitId) where.unitId = query.unitId;
     if (query.status === 'active') where.isActive = true;
     if (query.status === 'inactive') where.isActive = false;
     if (query.propertyType) where.property = { propertyType: query.propertyType };
@@ -65,7 +88,7 @@ export class LeasesService {
         where,
         skip,
         take: limit,
-        include: { property: true, tenant: true },
+        include: { property: true, tenant: true, mortgageScenarios: true, rtoContract: true },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.leaseAgreement.count({ where }),
@@ -82,6 +105,7 @@ export class LeasesService {
         tenant: true,
         rentalPayments: true,
         mortgageScenarios: true,
+        rtoContract: true,
       },
     });
     if (!lease) throw new NotFoundException('Lease agreement not found');
@@ -115,7 +139,10 @@ export class LeasesService {
   }
 
   async terminate(id: string, reason: string) {
-    await this.findOne(id);
+    const lease = await this.findOne(id);
+    if (!lease.isActive) {
+      throw new BadRequestException('Lease is already terminated');
+    }
     return this.prisma.leaseAgreement.update({
       where: { id },
       data: {

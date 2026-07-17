@@ -53,6 +53,17 @@ export function useUsers(query: UserQuery) {
   });
 }
 
+export function useUser(id: string) {
+  return useQuery({
+    queryKey: ["user", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<AppUser>>(`/users/${id}`);
+      return data.data;
+    },
+  });
+}
+
 export interface CreateUserPayload {
   email: string;
   password: string;

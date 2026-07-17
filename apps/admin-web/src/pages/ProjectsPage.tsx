@@ -22,23 +22,20 @@ import {
   createColumnHelper,
 } from "@tanstack/react-table";
 import { Plus, Search, ArrowUpDown, Eye, Hammer } from "lucide-react";
-import { useProjects, useDeleteProject } from "@/hooks/use-projects";
+import { useProjects, useDeleteProject, projectTypeLabels, projectStatusLabels } from "@/hooks/use-projects";
 import type { Project, ProjectType, ProjectStatus } from "@/hooks/use-projects";
-
-const projectTypeLabels: Record<ProjectType, string> = {
-  land_development: "Land Development",
-  new_construction: "New Construction",
-  renovation: "Renovation",
-  maintenance: "Maintenance",
-};
 
 const statusVariant: Record<ProjectStatus, "default" | "secondary" | "success" | "destructive" | "warning"> = {
   planning: "secondary",
-  in_progress: "default",
-  delayed: "destructive",
+  pre_selling: "warning",
+  construction: "default",
+  fit_out: "default",
   completed: "success",
-  cancelled: "warning",
+  turnover: "success",
 };
+
+const projectTypeOptions = Object.keys(projectTypeLabels) as ProjectType[];
+const projectStatusOptions = Object.keys(projectStatusLabels) as ProjectStatus[];
 
 const columnHelper = createColumnHelper<Project>();
 
@@ -88,24 +85,14 @@ export default function ProjectsPage() {
         </Badge>
       ),
     }),
-    columnHelper.accessor("completionPercentage", {
-      header: "Progress",
+    columnHelper.accessor("totalPhases", {
+      header: "Phases",
       cell: (info) => (
-        <div className="flex items-center gap-2">
-          <div className="w-24 bg-muted rounded-full h-2">
-            <div
-              className="h-2 rounded-full bg-primary"
-              style={{ width: `${info.getValue()}%` }}
-            />
-          </div>
-          <span className="text-xs text-muted-foreground w-8">
-            {info.getValue()}%
-          </span>
-        </div>
+        <span className="text-sm text-muted-foreground">{info.getValue() ?? 0}</span>
       ),
     }),
-    columnHelper.accessor("targetEndDate", {
-      header: "Target End",
+    columnHelper.accessor("targetCompletionDate", {
+      header: "Target Completion",
       cell: (info) => {
         const v = info.getValue();
         return (
@@ -191,11 +178,9 @@ export default function ProjectsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="planning">Planning</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="delayed">Delayed</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                {projectStatusOptions.map((s) => (
+                  <SelectItem key={s} value={s}>{projectStatusLabels[s]}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
@@ -204,10 +189,9 @@ export default function ProjectsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="land_development">Land Development</SelectItem>
-                <SelectItem value="new_construction">New Construction</SelectItem>
-                <SelectItem value="renovation">Renovation</SelectItem>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
+                {projectTypeOptions.map((t) => (
+                  <SelectItem key={t} value={t}>{projectTypeLabels[t]}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

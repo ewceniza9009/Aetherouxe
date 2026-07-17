@@ -148,41 +148,137 @@
   background: hsl(var(--primary) / 0.35);
 }
 
-/* ── Data grid: scrollable body with sticky header ──
-   Wrap a <table> in <div className="scroll-grid">. The container gets a
-   max-height and its own scrollbar; the <thead> sticks while the body scrolls,
-   so hundreds of rows scroll inside the table instead of the whole page. */
-.scroll-grid {
-  max-height: calc(100vh - 13rem);
+/* ── Uniform data-grid layout ──
+    ONLY activates on pages that contain a .scroll-grid. Pages without a grid
+    are unaffected — they scroll normally. When a grid IS present, the full
+    flex chain from <main> down to the grid is activated so the grid fills
+    exactly the remaining height and scrolls internally. */
+
+/* Non-grid pages: fill viewport height but allow content to overflow and scroll. */
+.app-content {
+  min-height: 100%;
+}
+
+/* Grid pages ONLY: activate the full flex chain. */
+.app-content:has(.scroll-grid) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Page root fills the viewport height. */
+.app-content:has(.scroll-grid) > * {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Walk every wrapper that eventually contains a grid. */
+.app-content:has(.scroll-grid) *:has(.scroll-grid) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Exception: the two-column unit-detail layout must stay a CSS grid even when a
+    .scroll-grid table lives inside it, otherwise the flex-column override above
+    stacks the left list and right panel vertically. Keep it a grid and let its
+    columns own their own height. */
+.app-content:has(.scroll-grid) .unit-detail-grid,
+.app-content:has(.scroll-grid) .unit-detail-grid:has(.scroll-grid) {
+  display: grid;
+  flex: 0 0 auto;
+  min-height: 0;
+}
+.unit-detail-grid > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* The grid fills and scrolls. */
+.app-content:has(.scroll-grid) .scroll-grid {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
-  border-radius: 0.5rem;
+}
+
+/* The one true grid container. */
+.scroll-grid {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid hsl(var(--border) / 0.6);
+  border-radius: 0.75rem;
+  background: hsl(var(--card) / 0.4);
 }
 /* The shadcn <Table> wraps itself in an inner overflow-auto div; neutralize
-   it so the outer .scroll-grid owns the scroll and the header can stick. */
+    it so the outer .scroll-grid owns the scroll and the header can stick. */
 .scroll-grid > div[class*="overflow-auto"] {
   overflow: visible !important;
+  height: 100%;
 }
+
+/* Tables inside a grid share ONE identical look, whether built with the
+    shadcn <Table> or a raw <table>. */
 .scroll-grid table {
+  width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  width: 100%;
+  font-size: 0.875rem;
 }
-.scroll-grid table > thead > tr > th {
+
+/* Sticky, branded header — identical on every grid. */
+.scroll-grid thead th,
+.scroll-grid thead > tr > th {
   position: sticky;
   top: 0;
   z-index: 10;
+  height: 2.75rem;
+  padding: 0 1rem;
+  text-align: left;
+  vertical-align: middle;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
   background: hsl(var(--card));
-  backdrop-filter: blur(6px);
+  border-bottom: 1px solid hsl(var(--border));
+  white-space: nowrap;
 }
-.scroll-grid table > thead > tr > th::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: hsl(var(--border));
+.scroll-grid thead th:first-child,
+.scroll-grid thead > tr > th:first-child {
+  border-top-left-radius: 0.75rem;
 }
-.scroll-grid table > tbody > tr:first-child > td {
-  border-top: none;
+.scroll-grid thead th:last-child,
+.scroll-grid thead > tr > th:last-child {
+  border-top-right-radius: 0.75rem;
 }
+
+/* Right-aligned numeric header/cells (opt-in via .text-right on the th). */
+.scroll-grid thead th.text-right,
+.scroll-grid thead > tr > th.text-right {
+  text-align: right;
+}
+.scroll-grid tbody td.text-right {
+  text-align: right;
+}
+
+/* Uniform body rows. */
+.scroll-grid tbody td {
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid hsl(var(--border) / 0.4);
+  color: hsl(var(--foreground));
+}
+.scroll-grid tbody tr {
+  transition: background-color 0.15s ease;
+}
+.scroll-grid tbody tr:hover {
+  background: hsl(var(--muted) / 0.3);
+}
+.scroll-grid tbody tr:last-child td {
+  border-bottom: none;
+}
+

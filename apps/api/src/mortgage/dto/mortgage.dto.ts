@@ -1,12 +1,12 @@
-import { IsString, IsOptional, IsUUID, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsUUID, IsNumber, Min, Max } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class GenerateScenarioDto {
   @ApiProperty() @IsString() @IsUUID() leaseAgreementId: string;
-  @ApiProperty() @IsNumber() downPaymentPercent: number;
-  @ApiPropertyOptional() @IsOptional() @IsNumber() interestRatePercent?: number;
-  @ApiPropertyOptional() @IsOptional() @IsNumber() loanTermMonths?: number;
-  @ApiPropertyOptional() @IsOptional() @IsNumber() propertyValueAtGeneration?: number;
+  @ApiProperty() @IsNumber() @Min(1) @Max(100) downPaymentPercent: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) @Max(50) interestRatePercent?: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(1) @Max(600) loanTermMonths?: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) propertyValueAtGeneration?: number;
 }
 
 export class MortgageScenarioQueryDto {

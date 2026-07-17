@@ -43,6 +43,9 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { SettingsModule } from './settings/settings.module';
 import { UsersModule } from './users/users.module';
 import { SalesModule } from './sales/sales.module';
+import { SchemesModule } from './schemes/schemes.module';
+import { TitlesModule } from './titles/titles.module';
+import { ImagesModule } from './images/images.module';
 
 @Module({
   imports: [
@@ -85,6 +88,9 @@ import { SalesModule } from './sales/sales.module';
     SettingsModule,
     UsersModule,
     SalesModule,
+    SchemesModule,
+    TitlesModule,
+    ImagesModule,
     ...(process.env.MONGODB_URI ? [MongodbModule] : []),
     ThrottlerModule.forRoot([
       {

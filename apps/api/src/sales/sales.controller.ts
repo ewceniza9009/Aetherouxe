@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SalesService } from './sales.service';
 import { ApplySchemeDto } from './dto/apply-scheme.dto';
@@ -12,5 +12,10 @@ export class SalesController {
   async applyScheme(@Body() dto: ApplySchemeDto, @Request() req: any) {
     const userId = req?.user?.id;
     return this.salesService.applyScheme(dto, userId);
+  }
+
+  @Get()
+  async listSchemes() {
+    return this.salesService.listSchemes();
   }
 }

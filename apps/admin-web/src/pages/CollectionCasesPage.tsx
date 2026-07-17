@@ -125,7 +125,7 @@ export default function CollectionCasesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Case</TableHead>
-                    <TableHead>Tenant</TableHead>
+                    <TableHead>Organization</TableHead>
                     <TableHead>Lease</TableHead>
                     <TableHead>Priority</TableHead>
                     <TableHead>Status</TableHead>

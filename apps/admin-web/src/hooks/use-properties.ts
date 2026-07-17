@@ -9,6 +9,8 @@ export interface Property {
   address: string;
   type: PropertyType;
   status: PropertyStatus;
+  projectId?: string;
+  projectName?: string;
   buildingId?: string;
   floorId?: string;
   unitId?: string;
@@ -52,6 +54,7 @@ export interface PropertyQuery {
   search?: string;
   type?: PropertyType;
   status?: PropertyStatus;
+  projectId?: string;
 }
 
 interface PaginatedResult<T> {
@@ -69,6 +72,8 @@ export function transformProperty(p: any): Property {
     address: building?.address || p.address || "",
     type: p.propertyType || p.type,
     status: p.status,
+    projectId: p.projectId ?? p.project?.id,
+    projectName: p.project?.name,
     buildingId: p.buildingId || units[0]?.buildingId || building?.id,
     floorId: p.floorId || units[0]?.floorId,
     unitId: p.unitId,
@@ -96,6 +101,7 @@ export function useProperties(query: PropertyQuery) {
       if (query.search) params.set("search", query.search);
       if (query.type) params.set("type", query.type);
       if (query.status) params.set("status", query.status);
+      if (query.projectId) params.set("projectId", query.projectId);
       const { data } = await api.get<ApiResponse<any[]>>(`/properties?${params}`);
       const raw = data.data;
       const transformed = raw.map(transformProperty);

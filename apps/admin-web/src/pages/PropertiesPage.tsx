@@ -38,6 +38,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useProperties, useDeleteProperty, type Property, type PropertyQuery } from "@/hooks/use-properties";
+import { useProjects } from "@/hooks/use-projects";
 import { PropertyType, PropertyStatus } from "@elite-realty/shared-types";
 
 export default function PropertiesPage() {
@@ -46,6 +47,7 @@ export default function PropertiesPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [projectFilter, setProjectFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Property | null>(null);
@@ -61,10 +63,13 @@ export default function PropertiesPage() {
       search: search || undefined,
       type: typeFilter !== "all" ? (typeFilter as PropertyType) : undefined,
       status: statusFilter !== "all" ? (statusFilter as PropertyStatus) : undefined,
+      projectId: projectFilter !== "all" ? projectFilter : undefined,
     };
-  }, [page, search, typeFilter, statusFilter, sorting]);
+  }, [page, search, typeFilter, statusFilter, projectFilter, sorting]);
 
   const { data: result, isLoading, error } = useProperties(query);
+  const { data: projectsResult } = useProjects({ limit: 200 });
+  const projects = projectsResult?.data ?? [];
   const deleteProperty = useDeleteProperty();
 
   const handleDelete = useCallback(async () => {
@@ -109,6 +114,18 @@ export default function PropertiesPage() {
         accessorKey: "name",
         header: "Building",
         cell: ({ row }) => <span className="font-medium">{row.getValue("name")}</span>,
+      },
+      {
+        accessorKey: "projectName",
+        header: "Project",
+        cell: ({ row }) => {
+          const projectName = row.original.projectName;
+          return projectName ? (
+            <span className="text-sm text-muted-foreground">{projectName}</span>
+          ) : (
+            <span className="text-sm text-muted-foreground/50">—</span>
+          );
+        },
       },
       {
         accessorKey: "units",
@@ -241,6 +258,25 @@ export default function PropertiesPage() {
                   {Object.values(PropertyStatus).map((s) => (
                     <SelectItem key={s} value={s}>
                       {s.replace(/_/g, " ")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={projectFilter}
+                onValueChange={(v) => {
+                  setProjectFilter(v);
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="w-44">
+                  <SelectValue placeholder="Project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Projects</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

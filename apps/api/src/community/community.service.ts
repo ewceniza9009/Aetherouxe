@@ -80,6 +80,8 @@ export class CommunityService {
         amenityId: dto.amenityId,
         tenantId: dto.tenantId,
         unitId: dto.unitId,
+        tenantName: dto.tenantName,
+        unitLabel: dto.unitLabel,
         bookingStart: new Date(dto.bookingStart),
         bookingEnd: new Date(dto.bookingEnd),
         totalAmount: dto.totalAmount,
@@ -104,7 +106,7 @@ export class CommunityService {
     }
 
     const [data, total] = await Promise.all([
-      this.prisma.amenityBooking.findMany({ where, skip, take: limit, orderBy: { bookingStart: 'desc' } }),
+      this.prisma.amenityBooking.findMany({ where, skip, take: limit, orderBy: { bookingStart: 'desc' }, include: { tenant: true, unit: true } }),
       this.prisma.amenityBooking.count({ where }),
     ]);
 

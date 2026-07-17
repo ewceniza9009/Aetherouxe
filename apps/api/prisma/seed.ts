@@ -5,12 +5,14 @@ import {
   PropertyStatus,
   BuildingType,
   UnitType,
+  UnitStatus,
   ProjectType,
   ProjectStatus,
   PhaseStatus,
   BudgetCategory,
   ContractorEngagementStatus,
   LeaseType,
+  SchemeType,
   RTOStatus,
   AgentTier,
   CommissionType,
@@ -150,17 +152,19 @@ async function cleanup() {
   const order = [
     'notification', 'collectionActivity', 'collectionCase', 'collectionCaseNote',
     'statementOfAccount', 'paymentReminder',
-    'arPayment', 'arPaymentArrangement', 'arInvoice', 'arCollectionAction', 'arArrangementInstallment',
+    'arArrangementInstallment', 'arPayment', 'arPaymentArrangement', 'arInvoice', 'arCollectionAction',
+    'titleTransfer',
     'rtoEquityLedger', 'rtoPaymentAllocation', 'rtoContract',
     'mortgageAmortizationSchedule', 'mortgageScenario',
-    'rentalPayment', 'leaseAgreement',
+    'rentalPayment', 'leaseAgreement', 'scheme',
     'consumptionReading', 'utilityBill', 'utilityMeter', 'utilityRate',
     'agentCommissionRelease', 'agentTransaction', 'agentLicenseRenewal', 'agentCommission',
     'realEstateAgent',
-    'budgetLineItem', 'contractorPayment', 'contractorEngagement', 'budget', 'phase', 'contractor',
+    'contractorPayment', 'contractorEngagement', 'budgetLineItem', 'budget', 'phase', 'contractor',
     'documentSignature', 'documentVault',
     'communityPost', 'amenityBooking', 'amenity', 'maintenanceWorkOrder', 'serviceRequest',
     'ownerPnlStatement',
+    'propertyImage', 'unitImage',
     'unit', 'floor', 'building', 'property', 'project',
     'user',
   ] as const;
@@ -176,8 +180,8 @@ async function cleanup() {
 
 async function main() {
   const existingUsers = await prisma.user.count();
-  if (existingUsers > 0) {
-    console.log('Database already seeded (users exist) — skipping seed.\n');
+  if (existingUsers > 0 && process.env.FORCE_RESEED !== '1') {
+    console.log('Database already seeded (users exist) — skipping seed. Set FORCE_RESEED=1 to override.\n');
     return;
   }
 
@@ -486,9 +490,92 @@ async function main() {
   }
   console.log(`Projects: ${projects.length} with budgets, phases, contractors`);
 
+  /* ── Payment / Pricing Schemes ── */
+  const byName = (n: string) => projects.find((p) => p.name === n) ?? null;
+  const horizon = byName('Horizon Ayala Towers');
+  const avida = byName('Avida Village Nuvali');
+  const arca = byName('The Arca South Residences');
+  const vertis = byName('Vertis North Residences');
+
+  const schemeDefs = [
+    {
+      code: 'SCH-STD-RENTAL', name: 'Standard Residential Lease', schemeType: SchemeType.standard_rental,
+      projectId: null, remarks: '12-month lease, 2-month deposit, 5%/day late penalty after 3-day grace.',
+      securityDepositPercent: '200', penaltyPercent: '5', graceDays: 3,
+      agentCommissionPercentage: '1', companyCommissionPercentage: '0.5',
+    },
+    {
+      code: 'SCH-CORP-RENTAL', name: 'Corporate Long-Term Lease', schemeType: SchemeType.standard_rental,
+      projectId: horizon?.id ?? null, remarks: '3-year corporate lease with 3-month deposit and 5-day grace.',
+      securityDepositPercent: '300', penaltyPercent: '3', graceDays: 5,
+      agentCommissionPercentage: '1.5', companyCommissionPercentage: '0.5',
+    },
+    {
+      code: 'SCH-SPOT-CASH', name: 'Spot Cash 10% Discount', schemeType: SchemeType.spot_cash,
+      projectId: null, remarks: 'Full payment within 30 days for 10% off the selling price.',
+      discountPercent: '10', agentCommissionPercentage: '4', companyCommissionPercentage: '2',
+    },
+    {
+      code: 'SCH-INHOUSE-24', name: 'In-House 24-Month Installment', schemeType: SchemeType.installment,
+      projectId: avida?.id ?? null, remarks: '20% DP over 24 months, 80% balance on turnover.',
+      dpNumberOfPayments: 24, dpNumberOfDaysFromDp: 30, eqPaymentPercentage: '20',
+      eqMonthlyAmortPercentage: '20', eqNumberOfPayments: 24, eqDownpaymentPercentage: '0',
+      blPaymentPercentage: '80', blMiscPercentage: '8.5', blNumberOfPayments: 1,
+      agentCommissionPercentage: '4', companyCommissionPercentage: '2',
+    },
+    {
+      code: 'SCH-INHOUSE-60', name: 'In-House 60-Month Deferred', schemeType: SchemeType.installment,
+      projectId: arca?.id ?? null, remarks: '10% DP, 90% spread over 60 months, no balloon.',
+      dpNumberOfPayments: 12, dpNumberOfDaysFromDp: 30, eqPaymentPercentage: '10',
+      eqMonthlyAmortPercentage: '90', eqNumberOfPayments: 60, eqDownpaymentPercentage: '10',
+      blPaymentPercentage: '0', blMiscPercentage: '8.5', blNumberOfPayments: 1,
+      discountPercent: '0', agentCommissionPercentage: '3.5', companyCommissionPercentage: '2',
+    },
+    {
+      code: 'SCH-MORTGAGE-BDO', name: 'Bank Mortgage Assisted (BDO)', schemeType: SchemeType.mortgage_assisted,
+      projectId: vertis?.id ?? null, remarks: '20% DP in-house over 12 months; 80% via bank at 7% for 20 years.',
+      dpNumberOfPayments: 12, dpNumberOfDaysFromDp: 30,
+      mortgageDownPaymentPercent: '20', interestRatePercent: '7', loanTermMonths: 240,
+      blPaymentPercentage: '80', blMiscPercentage: '8.5',
+      agentCommissionPercentage: '3.5', companyCommissionPercentage: '2',
+    },
+    {
+      code: 'SCH-MORTGAGE-PAGIBIG', name: 'Pag-IBIG Housing Loan', schemeType: SchemeType.mortgage_assisted,
+      projectId: null, remarks: '10% DP; 90% via Pag-IBIG at 6.25% for 30 years.',
+      dpNumberOfPayments: 6, dpNumberOfDaysFromDp: 30,
+      mortgageDownPaymentPercent: '10', interestRatePercent: '6.25', loanTermMonths: 360,
+      blPaymentPercentage: '90', blMiscPercentage: '8.5',
+      agentCommissionPercentage: '3', companyCommissionPercentage: '1.5',
+    },
+    {
+      code: 'SCH-RTO-5YR', name: 'Rent-to-Own 5-Year Path', schemeType: SchemeType.rent_to_own,
+      projectId: avida?.id ?? null, remarks: 'Option fee 2%; 30% of rent accrues as equity; purchase option matures in 5 years.',
+      optionFeePercent: '2', equityAccumulationPercent: '30', targetPurchaseYears: 5,
+      penaltyPercent: '5', graceDays: 5,
+      agentCommissionPercentage: '3', companyCommissionPercentage: '1.5',
+    },
+  ];
+
+  const schemes: any[] = [];
+  for (const s of schemeDefs) {
+    schemes.push(await prisma.scheme.create({ data: s as any }));
+  }
+  const schemesByType: Record<string, any[]> = {};
+  for (const s of schemes) {
+    (schemesByType[s.schemeType] ??= []).push(s);
+  }
+  console.log(`Schemes: ${schemes.length}`);
+
   /* ── Properties, Buildings, Floors, Units ── */
   const propertyTypeOptions = [PropertyType.condo_unit, PropertyType.house_and_lot, PropertyType.townhouse, PropertyType.commercial_space, PropertyType.parking_slot];
-  const unitTypes = [UnitType.studio, UnitType.one_br, UnitType.two_br, UnitType.three_br, UnitType.penthouse];
+  // Unit types that make sense for each property type
+  const unitTypesByProperty: Record<PropertyType, UnitType[]> = {
+    [PropertyType.condo_unit]: [UnitType.studio, UnitType.one_br, UnitType.two_br, UnitType.three_br, UnitType.penthouse],
+    [PropertyType.house_and_lot]: [UnitType.two_br, UnitType.three_br],
+    [PropertyType.townhouse]: [UnitType.two_br, UnitType.three_br],
+    [PropertyType.commercial_space]: [UnitType.commercial],
+    [PropertyType.parking_slot]: [UnitType.parking],
+  };
 
   // Map each project to a building code set
   const allUnits: any[] = [];
@@ -509,57 +596,116 @@ async function main() {
       },
     });
 
-    const numProps = faker.number.int({ min: 2, max: 3 });
+    // Floors belong to the building (created once, shared by all its properties)
+    const floorCount = faker.number.int({ min: 5, max: 12 });
+    const floors: any[] = [];
+    for (let f = 1; f <= floorCount; f++) {
+      floors.push(
+        await prisma.floor.create({
+          data: {
+            buildingId: building.id,
+            floorNumber: f === 1 ? 'G' : String(f),
+            sortOrder: f,
+            floorPlanUrl: 'https://cdn.elite-realty.example/floorplan.svg',
+          },
+        }),
+      );
+    }
+
+    // Real-world ruling: a Property is the titled/sellable wrapper.
+    // The normal case is 1 Property = 1 Unit = 1 Title. Occasionally a property
+    // bundles a residential unit with its own parking slot under a single title.
+    const numProps = faker.number.int({ min: 8, max: 16 });
     for (let pr = 0; pr < numProps; pr++) {
       const ptype = pick(propertyTypeOptions);
-      const unitNo = String(faker.number.int({ min: 1, max: 999 })).padStart(3, '0');
+      // The primary (titled) unit type must match the property type
+      const primaryUnitType = pick(unitTypesByProperty[ptype]);
+      const unitNo = String(pr + 1 + faker.number.int({ min: 0, max: 800 })).padStart(3, '0');
       const propertyCode = `${projCode}-${bldg.code}-${unitNo}`;
+
+      // Property status drives the unit status (a property IS its unit, normally)
+      const propStatus = pick([
+        PropertyStatus.available,
+        PropertyStatus.available,
+        PropertyStatus.reserved,
+        PropertyStatus.sold,
+        PropertyStatus.rented,
+        PropertyStatus.rto_active,
+      ]);
+      const unitStatusFor = (s: PropertyStatus): UnitStatus => {
+        switch (s) {
+          case PropertyStatus.sold: return UnitStatus.occupied;
+          case PropertyStatus.rented: return UnitStatus.rented;
+          case PropertyStatus.rto_active: return UnitStatus.rto_active;
+          case PropertyStatus.reserved: return UnitStatus.reserved;
+          case PropertyStatus.under_maintenance: return UnitStatus.under_maintenance;
+          default: return UnitStatus.available;
+        }
+      };
+
       const property = await prisma.property.create({
         data: {
           tenantId: tenant.id,
+          projectId: project.id,
           propertyCode,
           propertyType: ptype,
-          status: pick([PropertyStatus.available, PropertyStatus.rented, PropertyStatus.sold, PropertyStatus.rto_active, PropertyStatus.reserved]),
+          status: propStatus,
           specsDocumentId: null,
         },
       });
 
-      const floorCount = faker.number.int({ min: 5, max: 12 });
-      const floors: any[] = [];
-      for (let f = 1; f <= floorCount; f++) {
-        floors.push(
-          await prisma.floor.create({
-            data: {
-              buildingId: building.id,
-              floorNumber: f === 1 ? 'G' : String(f),
-              sortOrder: f,
-              floorPlanUrl: 'https://cdn.elite-realty.example/floorplan.svg',
-            },
-          }),
-        );
+      // Build the unit list for this property: the titled primary unit, plus an
+      // optional bundled parking slot for residential titles (~15%).
+      const unitPlans: UnitType[] = [primaryUnitType];
+      const canBundleParking = ptype === PropertyType.condo_unit || ptype === PropertyType.house_and_lot || ptype === PropertyType.townhouse;
+      if (canBundleParking && chance(0.15)) {
+        unitPlans.push(UnitType.parking);
       }
 
-      const unitCount = faker.number.int({ min: 6, max: 12 });
-      for (let u = 0; u < unitCount; u++) {
-        const floor = floors[u % floors.length]!;
-        const ut = pick(unitTypes);
+      let primaryUnit: any = null;
+      for (let ui = 0; ui < unitPlans.length; ui++) {
+        const ut = unitPlans[ui]!;
+        const floor = ut === UnitType.parking ? floors[0]! : pick(floors);
+        const bedrooms =
+          ut === UnitType.studio || ut === UnitType.commercial || ut === UnitType.parking
+            ? 0
+            : ut === UnitType.one_br
+              ? 1
+              : ut === UnitType.two_br
+                ? 2
+                : 3;
+        const bathrooms = ut === UnitType.parking ? 0 : ut === UnitType.studio || ut === UnitType.commercial ? 1 : 2;
+        const isSmall = ut === UnitType.parking || ut === UnitType.studio;
         const unit = await prisma.unit.create({
           data: {
             propertyId: property.id,
             buildingId: building.id,
             floorId: floor.id,
-            unitNumber: `${floor.sortOrder}${pick(['A', 'B', 'C'])}`,
+            unitNumber: ut === UnitType.parking
+              ? `P-${unitNo}`
+              : `${floor.floorNumber}${pick(['A', 'B', 'C', 'D'])}`,
             unitType: ut,
-            squareMeters: faker.number.int({ min: 24, max: 220 }),
-            bedrooms: ut === UnitType.studio ? 0 : ut === UnitType.one_br ? 1 : ut === UnitType.two_br ? 2 : 3,
-            bathrooms: ut === UnitType.studio ? 1 : 2,
-            hasBalcony: chance(0.5),
-            hasParking: chance(0.4),
+            status: unitStatusFor(propStatus),
+            squareMeters: ut === UnitType.parking
+              ? faker.number.int({ min: 12, max: 25 })
+              : faker.number.int({ min: isSmall ? 24 : 45, max: 220 }),
+            bedrooms,
+            bathrooms,
+            hasBalcony: ut === UnitType.parking ? false : chance(0.5),
+            hasParking: ut === UnitType.parking ? false : chance(0.4),
             facingDirection: pick(['North', 'South', 'East', 'West', 'Corner']),
+            listPrice: money(1_500_000, 25_000_000),
+            lotValue: money(500_000, 8_000_000),
+            buildingValue: money(1_000_000, 17_000_000),
           },
         });
         allUnits.push(unit);
-        if (chance(0.5)) leaseTargets.push({ property, unit });
+        if (ui === 0) primaryUnit = unit;
+      }
+
+      // Lease/RTO targets are the titled property + its primary unit
+      if (primaryUnit && (propStatus === PropertyStatus.rented || propStatus === PropertyStatus.rto_active || chance(0.35))) {
+        leaseTargets.push({ property, unit: primaryUnit });
       }
     }
   }
@@ -581,6 +727,11 @@ async function main() {
     const endDate = new Date(startDate);
     endDate.setFullYear(endDate.getFullYear() + (leaseType === LeaseType.corporate_lease ? 3 : 1));
 
+    const schemeTypeForLease =
+      leaseType === LeaseType.rent_to_own ? SchemeType.rent_to_own : SchemeType.standard_rental;
+    const matchingSchemes = schemesByType[schemeTypeForLease] ?? [];
+    const chosenScheme = matchingSchemes.length ? pick(matchingSchemes) : null;
+
     const lease = await prisma.leaseAgreement.create({
       data: {
         propertyId: target.property.id,
@@ -588,6 +739,8 @@ async function main() {
         unitLabel: target.unit?.unitNumber,
         tenantUserId: resident.id,
         leaseType,
+        schemeId: chosenScheme?.id ?? null,
+        schemeType: chosenScheme?.schemeType ?? null,
         startDate,
         endDate,
         monthlyRentAmount: monthlyRent,
@@ -702,12 +855,26 @@ async function main() {
         },
       });
       await prisma.mortgageAmortizationSchedule.createMany({
-        data: rows.map((r) => ({ ...r, mortgageScenarioId: scenario.id })),
+        data: rows.map((r) => {
+          const periodDate = new Date(startDate);
+          periodDate.setMonth(periodDate.getMonth() + (r.periodNumber - 1));
+          return { ...r, periodDate, mortgageScenarioId: scenario.id };
+        }),
       });
       mortgageCount++;
     }
   }
   console.log(`Leases: ${leaseCount} | RTO: ${rtoCount} | Mortgage: ${mortgageCount}`);
+
+  /* ── Sync Unit statuses from lease state ── */
+  for (const unitId of leasedUnitIds) {
+    const hasRto = rtoLeases.some((l) => l.unitId === unitId);
+    await prisma.unit.update({
+      where: { id: unitId },
+      data: { status: hasRto ? 'rto_active' : 'occupied' },
+    });
+  }
+  console.log(`Unit statuses synced (${leasedUnitIds.size} occupied/rto)`);
 
   /* ── Utility Meters, Readings, Bills ── */
   let billCount = 0;
@@ -842,6 +1009,68 @@ async function main() {
   ];
 
   const properties = await prisma.property.findMany({ take: 12 });
+
+  /* ── Property & Unit Showcase Images ── */
+  const UNSPLASH_PROPERTY = [
+    'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800',
+    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800',
+    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800',
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800',
+    'https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=800',
+    'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800',
+    'https://images.unsplash.com/photo-1460317442991-0ec209397118?w=800',
+    'https://images.unsplash.com/photo-1582407947092-a5f9c8380be7?w=800',
+    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800',
+    'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800',
+  ];
+  const UNSPLASH_UNIT = [
+    'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600',
+    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600',
+    'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600',
+    'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=600',
+    'https://images.unsplash.com/photo-1536376072261-38c75010e6c9?w=600',
+    'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600',
+    'https://images.unsplash.com/photo-1600573472592-401b489a3cdc?w=600',
+    'https://images.unsplash.com/photo-1616137466211-f73a09e5f6e9?w=600',
+  ];
+  const PROP_ALTS = ['Building exterior', 'Lobby entrance', 'Facade view', 'Tower overview', 'Aerial view', 'Pool area', 'Garden view', 'Parking area', 'Rooftop view', 'Neighborhood'];
+  const UNIT_ALTS = ['Living room', 'Kitchen', 'Bedroom', 'Bathroom', 'Balcony view', 'Dining area', 'Study room', 'Unit interior'];
+
+  let imgCount = 0;
+  for (const prop of pickN(properties, Math.min(8, properties.length))) {
+    const numImages = faker.number.int({ min: 2, max: 4 });
+    for (let i = 0; i < numImages; i++) {
+      await prisma.propertyImage.create({
+        data: {
+          propertyId: prop.id,
+          url: UNSPLASH_PROPERTY[(imgCount + i) % UNSPLASH_PROPERTY.length],
+          alt: PROP_ALTS[(imgCount + i) % PROP_ALTS.length],
+          sortOrder: i,
+          isPrimary: i === 0,
+        },
+      });
+    }
+    imgCount += numImages;
+  }
+
+  let unitImgCount = 0;
+  for (const unit of pickN(allUnits, Math.min(20, allUnits.length))) {
+    const numImages = faker.number.int({ min: 1, max: 3 });
+    for (let i = 0; i < numImages; i++) {
+      await prisma.unitImage.create({
+        data: {
+          unitId: unit.id,
+          url: UNSPLASH_UNIT[(unitImgCount + i) % UNSPLASH_UNIT.length],
+          alt: UNIT_ALTS[(unitImgCount + i) % UNIT_ALTS.length],
+          sortOrder: i,
+          isPrimary: i === 0,
+        },
+      });
+    }
+    unitImgCount += numImages;
+  }
+  console.log(`Showcase images: ${imgCount} property + ${unitImgCount} unit`);
+
   for (const agent of agents) {
     const txns = faker.number.int({ min: 3, max: 6 });
     for (let t = 0; t < txns; t++) {
@@ -957,7 +1186,9 @@ async function main() {
       }),
     );
   }
-  for (const resident of pickN(residents, Math.min(10, residents.length))) {
+  const residentsWithLeases = residents.filter((r) => residentLeases[r.id]);
+  for (const resident of pickN(residentsWithLeases, Math.min(10, residentsWithLeases.length))) {
+    const lease = residentLeases[resident.id];
     const bookings = faker.number.int({ min: 1, max: 3 });
     for (let b = 0; b < bookings; b++) {
       const amenity = pick(amenityRecs);
@@ -968,7 +1199,9 @@ async function main() {
         data: {
           amenityId: amenity.id,
           tenantId: tenant.id,
-          unitId: pick(allUnits).id,
+          unitId: lease.unitId ?? undefined,
+          tenantName: `${resident.firstName ?? ''} ${resident.lastName ?? ''}`.trim() || resident.email,
+          unitLabel: lease.unitLabel ?? undefined,
           bookingStart: start,
           bookingEnd: end,
           status: pick([BookingStatus.confirmed, BookingStatus.completed, BookingStatus.pending, BookingStatus.cancelled]),
@@ -1029,44 +1262,54 @@ async function main() {
   }
   console.log('Service requests + work orders created');
 
-  /* ── Documents (owner + resident) ── */
+  /* ── Documents (linked to properties, units, leases) ── */
   for (const owner of owners) {
     const prop = pick(properties);
+    const ownerLeases = Object.values(residentLeases).filter((l) => l.propertyId === prop.id);
+    const linkedLease = ownerLeases[0] ?? null;
     await prisma.documentVault.create({
       data: {
         ownerType: DocOwnerType.owner,
         ownerId: owner.id,
-        documentType: pick([DocumentType.lease_agreement, DocumentType.title_deed, DocumentType.statement, DocumentType.insurance]),
-        title: pick(['Deed of Absolute Sale', 'Lease Contract', 'Annual Statement', 'Property Insurance']),
-        fileUrl: 'https://cdn.elite-realty.example/doc.pdf',
-        fileName: 'doc.pdf',
+        documentType: pick([DocumentType.title_deed, DocumentType.insurance, DocumentType.permit]),
+        title: pick(['Deed of Absolute Sale', 'Property Insurance', 'Building Permit', 'Tax Declaration']),
+        fileUrl: `https://cdn.elite-realty.example/${faker.string.alphanumeric(8)}.pdf`,
+        fileName: `${faker.string.alphanumeric(8)}.pdf`,
         mimeType: 'application/pdf',
         fileSize: faker.number.int({ min: 100_000, max: 5_000_000 }),
         uploadedById: admin.id,
         expiryDate: chance(0.3) ? faker.date.future({ years: 2 }) : null,
         isSigned: chance(0.7),
+        propertyId: prop.id,
+        unitId: linkedLease?.unitId ?? null,
+        leaseId: linkedLease?.id ?? null,
       },
     });
   }
   for (const resident of pickN(residents, Math.min(10, residents.length))) {
+    const lease = residentLeases[resident.id];
     await prisma.documentVault.create({
       data: {
         ownerType: DocOwnerType.tenant,
         ownerId: resident.id,
-        documentType: pick([DocumentType.lease_agreement, DocumentType.id_proof, DocumentType.statement, DocumentType.insurance]),
-        title: pick(['Signed Lease', 'Government ID', 'Billing Statement', 'Renter Insurance']),
-        fileUrl: 'https://cdn.elite-realty.example/doc.pdf',
-        fileName: 'doc.pdf',
+        documentType: pick([DocumentType.lease_agreement, DocumentType.id_proof, DocumentType.insurance]),
+        title: pick(['Signed Lease Agreement', 'Government ID', 'Renter Insurance', 'Move-in Inspection']),
+        fileUrl: `https://cdn.elite-realty.example/${faker.string.alphanumeric(8)}.pdf`,
+        fileName: `${faker.string.alphanumeric(8)}.pdf`,
         mimeType: 'application/pdf',
         fileSize: faker.number.int({ min: 100_000, max: 5_000_000 }),
         uploadedById: admin.id,
         isSigned: chance(0.6),
+        propertyId: lease?.propertyId ?? null,
+        unitId: lease?.unitId ?? null,
+        leaseId: lease?.id ?? null,
       },
     });
   }
 
-  /* ── Statements of Account ── */
+  /* ── Statements of Account (linked to leases) ── */
   for (const resident of pickN(residents, Math.min(8, residents.length))) {
+    const lease = residentLeases[resident.id];
     const open = money(0, 20000);
     const billed = money(15000, 80000);
     const paidAmt = money(0, billed);
@@ -1074,6 +1317,8 @@ async function main() {
       data: {
         tenantId: tenant.id,
         ownerId: resident.id,
+        propertyId: lease?.propertyId ?? null,
+        leaseId: lease?.id ?? null,
         periodStart: faker.date.past({ years: 1 }),
         periodEnd: faker.date.recent({ days: 10 }),
         openingBalance: open,
