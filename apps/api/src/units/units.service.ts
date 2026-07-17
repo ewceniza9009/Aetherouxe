@@ -33,6 +33,7 @@ export class UnitsService {
     const limit = Number(query.limit) || 20;
     const skip = (page - 1) * limit;
     const where: any = { building: { tenantId } };
+    if (query.propertyId) where.propertyId = query.propertyId;
     if (query.buildingId) where.buildingId = query.buildingId;
     if (query.floorId) where.floorId = query.floorId;
     if (query.unitType) where.unitType = query.unitType;

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -154,9 +155,14 @@ export default function ProjectDetailPage() {
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            {project.projectLogoUrl && (
-              <img src={project.projectLogoUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />
-            )}
+            <Avatar className="h-11 w-11 rounded-lg border border-border/50 shrink-0">
+              {project.projectLogoUrl && (
+                <AvatarImage src={project.projectLogoUrl} alt={project.name} className="object-cover" />
+              )}
+              <AvatarFallback className="rounded-lg bg-muted/50 text-muted-foreground font-medium">
+                <Building2 className="h-5 w-5 opacity-50" />
+              </AvatarFallback>
+            </Avatar>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>

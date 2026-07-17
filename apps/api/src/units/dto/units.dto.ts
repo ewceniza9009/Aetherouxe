@@ -40,6 +40,7 @@ export class UnitQueryDto {
   @ApiPropertyOptional() @IsOptional() page?: number;
   @ApiPropertyOptional() @IsOptional() limit?: number;
   @ApiPropertyOptional() @IsOptional() @IsString() buildingId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() propertyId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() floorId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() unitType?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() propertyStatus?: string;

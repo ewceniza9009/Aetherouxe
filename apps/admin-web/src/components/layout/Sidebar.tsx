@@ -31,6 +31,18 @@ import {
   Wallet,
   Activity,
   ShieldCheck,
+  MapPin,
+  Coffee,
+  Coins,
+  Landmark,
+  Gauge,
+  Scale,
+  CalendarClock,
+  Hourglass,
+  Folders,
+  AlarmClock,
+  Zap,
+  LineChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -64,8 +76,8 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Projects", icon: <Hammer size={18} />, path: "/projects", kind: "setup" },
       { label: "Buildings", icon: <Building2 size={18} />, path: "/buildings", kind: "setup" },
-      { label: "Properties", icon: <Building2 size={18} />, path: "/properties", kind: "setup" },
-      { label: "Amenities", icon: <Droplet size={18} />, path: "/amenities", kind: "setup" },
+      { label: "Properties", icon: <MapPin size={18} />, path: "/properties", kind: "setup" },
+      { label: "Amenities", icon: <Coffee size={18} />, path: "/amenities", kind: "setup" },
       { label: "Tenants", icon: <Users size={18} />, path: "/tenants", kind: "txn" },
       { label: "Leases", icon: <FileText size={18} />, path: "/leases", kind: "txn" },
       { label: "Rent-to-Own", icon: <KeyRound size={18} />, path: "/rto", kind: "txn" },
@@ -79,19 +91,19 @@ const navGroups: NavGroup[] = [
       { label: "Agents", icon: <UserCheck size={18} />, path: "/agents", kind: "setup" },
       { label: "Schemes", icon: <ClipboardList size={18} />, path: "/schemes", kind: "setup" },
       { label: "Sales & Schemes", icon: <BadgeDollarSign size={18} />, path: "/sales", kind: "txn" },
-      { label: "Commissions", icon: <DollarSign size={18} />, path: "/commissions", kind: "txn" },
+      { label: "Commissions", icon: <Coins size={18} />, path: "/commissions", kind: "txn" },
     ],
   },
   {
     label: "Finance",
     icon: <Wallet size={16} />,
     items: [
-      { label: "Finance", icon: <DollarSign size={18} />, path: "/finance", kind: "setup" },
-      { label: "Meters & Billing", icon: <Droplet size={18} />, path: "/meters", kind: "setup" },
+      { label: "Finance", icon: <Landmark size={18} />, path: "/finance", kind: "setup" },
+      { label: "Meters & Billing", icon: <Gauge size={18} />, path: "/meters", kind: "setup" },
       { label: "Collections", icon: <BellRing size={18} />, path: "/collections", kind: "txn" },
-      { label: "Collection Cases", icon: <ClipboardList size={18} />, path: "/collections/cases", kind: "txn" },
-      { label: "AR Aging", icon: <BarChart3 size={18} />, path: "/collections/ar-aging", kind: "txn" },
-      { label: "Commission Aging", icon: <BarChart3 size={18} />, path: "/finance/commission-aging", kind: "txn" },
+      { label: "Collection Cases", icon: <Scale size={18} />, path: "/collections/cases", kind: "txn" },
+      { label: "AR Aging", icon: <CalendarClock size={18} />, path: "/collections/ar-aging", kind: "txn" },
+      { label: "Commission Aging", icon: <Hourglass size={18} />, path: "/finance/commission-aging", kind: "txn" },
       { label: "Statements", icon: <Inbox size={18} />, path: "/statements", kind: "txn" },
       { label: "Owner P&L", icon: <PieChart size={18} />, path: "/owner-pnl", kind: "txn" },
     ],
@@ -100,18 +112,18 @@ const navGroups: NavGroup[] = [
     label: "Operations",
     icon: <Activity size={16} />,
     items: [
-      { label: "Documents", icon: <FileText size={18} />, path: "/documents", kind: "setup" },
+      { label: "Documents", icon: <Folders size={18} />, path: "/documents", kind: "setup" },
       { label: "Community", icon: <Megaphone size={18} />, path: "/community-posts", kind: "txn" },
       { label: "Service Requests", icon: <Wrench size={18} />, path: "/service-requests", kind: "txn" },
-      { label: "Payment Reminders", icon: <BellRing size={18} />, path: "/payment-reminders", kind: "txn" },
-      { label: "Readings", icon: <Droplet size={18} />, path: "/readings", kind: "txn" },
+      { label: "Payment Reminders", icon: <AlarmClock size={18} />, path: "/payment-reminders", kind: "txn" },
+      { label: "Readings", icon: <Zap size={18} />, path: "/readings", kind: "txn" },
     ],
   },
   {
     label: "Reports",
     icon: <BarChart3 size={16} />,
     items: [
-      { label: "Analytics", icon: <BarChart3 size={18} />, path: "/analytics", kind: "txn" },
+      { label: "Analytics", icon: <LineChart size={18} />, path: "/analytics", kind: "txn" },
     ],
   },
   {
@@ -154,11 +166,11 @@ function renderItem(
       to={item.path}
       title={collapsed ? item.label : undefined}
       className={cn(
-        "group relative flex items-center rounded-lg text-sm font-medium transition-colors",
-        collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
-        active
-          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
-          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        "group relative flex items-center rounded-lg text-sm font-medium transition-all duration-200",
+        collapsed ? "justify-center p-2.5 mx-1 mb-1 hover:bg-sidebar-accent/50" : "gap-3 px-3 py-2",
+        active && collapsed ? "bg-sidebar-primary/20 text-sidebar-primary shadow-sm" : "",
+        active && !collapsed ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm" : "",
+        !active && "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
       )}
     >
       {active && !collapsed && (
@@ -167,9 +179,9 @@ function renderItem(
       <span
         className={cn(
           "relative flex",
-          active
-            ? "text-sidebar-primary-foreground"
-            : "text-sidebar-foreground/60 group-hover:text-sidebar-accent-foreground",
+          active && !collapsed ? "text-sidebar-primary-foreground" : "",
+          active && collapsed ? "text-sidebar-primary drop-shadow-md" : "",
+          !active && "text-sidebar-foreground/60 group-hover:text-sidebar-accent-foreground",
         )}
       >
         {item.icon}
@@ -260,11 +272,19 @@ export default function Sidebar() {
           </div>
         )}
         {collapsed && (
-          <img
-            src="/favicon.png"
-            alt="Logo"
-            className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-primary/40"
-          />
+          <button
+            onClick={() => setCollapsed(false)}
+            className="group relative flex items-center justify-center rounded-lg transition-all"
+          >
+            <img
+              src="/favicon.png"
+              alt="Logo"
+              className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-primary/40 transition-all group-hover:ring-primary group-hover:shadow-[0_0_10px_rgba(251,191,36,0.3)] group-hover:brightness-110"
+            />
+            <div className="absolute left-full ml-4 w-max origin-left scale-95 rounded-md border border-sidebar-border bg-sidebar px-3 py-2 text-xs font-medium text-sidebar-foreground opacity-0 shadow-xl transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 pointer-events-none z-50">
+              Expand Menu
+            </div>
+          </button>
         )}
         {!collapsed && (
           <Button
@@ -279,23 +299,26 @@ export default function Sidebar() {
         )}
       </div>
 
-      {/* Expand toggle when collapsed (centered floating icon) */}
-      {collapsed && (
-        <button
-          type="button"
-          onClick={() => setCollapsed(false)}
-          className="mx-auto mt-2 flex h-7 w-7 items-center justify-center rounded-md border border-sidebar-border text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent"
-          title="Expand sidebar"
-        >
-          <ChevronRight size={14} />
-        </button>
+      {/* Navigation */}
+      {!collapsed && (
+        <div className="flex items-center justify-between px-5 pb-2 pt-5">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
+            Menu
+          </span>
+          <button
+            onClick={() => setOpenGroups({})}
+            className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40 transition-colors hover:text-sidebar-foreground"
+          >
+            Collapse All
+          </button>
+        </div>
       )}
 
       {/* Navigation */}
       <nav
         className={cn(
-          "flex-1 overflow-y-auto py-4 px-2",
-          collapsed ? "space-y-4" : "space-y-1.5",
+          "flex-1 overflow-y-auto px-2",
+          collapsed ? "py-4 space-y-2" : "pb-4 space-y-1.5",
         )}
       >
         {navGroups.map((group) => {
@@ -308,18 +331,19 @@ export default function Sidebar() {
                 <button
                   type="button"
                   onClick={() => toggleGroup(group.label)}
+                  title={collapsed ? group.label : undefined}
                   className={cn(
-                    "group/head flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest transition-colors",
+                    "group/head flex w-full items-center justify-between rounded-lg px-3 py-2 text-[10px] font-semibold uppercase tracking-widest transition-colors",
                     hasActive
                       ? "text-primary"
-                      : "text-sidebar-foreground/40 hover:text-sidebar-foreground/70",
+                      : "text-sidebar-foreground/40 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground/70",
                   )}
                 >
                   <span className="flex items-center gap-2">
                     <span
                       className={cn(
                         hasActive
-                          ? "text-primary"
+                          ? "text-primary drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]"
                           : "text-sidebar-foreground/40 group-hover/head:text-sidebar-foreground/70",
                       )}
                     >
@@ -337,13 +361,13 @@ export default function Sidebar() {
                 </button>
               ) : (
                 group.label !== navGroups[0].label && (
-                  <div className="mx-2 my-2 border-t border-sidebar-border/60" />
+                  <div className="mx-3 my-3 border-t border-sidebar-border/40" />
                 )
               )}
 
               <div
                 className={cn(
-                  "grid transition-all duration-200 ease-in-out",
+                  "grid transition-all duration-300 ease-in-out",
                   open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
                 )}
               >
@@ -356,7 +380,7 @@ export default function Sidebar() {
                        group.items.some((i) => i.kind === "txn") && (
                          <>
                            {group.items.some((i) => i.kind === "setup") && (
-                             <div className="px-3 pt-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-sidebar-foreground/30">
+                             <div className="px-3 pt-3 pb-1 text-[9px] font-semibold uppercase tracking-widest text-sidebar-foreground/30">
                                Transactions
                              </div>
                            )}
@@ -374,17 +398,21 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout */}
-      <div className="p-2 border-t border-sidebar-border">
+      <div className="p-3 border-t border-sidebar-border">
         <button
           onClick={logout}
-          title={collapsed ? "Logout" : undefined}
           className={cn(
-            "flex items-center rounded-md text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors w-full",
-            collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
+            "group relative flex items-center rounded-lg text-sm font-medium text-sidebar-foreground/70 transition-all hover:bg-red-500/10 hover:text-red-500 w-full",
+            collapsed ? "justify-center p-3" : "gap-3 px-3 py-2",
           )}
         >
           <LogOut size={18} />
           {!collapsed && <span>Logout</span>}
+          {collapsed && (
+            <div className="absolute left-full ml-3 w-max origin-left scale-95 rounded-md border border-sidebar-border bg-sidebar px-3 py-2 text-xs font-medium text-sidebar-foreground opacity-0 shadow-xl transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 pointer-events-none z-50">
+              Logout
+            </div>
+          )}
         </button>
       </div>
     </aside>

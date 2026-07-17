@@ -118,7 +118,7 @@ export default function PropertyDetailPage() {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{property.units ?? 0}</div>
+            <div className="text-2xl font-bold">{unitsResult?.meta?.total ?? property.units ?? 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -155,7 +155,7 @@ export default function PropertyDetailPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Units</p>
-                <p className="font-medium">{property.units ?? 0}</p>
+                <p className="font-medium">{unitsResult?.meta?.total ?? property.units ?? 0}</p>
               </div>
               {property.yearBuilt && (
                 <div>
@@ -322,8 +322,12 @@ export default function PropertyDetailPage() {
               </p>
             </div>
           ) : (
-            <div className="rounded-md border scroll-grid">
-              <table className="w-full">
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                Showing {unitsResult.data.length} of {unitsResult.meta.total} total units
+              </p>
+              <div className="rounded-md border scroll-grid">
+                <table className="w-full">
                 <thead>
                   <tr className="border-b bg-muted/50">
                     <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Unit</th>
@@ -348,6 +352,7 @@ export default function PropertyDetailPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
             </div>
           )}
         </CardContent>
