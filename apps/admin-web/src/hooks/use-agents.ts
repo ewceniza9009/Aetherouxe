@@ -15,6 +15,7 @@ function mapAgent(a: any): Agent {
     name: composed || user.email || a.email || undefined,
     email: user.email ?? a.email,
     phone: user.phone ?? a.phone,
+    avatarUrl: user.avatarUrl ?? a.avatarUrl,
     licenseNumber: a.licenseNumber,
     tier: a.tier,
     commissionRateDefault: a.commissionRateDefault,

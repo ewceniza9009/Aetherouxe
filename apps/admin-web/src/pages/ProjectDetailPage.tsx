@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,11 +40,16 @@ import {
   ChevronDown,
   Home,
   Package,
+  Image as ImageIcon,
+  Loader2,
+  ZoomIn
 } from "lucide-react";
 import {
   useProject,
   useProjectTimeline,
   useDeleteProject,
+  useProjectImages,
+  useUploadProjectImage,
   projectTypeLabels,
   projectStatusLabels,
   type ProjectStatus,
@@ -100,7 +107,27 @@ export default function ProjectDetailPage() {
   const { data: phases } = usePhases(id);
   const { data: budgetsData } = useBudgets({ projectId: id });
   const { data: inventory } = useProjectInventory(id);
+  const { data: images } = useProjectImages(id);
+  const uploadImage = useUploadProjectImage();
   const deleteProject = useDeleteProject();
+  const queryClient = useQueryClient();
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    const file = e.target.files[0];
+    await uploadImage.mutateAsync({ projectId: id, file });
+  };
+
+  const handleDeleteImage = async (imageId: string) => {
+    if (!window.confirm("Are you sure you want to delete this image?")) return;
+    try {
+      await api.delete(`/images/${imageId}`);
+      queryClient.invalidateQueries({ queryKey: ["project-images", id] });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete image.");
+    }
+  };
 
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this project?")) return;
@@ -191,6 +218,7 @@ export default function ProjectDetailPage() {
       <Tabs.Root value={tab} onValueChange={setTab} className="space-y-4">
         <Tabs.List className="flex border-b overflow-x-auto">
           <Tabs.Trigger value="overview" className={tabTrigger}>Overview</Tabs.Trigger>
+          <Tabs.Trigger value="gallery" className={tabTrigger}>Gallery ({images?.length ?? 0})</Tabs.Trigger>
           <Tabs.Trigger value="phases" className={tabTrigger}>Phases ({phaseList.length})</Tabs.Trigger>
           <Tabs.Trigger value="inventory" className={tabTrigger}>Inventory ({inventory?.totals.units ?? 0})</Tabs.Trigger>
           <Tabs.Trigger value="budgets" className={tabTrigger}>Budgets ({budgetList.length})</Tabs.Trigger>
@@ -252,6 +280,67 @@ export default function ProjectDetailPage() {
             <StatCard icon={<Layers className="h-5 w-5 text-muted-foreground" />} label="Phases" value={String(phaseList.length)} />
             <StatCard icon={<Package className="h-5 w-5 text-muted-foreground" />} label="Units" value={String(inventory?.totals.units ?? 0)} />
           </div>
+        </Tabs.Content>
+
+        {/* ── Gallery ── */}
+        <Tabs.Content value="gallery" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">Image Gallery</h2>
+              <p className="text-muted-foreground text-sm">Manage photos and renderings for this project.</p>
+            </div>
+            <div className="relative">
+              <Button disabled={uploadImage.isPending}>
+                {uploadImage.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-2 h-4 w-4" />}
+                Upload Photo
+              </Button>
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                onChange={handleImageUpload}
+                disabled={uploadImage.isPending}
+              />
+            </div>
+          </div>
+          
+          {!images?.length ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <ImageIcon className="mx-auto h-8 w-8 text-muted-foreground/50 mb-3" />
+                <p className="font-medium">No images uploaded</p>
+                <p className="text-sm text-muted-foreground">Upload some photos to create a gallery.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {images.map(img => (
+                <Dialog key={img.id}>
+                  <div className="relative aspect-video rounded-lg overflow-hidden border group bg-muted">
+                    <img src={img.url} alt={img.alt ?? "Project image"} className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105" />
+                    {img.isPrimary && (
+                      <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded font-medium shadow-sm">
+                        Primary
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <DialogTrigger asChild>
+                        <Button variant="secondary" size="icon" className="h-8 w-8">
+                          <ZoomIn className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => handleDeleteImage(img.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <DialogContent className="max-w-4xl p-1 bg-transparent border-none shadow-none">
+                    <img src={img.url} alt={img.alt || "Project image"} className="w-full h-auto max-h-[85vh] object-contain rounded-md" />
+                  </DialogContent>
+                </Dialog>
+              ))}
+            </div>
+          )}
         </Tabs.Content>
 
         {/* ── Phases (editable) ── */}

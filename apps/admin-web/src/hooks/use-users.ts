@@ -16,6 +16,7 @@ export interface AppUser {
   email: string;
   firstName?: string | null;
   lastName?: string | null;
+  avatarUrl?: string | null;
   phone?: string | null;
   userType: AppUserType;
   isActive: boolean;
@@ -85,13 +86,36 @@ export function useCreateUser() {
 }
 
 export function useUpdateUser() {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...payload }: Partial<AppUser> & { id: string; password?: string }) => {
       const { data } = await api.patch<ApiResponse<AppUser>>(`/users/${id}`, payload);
       return data.data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["user", variables.id] });
+      void result;
+    },
+  });
+}
+
+export function useUploadUserAvatar() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, file }: { id: string; file: File }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const { data } = await api.post<ApiResponse<{ url: string }>>(`/images/user/${id}/avatar`, formData);
+      return data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["user", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["auth-user"] });
+      queryClient.invalidateQueries({ queryKey: ["agents"] });
+      queryClient.invalidateQueries({ queryKey: ["agent"] });
+    },
   });
 }
 

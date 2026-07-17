@@ -10,6 +10,7 @@ interface User {
   firstName?: string;
   lastName?: string;
   phone?: string;
+  avatarUrl?: string | null;
   type: UserType;
 }
 
@@ -35,12 +36,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
-      void bootstrapSettings();
-    }
-  }, []);
-
   const refetchUser = useCallback(async () => {
     if (!localStorage.getItem("accessToken")) return;
     try {
@@ -52,6 +47,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // ignore
     }
   }, []);
+
+  useEffect(() => {
+    if (localStorage.getItem("accessToken")) {
+      void bootstrapSettings();
+      void refetchUser();
+    }
+  }, [refetchUser]);
 
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);

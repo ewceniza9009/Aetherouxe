@@ -15,6 +15,7 @@ const USER_SELECT = {
   lastLoginAt: true,
   createdAt: true,
   updatedAt: true,
+  avatarUrl: true,
   tenant: { select: { id: true, name: true, domain: true } },
 };
 

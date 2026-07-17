@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   ArrowLeft,
@@ -75,9 +75,12 @@ export default function TenantDetailPage() {
       {/* Tenant header */}
       <Card>
         <CardContent className="flex items-center gap-4 py-6">
-          <Avatar className="h-14 w-14">
-            <AvatarFallback className="text-lg">{initials}</AvatarFallback>
-          </Avatar>
+          <AvatarUpload 
+            userId={user?.id ?? ""}
+            avatarUrl={user?.avatarUrl}
+            initials={initials}
+            className="h-14 w-14"
+          />
           <div className="flex-1">
             <h1 className="text-2xl font-bold tracking-tight">
               {user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email : "Tenant"}

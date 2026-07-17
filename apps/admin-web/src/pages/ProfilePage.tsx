@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import api from "@/lib/api";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
 
 export default function ProfilePage() {
   const { user, refetchUser } = useAuth();
@@ -61,9 +62,20 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
-        <p className="text-muted-foreground">Manage your personal information and security</p>
+      <div className="flex items-center gap-6">
+        <AvatarUpload
+          userId={user?.id ?? ""}
+          avatarUrl={user?.avatarUrl}
+          initials={
+            user ? [user.firstName, user.lastName].filter(Boolean).join(" ").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || user.email.slice(0, 2).toUpperCase() : "—"
+          }
+          className="h-20 w-20"
+          onSuccess={refetchUser}
+        />
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
+          <p className="text-muted-foreground">Manage your personal information and security</p>
+        </div>
       </div>
 
       {msg && (

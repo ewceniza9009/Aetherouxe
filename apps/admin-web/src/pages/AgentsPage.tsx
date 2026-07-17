@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -69,6 +69,7 @@ export default function AgentsPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9">
+              {row.original.avatarUrl && <AvatarImage src={row.original.avatarUrl} />}
               <AvatarFallback className="bg-muted text-xs">
                 {getInitials(row.original.name)}
               </AvatarFallback>

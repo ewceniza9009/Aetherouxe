@@ -75,6 +75,53 @@ export class ImagesService {
     return image;
   }
 
+  async uploadProjectImage(projectId: string, file: UploadFile, alt?: string, isPrimary = false) {
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) throw new NotFoundException('Project not found');
+
+    const { url } = await this.s3.upload(file, `projects/${projectId}`);
+
+    if (isPrimary) {
+      await this.prisma.projectImage.updateMany({
+        where: { projectId, isPrimary: true },
+        data: { isPrimary: false },
+      });
+    }
+
+    const maxSort = await this.prisma.projectImage.aggregate({
+      where: { projectId },
+      _max: { sortOrder: true },
+    });
+
+    const image = await this.prisma.projectImage.create({
+      data: {
+        projectId,
+        url,
+        alt: alt || file.originalname,
+        isPrimary,
+        sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
+      },
+    });
+
+    this.logger.log(`Project image uploaded: ${image.id} for project ${projectId}`);
+    return image;
+  }
+
+  async uploadUserAvatar(userId: string, file: UploadFile) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const { url } = await this.s3.upload(file, `users/${userId}/avatar`);
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl: url },
+    });
+
+    this.logger.log(`User avatar uploaded for user ${userId}`);
+    return { url: updatedUser.avatarUrl };
+  }
+
   async getPropertyImages(propertyId: string) {
     return this.prisma.propertyImage.findMany({
       where: { propertyId },
@@ -89,9 +136,17 @@ export class ImagesService {
     });
   }
 
+  async getProjectImages(projectId: string) {
+    return this.prisma.projectImage.findMany({
+      where: { projectId },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
   async updateImage(id: string, data: { alt?: string; sortOrder?: number; isPrimary?: boolean }) {
     const image = await this.prisma.propertyImage.findUnique({ where: { id } })
-      || await this.prisma.unitImage.findUnique({ where: { id } });
+      || await this.prisma.unitImage.findUnique({ where: { id } })
+      || await this.prisma.projectImage.findUnique({ where: { id } });
 
     if (!image) throw new NotFoundException('Image not found');
 
@@ -106,18 +161,26 @@ export class ImagesService {
           where: { unitId: image.unitId, isPrimary: true },
           data: { isPrimary: false },
         });
+      } else if ('projectId' in image) {
+        await this.prisma.projectImage.updateMany({
+          where: { projectId: image.projectId, isPrimary: true },
+          data: { isPrimary: false },
+        });
       }
     }
 
     if ('propertyId' in image) {
       return this.prisma.propertyImage.update({ where: { id }, data });
+    } else if ('unitId' in image) {
+      return this.prisma.unitImage.update({ where: { id }, data });
     }
-    return this.prisma.unitImage.update({ where: { id }, data });
+    return this.prisma.projectImage.update({ where: { id }, data });
   }
 
   async deleteImage(id: string) {
     const image = await this.prisma.propertyImage.findUnique({ where: { id } })
-      || await this.prisma.unitImage.findUnique({ where: { id } });
+      || await this.prisma.unitImage.findUnique({ where: { id } })
+      || await this.prisma.projectImage.findUnique({ where: { id } });
 
     if (!image) throw new NotFoundException('Image not found');
 
@@ -125,6 +188,8 @@ export class ImagesService {
       await this.prisma.propertyImage.delete({ where: { id } });
     } else if ('unitId' in image) {
       await this.prisma.unitImage.delete({ where: { id } });
+    } else if ('projectId' in image) {
+      await this.prisma.projectImage.delete({ where: { id } });
     }
 
     this.logger.log(`Image deleted: ${id}`);

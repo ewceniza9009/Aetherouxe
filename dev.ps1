@@ -19,4 +19,5 @@ Write-Host "Starting infrastructure services (Postgres, MongoDB, Redis, MinIO) i
 docker-compose up -d postgres mongodb redis minio
 
 Write-Host "Starting all development servers (API, Admin Web, Owner Web, Resident Web)..." -ForegroundColor Cyan
+Start-Process "vivaldi" -ArgumentList "http://localhost:5173"
 npm run dev

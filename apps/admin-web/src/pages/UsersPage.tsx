@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -254,10 +255,20 @@ export default function UsersPage() {
                       return (
                         <tr key={u.id} className="border-b hover:bg-muted/30 transition-colors">
                           <td className="px-4 py-3">
-                            <div className="font-medium">
-                              {[u.firstName, u.lastName].filter(Boolean).join(" ") || "—"}
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                {u.avatarUrl && <AvatarImage src={u.avatarUrl} />}
+                                <AvatarFallback className="text-xs">
+                                  {([u.firstName, u.lastName].filter(Boolean).join(" ") || u.email || "—").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium">
+                                  {[u.firstName, u.lastName].filter(Boolean).join(" ") || "—"}
+                                </div>
+                                <div className="text-xs text-muted-foreground">{u.phone || ""}</div>
+                              </div>
                             </div>
-                            <div className="text-xs text-muted-foreground">{u.phone || ""}</div>
                           </td>
                           <td className="px-4 py-3 text-sm">{u.email}</td>
                           <td className="px-4 py-3">

@@ -252,6 +252,7 @@ model User {
   userType     UserType
   firstName    String?
   lastName     String?
+  avatarUrl    String?
   isActive     Boolean  @default(true)
   tokenVersion Int      @default(0)
   lastLoginAt  DateTime?
@@ -441,6 +442,20 @@ model UnitImage {
   @@map("unit_images")
 }
 
+model ProjectImage {
+  id          String    @id @default(uuid())
+  projectId   String
+  url         String
+  alt         String?
+  sortOrder   Int       @default(0)
+  isPrimary   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_images")
+}
+
 // ─────────────────────────────────────────────
 // PROJECT DEVELOPMENT & BUDGETING
 // ─────────────────────────────────────────────
@@ -465,6 +480,7 @@ model Project {
   properties Property[]
   phases     Phase[]
   budgets    Budget[]
+  images     ProjectImage[]
 
   @@map("projects")
 }

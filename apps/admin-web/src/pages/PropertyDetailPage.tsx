@@ -401,13 +401,12 @@ function ShowcaseTab({ property }: { property: any }) {
       setUploading(true);
       const formData = new FormData();
       formData.append("file", file);
-      // Let's make the first image uploaded automatically the primary image
-      const isPrimary = (!property.images || property.images.length === 0).toString();
-      formData.append("isPrimary", isPrimary);
+      
+      const isPrimary = (!property.images || property.images.length === 0);
+      const params = new URLSearchParams();
+      if (isPrimary) params.append("isPrimary", "true");
 
-      await api.post(`/images/property/${property.id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await api.post(`/images/property/${property.id}?${params.toString()}`, formData);
       
       // Silently refresh the property data without reloading the page
       queryClient.invalidateQueries({ queryKey: ["property", property.id] });

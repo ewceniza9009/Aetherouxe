@@ -397,24 +397,7 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="p-3 border-t border-sidebar-border">
-        <button
-          onClick={logout}
-          className={cn(
-            "group relative flex items-center rounded-lg text-sm font-medium text-sidebar-foreground/70 transition-all hover:bg-red-500/10 hover:text-red-500 w-full",
-            collapsed ? "justify-center p-3" : "gap-3 px-3 py-2",
-          )}
-        >
-          <LogOut size={18} />
-          {!collapsed && <span>Logout</span>}
-          {collapsed && (
-            <div className="absolute left-full ml-3 w-max origin-left scale-95 rounded-md border border-sidebar-border bg-sidebar px-3 py-2 text-xs font-medium text-sidebar-foreground opacity-0 shadow-xl transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 pointer-events-none z-50">
-              Logout
-            </div>
-          )}
-        </button>
-      </div>
+
     </aside>
   );
 }

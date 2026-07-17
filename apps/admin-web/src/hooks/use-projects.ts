@@ -5,19 +5,31 @@ import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
 export type ProjectType = "high_rise" | "mid_rise" | "village" | "township" | "commercial_complex";
 export type ProjectStatus = "planning" | "pre_selling" | "construction" | "fit_out" | "completed" | "turnover";
 
+export interface ProjectImage {
+  id: string;
+  projectId: string;
+  url: string;
+  alt?: string | null;
+  sortOrder: number;
+  isPrimary: boolean;
+  createdAt: string;
+}
+
 export interface Project {
   id: string;
+  tenantId: string;
   name: string;
+  description?: string | null;
   projectType: ProjectType;
   status: ProjectStatus;
-  description?: string;
-  totalPhases?: number;
-  targetStartDate?: string;
-  targetCompletionDate?: string;
-  actualCompletionDate?: string;
-  address?: string;
-  projectLogoUrl?: string;
+  totalPhases?: number | null;
+  targetStartDate?: string | null;
+  targetCompletionDate?: string | null;
+  actualCompletionDate?: string | null;
+  projectLogoUrl?: string | null;
+  address?: string | null;
   createdAt: string;
+  images?: ProjectImage[];
 }
 
 export const projectTypeLabels: Record<ProjectType, string> = {
@@ -149,4 +161,48 @@ export interface ProjectTimelineEntry {
   endDate: string;
   status: string;
   progress: number;
+}
+
+export function useProjectImages(projectId: string) {
+  return useQuery({
+    queryKey: ["project-images", projectId],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<ProjectImage[]>>(`/images/project/${projectId}`);
+      return data.data;
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useUploadProjectImage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      file,
+      alt,
+      isPrimary,
+    }: {
+      projectId: string;
+      file: File;
+      alt?: string;
+      isPrimary?: boolean;
+    }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const params = new URLSearchParams();
+      if (alt) params.append("alt", alt);
+      if (isPrimary) params.append("isPrimary", "true");
+      
+      const { data } = await api.post<ApiResponse<ProjectImage>>(
+        `/images/project/${projectId}?${params.toString()}`,
+        formData
+      );
+      return data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["project-images", variables.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
 }

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus, Search, Phone, Mail } from "lucide-react";
 import { useUsers } from "@/hooks/use-users";
 import { useLeases } from "@/hooks/use-leases";
@@ -18,6 +18,7 @@ interface TenantRow {
   unit: string;
   leaseEnd: string;
   status: string;
+  avatarUrl?: string | null;
 }
 
 export default function TenantsPage() {
@@ -51,6 +52,7 @@ export default function TenantsPage() {
         unit: lease?.unitLabel ?? "—",
         leaseEnd: lease?.endDate ? new Date(lease.endDate).toLocaleDateString() : "—",
         status: !lease ? "no lease" : lease.status,
+        avatarUrl: u.avatarUrl,
       } as TenantRow & { initials: string };
     });
   }, [usersData, leasesData]);
@@ -121,6 +123,7 @@ export default function TenantsPage() {
                       <td className="font-medium">
                         <span className="flex items-center gap-3">
                           <Avatar className="h-7 w-7">
+                            {tenant.avatarUrl && <AvatarImage src={tenant.avatarUrl} />}
                             <AvatarFallback className="text-xs">{(tenant as any).initials}</AvatarFallback>
                           </Avatar>
                           {tenant.name}

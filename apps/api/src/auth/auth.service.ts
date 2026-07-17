@@ -29,6 +29,7 @@ export class AuthService {
       userType: user.userType,
       tenantId: user.tenantId,
       tokenVersion: user.tokenVersion,
+      avatarUrl: user.avatarUrl,
     };
   }
 
@@ -66,6 +67,7 @@ export class AuthService {
       userType: user.userType,
       tenantId: user.tenantId,
       tokenVersion: user.tokenVersion,
+      avatarUrl: user.avatarUrl,
     });
   }
 
@@ -107,6 +109,7 @@ export class AuthService {
         userType: updated.userType,
         tenantId: updated.tenantId,
         tokenVersion: updated.tokenVersion,
+        avatarUrl: updated.avatarUrl,
       });
     } catch (err) {
       if (err instanceof UnauthorizedException) throw err;
@@ -147,6 +150,7 @@ export class AuthService {
         isActive: true,
         lastLoginAt: true,
         createdAt: true,
+        avatarUrl: true,
         tenant: { select: { id: true, name: true, domain: true } },
       },
     });
@@ -181,13 +185,14 @@ export class AuthService {
         isActive: true,
         lastLoginAt: true,
         createdAt: true,
+        avatarUrl: true,
         tenant: { select: { id: true, name: true, domain: true } },
       },
     });
     return updated;
   }
 
-  private generateTokens(userPayload: { id: string; email: string; userType: any; tenantId: string; tokenVersion: number }) {
+  private generateTokens(userPayload: { id: string; email: string; userType: any; tenantId: string; tokenVersion: number; avatarUrl?: string | null }) {
     const payload = {
       sub: userPayload.id,
       email: userPayload.email,

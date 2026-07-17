@@ -1,12 +1,18 @@
 import { type ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import NotificationBell from "@/components/NotificationBell";
+import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Link } from "@tanstack/react-router";
+import { LogOut } from "lucide-react";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const { user, logout } = useAuth();
+  
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
@@ -16,8 +22,31 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <img src="/favicon.png" alt="Logo" className="h-7 w-7 rounded object-cover" />
             <span className="font-serif text-lg font-bold gold-text">Aetherouxe Estates</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <NotificationBell role="admin" />
+            
+            {user && (
+              <div className="flex items-center gap-4 border-l border-border pl-4 ml-2">
+                <Link to="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                  <span className="text-sm font-medium hidden sm:block">
+                    {[user.firstName, user.lastName].filter(Boolean).join(" ") || user.email}
+                  </span>
+                  <Avatar className="h-8 w-8">
+                    {user.avatarUrl && <AvatarImage src={user.avatarUrl} />}
+                    <AvatarFallback className="text-xs">
+                      {([user.firstName, user.lastName].filter(Boolean).join(" ") || user.email || "—").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
+                <button 
+                  onClick={logout}
+                  className="text-muted-foreground hover:text-red-500 transition-colors p-2 rounded-md hover:bg-red-500/10"
+                  title="Logout"
+                >
+                  <LogOut size={18} />
+                </button>
+              </div>
+            )}
           </div>
         </header>
         <main className="flex-1 overflow-auto bg-background">
