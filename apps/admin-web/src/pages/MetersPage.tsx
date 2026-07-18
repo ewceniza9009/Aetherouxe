@@ -104,7 +104,7 @@ export default function MetersPage() {
   }, [data, search]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="font-serif text-3xl font-bold tracking-tight">Meters &amp; Billing</h1>

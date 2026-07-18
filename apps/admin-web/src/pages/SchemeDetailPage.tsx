@@ -149,7 +149,7 @@ export default function SchemeDetailPage() {
   const schemeType = form.schemeType as SchemeTypeValue;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="outline" size="icon" onClick={() => navigate({ to: "/schemes" })}>

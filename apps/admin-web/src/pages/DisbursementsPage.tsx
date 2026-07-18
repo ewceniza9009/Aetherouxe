@@ -37,7 +37,7 @@ export default function DisbursementsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
       <div>
         <h2 className="text-3xl font-bold tracking-tight text-white">Accounts Payable</h2>
         <p className="text-muted-foreground mt-2">

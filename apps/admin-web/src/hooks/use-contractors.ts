@@ -10,7 +10,7 @@ export interface Contractor {
   phone?: string;
   specialization: string;
   licenseNumber?: string;
-  status: "active" | "inactive" | "suspended";
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -139,7 +139,7 @@ export default function ProjectsPage() {
 
   if (isError) {
     return (
-      <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Development Projects</h1>
         </div>
@@ -208,7 +208,7 @@ export default function ProjectsPage() {
               ))}
             </div>
           ) : (data?.data ?? []).length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center py-12 text-center min-h-[400px]">
               <Hammer className="h-12 w-12 text-muted-foreground/40 mb-3" />
               <p className="font-medium">No projects found</p>
               <p className="text-sm text-muted-foreground mt-1">

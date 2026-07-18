@@ -108,7 +108,7 @@ const EMPTY_FORM: PostForm = {
 
 export default function CommunityPostsPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
       <div>
         <h1 className="font-serif text-3xl font-bold tracking-tight">Community</h1>
         <p className="text-muted-foreground">

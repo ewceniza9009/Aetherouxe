@@ -137,7 +137,7 @@ export default function ProjectDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-48 w-full" />
       </div>
@@ -150,7 +150,7 @@ export default function ProjectDetailPage() {
         <Button variant="outline" size="sm" onClick={() => navigate({ to: "/projects" })}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
-        <Card>
+        <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
           <CardContent className="py-12 text-center">
             <p className="text-destructive font-medium">Project not found</p>
             <p className="text-sm text-muted-foreground mt-1">This project may have been removed.</p>
@@ -305,7 +305,7 @@ export default function ProjectDetailPage() {
           </div>
           
           {!images?.length ? (
-            <Card>
+            <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
               <CardContent className="py-12 text-center">
                 <ImageIcon className="mx-auto h-8 w-8 text-muted-foreground/50 mb-3" />
                 <p className="font-medium">No images uploaded</p>
@@ -446,7 +446,7 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
 
 function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
-    <Card><CardContent className="py-12 text-center">{icon}<p className="font-medium">{text}</p></CardContent></Card>
+    <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]"><CardContent className="py-12 text-center">{icon}<p className="font-medium">{text}</p></CardContent></Card>
   );
 }
 

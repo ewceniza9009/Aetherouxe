@@ -127,7 +127,7 @@ export default function EditUnitPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
         <div className="flex items-center gap-4">
           <Skeleton className="h-10 w-10 rounded-md" />
           <Skeleton className="h-8 w-64" />
@@ -143,7 +143,7 @@ export default function EditUnitPage() {
         <Button variant="outline" size="icon" onClick={() => navigate({ to: `/properties/${propertyId}/units` })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <Card>
+        <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
           <CardContent className="py-12 text-center">
             <XCircle className="mx-auto h-8 w-8 text-muted-foreground/50" />
             <p className="mt-3 font-semibold">Unit not found</p>

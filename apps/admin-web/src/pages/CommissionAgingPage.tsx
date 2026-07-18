@@ -51,7 +51,7 @@ export default function CommissionAgingPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
         <Skeleton className="h-28 w-full" />
         <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -67,7 +67,7 @@ export default function CommissionAgingPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold tracking-tight">Commission Aging</h1>
-        <Card>
+        <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
           <CardContent className="py-12 text-center">
             <p className="text-destructive font-medium">
               Unable to load commission aging report.

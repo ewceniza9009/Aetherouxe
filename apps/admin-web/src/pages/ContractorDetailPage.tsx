@@ -35,6 +35,9 @@ import {
   useContractor,
   useEngagements,
   useCreatePayment,
+  useUpdateContractor,
+  useCreateEngagement,
+  useDeleteContractor,
 } from "@/hooks/use-contractors";
 import { formatCurrency } from "@/lib/agent-meta";
 
@@ -43,10 +46,14 @@ export default function ContractorDetailPage() {
   const navigate = useNavigate();
   const { data: contractor, isLoading, isError } = useContractor(id);
   const { data: engagements } = useEngagements({ contractorId: id });
+  const updateContractor = useUpdateContractor();
+  const createEngagement = useCreateEngagement();
   const createPayment = useCreatePayment();
+  const deleteContractor = useDeleteContractor();
 
   const [paymentDialog, setPaymentDialog] = useState(false);
   const [selectedEngagement, setSelectedEngagement] = useState("");
+  const [deleteContractorDialog, setDeleteContractorDialog] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
     amount: "",
     paymentDate: new Date().toISOString().split("T")[0],
@@ -54,7 +61,65 @@ export default function ContractorDetailPage() {
     reference: "",
     notes: "",
   });
+
+  const [editContractorDialog, setEditContractorDialog] = useState(false);
+  const [editContractorForm, setEditContractorForm] = useState({
+    companyName: "",
+    contactName: "",
+    email: "",
+    phone: "",
+    specialization: "",
+    licenseNumber: "",
+  });
+
+  const [newEngagementDialog, setNewEngagementDialog] = useState(false);
+  const [newEngagementForm, setNewEngagementForm] = useState({
+    projectId: "",
+    projectName: "",
+    contractAmount: "",
+    startDate: "",
+    endDate: "",
+    scope: "",
+  });
+
   const [expandedEngagement, setExpandedEngagement] = useState<string | null>(null);
+
+  const handleUpdateContractor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+    await updateContractor.mutateAsync({ id, ...editContractorForm });
+    setEditContractorDialog(false);
+  };
+
+  const handleDeleteContractor = async () => {
+    if (!id) return;
+    await deleteContractor.mutateAsync(id);
+    setDeleteContractorDialog(false);
+    navigate({ to: "/contractors" });
+  };
+
+  const handleCreateEngagement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+    await createEngagement.mutateAsync({
+      contractorId: id,
+      projectId: newEngagementForm.projectId,
+      projectName: newEngagementForm.projectName || undefined,
+      contractAmount: parseFloat(newEngagementForm.contractAmount),
+      startDate: newEngagementForm.startDate || undefined,
+      endDate: newEngagementForm.endDate || undefined,
+      scope: newEngagementForm.scope || undefined,
+    });
+    setNewEngagementDialog(false);
+    setNewEngagementForm({
+      projectId: "",
+      projectName: "",
+      contractAmount: "",
+      startDate: "",
+      endDate: "",
+      scope: "",
+    });
+  };
 
   const handleAddPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +144,7 @@ export default function ContractorDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-48 w-full" />
       </div>
@@ -92,7 +157,7 @@ export default function ContractorDetailPage() {
         <Button variant="outline" size="sm" onClick={() => navigate({ to: "/contractors" })}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
-        <Card>
+        <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
           <CardContent className="py-12 text-center">
             <p className="text-destructive font-medium">Contractor not found</p>
           </CardContent>
@@ -102,20 +167,117 @@ export default function ContractorDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" onClick={() => navigate({ to: "/contractors" })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div className="flex-1">
+        <div className="flex-1 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold tracking-tight">{contractor.companyName}</h1>
-            <Badge variant={
-              contractor.status === "active" ? "success" :
-              contractor.status === "suspended" ? "destructive" : "secondary"
-            }>
-              {contractor.status}
+            <Badge variant={contractor.isActive ? "success" : "secondary"}>
+              {contractor.isActive ? "Active" : "Inactive"}
             </Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Dialog open={deleteContractorDialog} onOpenChange={setDeleteContractorDialog}>
+              <DialogTrigger asChild>
+                <Button variant="destructive">Delete Contractor</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Are you absolutely sure?</DialogTitle>
+                </DialogHeader>
+                <div className="py-4 text-sm text-muted-foreground">
+                  This action cannot be undone. This will permanently delete the contractor and all associated data.
+                </div>
+                <div className="flex justify-end gap-3 mt-4">
+                  <Button variant="outline" onClick={() => setDeleteContractorDialog(false)}>Cancel</Button>
+                  <Button variant="destructive" onClick={handleDeleteContractor} disabled={deleteContractor.isPending}>
+                    {deleteContractor.isPending ? "Deleting..." : "Delete"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={editContractorDialog} onOpenChange={setEditContractorDialog}>
+              <DialogTrigger asChild>
+              <Button variant="outline" onClick={() => {
+                setEditContractorForm({
+                  companyName: contractor.companyName || "",
+                  contactName: contractor.contactName || "",
+                  email: contractor.email || "",
+                  phone: contractor.phone || "",
+                  specialization: contractor.specialization || "",
+                  licenseNumber: contractor.licenseNumber || "",
+                });
+              }}>
+                Edit Contractor
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Contractor</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleUpdateContractor} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label>Company Name</Label>
+                  <Input
+                    required
+                    value={editContractorForm.companyName}
+                    onChange={(e) => setEditContractorForm({ ...editContractorForm, companyName: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Contact Name</Label>
+                  <Input
+                    value={editContractorForm.contactName}
+                    onChange={(e) => setEditContractorForm({ ...editContractorForm, contactName: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input
+                      type="email"
+                      value={editContractorForm.email}
+                      onChange={(e) => setEditContractorForm({ ...editContractorForm, email: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Phone</Label>
+                    <Input
+                      value={editContractorForm.phone}
+                      onChange={(e) => setEditContractorForm({ ...editContractorForm, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Specialization</Label>
+                    <Input
+                      value={editContractorForm.specialization}
+                      onChange={(e) => setEditContractorForm({ ...editContractorForm, specialization: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>License Number</Label>
+                    <Input
+                      value={editContractorForm.licenseNumber}
+                      onChange={(e) => setEditContractorForm({ ...editContractorForm, licenseNumber: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-6">
+                  <Button variant="outline" type="button" onClick={() => setEditContractorDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={updateContractor.isPending}>
+                    {updateContractor.isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
           </div>
         </div>
       </div>
@@ -159,13 +321,90 @@ export default function ContractorDetailPage() {
       </Card>
 
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold tracking-tight">Engagements</h2>
-        <span className="text-sm text-muted-foreground">{engagements?.length ?? 0} total</span>
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-semibold tracking-tight">Engagements</h2>
+          <span className="text-sm text-muted-foreground">{engagements?.length ?? 0} total</span>
+        </div>
+        <Dialog open={newEngagementDialog} onOpenChange={setNewEngagementDialog}>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus className="mr-2 h-4 w-4" /> New Engagement
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>New Engagement</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateEngagement} className="space-y-4 pt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Project ID</Label>
+                  <Input
+                    required
+                    value={newEngagementForm.projectId}
+                    onChange={(e) => setNewEngagementForm({ ...newEngagementForm, projectId: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Project Name</Label>
+                  <Input
+                    value={newEngagementForm.projectName}
+                    onChange={(e) => setNewEngagementForm({ ...newEngagementForm, projectName: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Contract Amount</Label>
+                <Input
+                  required
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={newEngagementForm.contractAmount}
+                  onChange={(e) => setNewEngagementForm({ ...newEngagementForm, contractAmount: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Start Date</Label>
+                  <Input
+                    type="date"
+                    value={newEngagementForm.startDate}
+                    onChange={(e) => setNewEngagementForm({ ...newEngagementForm, startDate: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>End Date</Label>
+                  <Input
+                    type="date"
+                    value={newEngagementForm.endDate}
+                    onChange={(e) => setNewEngagementForm({ ...newEngagementForm, endDate: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Scope / Description</Label>
+                <Input
+                  value={newEngagementForm.scope}
+                  onChange={(e) => setNewEngagementForm({ ...newEngagementForm, scope: e.target.value })}
+                />
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <Button variant="outline" type="button" onClick={() => setNewEngagementDialog(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createEngagement.isPending}>
+                  {createEngagement.isPending ? "Creating..." : "Create Engagement"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {!engagements || engagements.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
+        <Card className="flex-1 flex flex-col justify-center items-center">
+          <CardContent className="py-12 text-center flex flex-col justify-center items-center">
             <FileText className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
             <p className="font-medium text-muted-foreground">No engagements</p>
             <p className="text-sm text-muted-foreground mt-1">This contractor has no project engagements yet.</p>

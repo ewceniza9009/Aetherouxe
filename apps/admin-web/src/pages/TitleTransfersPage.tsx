@@ -229,7 +229,7 @@ export default function TitleTransfersPage() {
   const completed = transfers.filter((t) => t.status === "completed").length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight font-serif gold-text">Title Transfers</h1>
@@ -284,7 +284,7 @@ export default function TitleTransfersPage() {
               ))}
             </div>
           ) : transfers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center py-12 text-center min-h-[400px]">
               <ScrollText className="h-12 w-12 text-muted-foreground/40 mb-3" />
               <p className="font-medium">No title transfers in this stage</p>
               <p className="text-sm text-muted-foreground mt-1">

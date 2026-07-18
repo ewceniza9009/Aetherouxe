@@ -66,7 +66,7 @@ export default function EditProjectPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-96 w-full" />
       </div>
@@ -79,7 +79,7 @@ export default function EditProjectPage() {
         <Button variant="outline" size="sm" onClick={() => navigate({ to: "/projects" })}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
-        <Card>
+        <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
           <CardContent className="py-12 text-center">
             <p className="text-destructive font-medium">Project not found</p>
           </CardContent>

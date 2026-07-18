@@ -174,7 +174,7 @@ export default function LeasesPage() {
   const totalPages = meta?.totalPages ?? 1;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Lease Agreements</h1>

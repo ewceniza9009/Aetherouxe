@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   useReactTable,
   getCoreRowModel,
@@ -34,7 +42,7 @@ import {
   Eye,
   DollarSign,
 } from "lucide-react";
-import { useContractors, useEngagements } from "@/hooks/use-contractors";
+import { useContractors, useEngagements, useCreateContractor } from "@/hooks/use-contractors";
 import type { Contractor } from "@/hooks/use-contractors";
 import { formatCurrency } from "@/lib/agent-meta";
 
@@ -59,6 +67,31 @@ export default function ContractorsPage() {
   const { data: engagements } = useEngagements(
     engagementFilter ? { contractorId: engagementFilter } : {}
   );
+  
+  const createContractor = useCreateContractor();
+  const [newContractorDialog, setNewContractorDialog] = useState(false);
+  const [newContractorForm, setNewContractorForm] = useState({
+    companyName: "",
+    contactName: "",
+    email: "",
+    phone: "",
+    specialization: "",
+    licenseNumber: "",
+  });
+
+  const handleCreateContractor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await createContractor.mutateAsync(newContractorForm);
+    setNewContractorDialog(false);
+    setNewContractorForm({
+      companyName: "",
+      contactName: "",
+      email: "",
+      phone: "",
+      specialization: "",
+      licenseNumber: "",
+    });
+  };
 
   const columns = useMemo(() => [
     columnHelper.accessor("companyName", {
@@ -102,11 +135,11 @@ export default function ContractorsPage() {
         </span>
       ),
     }),
-    columnHelper.accessor("status", {
+    columnHelper.accessor("isActive", {
       header: "Status",
       cell: (info) => (
-        <Badge variant={info.getValue() === "active" ? "success" : info.getValue() === "suspended" ? "destructive" : "secondary"}>
-          {info.getValue()}
+        <Badge variant={info.getValue() ? "success" : "secondary"}>
+          {info.getValue() ? "Active" : "Inactive"}
         </Badge>
       ),
     }),
@@ -149,11 +182,11 @@ export default function ContractorsPage() {
 
   if (isError) {
     return (
-      <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Contractors</h1>
         </div>
-        <Card>
+        <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
           <CardContent className="py-12 text-center">
             <p className="text-destructive font-medium">Failed to load contractors</p>
           </CardContent>
@@ -169,9 +202,76 @@ export default function ContractorsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Contractors</h1>
           <p className="text-muted-foreground">Manage contractors, engagements, and payments</p>
         </div>
-        <Button onClick={() => navigate({ to: "/contractors" })}>
-          <Plus className="mr-2 h-4 w-4" /> New Contractor
-        </Button>
+        <Dialog open={newContractorDialog} onOpenChange={setNewContractorDialog}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> New Contractor
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>New Contractor</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateContractor} className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label>Company Name</Label>
+                <Input
+                  required
+                  value={newContractorForm.companyName}
+                  onChange={(e) => setNewContractorForm({ ...newContractorForm, companyName: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Contact Name</Label>
+                <Input
+                  value={newContractorForm.contactName}
+                  onChange={(e) => setNewContractorForm({ ...newContractorForm, contactName: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={newContractorForm.email}
+                    onChange={(e) => setNewContractorForm({ ...newContractorForm, email: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Phone</Label>
+                  <Input
+                    value={newContractorForm.phone}
+                    onChange={(e) => setNewContractorForm({ ...newContractorForm, phone: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Specialization</Label>
+                  <Input
+                    value={newContractorForm.specialization}
+                    onChange={(e) => setNewContractorForm({ ...newContractorForm, specialization: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>License Number</Label>
+                  <Input
+                    value={newContractorForm.licenseNumber}
+                    onChange={(e) => setNewContractorForm({ ...newContractorForm, licenseNumber: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <Button variant="outline" type="button" onClick={() => setNewContractorDialog(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createContractor.isPending}>
+                  {createContractor.isPending ? "Creating..." : "Create Contractor"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card>
@@ -213,7 +313,7 @@ export default function ContractorsPage() {
               ))}
             </div>
           ) : (data?.data ?? []).length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center py-12 text-center min-h-[400px]">
               <Building2 className="h-12 w-12 text-muted-foreground/40 mb-3" />
               <p className="font-medium">No contractors found</p>
               <p className="text-sm text-muted-foreground mt-1">
@@ -245,59 +345,58 @@ export default function ContractorsPage() {
                 </thead>
                 <tbody>
                   {table.getRowModel().rows.map((row) => (
-                    <tr key={row.id} className="border-b">
-                      <td
-                        colSpan={row.getVisibleCells().length}
-                        className="p-0"
+                    <Fragment key={row.id}>
+                      <tr 
+                        className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
+                        onClick={() => navigate({ to: `/contractors/${row.original.id}` })}
                       >
-                        <div
-                          className="flex items-center hover:bg-muted/30 cursor-pointer px-4 py-3 transition-colors"
-                          onClick={() => navigate({ to: `/contractors/${row.original.id}` })}
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <div key={cell.id} className="flex-1 px-0 py-0 text-sm" style={{ minWidth: cell.column.getSize() }}>
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </div>
-                          ))}
-                        </div>
-                        {expandedRow === row.original.id && engagements && (
-                          <div className="bg-muted/20 px-4 py-3 border-t">
-                            <p className="text-sm font-medium mb-2">Engagements</p>
-                            {engagements.length === 0 ? (
-                              <p className="text-sm text-muted-foreground">No engagements found.</p>
-                            ) : (
-                              <div className="space-y-2">
-                                {engagements.map((eng) => (
-                                  <div key={eng.id} className="flex items-center justify-between bg-background rounded-md border p-3">
-                                    <div>
-                                      <p className="text-sm font-medium">{eng.projectName || `Project ${eng.projectId}`}</p>
-                                       <p className="text-xs text-muted-foreground">{formatCurrency(Number(eng.contractAmount))} contract</p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <div className="text-right">
-                                         <p className="text-sm">{formatCurrency(Number(eng.paidAmount))} paid</p>
-                                        <p className="text-xs text-muted-foreground">
-                                          {eng.contractAmount > 0
-                                            ? `${((eng.paidAmount / eng.contractAmount) * 100).toFixed(0)}%`
-                                            : "0%"}
-                                        </p>
+                        {row.getVisibleCells().map((cell) => (
+                          <td key={cell.id} className="px-4 py-3 text-sm">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        ))}
+                      </tr>
+                      {expandedRow === row.original.id && engagements && (
+                        <tr className="border-b bg-muted/20">
+                          <td colSpan={row.getVisibleCells().length} className="p-0 border-t">
+                            <div className="px-4 py-3">
+                              <p className="text-sm font-medium mb-2">Engagements</p>
+                              {engagements.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">No engagements found.</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {engagements.map((eng) => (
+                                    <div key={eng.id} className="flex items-center justify-between bg-background rounded-md border p-3">
+                                      <div>
+                                        <p className="text-sm font-medium">{eng.projectName || `Project ${eng.projectId}`}</p>
+                                         <p className="text-xs text-muted-foreground">{formatCurrency(Number(eng.contractAmount))} contract</p>
                                       </div>
-                                      <Badge variant={
-                                        eng.status === "active" ? "default" :
-                                        eng.status === "completed" ? "success" :
-                                        eng.status === "terminated" ? "destructive" : "secondary"
-                                      }>
-                                        {eng.status}
-                                      </Badge>
+                                      <div className="flex items-center gap-3">
+                                        <div className="text-right">
+                                           <p className="text-sm">{formatCurrency(Number(eng.paidAmount))} paid</p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {eng.contractAmount > 0
+                                              ? `${((eng.paidAmount / eng.contractAmount) * 100).toFixed(0)}%`
+                                              : "0%"}
+                                          </p>
+                                        </div>
+                                        <Badge variant={
+                                          eng.status === "active" ? "default" :
+                                          eng.status === "completed" ? "success" :
+                                          eng.status === "terminated" ? "destructive" : "secondary"
+                                        }>
+                                          {eng.status}
+                                        </Badge>
+                                      </div>
                                     </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

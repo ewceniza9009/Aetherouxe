@@ -151,7 +151,7 @@ export default function AgentDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-40 w-full" />
         <Skeleton className="h-64 w-full" />
@@ -165,7 +165,7 @@ export default function AgentDetailPage() {
         <Button variant="outline" size="sm" onClick={() => navigate({ to: "/agents" })}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
-        <Card>
+        <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
           <CardContent className="py-12 text-center">
             <p className="text-destructive font-medium">Agent not found</p>
           </CardContent>

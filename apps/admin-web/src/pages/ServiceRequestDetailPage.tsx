@@ -225,7 +225,7 @@ export default function ServiceRequestDetailPage() {
   const terminal = request.status === "completed" || request.status === "cancelled";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -377,9 +377,9 @@ export default function ServiceRequestDetailPage() {
                           <th className="px-4 py-3 text-left font-semibold">Contractor</th>
                           <th className="px-4 py-3 text-right font-semibold">Est. Cost</th>
                           <th className="px-4 py-3 text-right font-semibold">Actual</th>
-                          <th className="px-4 py-3 font-semibold">Scheduled</th>
-                          <th className="px-4 py-3 font-semibold">Status</th>
-                          <th className="px-4 py-3 font-semibold text-right">Actions</th>
+                          <th className="px-4 py-3 text-left font-semibold">Scheduled</th>
+                          <th className="px-4 py-3 text-left font-semibold">Status</th>
+                          <th className="px-4 py-3 text-right font-semibold">Actions</th>
                         </tr>
                       </thead>
                       <tbody>

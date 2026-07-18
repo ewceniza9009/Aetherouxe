@@ -42,7 +42,7 @@ export default function EditLeasePage() {
 
   if (isLoading || !lease) {
     return (
-      <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
         <Skeleton className="h-10 w-40" />
         <Skeleton className="h-96 w-full" />
       </div>
@@ -55,7 +55,7 @@ export default function EditLeasePage() {
         <Button variant="outline" size="icon" onClick={() => navigate({ to: `/leases/${id}` })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <Card>
+        <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
           <CardContent className="py-12 text-center">
             <AlertCircle className="mx-auto h-8 w-8 text-destructive" />
             <p className="mt-3 font-semibold">Failed to load lease</p>

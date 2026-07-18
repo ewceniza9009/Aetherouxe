@@ -85,7 +85,7 @@ export default function NewUnitPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" onClick={() => navigate({ to: `/properties/${propertyId}/units` })}>
           <ArrowLeft className="h-4 w-4" />

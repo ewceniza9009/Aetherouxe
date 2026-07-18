@@ -66,7 +66,7 @@ export default function TenantDetailPage() {
   const isLoading = loadingUser || loadingLeases;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
       {/* Back */}
       <Button variant="outline" size="icon" onClick={() => navigate({ to: "/tenants" })}>
         <ArrowLeft className="h-4 w-4" />
@@ -103,7 +103,7 @@ export default function TenantDetailPage() {
           {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
         </div>
       ) : units.length === 0 ? (
-        <Card>
+        <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
           <CardContent className="py-12 text-center">
             <Home className="mx-auto h-8 w-8 text-muted-foreground" />
             <p className="mt-3 font-semibold">No units yet</p>

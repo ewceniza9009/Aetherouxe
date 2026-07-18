@@ -136,7 +136,7 @@ export default function UnitListPage() {
 
   if (error) {
     return (
-      <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
         <Button variant="outline" size="icon" onClick={() => navigate({ to: `/properties/${propertyId}` })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>

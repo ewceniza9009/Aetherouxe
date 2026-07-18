@@ -148,7 +148,7 @@ export default function SalesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div>

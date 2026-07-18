@@ -71,7 +71,7 @@ export class NotificationsService {
         const ok = await this.upsert(refId, 'admin', {
           type: 'rent_overdue',
           title: 'Rent overdue',
-          message: `Rent overdue from ${name}: ${owed.toFixed(2)} due ${dueStr}`,
+          message: `Rent overdue from ${name}: ${owed.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} due ${dueStr}`,
           link: '/leases',
           tenantId: platformTenantId,
         });
@@ -80,7 +80,7 @@ export class NotificationsService {
         const ok = await this.upsert(refId, 'resident', {
           type: 'rent_due',
           title: 'Rent due soon',
-          message: `Your rent of ${owed.toFixed(2)} is due ${dueStr}`,
+          message: `Your rent of ${owed.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} is due ${dueStr}`,
           link: '/',
           tenantId: platformTenantId,
           userId: p.leaseAgreement?.tenantUserId ?? null,
@@ -138,7 +138,7 @@ export class NotificationsService {
       const ok = await this.upsert(refId, 'admin', {
         type: 'collection_case',
         title: 'Collection case active',
-        message: `Collection case is ${cc.status} with ${this.toNum(cc.totalOutstanding).toFixed(2)} outstanding`,
+        message: `Collection case is ${cc.status} with ${this.toNum(cc.totalOutstanding).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} outstanding`,
         link: `/collections/cases/${cc.id}`,
         tenantId: cc.tenantId ?? null,
       });
