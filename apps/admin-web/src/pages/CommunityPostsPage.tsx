@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import { useState } from "react";
 import { useListQuery } from "@/hooks/use-list-query";
 import { GridToolbar, GridState } from "@/components/GridToolbar";
@@ -108,7 +109,7 @@ const EMPTY_FORM: PostForm = {
 
 export default function CommunityPostsPage() {
   return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
       <div>
         <h1 className="font-serif text-3xl font-bold tracking-tight">Community</h1>
         <p className="text-muted-foreground">
@@ -686,7 +687,7 @@ function CommentsTab() {
         ) : comments.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
             <MessageSquare className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">No comments found.</p>
+            <EmptyState title="No comments found" />
           </div>
         ) : (
           <div className="space-y-3">

@@ -124,7 +124,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground">Configure your organization, currency, locale, and fiscal calendar</p>

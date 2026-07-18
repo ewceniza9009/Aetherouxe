@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
 
   if (isLoading) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
         <Skeleton className="h-12 w-72" />
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {Array.from({ length: 9 }).map((_, i) => (

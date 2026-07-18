@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import { useState, useMemo, Fragment } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useListQuery } from "@/hooks/use-list-query";
@@ -82,7 +83,7 @@ export default function ContractorsPage() {
 
   if (isError) {
     return (
-      <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+      <div className="space-y-6 flex flex-col ">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Contractors</h1>
         </div>
@@ -292,7 +293,7 @@ export default function ContractorsPage() {
                             <div className="px-4 py-3">
                               <p className="text-sm font-medium mb-2">Engagements</p>
                               {engagements.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">No engagements found.</p>
+                                <EmptyState title="No engagements found" />
                               ) : (
                                 <div className="space-y-2">
                                   {engagements.map((eng) => (

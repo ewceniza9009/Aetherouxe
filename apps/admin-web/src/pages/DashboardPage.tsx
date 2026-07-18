@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -158,7 +159,7 @@ export default function DashboardPage() {
   const unsignedDocuments = documents.filter((d) => !d.isSigned).length;
 
   return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -392,7 +393,7 @@ export default function DashboardPage() {
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center border-2 border-dashed rounded-lg border-border">
-                  <p className="text-muted-foreground">No revenue data yet</p>
+                  <EmptyState title="No revenue data yet" />
                 </div>
               )}
             </div>
@@ -417,7 +418,7 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-4">
                 {(recentProperties?.data ?? []).length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">No properties yet.</p>
+                  <EmptyState title="No properties yet" />
                 ) : (
                   (recentProperties?.data ?? []).map((prop) => (
                     <div

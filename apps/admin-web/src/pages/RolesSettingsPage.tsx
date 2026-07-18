@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -193,12 +194,7 @@ export function RolesSettingsPage() {
           {loading ? (
             <div className="py-20 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
           ) : roles.length === 0 ? (
-            <div className="text-center py-20 border rounded-xl bg-muted/20">
-              <ShieldAlert className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-4" />
-              <h3 className="text-lg font-medium">No custom roles found</h3>
-              <p className="text-muted-foreground mt-1 mb-4">Create your first role to start managing granular permissions.</p>
-              <Button variant="outline" onClick={openCreateForm}>Create First Role</Button>
-            </div>
+            <EmptyState title="No custom roles found" description="Create your first role to start managing granular permissions." action={<Button variant="outline" onClick={openCreateForm}>Create First Role</Button>} />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {roles.map(role => (

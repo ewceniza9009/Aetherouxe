@@ -130,7 +130,7 @@ export default function StatementsPage() {
   };
 
   return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="font-serif text-3xl font-bold tracking-tight">Statements</h1>

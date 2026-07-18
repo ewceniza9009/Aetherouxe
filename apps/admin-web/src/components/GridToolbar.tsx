@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Loader2 } from "lucide-react";
@@ -92,9 +93,7 @@ export function GridState({
     return (
       <>
         {emptyState ?? (
-          <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-            <p className="text-sm text-muted-foreground">No results found.</p>
-          </div>
+          <EmptyState />
         )}
       </>
     );

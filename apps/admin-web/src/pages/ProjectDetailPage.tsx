@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import React, { useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -137,7 +138,7 @@ export default function ProjectDetailPage() {
 
   if (isLoading) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-48 w-full" />
       </div>
@@ -150,168 +151,7 @@ export default function ProjectDetailPage() {
         <Button variant="outline" size="sm" onClick={() => navigate({ to: "/projects" })}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
-        <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
-          <CardContent className="py-12 text-center">
-            <p className="text-destructive font-medium">Project not found</p>
-            <p className="text-sm text-muted-foreground mt-1">This project may have been removed.</p>
-            <Button className="mt-4" variant="outline" onClick={() => navigate({ to: "/projects" })}>
-              Go to Projects
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const budgetList = budgetsData?.data ?? [];
-  const phaseList = phases ?? [];
-
-  // Derived completion from phase progress (no fictional field)
-  const completion = phaseList.length
-    ? Math.round(phaseList.reduce((s, p) => s + p.progress, 0) / phaseList.length)
-    : project.status === "completed" || project.status === "turnover"
-      ? 100
-      : 0;
-
-  const totalPlanned = budgetList.reduce((s, b) => s + (b.totalPlanned || 0), 0);
-  const totalActual = budgetList.reduce((s, b) => s + (b.totalActual || 0), 0);
-
-  const tabTrigger = "px-4 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-colors";
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigate({ to: "/projects" })}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-11 w-11 rounded-lg border border-border/50 shrink-0">
-              {project.projectLogoUrl && (
-                <AvatarImage src={project.projectLogoUrl} alt={project.name} className="object-cover" />
-              )}
-              <AvatarFallback className="rounded-lg bg-muted/50 text-muted-foreground font-medium">
-                <Building2 className="h-5 w-5 opacity-50" />
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
-                <Badge variant={statusVariant[project.status] ?? "secondary"}>
-                  {projectStatusLabels[project.status as ProjectStatus] ?? project.status}
-                </Badge>
-              </div>
-              <p className="text-muted-foreground">{projectTypeLabels[project.projectType] ?? project.projectType}</p>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => navigate({ to: `/projects/${id}/edit` })}>
-            <Edit className="mr-2 h-4 w-4" /> Edit
-          </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={deleteProject.isPending}>
-            <Trash2 className="mr-2 h-4 w-4" /> Delete
-          </Button>
-        </div>
-      </div>
-
-      <Tabs.Root value={tab} onValueChange={setTab} className="space-y-4">
-        <Tabs.List className="flex border-b overflow-x-auto">
-          <Tabs.Trigger value="overview" className={tabTrigger}>Overview</Tabs.Trigger>
-          <Tabs.Trigger value="gallery" className={tabTrigger}>Gallery ({images?.length ?? 0})</Tabs.Trigger>
-          <Tabs.Trigger value="phases" className={tabTrigger}>Phases ({phaseList.length})</Tabs.Trigger>
-          <Tabs.Trigger value="inventory" className={tabTrigger}>Inventory ({inventory?.totals.units ?? 0})</Tabs.Trigger>
-          <Tabs.Trigger value="budgets" className={tabTrigger}>Budgets ({budgetList.length})</Tabs.Trigger>
-          <Tabs.Trigger value="timeline" className={tabTrigger}>Timeline</Tabs.Trigger>
-        </Tabs.List>
-
-        {/* ── Overview ── */}
-        <Tabs.Content value="overview" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Project Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {project.description && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Description</p>
-                  <p className="mt-1">{project.description}</p>
-                </div>
-              )}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Target Start</p>
-                  <p className="font-medium flex items-center gap-1 mt-1">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    {fmtDate(project.targetStartDate)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Target Completion</p>
-                  <p className="font-medium flex items-center gap-1 mt-1">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    {fmtDate(project.targetCompletionDate)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Address</p>
-                  <p className="font-medium flex items-center gap-1 mt-1">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    {project.address || "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Completion (from phases)</p>
-                  <p className="font-medium mt-1">{completion}%</p>
-                </div>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2.5">
-                <div
-                  className={`h-2.5 rounded-full transition-all ${completion >= 100 ? "bg-green-500" : "bg-primary"}`}
-                  style={{ width: `${completion}%` }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-4 md:grid-cols-4">
-            <StatCard icon={<DollarSign className="h-5 w-5 text-muted-foreground" />} label="Total Planned" value={totalPlanned ? formatCurrency(totalPlanned) : "—"} />
-            <StatCard icon={<TrendingUp className="h-5 w-5 text-muted-foreground" />} label="Total Spent" value={totalActual ? formatCurrency(totalActual) : "—"} />
-            <StatCard icon={<Layers className="h-5 w-5 text-muted-foreground" />} label="Phases" value={String(phaseList.length)} />
-            <StatCard icon={<Package className="h-5 w-5 text-muted-foreground" />} label="Units" value={String(inventory?.totals.units ?? 0)} />
-          </div>
-        </Tabs.Content>
-
-        {/* ── Gallery ── */}
-        <Tabs.Content value="gallery" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold tracking-tight">Image Gallery</h2>
-              <p className="text-muted-foreground text-sm">Manage photos and renderings for this project.</p>
-            </div>
-            <div className="relative">
-              <Button disabled={uploadImage.isPending}>
-                {uploadImage.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageIcon className="mr-2 h-4 w-4" />}
-                Upload Photo
-              </Button>
-              <input 
-                type="file" 
-                accept="image/*" 
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
-                onChange={handleImageUpload}
-                disabled={uploadImage.isPending}
-              />
-            </div>
-          </div>
-          
-          {!images?.length ? (
-            <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
-              <CardContent className="py-12 text-center">
-                <ImageIcon className="mx-auto h-8 w-8 text-muted-foreground/50 mb-3" />
-                <p className="font-medium">No images uploaded</p>
-                <p className="text-sm text-muted-foreground">Upload some photos to create a gallery.</p>
-              </CardContent>
-            </Card>
+        <EmptyState icon={<ImageIcon className="w-8 h-8 opacity-80" />} title="No images uploaded" description="Upload some photos to create a gallery." />
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {images.map(img => (

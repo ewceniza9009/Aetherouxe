@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "@tanstack/react-router";
@@ -25,7 +26,7 @@ export default function PropertyDetailPage() {
 
   if (error) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
         <Button variant="outline" size="icon" onClick={() => navigate({ to: "/properties" })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -327,7 +328,7 @@ export default function PropertyDetailPage() {
           {!unitsResult?.data?.length ? (
             <div className="text-center py-8 text-muted-foreground">
               <Building2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No units yet</p>
+              <EmptyState title="No units yet" />
               <p className="text-sm">
                 <Button variant="link" className="p-0 h-auto" onClick={() => navigate({ to: `/properties/${id}/units/new` })}>
                   Create the first unit
@@ -449,7 +450,7 @@ function ShowcaseTab({ property }: { property: any }) {
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center">
             <ImageIcon className="h-12 w-12 mb-4 opacity-50" />
-            <h3 className="text-lg font-medium text-foreground">No images uploaded yet</h3>
+            <EmptyState title="No images uploaded yet" />
             <p className="mt-1 max-w-md">Upload high-quality images to showcase this property to potential buyers and tenants.</p>
             <Button variant="outline" className="mt-6" onClick={() => fileInputRef.current?.click()}>
               Select a Photo

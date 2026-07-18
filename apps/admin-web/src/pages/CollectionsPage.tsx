@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Card,
@@ -70,7 +71,7 @@ export default function CollectionsPage() {
   const recentCases = casesRows.slice(0, 8);
 
   return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="font-serif text-3xl font-bold tracking-tight">Collections</h1>
@@ -231,7 +232,7 @@ export default function CollectionsPage() {
           ) : recentCases.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
               <FolderOpen className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No collection cases yet.</p>
+              <EmptyState title="No collection cases yet" />
             </div>
           ) : (
             <div className="rounded-md border scroll-grid">

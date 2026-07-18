@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { formatCurrency } from "@/lib/agent-meta";
@@ -66,7 +67,7 @@ export default function TenantDetailPage() {
   const isLoading = loadingUser || loadingLeases;
 
   return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
       {/* Back */}
       <Button variant="outline" size="icon" onClick={() => navigate({ to: "/tenants" })}>
         <ArrowLeft className="h-4 w-4" />
@@ -103,13 +104,7 @@ export default function TenantDetailPage() {
           {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
         </div>
       ) : units.length === 0 ? (
-        <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
-          <CardContent className="py-12 text-center">
-            <Home className="mx-auto h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 font-semibold">No units yet</p>
-            <p className="text-sm text-muted-foreground">This tenant has no leases or units assigned.</p>
-          </CardContent>
-        </Card>
+        <EmptyState title="No units yet" description="This tenant has no leases or units assigned." />
       ) : (
         <div className="unit-detail-grid grid gap-4 lg:grid-cols-[320px_1fr]">
           {/* ── Left: Unit list ── */}
@@ -245,13 +240,9 @@ function UnitDetail({
             ) : rto ? (
               <FinancingRto rto={rto} navigate={navigate} />
             ) : (
-              <div className="py-12 text-center">
-                <Calculator className="mx-auto h-8 w-8 text-muted-foreground" />
-                <p className="mt-3 font-semibold">No financing yet</p>
-                <p className="text-sm text-muted-foreground">
+              <EmptyState title="No financing yet" description="
                   This lease has no mortgage or rent-to-own plan attached.
-                </p>
-              </div>
+                " />
             )}
           </TabsContent>
         </Tabs>
@@ -339,9 +330,7 @@ function FinancingMortgage({
             </table>
           </div>
       ) : (
-        <div className="py-10 text-center">
-          <p className="text-sm text-muted-foreground">No amortization schedule generated yet.</p>
-        </div>
+        <EmptyState title="No amortization schedule generated yet" />
       )}
         </TabsContent>
       </Tabs>
@@ -464,9 +453,7 @@ function FinancingRto({
               </table>
             </div>
           ) : (
-            <div className="py-10 text-center">
-              <p className="text-sm text-muted-foreground">No equity transactions recorded yet.</p>
-            </div>
+            <EmptyState title="No equity transactions recorded yet" />
           )}
         </TabsContent>
       </Tabs>

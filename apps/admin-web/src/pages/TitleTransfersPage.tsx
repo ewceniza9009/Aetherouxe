@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useListQuery } from "@/hooks/use-list-query";
 import { GridState } from "@/components/GridToolbar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -239,7 +240,7 @@ export default function TitleTransfersPage() {
   const completed = transfers.filter((t) => t.status === "completed").length;
 
   return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight font-serif gold-text">Title Transfers</h1>
@@ -283,21 +284,19 @@ export default function TitleTransfersPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <GridState
-            isLoading={isLoading}
-            isError={isError}
-            isEmpty={transfers.length === 0}
-            onRetry={() => {}}
-            emptyState={
-              <div className="flex-1 flex flex-col items-center justify-center py-12 text-center min-h-[400px]">
-                <ScrollText className="h-12 w-12 text-muted-foreground/40 mb-3" />
-                <p className="font-medium">No title transfers in this stage</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Create a transfer to begin tracking ownership handover.
-                </p>
-              </div>
-            }
-          >
+            <GridState
+              isLoading={isLoading}
+              isError={isError}
+              isEmpty={transfers.length === 0}
+              onRetry={() => {}}
+              emptyState={
+                <EmptyState 
+                  title="No title transfers in this stage"
+                  description="Create a transfer to begin tracking ownership handover."
+                  icon={<ScrollText className="w-12 h-12 opacity-80" />}
+                />
+              }
+            >
             <div className="rounded-md border scroll-grid overflow-x-auto">
               <Table>
                 <TableHeader>

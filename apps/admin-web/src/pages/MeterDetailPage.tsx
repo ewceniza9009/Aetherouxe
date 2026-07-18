@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import * as Tabs from "@radix-ui/react-tabs";
@@ -120,7 +121,7 @@ export default function MeterDetailPage() {
 
   if (isError) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
         <Button variant="outline" size="icon" onClick={() => navigate({ to: "/meters" })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -252,7 +253,7 @@ export default function MeterDetailPage() {
                   ))}
                 </div>
               ) : readingsSorted.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">No readings recorded yet.</p>
+                <EmptyState title="No readings recorded yet" />
               ) : (
                 <Table>
                   <TableHeader>
@@ -310,7 +311,7 @@ export default function MeterDetailPage() {
             </CardHeader>
             <CardContent>
               {bills.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">No bills generated yet.</p>
+                <EmptyState title="No bills generated yet" />
               ) : (
                 <Table>
                   <TableHeader>

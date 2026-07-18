@@ -50,7 +50,7 @@ export default function ProjectsPage() {
 
   if (isError) {
     return (
-      <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+      <div className="space-y-6 flex flex-col ">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Development Projects</h1>
         </div>

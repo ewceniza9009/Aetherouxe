@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import { useState, useCallback } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { GridState } from "@/components/GridToolbar";
@@ -133,7 +134,7 @@ export default function FloorListPage() {
             onRetry={() => {}}
             emptyState={
               <div className="text-center py-12">
-                <p className="text-lg font-semibold text-muted-foreground">No floors added yet</p>
+                <EmptyState title="No floors added yet" />
                 <p className="text-sm text-muted-foreground">Add a floor using the form above.</p>
               </div>
             }

@@ -127,7 +127,7 @@ export default function EditUnitPage() {
 
   if (isLoading) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
         <div className="flex items-center gap-4">
           <Skeleton className="h-10 w-10 rounded-md" />
           <Skeleton className="h-8 w-64" />

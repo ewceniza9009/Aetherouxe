@@ -153,7 +153,7 @@ export default function CollectionCaseDetailPage() {
 
   if (isLoading) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
         <Skeleton className="h-24 w-full" />
         <div className="grid gap-4 md:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (

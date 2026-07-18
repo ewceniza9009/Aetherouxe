@@ -61,7 +61,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
       <div className="flex items-center gap-6">
         <AvatarUpload
           userId={user?.id ?? ""}

@@ -66,7 +66,7 @@ export default function EditProjectPage() {
 
   if (isLoading) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-96 w-full" />
       </div>

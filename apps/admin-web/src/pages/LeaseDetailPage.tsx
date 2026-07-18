@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import { useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { formatCurrency } from "@/lib/agent-meta";
@@ -106,7 +107,7 @@ export default function LeaseDetailPage() {
 
   if (error) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
         <Button variant="outline" size="icon" onClick={() => navigate({ to: "/leases" })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -307,7 +308,7 @@ export default function LeaseDetailPage() {
                   ))}
                 </div>
               ) : (payments ?? []).length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No payments recorded yet.</p>
+                <EmptyState title="No payments recorded yet" />
               ) : (
                 <div className="rounded-md border scroll-grid">
                   <table className="w-full">
@@ -381,7 +382,7 @@ export default function LeaseDetailPage() {
                 </div>
               ) : (scenariosData?.data ?? []).length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground">No scenarios generated yet.</p>
+                  <EmptyState title="No scenarios generated yet" />
                   <Button variant="outline" size="sm" className="mt-3" onClick={() => setGenerateOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" /> Generate First Scenario
                   </Button>

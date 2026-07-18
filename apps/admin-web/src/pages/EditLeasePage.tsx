@@ -42,7 +42,7 @@ export default function EditLeasePage() {
 
   if (isLoading || !lease) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
         <Skeleton className="h-10 w-40" />
         <Skeleton className="h-96 w-full" />
       </div>

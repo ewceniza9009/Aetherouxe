@@ -192,7 +192,7 @@ export default function CollectionCasesPage() {
   }
 
   return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-serif text-3xl font-bold tracking-tight">Collection Cases</h1>

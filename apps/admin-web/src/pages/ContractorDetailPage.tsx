@@ -144,7 +144,7 @@ export default function ContractorDetailPage() {
 
   if (isLoading) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-48 w-full" />
       </div>
@@ -167,7 +167,7 @@ export default function ContractorDetailPage() {
   }
 
   return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" onClick={() => navigate({ to: "/contractors" })}>
           <ArrowLeft className="h-4 w-4" />

@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import { useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -115,7 +116,7 @@ export default function BudgetDetailPage() {
 
   if (isLoading) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-32 w-full" />
         <Skeleton className="h-64 w-full" />
@@ -282,11 +283,7 @@ export default function BudgetDetailPage() {
         </CardHeader>
         <CardContent>
           {lineItems.length === 0 ? (
-            <div className="py-8 text-center">
-              <DollarSign className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
-              <p className="font-medium text-muted-foreground">No line items yet</p>
-              <p className="text-sm text-muted-foreground mt-1">Add your first budget line item.</p>
-            </div>
+            <EmptyState title="No line items yet" description="Add your first budget line item." />
           ) : (
             <div className="rounded-md border scroll-grid">
               <table className="w-full">

@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/ui/empty-state";
 import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -225,7 +226,7 @@ export default function ServiceRequestDetailPage() {
   const terminal = request.status === "completed" || request.status === "cancelled";
 
   return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -365,10 +366,7 @@ export default function ServiceRequestDetailPage() {
                     ))}
                   </div>
                 ) : workOrders.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <Wrench className="mx-auto h-8 w-8 text-muted-foreground/30" />
-                    <p className="mt-3 text-sm text-muted-foreground">No work orders created yet.</p>
-                  </div>
+                  <EmptyState title="No work orders created yet" />
                 ) : (
                   <div className="rounded-lg border border-border/60 overflow-hidden">
                     <table className="w-full text-sm">
@@ -447,10 +445,7 @@ export default function ServiceRequestDetailPage() {
               </CardHeader>
               <CardContent>
                 {workOrders.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <MessageSquare className="mx-auto h-8 w-8 text-muted-foreground/30" />
-                    <p className="mt-3 text-sm text-muted-foreground">No activity recorded yet.</p>
-                  </div>
+                  <EmptyState title="No activity recorded yet" />
                 ) : (
                   <ol className="relative border-l border-border/60 pl-8 space-y-6">
                     {workOrders.map((w: WorkOrder) => (

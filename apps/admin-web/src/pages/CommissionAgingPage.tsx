@@ -51,7 +51,7 @@ export default function CommissionAgingPage() {
 
   if (isLoading) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
         <Skeleton className="h-28 w-full" />
         <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => (

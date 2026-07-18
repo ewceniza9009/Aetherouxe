@@ -87,7 +87,7 @@ export default function DocumentDetailPage() {
 
   if (isError) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+    <div className="space-y-6 flex flex-col ">
         <Button variant="outline" size="icon" onClick={() => navigate({ to: "/documents" })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
