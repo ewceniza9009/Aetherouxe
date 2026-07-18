@@ -43,6 +43,7 @@ import {
   AlarmClock,
   Zap,
   LineChart,
+  HardHat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -99,6 +100,8 @@ const navGroups: NavGroup[] = [
     icon: <Wallet size={16} />,
     items: [
       { label: "Finance", icon: <Landmark size={18} />, path: "/finance", kind: "setup" },
+      { label: "General Ledger", icon: <PieChart size={18} />, path: "/finance/ledger", kind: "setup" },
+      { label: "Disbursements (AP)", icon: <Wallet size={18} />, path: "/finance/disbursements", kind: "txn" },
       { label: "Meters & Billing", icon: <Gauge size={18} />, path: "/meters", kind: "setup" },
       { label: "Collections", icon: <BellRing size={18} />, path: "/collections", kind: "txn" },
       { label: "Collection Cases", icon: <Scale size={18} />, path: "/collections/cases", kind: "txn" },
@@ -113,6 +116,7 @@ const navGroups: NavGroup[] = [
     icon: <Activity size={16} />,
     items: [
       { label: "Documents", icon: <Folders size={18} />, path: "/documents", kind: "setup" },
+      { label: "Contractors", icon: <HardHat size={18} />, path: "/contractors", kind: "setup" },
       { label: "Community", icon: <Megaphone size={18} />, path: "/community-posts", kind: "txn" },
       { label: "Service Requests", icon: <Wrench size={18} />, path: "/service-requests", kind: "txn" },
       { label: "Payment Reminders", icon: <AlarmClock size={18} />, path: "/payment-reminders", kind: "txn" },
@@ -132,6 +136,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Users", icon: <UserCog size={18} />, path: "/users", kind: "setup" },
       { label: "Settings", icon: <Settings size={18} />, path: "/settings", kind: "setup" },
+      { label: "Roles", icon: <ShieldCheck size={18} />, path: "/settings/roles", kind: "setup" },
       { label: "Profile", icon: <IdCard size={18} />, path: "/profile", kind: "txn" },
     ],
   },

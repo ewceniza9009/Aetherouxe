@@ -251,6 +251,51 @@ async function main() {
     },
   });
 
+  // Base Chart of Accounts
+  console.log('Seeding Chart of Accounts...');
+  const coas = [
+    { accountCode: '1000', name: 'Operating Cash', type: 'asset' as any },
+    { accountCode: '1200', name: 'Accounts Receivable', type: 'asset' as any },
+    { accountCode: '2000', name: 'Accounts Payable', type: 'liability' as any },
+    { accountCode: '4000', name: 'Rental Income', type: 'revenue' as any },
+    { accountCode: '4100', name: 'Sales Income', type: 'revenue' as any },
+    { accountCode: '5000', name: 'Maintenance Expense', type: 'expense' as any },
+    { accountCode: '5100', name: 'Commission Expense', type: 'expense' as any },
+  ];
+
+  for (const acc of coas) {
+    await prisma.chartOfAccount.upsert({
+      where: { tenantId_accountCode: { tenantId: tenant.id, accountCode: acc.accountCode } },
+      update: {},
+      create: {
+        tenantId: tenant.id,
+        accountCode: acc.accountCode,
+        name: acc.name,
+        type: acc.type,
+      }
+    });
+  }
+
+  // Financial Mappings
+  const cashAcc = await prisma.chartOfAccount.findFirst({ where: { tenantId: tenant.id, accountCode: '1000' } });
+  const arAcc = await prisma.chartOfAccount.findFirst({ where: { tenantId: tenant.id, accountCode: '1200' } });
+  const apAcc = await prisma.chartOfAccount.findFirst({ where: { tenantId: tenant.id, accountCode: '2000' } });
+  const rentAcc = await prisma.chartOfAccount.findFirst({ where: { tenantId: tenant.id, accountCode: '4000' } });
+  const salesAcc = await prisma.chartOfAccount.findFirst({ where: { tenantId: tenant.id, accountCode: '4100' } });
+  const maintAcc = await prisma.chartOfAccount.findFirst({ where: { tenantId: tenant.id, accountCode: '5000' } });
+  const commAcc = await prisma.chartOfAccount.findFirst({ where: { tenantId: tenant.id, accountCode: '5100' } });
+
+  if (cashAcc && arAcc && apAcc && rentAcc && salesAcc && maintAcc && commAcc) {
+    await prisma.financialMapping.deleteMany({ where: { tenantId: tenant.id } });
+    await prisma.financialMapping.createMany({
+      data: [
+        { tenantId: tenant.id, transactionType: 'WORK_ORDER_COMPLETED', debitAccountId: maintAcc.id, creditAccountId: apAcc.id },
+        { tenantId: tenant.id, transactionType: 'COMMISSION_APPROVED', debitAccountId: commAcc.id, creditAccountId: apAcc.id },
+        { tenantId: tenant.id, transactionType: 'SALE_CONTRACT_SIGNED', debitAccountId: arAcc.id, creditAccountId: salesAcc.id },
+      ],
+    });
+  }
+
   const pmP = person();
   await prisma.user.create({
     data: {
@@ -1238,8 +1283,11 @@ async function main() {
         requestedAt: faker.date.past({ years: 1 }),
         scheduledAt: chance(0.5) ? faker.date.soon({ days: 14 }) : null,
         completedAt: status === ServiceStatus.completed ? faker.date.recent({ days: 30 }) : null,
-        assignedToId: chance(0.6) ? pick(agents).user.id : null,
-        assignedToType: chance(0.6) ? 'agent' : null,
+        ...(chance(0.6) 
+          ? chance(0.5)
+            ? { assignedToId: pick(agents).user.id, assignedToType: 'agent' }
+            : { assignedToId: pick(contractors).id, assignedToType: 'contractor' }
+          : { assignedToId: null, assignedToType: null }),
         resolutionNotes: status === ServiceStatus.completed ? faker.lorem.sentence() : null,
       },
     });
@@ -1250,6 +1298,7 @@ async function main() {
       await prisma.maintenanceWorkOrder.create({
         data: {
           serviceRequestId: req.id,
+          vendorId: pick(contractors).id,
           scheduledDate: chance(0.7) ? faker.date.soon({ days: 21 }) : null,
           estimatedCost: est,
           actualCost: woStatus === 'completed' ? Math.round(est * (0.8 + Math.random() * 0.4)) : null,

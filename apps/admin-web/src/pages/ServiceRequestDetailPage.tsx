@@ -38,20 +38,25 @@ import {
   FileText,
   Wrench,
   MessageSquare,
+  Trash2,
+  Edit2
 } from "lucide-react";
 import { formatCurrency } from "@/lib/agent-meta";
 import {
   useServiceRequest,
+  useWorkOrders,
+  useCreateWorkOrder,
+  useUpdateWorkOrder,
+  useDeleteWorkOrder,
   useAssignRequest,
   useCompleteRequest,
   useCancelRequest,
-  useWorkOrders,
-  useCreateWorkOrder,
   type ServiceCategory,
   type ServicePriority,
   type WorkOrder,
   type WorkOrderStatus,
 } from "@/hooks/use-service-requests";
+import { useContractors } from "@/hooks/use-contractors";
 
 const priorityMeta: Record<ServicePriority, { label: string; className: string }> = {
   low: { label: "Low", className: "bg-slate-100 text-slate-700 border-slate-200" },
@@ -101,11 +106,17 @@ export default function ServiceRequestDetailPage() {
   const complete = useCompleteRequest();
   const cancel = useCancelRequest();
   const createWorkOrder = useCreateWorkOrder();
+  const updateWorkOrder = useUpdateWorkOrder();
+  const deleteWorkOrder = useDeleteWorkOrder();
+
+  const { data: contractorsData } = useContractors({ limit: 100 });
+  const contractors = contractorsData?.data || [];
 
   const [assignOpen, setAssignOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [woOpen, setWoOpen] = useState(false);
+  const [woEditingId, setWoEditingId] = useState<string | null>(null);
 
   const [assignForm, setAssignForm] = useState({ assignedToId: "", assignedToType: "" });
   const [resolutionNotes, setResolutionNotes] = useState("");
@@ -185,8 +196,8 @@ export default function ServiceRequestDetailPage() {
     setResolutionNotes("");
   };
 
-  const handleCreateWo = async () => {
-    await createWorkOrder.mutateAsync({
+  const handleSubmitWo = async () => {
+    const payload = {
       serviceRequestId: request.id,
       vendorId: woForm.vendorId || undefined,
       estimatedCost: woForm.estimatedCost ? Number(woForm.estimatedCost) : undefined,
@@ -194,24 +205,36 @@ export default function ServiceRequestDetailPage() {
       scheduledDate: woForm.scheduledDate || undefined,
       notes: woForm.notes || undefined,
       status: woForm.status,
-    });
+    };
+    if (woEditingId) {
+      await updateWorkOrder.mutateAsync({ id: woEditingId, ...payload });
+    } else {
+      await createWorkOrder.mutateAsync(payload);
+    }
     setWoOpen(false);
+    setWoEditingId(null);
     setWoForm({ vendorId: "", estimatedCost: "", actualCost: "", scheduledDate: "", notes: "", status: "scheduled" });
+  };
+
+  const handleDeleteWo = async (id: string) => {
+    if (confirm("Are you sure you want to delete this work order?")) {
+      await deleteWorkOrder.mutateAsync(id);
+    }
   };
 
   const terminal = request.status === "completed" || request.status === "cancelled";
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="space-y-6">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-8 py-5 border-b border-border/60 bg-card/50 backdrop-blur-sm shrink-0">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate({ to: "/service-requests" })}>
-            <ArrowLeft className="h-5 w-5" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="icon" onClick={() => navigate({ to: "/service-requests" })}>
+            <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight">
+              <h1 className="font-serif text-2xl font-bold tracking-tight">
                 #{request.id.slice(0, 8).toUpperCase()}
               </h1>
               <Badge variant={statusMeta[request.status].variant}>
@@ -240,9 +263,6 @@ export default function ServiceRequestDetailPage() {
           </div>
         )}
       </div>
-
-      {/* ── Content ── */}
-      <div className="flex-1 overflow-auto p-8 space-y-6">
         {/* Summary Cards */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
@@ -328,7 +348,11 @@ export default function ServiceRequestDetailPage() {
                     <CardTitle className="text-sm font-semibold">Work Orders</CardTitle>
                     <p className="text-xs text-muted-foreground mt-0.5">Vendor work for this request</p>
                   </div>
-                  <Button size="sm" className="h-8 text-xs" onClick={() => setWoOpen(true)}>
+                  <Button size="sm" className="h-8 text-xs" onClick={() => {
+                    setWoEditingId(null);
+                    setWoForm({ vendorId: "", estimatedCost: "", actualCost: "", scheduledDate: "", notes: "", status: "scheduled" });
+                    setWoOpen(true);
+                  }}>
                     <Plus className="mr-1.5 h-3.5 w-3.5" /> New Work Order
                   </Button>
                 </div>
@@ -355,12 +379,13 @@ export default function ServiceRequestDetailPage() {
                           <th className="px-4 py-3 text-right font-semibold">Actual</th>
                           <th className="px-4 py-3 font-semibold">Scheduled</th>
                           <th className="px-4 py-3 font-semibold">Status</th>
+                          <th className="px-4 py-3 font-semibold text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {workOrders.map((w: WorkOrder) => (
                           <tr key={w.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
-                            <td className="px-4 py-3 font-medium text-sm">{w.vendorId || "—"}</td>
+                            <td className="px-4 py-3 font-medium text-sm">{w.vendor?.companyName || "—"}</td>
                             <td className="px-4 py-3 text-right tabular-nums text-sm">
                               {w.estimatedCost != null ? money(w.estimatedCost) : "—"}
                             </td>
@@ -374,6 +399,35 @@ export default function ServiceRequestDetailPage() {
                               <Badge variant={woStatusMeta[w.status].variant} className="text-[10px]">
                                 {woStatusMeta[w.status].label}
                               </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => {
+                                  setWoEditingId(w.id);
+                                  setWoForm({
+                                    vendorId: w.vendorId || "",
+                                    estimatedCost: w.estimatedCost?.toString() || "",
+                                    actualCost: w.actualCost?.toString() || "",
+                                    scheduledDate: w.scheduledDate ? new Date(w.scheduledDate).toISOString().slice(0, 16) : "",
+                                    notes: w.notes || "",
+                                    status: w.status,
+                                  });
+                                  setWoOpen(true);
+                                }}
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                                onClick={() => handleDeleteWo(w.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </td>
                           </tr>
                         ))}
@@ -403,12 +457,31 @@ export default function ServiceRequestDetailPage() {
                       <li key={w.id} className="relative">
                         <span className="absolute -left-[31px] top-1.5 h-3 w-3 rounded-full bg-primary/60 ring-4 ring-background" />
                         <div>
-                          <p className="text-sm font-medium">
-                            Work order created{w.vendorId ? ` · ${w.vendorId}` : ""}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {new Date(w.createdAt).toLocaleString()} · {woStatusMeta[w.status].label}
-                          </p>
+                            <p className="text-sm font-medium">
+                              Work Order Assigned {w.vendor?.companyName ? `to ${w.vendor.companyName}` : ""}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {new Date(w.createdAt).toLocaleString()} • Status: <span className="font-semibold">{woStatusMeta[w.status].label}</span>
+                            </p>
+                            {(w.estimatedCost || w.actualCost || w.notes) && (
+                              <div className="mt-3 p-3 rounded-md bg-muted/30 border text-sm space-y-1.5">
+                                {w.estimatedCost && (
+                                  <p className="text-muted-foreground">
+                                    <span className="font-medium text-foreground">Estimated Cost:</span> ₱{w.estimatedCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  </p>
+                                )}
+                                {w.actualCost && (
+                                  <p className="text-muted-foreground">
+                                    <span className="font-medium text-foreground">Actual Cost:</span> ₱{w.actualCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  </p>
+                                )}
+                                {w.notes && (
+                                  <p className="text-muted-foreground italic">
+                                    "{w.notes}"
+                                  </p>
+                                )}
+                              </div>
+                            )}
                         </div>
                       </li>
                     ))}
@@ -418,7 +491,6 @@ export default function ServiceRequestDetailPage() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
 
       {/* ── Dialogs ── */}
       <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
@@ -520,12 +592,20 @@ export default function ServiceRequestDetailPage() {
           <div className="space-y-5">
             <div className="space-y-2">
               <Label>Contractor Name</Label>
-              <Input
+              <Select
                 value={woForm.vendorId}
-                onChange={(e) => setWoForm((f) => ({ ...f, vendorId: e.target.value }))}
-                placeholder="e.g. ABC Plumbing Co."
-              />
-              <p className="text-[11px] text-muted-foreground">Name of the external contractor performing this work.</p>
+                onValueChange={(v) => setWoForm((f) => ({ ...f, vendorId: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select contractor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {contractors.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.companyName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">Select the external contractor performing this work.</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -587,10 +667,10 @@ export default function ServiceRequestDetailPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setWoOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateWo} disabled={createWorkOrder.isPending}>
-              {createWorkOrder.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create
+            <Button variant="outline" onClick={() => { setWoOpen(false); setWoEditingId(null); }}>Cancel</Button>
+            <Button onClick={handleSubmitWo} disabled={createWorkOrder.isPending || updateWorkOrder.isPending}>
+              {(createWorkOrder.isPending || updateWorkOrder.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {woEditingId ? "Save Changes" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>

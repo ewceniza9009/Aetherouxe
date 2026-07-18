@@ -62,6 +62,7 @@ export class CommissionReleasesService {
   async payCommission(agentTransactionId: string, dto: PayCommissionDto) {
     const tx = await this.prisma.agentTransaction.findUnique({
       where: { id: agentTransactionId },
+      include: { agent: true }
     });
     if (!tx) throw new NotFoundException('Agent transaction not found');
     if (tx.status === 'disputed') {
@@ -106,6 +107,54 @@ export class CommissionReleasesService {
       },
       include: { transaction: { include: { agent: { include: { user: true } } } } },
     });
+
+    // GL Integration: Record Commission Expense
+    const tenantId = tx.agent.tenantId;
+    const commAcc = await this.prisma.chartOfAccount.findFirst({
+      where: { tenantId, accountCode: '5100' }
+    });
+    const cashAcc = await this.prisma.chartOfAccount.findFirst({
+      where: { tenantId, accountCode: '1000' }
+    });
+    const apAcc = await this.prisma.chartOfAccount.findFirst({
+      where: { tenantId, accountCode: '2000' }
+    });
+
+    if (commAcc && cashAcc && apAcc) {
+      const apInvoice = await this.prisma.apInvoice.create({
+        data: {
+          tenantId,
+          sourceType: 'COMMISSION',
+          sourceId: release.id,
+          invoiceNumber: `COMM-${release.id.substring(0,8)}`,
+          amount: dto.amount,
+          status: 'paid',
+          dueDate: paymentDate,
+        }
+      });
+
+      await this.prisma.apDisbursement.create({
+        data: {
+          invoiceId: apInvoice.id,
+          amount: dto.amount,
+          notes: `Commission payout to agent. Ref: ${release.id}`,
+        }
+      });
+
+      await this.prisma.journalEntry.create({
+        data: {
+          tenantId,
+          reference: `COMM-${release.id.substring(0, 8)}`,
+          notes: `Commission payout for Transaction ${tx.id}`,
+          lines: {
+            create: [
+              { accountId: commAcc.id, debitAmount: dto.amount, description: 'Commission Expense' },
+              { accountId: cashAcc.id, creditAmount: dto.amount, description: 'Cash Outflow' },
+            ]
+          }
+        }
+      });
+    }
 
     const newStatus = await this.reconcileTransactionStatus(agentTransactionId);
 

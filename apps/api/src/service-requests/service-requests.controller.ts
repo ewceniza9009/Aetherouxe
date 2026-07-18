@@ -55,7 +55,7 @@ export class MaintenanceWorkOrderController {
   create(@Body() dto: CreateWorkOrderDto) { return this.service.createWorkOrder(dto); }
 
   @Get() @ApiOperation({ summary: 'List maintenance work orders (filter by requestId)' })
-  findAll(@Query('requestId') requestId: string) { return this.service.findAllWorkOrders(requestId); }
+  findAll(@Query('requestId') requestId: string, @Query('serviceRequestId') serviceRequestId: string) { return this.service.findAllWorkOrders(requestId || serviceRequestId); }
 
   @Get('request/:requestId') @ApiOperation({ summary: 'List work orders for a service request' })
   getByRequest(@Param('requestId') requestId: string) {
@@ -83,7 +83,7 @@ export class WorkOrderAliasController {
   createAlias(@Body() dto: CreateWorkOrderDto) { return this.service.createWorkOrder(dto); }
 
   @Get() @ApiOperation({ summary: 'List maintenance work orders (alias)' })
-  findAllAlias(@Query('requestId') requestId: string) { return this.service.findAllWorkOrders(requestId); }
+  findAllAlias(@Query('requestId') requestId: string, @Query('serviceRequestId') serviceRequestId: string) { return this.service.findAllWorkOrders(requestId || serviceRequestId); }
 
   @Get('request/:requestId') @ApiOperation({ summary: 'List work orders for a service request (alias)' })
   getByRequestAlias(@Param('requestId') requestId: string) {

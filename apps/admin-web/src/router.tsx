@@ -41,7 +41,10 @@ import EditAgentPage from "./pages/EditAgentPage";
 import CommissionsPage from "./pages/CommissionsPage";
 import CommissionAgingPage from "./pages/CommissionAgingPage";
 import FinancePage from "./pages/FinancePage";
+import GeneralLedgerPage from "./pages/GeneralLedgerPage";
+import DisbursementsPage from "./pages/DisbursementsPage";
 import SettingsPage from "./pages/SettingsPage";
+import { RolesSettingsPage } from "./pages/RolesSettingsPage";
 import ProfilePage from "./pages/ProfilePage";
 import CollectionsPage from "./pages/CollectionsPage";
 import ArAgingPage from "./pages/ArAgingPage";
@@ -314,10 +317,28 @@ const financeRoute = createRoute({
   component: FinancePage,
 });
 
+const generalLedgerRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/finance/ledger",
+  component: GeneralLedgerPage,
+});
+
+const disbursementsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/finance/disbursements",
+  component: DisbursementsPage,
+});
+
 const settingsRoute = createRoute({
   getParentRoute: () => protectedLayout,
   path: "/settings",
   component: SettingsPage,
+});
+
+const rolesSettingsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/settings/roles",
+  component: RolesSettingsPage,
 });
 
 const profileRoute = createRoute({
@@ -515,7 +536,10 @@ const routeTree = rootRoute.addChildren([
     commissionsRoute,
     commissionAgingRoute,
     financeRoute,
+    generalLedgerRoute,
+    disbursementsRoute,
     settingsRoute,
+    rolesSettingsRoute,
     profileRoute,
     collectionsRoute,
     arAgingRoute,

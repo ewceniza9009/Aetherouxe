@@ -1,6 +1,6 @@
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
+  provider        = "prisma-client-js"
+  binaryTargets   = ["native", "debian-openssl-3.0.x"]
   previewFeatures = ["postgresqlExtensions"]
 }
 
@@ -220,6 +220,7 @@ model Tenant {
   createdAt DateTime @default(now())
 
   users                User[]
+  roles                Role[]
   properties           Property[]
   buildings            Building[]
   projects             Project[]
@@ -230,81 +231,88 @@ model Tenant {
   utilityRates         UtilityRate[]
   arInvoices           ArInvoice[]
 
-  utilityMeters        UtilityMeter[]
-  utilityBills         UtilityBill[]
-  paymentReminders     PaymentReminder[]
-  statements           StatementOfAccount[]
-  collectionCases      CollectionCase[]
-  amenityBookings      AmenityBooking[]
-  serviceRequests      ServiceRequest[]
-  notifications        Notification[]
-  titleTransfers       TitleTransfer[]
+  utilityMeters    UtilityMeter[]
+  utilityBills     UtilityBill[]
+  paymentReminders PaymentReminder[]
+  statements       StatementOfAccount[]
+  collectionCases  CollectionCase[]
+  amenityBookings  AmenityBooking[]
+  serviceRequests  ServiceRequest[]
+  notifications    Notification[]
+  titleTransfers   TitleTransfer[]
+
+  chartOfAccounts   ChartOfAccount[]
+  journalEntries    JournalEntry[]
+  financialMappings FinancialMapping[]
+  apInvoices        ApInvoice[]
 
   @@map("tenants")
 }
 
 model User {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   tenantId     String
-  email        String   @unique
+  email        String    @unique
   phone        String?
   passwordHash String
   userType     UserType
   firstName    String?
   lastName     String?
   avatarUrl    String?
-  isActive     Boolean  @default(true)
-  tokenVersion Int      @default(0)
+  isActive     Boolean   @default(true)
+  tokenVersion Int       @default(0)
   lastLoginAt  DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  roleId       String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  tenant                  Tenant                @relation(fields: [tenantId], references: [id])
+  tenant                  Tenant             @relation(fields: [tenantId], references: [id])
+  role                    Role?              @relation(fields: [roleId], references: [id])
   realEstateAgent         RealEstateAgent?
-  leaseAgreementsAsTenant LeaseAgreement[]      @relation("TenantLeaseAgreements")
-  mortgageScenarios       MortgageScenario[]    @relation("MortgageScenarioUser")
+  leaseAgreementsAsTenant LeaseAgreement[]   @relation("TenantLeaseAgreements")
+  mortgageScenarios       MortgageScenario[] @relation("MortgageScenarioUser")
   rtoEquityLedgerEntries  RtoEquityLedger[]
 
-  paymentRemindersOwned   PaymentReminder[]
-  statementsOwned         StatementOfAccount[]
-  collectionCasesAssigned CollectionCase[]
-  caseNotesAuthored       CollectionCaseNote[]
-  activitiesPerformed     CollectionActivity[]
-  pnlStatements           OwnerPnlStatement[]
-  communityPostsAuthored  CommunityPost[]
-  postsModerated          CommunityPost[]       @relation("PostModeratedBy")
-  commentsAuthored        PostComment[]         @relation("CommentAuthor")
-  commentsModerated       PostComment[]         @relation("CommentModeratedBy")
-  reportsFiled            PostReport[]          @relation("ReportReporter")
-  reportsResolved         PostReport[]          @relation("ReportResolvedBy")
-  moderationActions       ModerationLog[]       @relation("ModerationPerformer")
-  notificationsOwned      Notification[]
-  paymentArrangements     ArPaymentArrangement[]
-  titleTransfersAsBuyer   TitleTransfer[]        @relation("TitleTransferBuyer")
-  titleTransfersAsPrevOwner TitleTransfer[]      @relation("TitleTransferPreviousOwner")
-  titleTransfersProcessed TitleTransfer[]        @relation("TitleTransferProcessedBy")
+  paymentRemindersOwned     PaymentReminder[]
+  statementsOwned           StatementOfAccount[]
+  collectionCasesAssigned   CollectionCase[]
+  caseNotesAuthored         CollectionCaseNote[]
+  activitiesPerformed       CollectionActivity[]
+  pnlStatements             OwnerPnlStatement[]
+  communityPostsAuthored    CommunityPost[]
+  postsModerated            CommunityPost[]        @relation("PostModeratedBy")
+  commentsAuthored          PostComment[]          @relation("CommentAuthor")
+  commentsModerated         PostComment[]          @relation("CommentModeratedBy")
+  reportsFiled              PostReport[]           @relation("ReportReporter")
+  reportsResolved           PostReport[]           @relation("ReportResolvedBy")
+  moderationActions         ModerationLog[]        @relation("ModerationPerformer")
+  notificationsOwned        Notification[]
+  paymentArrangements       ArPaymentArrangement[]
+  titleTransfersAsBuyer     TitleTransfer[]        @relation("TitleTransferBuyer")
+  titleTransfersAsPrevOwner TitleTransfer[]        @relation("TitleTransferPreviousOwner")
+  titleTransfersProcessed   TitleTransfer[]        @relation("TitleTransferProcessedBy")
 
   @@map("users")
 }
 
 model RealEstateAgent {
-  id                    String   @id @default(uuid())
+  id                    String    @id @default(uuid())
   tenantId              String
-  userId                String   @unique
-  licenseNumber         String   @unique
+  userId                String    @unique
+  licenseNumber         String    @unique
   tinNumber             String?
-  commissionRateDefault Decimal? @db.Decimal(5, 2)
+  commissionRateDefault Decimal?  @db.Decimal(5, 2)
   tier                  AgentTier @default(junior)
   managerId             String?
-  isInternal            Boolean  @default(true)
-  createdAt             DateTime @default(now())
+  isInternal            Boolean   @default(true)
+  createdAt             DateTime  @default(now())
 
-  tenant              Tenant                 @relation(fields: [tenantId], references: [id])
-  user                User                   @relation(fields: [userId], references: [id])
-  manager             RealEstateAgent?       @relation("AgentHierarchy", fields: [managerId], references: [id])
-  subordinates        RealEstateAgent[]      @relation("AgentHierarchy")
+  tenant          Tenant                @relation(fields: [tenantId], references: [id])
+  user            User                  @relation(fields: [userId], references: [id])
+  manager         RealEstateAgent?      @relation("AgentHierarchy", fields: [managerId], references: [id])
+  subordinates    RealEstateAgent[]     @relation("AgentHierarchy")
   transactions    AgentTransaction[]
-  leases           LeaseAgreement[]
+  leases          LeaseAgreement[]
   licenseRenewals AgentLicenseRenewal[]
 
   @@map("real_estate_agents")
@@ -313,6 +321,21 @@ model RealEstateAgent {
 // ─────────────────────────────────────────────
 // PROPERTY INVENTORY
 // ─────────────────────────────────────────────
+
+model Role {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  description String?
+  permissions String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  users       User[]
+
+  @@unique([tenantId, name])
+}
 
 model Property {
   id               String         @id @default(uuid())
@@ -326,24 +349,24 @@ model Property {
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
-  tenant          Tenant               @relation(fields: [tenantId], references: [id])
-  project         Project              @relation(fields: [projectId], references: [id])
-  parentProperty  Property?            @relation("PropertyHierarchy", fields: [parentPropertyId], references: [id])
-  childProperties Property[]           @relation("PropertyHierarchy")
-  units           Unit[]
-  leaseAgreements LeaseAgreement[]
+  tenant            Tenant               @relation(fields: [tenantId], references: [id])
+  project           Project              @relation(fields: [projectId], references: [id])
+  parentProperty    Property?            @relation("PropertyHierarchy", fields: [parentPropertyId], references: [id])
+  childProperties   Property[]           @relation("PropertyHierarchy")
+  units             Unit[]
+  leaseAgreements   LeaseAgreement[]
   mortgageScenarios MortgageScenario[]
   agentTransactions AgentTransaction[]
-  utilityMeters   UtilityMeter[]
-  utilityBills    UtilityBill[]
-  statements      StatementOfAccount[]
-  amenities       Amenity[]
-  pnlStatements   OwnerPnlStatement[]
-  serviceRequests ServiceRequest[]
-  communityPosts  CommunityPost[]
-  documents       DocumentVault[]
-  images          PropertyImage[]
-  titleTransfers  TitleTransfer[]
+  utilityMeters     UtilityMeter[]
+  utilityBills      UtilityBill[]
+  statements        StatementOfAccount[]
+  amenities         Amenity[]
+  pnlStatements     OwnerPnlStatement[]
+  serviceRequests   ServiceRequest[]
+  communityPosts    CommunityPost[]
+  documents         DocumentVault[]
+  images            PropertyImage[]
+  titleTransfers    TitleTransfer[]
 
   @@map("properties")
 }
@@ -399,29 +422,29 @@ model Unit {
   buildingValue   Decimal?   @db.Decimal(14, 2)
   createdAt       DateTime   @default(now())
 
-  property Property? @relation(fields: [propertyId], references: [id])
-  building Building  @relation(fields: [buildingId], references: [id])
-  floor    Floor?    @relation(fields: [floorId], references: [id])
-  utilityMeters      UtilityMeter[]
-  utilityBills       UtilityBill[]
-  serviceRequests    ServiceRequest[]
-  leaseAgreements    LeaseAgreement[]
-  documents          DocumentVault[]
-  bookings           AmenityBooking[]
-  images             UnitImage[]
-  titleTransfers     TitleTransfer[]
+  property        Property?        @relation(fields: [propertyId], references: [id])
+  building        Building         @relation(fields: [buildingId], references: [id])
+  floor           Floor?           @relation(fields: [floorId], references: [id])
+  utilityMeters   UtilityMeter[]
+  utilityBills    UtilityBill[]
+  serviceRequests ServiceRequest[]
+  leaseAgreements LeaseAgreement[]
+  documents       DocumentVault[]
+  bookings        AmenityBooking[]
+  images          UnitImage[]
+  titleTransfers  TitleTransfer[]
 
   @@map("units")
 }
 
 model PropertyImage {
-  id          String    @id @default(uuid())
-  propertyId  String
-  url         String
-  alt         String?
-  sortOrder   Int       @default(0)
-  isPrimary   Boolean   @default(false)
-  createdAt   DateTime  @default(now())
+  id         String   @id @default(uuid())
+  propertyId String
+  url        String
+  alt        String?
+  sortOrder  Int      @default(0)
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
@@ -429,13 +452,13 @@ model PropertyImage {
 }
 
 model UnitImage {
-  id          String    @id @default(uuid())
-  unitId      String
-  url         String
-  alt         String?
-  sortOrder   Int       @default(0)
-  isPrimary   Boolean   @default(false)
-  createdAt   DateTime  @default(now())
+  id        String   @id @default(uuid())
+  unitId    String
+  url       String
+  alt       String?
+  sortOrder Int      @default(0)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
 
   unit Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
 
@@ -443,13 +466,13 @@ model UnitImage {
 }
 
 model ProjectImage {
-  id          String    @id @default(uuid())
-  projectId   String
-  url         String
-  alt         String?
-  sortOrder   Int       @default(0)
-  isPrimary   Boolean   @default(false)
-  createdAt   DateTime  @default(now())
+  id        String   @id @default(uuid())
+  projectId String
+  url       String
+  alt       String?
+  sortOrder Int      @default(0)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -461,21 +484,21 @@ model ProjectImage {
 // ─────────────────────────────────────────────
 
 model Project {
-  id                    String        @id @default(uuid())
-  tenantId              String
-  name                  String
-  description           String?
-  projectType           ProjectType
-  status                ProjectStatus @default(planning)
-  totalPhases           Int?
-  targetStartDate       DateTime?
-  targetCompletionDate  DateTime?
-  actualCompletionDate  DateTime?
-  projectLogoUrl        String?
-  address               String?
-  createdAt             DateTime      @default(now())
+  id                   String        @id @default(uuid())
+  tenantId             String
+  name                 String
+  description          String?
+  projectType          ProjectType
+  status               ProjectStatus @default(planning)
+  totalPhases          Int?
+  targetStartDate      DateTime?
+  targetCompletionDate DateTime?
+  actualCompletionDate DateTime?
+  projectLogoUrl       String?
+  address              String?
+  createdAt            DateTime      @default(now())
 
-  tenant     Tenant     @relation(fields: [tenantId], references: [id])
+  tenant     Tenant         @relation(fields: [tenantId], references: [id])
   buildings  Building[]
   properties Property[]
   phases     Phase[]
@@ -504,18 +527,18 @@ model Phase {
 }
 
 model Budget {
-  id                String  @id @default(uuid())
+  id                String   @id @default(uuid())
   phaseId           String?
   projectId         String?
   budgetName        String
-  totalBudgetAmount Decimal @db.Decimal(14, 2)
+  totalBudgetAmount Decimal  @db.Decimal(14, 2)
   approvedByUserId  String?
-  isCurrentVersion  Boolean @default(true)
-  versionNumber     Int     @default(1)
+  isCurrentVersion  Boolean  @default(true)
+  versionNumber     Int      @default(1)
   createdAt         DateTime @default(now())
 
-  phase     Phase?             @relation(fields: [phaseId], references: [id])
-  project   Project?           @relation(fields: [projectId], references: [id])
+  phase     Phase?           @relation(fields: [phaseId], references: [id])
+  project   Project?         @relation(fields: [projectId], references: [id])
   lineItems BudgetLineItem[]
 
   @@map("budgets")
@@ -553,23 +576,25 @@ model Contractor {
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
 
-  tenant      Tenant                @relation(fields: [tenantId], references: [id])
-  engagements ContractorEngagement[]
+  tenant        Tenant                 @relation(fields: [tenantId], references: [id])
+  engagements   ContractorEngagement[]
+  workOrders    MaintenanceWorkOrder[]
+  apInvoices    ApInvoice[]
 
   @@map("contractors")
 }
 
 model ContractorEngagement {
-  id                  String                      @id @default(uuid())
+  id                  String                     @id @default(uuid())
   budgetLineItemId    String
   contractorId        String
-  contractAmount      Decimal                     @db.Decimal(14, 2)
+  contractAmount      Decimal                    @db.Decimal(14, 2)
   startDate           DateTime?
   endDate             DateTime?
   contractDocumentUrl String?
   terms               String?
-  status              ContractorEngagementStatus  @default(pending)
-  createdAt           DateTime                    @default(now())
+  status              ContractorEngagementStatus @default(pending)
+  createdAt           DateTime                   @default(now())
 
   budgetLineItem BudgetLineItem      @relation(fields: [budgetLineItemId], references: [id])
   contractor     Contractor          @relation(fields: [contractorId], references: [id])
@@ -601,65 +626,65 @@ model ContractorPayment {
 // ─────────────────────────────────────────────
 
 model LeaseAgreement {
-  id                         String    @id @default(uuid())
-  propertyId                 String
-  unitId                     String?
-  tenantUserId               String
-  agentId                    String?
-  unitLabel                  String?
-  leaseType                  LeaseType
-  schemeType                 String?
-  schemeId                   String?
-  startDate                  DateTime
-  endDate                    DateTime
-  monthlyRentAmount          Decimal   @db.Decimal(12, 2)
-  securityDepositAmount      Decimal?  @db.Decimal(12, 2)
-  securityDepositHeldIn      String?
-  latePaymentPenaltyPercent  Decimal?  @db.Decimal(5, 2)
-  gracePeriodDays            Int?      @default(3)
-  isActive                   Boolean   @default(true)
-  terminationDate            DateTime?
-  terminationReason          String?
-  leaseDocumentUrl           String?
-  createdAt                  DateTime  @default(now())
+  id                        String    @id @default(uuid())
+  propertyId                String
+  unitId                    String?
+  tenantUserId              String
+  agentId                   String?
+  unitLabel                 String?
+  leaseType                 LeaseType
+  schemeType                String?
+  schemeId                  String?
+  startDate                 DateTime
+  endDate                   DateTime
+  monthlyRentAmount         Decimal   @db.Decimal(12, 2)
+  securityDepositAmount     Decimal?  @db.Decimal(12, 2)
+  securityDepositHeldIn     String?
+  latePaymentPenaltyPercent Decimal?  @db.Decimal(5, 2)
+  gracePeriodDays           Int?      @default(3)
+  isActive                  Boolean   @default(true)
+  terminationDate           DateTime?
+  terminationReason         String?
+  leaseDocumentUrl          String?
+  createdAt                 DateTime  @default(now())
 
-  property Property  @relation(fields: [propertyId], references: [id])
-  unit     Unit?     @relation(fields: [unitId], references: [id])
-  tenant   User      @relation("TenantLeaseAgreements", fields: [tenantUserId], references: [id])
+  property Property         @relation(fields: [propertyId], references: [id])
+  unit     Unit?            @relation(fields: [unitId], references: [id])
+  tenant   User             @relation("TenantLeaseAgreements", fields: [tenantUserId], references: [id])
   agent    RealEstateAgent? @relation(fields: [agentId], references: [id])
-  scheme   Scheme?   @relation(fields: [schemeId], references: [id])
+  scheme   Scheme?          @relation(fields: [schemeId], references: [id])
 
-  rentalPayments       RentalPayment[]
-  mortgageScenarios    MortgageScenario[]
-  rtoContract          RtoContract?
-  agentTransactions    AgentTransaction[]
-  paymentReminders     PaymentReminder[]
-  collectionCases      CollectionCase[]
-  statements           StatementOfAccount[]
-  pnlStatements        OwnerPnlStatement[]
-  documents            DocumentVault[]
-  titleTransfers       TitleTransfer[]
+  rentalPayments    RentalPayment[]
+  mortgageScenarios MortgageScenario[]
+  rtoContract       RtoContract?
+  agentTransactions AgentTransaction[]
+  paymentReminders  PaymentReminder[]
+  collectionCases   CollectionCase[]
+  statements        StatementOfAccount[]
+  pnlStatements     OwnerPnlStatement[]
+  documents         DocumentVault[]
+  titleTransfers    TitleTransfer[]
 
   @@map("lease_agreements")
 }
 
 model RentalPayment {
-  id                String   @id @default(uuid())
-  leaseAgreementId  String
+  id                 String    @id @default(uuid())
+  leaseAgreementId   String
   billingPeriodStart DateTime
-  billingPeriodEnd  DateTime
-  dueDate           DateTime
-  amountDue         Decimal  @db.Decimal(12, 2)
-  amountPaid        Decimal? @default(0) @db.Decimal(12, 2)
-  paymentDate       DateTime?
-  paymentMethod     String?
-  paymentReference  String?
-  status            String   @default("pending")
-  lateFeeApplied    Boolean  @default(false)
-  notes             String?
-  createdAt         DateTime @default(now())
+  billingPeriodEnd   DateTime
+  dueDate            DateTime
+  amountDue          Decimal   @db.Decimal(12, 2)
+  amountPaid         Decimal?  @default(0) @db.Decimal(12, 2)
+  paymentDate        DateTime?
+  paymentMethod      String?
+  paymentReference   String?
+  status             String    @default("pending")
+  lateFeeApplied     Boolean   @default(false)
+  notes              String?
+  createdAt          DateTime  @default(now())
 
-  leaseAgreement      LeaseAgreement        @relation(fields: [leaseAgreementId], references: [id])
+  leaseAgreement        LeaseAgreement         @relation(fields: [leaseAgreementId], references: [id])
   rtoPaymentAllocations RtoPaymentAllocation[]
   paymentReminders      PaymentReminder[]
 
@@ -667,21 +692,21 @@ model RentalPayment {
 }
 
 model MortgageScenario {
-  id                       String   @id @default(uuid())
-  leaseAgreementId         String
-  propertyId               String
-  generatedForUserId       String
-  propertyValueAtGeneration Decimal  @db.Decimal(14, 2)
-  downPaymentPercent       Decimal  @db.Decimal(5, 2)
-  loanAmount               Decimal  @db.Decimal(14, 2)
-  interestRatePercent      Decimal  @db.Decimal(5, 3)
-  loanTermMonths           Int
-  monthlyAmortization      Decimal  @db.Decimal(12, 2)
-  totalInterestPayable     Decimal  @db.Decimal(14, 2)
-  generationDate           DateTime @default(now())
-  expiryDate               DateTime?
-  status                   String   @default("draft")
-  createdAt                DateTime @default(now())
+  id                        String    @id @default(uuid())
+  leaseAgreementId          String
+  propertyId                String
+  generatedForUserId        String
+  propertyValueAtGeneration Decimal   @db.Decimal(14, 2)
+  downPaymentPercent        Decimal   @db.Decimal(5, 2)
+  loanAmount                Decimal   @db.Decimal(14, 2)
+  interestRatePercent       Decimal   @db.Decimal(5, 3)
+  loanTermMonths            Int
+  monthlyAmortization       Decimal   @db.Decimal(12, 2)
+  totalInterestPayable      Decimal   @db.Decimal(14, 2)
+  generationDate            DateTime  @default(now())
+  expiryDate                DateTime?
+  status                    String    @default("draft")
+  createdAt                 DateTime  @default(now())
 
   leaseAgreement LeaseAgreement @relation(fields: [leaseAgreementId], references: [id])
   property       Property       @relation(fields: [propertyId], references: [id])
@@ -693,17 +718,17 @@ model MortgageScenario {
 }
 
 model MortgageAmortizationSchedule {
-  id                    String  @id @default(uuid())
-  mortgageScenarioId    String
-  periodNumber          Int
-  periodDate            DateTime? @map("perioddate")
-  beginningBalance      Decimal @db.Decimal(14, 2)
-  monthlyPayment        Decimal @db.Decimal(12, 2)
-  principalPayment      Decimal @db.Decimal(12, 2)
-  interestPayment       Decimal @db.Decimal(12, 2)
-  endingBalance         Decimal @db.Decimal(14, 2)
-  cumulativeInterestPaid Decimal @db.Decimal(14, 2)
-  createdAt             DateTime @default(now())
+  id                     String    @id @default(uuid())
+  mortgageScenarioId     String
+  periodNumber           Int
+  periodDate             DateTime? @map("perioddate")
+  beginningBalance       Decimal   @db.Decimal(14, 2)
+  monthlyPayment         Decimal   @db.Decimal(12, 2)
+  principalPayment       Decimal   @db.Decimal(12, 2)
+  interestPayment        Decimal   @db.Decimal(12, 2)
+  endingBalance          Decimal   @db.Decimal(14, 2)
+  cumulativeInterestPaid Decimal   @db.Decimal(14, 2)
+  createdAt              DateTime  @default(now())
 
   scenario MortgageScenario @relation(fields: [mortgageScenarioId], references: [id])
 
@@ -715,22 +740,22 @@ model MortgageAmortizationSchedule {
 // ─────────────────────────────────────────────
 
 model RtoContract {
-  id                   String   @id @default(uuid())
-  leaseAgreementId     String   @unique
-  totalContractValue   Decimal  @db.Decimal(14, 2)
-  optionFeeAmount      Decimal  @default(0) @db.Decimal(12, 2)
-  monthlyRentPortion   Decimal  @db.Decimal(12, 2)
-  monthlyEquityPortion Decimal  @db.Decimal(12, 2)
-  accumulatedEquity    Decimal  @default(0) @db.Decimal(14, 2)
+  id                   String    @id @default(uuid())
+  leaseAgreementId     String    @unique
+  totalContractValue   Decimal   @db.Decimal(14, 2)
+  optionFeeAmount      Decimal   @default(0) @db.Decimal(12, 2)
+  monthlyRentPortion   Decimal   @db.Decimal(12, 2)
+  monthlyEquityPortion Decimal   @db.Decimal(12, 2)
+  accumulatedEquity    Decimal   @default(0) @db.Decimal(14, 2)
   targetPurchaseDate   DateTime?
-  purchaseOptionPrice  Decimal? @db.Decimal(14, 2)
-  isOptionExercised    Boolean  @default(false)
+  purchaseOptionPrice  Decimal?  @db.Decimal(14, 2)
+  isOptionExercised    Boolean   @default(false)
   exerciseDate         DateTime?
   status               RTOStatus @default(active)
   contractDocumentUrl  String?
-  createdAt            DateTime @default(now())
+  createdAt            DateTime  @default(now())
 
-  leaseAgreement    LeaseAgreement        @relation(fields: [leaseAgreementId], references: [id])
+  leaseAgreement     LeaseAgreement         @relation(fields: [leaseAgreementId], references: [id])
   paymentAllocations RtoPaymentAllocation[]
   equityLedger       RtoEquityLedger[]
 
@@ -754,7 +779,7 @@ model RtoPaymentAllocation {
 
 model RtoEquityLedger {
   id              String   @id @default(uuid())
-  rtoContractId    String
+  rtoContractId   String
   transactionType String
   amount          Decimal  @db.Decimal(14, 2)
   runningBalance  Decimal  @db.Decimal(14, 2)
@@ -774,7 +799,7 @@ model RtoEquityLedger {
 // ─────────────────────────────────────────────
 
 model AgentCommission {
-  id              String       @id @default(uuid())
+  id              String         @id @default(uuid())
   tenantId        String
   name            String
   agentTier       AgentTier?
@@ -782,55 +807,55 @@ model AgentCommission {
   projectId       String?
   commissionType  CommissionType
   commissionValue String
-  isActive        Boolean      @default(true)
+  isActive        Boolean        @default(true)
   effectiveFrom   DateTime?
   effectiveUntil  DateTime?
-  createdAt       DateTime     @default(now())
+  createdAt       DateTime       @default(now())
 
-  tenant       Tenant              @relation(fields: [tenantId], references: [id])
+  tenant       Tenant             @relation(fields: [tenantId], references: [id])
   transactions AgentTransaction[]
 
   @@map("agent_commissions")
 }
 
 model AgentTransaction {
-  id                  String           @id @default(uuid())
-  agentId             String
-  transactionType     TransactionType
-  propertyId          String
-  leaseAgreementId    String?
-  transactionAmount   Decimal          @db.Decimal(14, 2)
-  commissionRuleId    String?
+  id                   String           @id @default(uuid())
+  agentId              String
+  transactionType      TransactionType
+  propertyId           String
+  leaseAgreementId     String?
+  transactionAmount    Decimal          @db.Decimal(14, 2)
+  commissionRuleId     String?
   calculatedCommission Decimal          @db.Decimal(12, 2)
-  finalCommission     Decimal?         @db.Decimal(12, 2)
-  status              CommissionStatus @default(pending)
-  transactionDate     DateTime
-  createdAt           DateTime         @default(now())
+  finalCommission      Decimal?         @db.Decimal(12, 2)
+  status               CommissionStatus @default(pending)
+  transactionDate      DateTime
+  createdAt            DateTime         @default(now())
 
-  agent          RealEstateAgent   @relation(fields: [agentId], references: [id])
-  property       Property          @relation(fields: [propertyId], references: [id])
-  leaseAgreement LeaseAgreement?   @relation(fields: [leaseAgreementId], references: [id])
-  commissionRule AgentCommission?  @relation(fields: [commissionRuleId], references: [id])
+  agent              RealEstateAgent          @relation(fields: [agentId], references: [id])
+  property           Property                 @relation(fields: [propertyId], references: [id])
+  leaseAgreement     LeaseAgreement?          @relation(fields: [leaseAgreementId], references: [id])
+  commissionRule     AgentCommission?         @relation(fields: [commissionRuleId], references: [id])
   commissionReleases AgentCommissionRelease[]
 
   @@map("agent_transactions")
 }
 
 model AgentCommissionRelease {
-  id                 String   @id @default(uuid())
+  id                 String    @id @default(uuid())
   agentTransactionId String
-  amount             Decimal  @db.Decimal(12, 2)
+  amount             Decimal   @db.Decimal(12, 2)
   releaseDate        DateTime
   releaseType        String
   agingBucket        String?
   paymentReference   String?
   paymentMethod      String?
   paymentDate        DateTime?
-  status             String   @default("paid")
+  status             String    @default("paid")
   approvedByUserId   String?
   receiptUrl         String?
   notes              String?
-  createdAt          DateTime @default(now())
+  createdAt          DateTime  @default(now())
 
   transaction AgentTransaction @relation(fields: [agentTransactionId], references: [id])
 
@@ -838,19 +863,19 @@ model AgentCommissionRelease {
 }
 
 model AgentLicenseRenewal {
-  id                 String   @id @default(uuid())
+  id                 String    @id @default(uuid())
   tenantId           String
   agentId            String
   licenseNumber      String
   licenseExpiryDate  DateTime
-  cpeUnitsCompleted  Int?     @default(0)
-  cpeUnitsRequired   Int?     @default(0)
-  renewalStatus      String   @default("compliant")
+  cpeUnitsCompleted  Int?      @default(0)
+  cpeUnitsRequired   Int?      @default(0)
+  renewalStatus      String    @default("compliant")
   renewalDocumentUrl String?
   lastRenewedAt      DateTime?
-  createdAt          DateTime @default(now())
+  createdAt          DateTime  @default(now())
 
-  tenant Tenant         @relation(fields: [tenantId], references: [id])
+  tenant Tenant          @relation(fields: [tenantId], references: [id])
   agent  RealEstateAgent @relation(fields: [agentId], references: [id])
 
   @@map("agent_license_renewals")
@@ -874,7 +899,7 @@ model ArInvoice {
   notes           String?
   createdAt       DateTime      @default(now())
 
-  tenant            Tenant              @relation(fields: [tenantId], references: [id])
+  tenant            Tenant               @relation(fields: [tenantId], references: [id])
   payments          ArPayment[]
   collectionActions ArCollectionAction[]
 
@@ -898,33 +923,33 @@ model ArPayment {
 }
 
 model ArPaymentArrangement {
-  id                     String                    @id @default(uuid())
+  id                     String                   @id @default(uuid())
   userId                 String
-  totalOutstandingAmount  Decimal                   @db.Decimal(14, 2)
+  totalOutstandingAmount Decimal                  @db.Decimal(14, 2)
   numberOfInstallments   Int
-  installmentAmount      Decimal                   @db.Decimal(12, 2)
+  installmentAmount      Decimal                  @db.Decimal(12, 2)
   startDate              DateTime
   endDate                DateTime?
-  status                 PaymentArrangementStatus  @default(proposed)
+  status                 PaymentArrangementStatus @default(proposed)
   approvedByUserId       String?
   termsDocumentUrl       String?
-  createdAt              DateTime                  @default(now())
+  createdAt              DateTime                 @default(now())
 
-  user         User                      @relation(fields: [userId], references: [id])
+  user         User                       @relation(fields: [userId], references: [id])
   installments ArArrangementInstallment[]
 
   @@map("ar_payment_arrangements")
 }
 
 model ArArrangementInstallment {
-  id                    String   @id @default(uuid())
-  paymentArrangementId  String
-  installmentNumber     Int
-  dueDate               DateTime
-  amount                Decimal  @db.Decimal(12, 2)
-  status                String   @default("pending")
-  paidDate              DateTime?
-  createdAt             DateTime @default(now())
+  id                   String    @id @default(uuid())
+  paymentArrangementId String
+  installmentNumber    Int
+  dueDate              DateTime
+  amount               Decimal   @db.Decimal(12, 2)
+  status               String    @default("pending")
+  paidDate             DateTime?
+  createdAt            DateTime  @default(now())
 
   arrangement ArPaymentArrangement @relation(fields: [paymentArrangementId], references: [id])
 
@@ -932,16 +957,16 @@ model ArArrangementInstallment {
 }
 
 model ArCollectionAction {
-  id                String             @id @default(uuid())
+  id                String               @id @default(uuid())
   userId            String
   invoiceId         String
   collectionCaseId  String?
   actionType        CollectionActionType
-  actionDate        DateTime           @default(now())
+  actionDate        DateTime             @default(now())
   performedByUserId String?
   outcome           String?
   notes             String?
-  createdAt         DateTime           @default(now())
+  createdAt         DateTime             @default(now())
 
   invoice        ArInvoice       @relation(fields: [invoiceId], references: [id])
   collectionCase CollectionCase? @relation(fields: [collectionCaseId], references: [id])
@@ -968,36 +993,36 @@ enum BillStatus {
 }
 
 model UtilityMeter {
-  id               String       @id @default(cuid())
+  id               String      @id @default(cuid())
   tenantId         String?
   unitId           String?
   propertyId       String?
   utilityType      UtilityType
-  meterNumber      String       @unique
-  multiplier       Float        @default(1)
-  isActive         Boolean      @default(true)
+  meterNumber      String      @unique
+  multiplier       Float       @default(1)
+  isActive         Boolean     @default(true)
   installationDate DateTime?
   lastReadingValue Float?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 
   readings ConsumptionReading[]
   bills    UtilityBill[]
-  tenant   Tenant?  @relation(fields: [tenantId], references: [id])
-  property Property? @relation(fields: [propertyId], references: [id])
-  unit     Unit?     @relation(fields: [unitId], references: [id])
+  tenant   Tenant?              @relation(fields: [tenantId], references: [id])
+  property Property?            @relation(fields: [propertyId], references: [id])
+  unit     Unit?                @relation(fields: [unitId], references: [id])
 
   @@map("utility_meters")
 }
 
 model ConsumptionReading {
-  id          String       @id @default(cuid())
+  id          String   @id @default(cuid())
   meterId     String
   readingDate DateTime
   value       Float
   reader      String?
   note        String?
-  createdAt   DateTime     @default(now())
+  createdAt   DateTime @default(now())
 
   meter UtilityMeter  @relation(fields: [meterId], references: [id], onDelete: Cascade)
   bills UtilityBill[]
@@ -1025,11 +1050,11 @@ model UtilityBill {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
-  meter    UtilityMeter        @relation(fields: [meterId], references: [id])
+  meter    UtilityMeter         @relation(fields: [meterId], references: [id])
   readings ConsumptionReading[]
-  tenant   Tenant?             @relation(fields: [tenantId], references: [id])
-  property Property?           @relation(fields: [propertyId], references: [id])
-  unit     Unit?               @relation(fields: [unitId], references: [id])
+  tenant   Tenant?              @relation(fields: [tenantId], references: [id])
+  property Property?            @relation(fields: [propertyId], references: [id])
+  unit     Unit?                @relation(fields: [unitId], references: [id])
 
   @@map("utility_bills")
 }
@@ -1061,16 +1086,19 @@ enum AmenityType {
   garden
   other
 }
+
 enum BookingStatus {
   pending
   confirmed
   completed
   cancelled
 }
+
 enum PostType {
   announcement
   event
 }
+
 enum Audience {
   all
   building
@@ -1079,18 +1107,18 @@ enum Audience {
 }
 
 model Amenity {
-  id         String      @id @default(cuid())
-  name       String
-  type       AmenityType
+  id          String           @id @default(cuid())
+  name        String
+  type        AmenityType
   description String?
-  capacity   Int?
-  location   String?
-  hourlyRate Float?
-  isActive   Boolean     @default(true)
-  propertyId String?
-  createdAt  DateTime    @default(now())
-  bookings   AmenityBooking[]
-  property   Property?   @relation(fields: [propertyId], references: [id])
+  capacity    Int?
+  location    String?
+  hourlyRate  Float?
+  isActive    Boolean          @default(true)
+  propertyId  String?
+  createdAt   DateTime         @default(now())
+  bookings    AmenityBooking[]
+  property    Property?        @relation(fields: [propertyId], references: [id])
 
   @@map("amenities")
 }
@@ -1124,12 +1152,14 @@ enum ServiceCategory {
   elevator
   other
 }
+
 enum Priority {
   low
   medium
   high
   emergency
 }
+
 enum ServiceStatus {
   open
   assigned
@@ -1138,6 +1168,7 @@ enum ServiceStatus {
   cancelled
   rejected
 }
+
 enum WorkOrderStatus {
   scheduled
   in_progress
@@ -1146,42 +1177,43 @@ enum WorkOrderStatus {
 }
 
 model ServiceRequest {
-  id            String          @id @default(cuid())
-  tenantId      String?
-  unitId        String?
-  propertyId    String?
-  category      ServiceCategory
-  priority      Priority
-  description   String
-  status        ServiceStatus   @default(open)
-  requestedAt   DateTime        @default(now())
-  scheduledAt   DateTime?
-  completedAt   DateTime?
-  assignedToId  String?
-  assignedToType String?
+  id              String          @id @default(cuid())
+  tenantId        String?
+  unitId          String?
+  propertyId      String?
+  category        ServiceCategory
+  priority        Priority
+  description     String
+  status          ServiceStatus   @default(open)
+  requestedAt     DateTime        @default(now())
+  scheduledAt     DateTime?
+  completedAt     DateTime?
+  assignedToId    String?
+  assignedToType  String?
   resolutionNotes String?
-  createdAt     DateTime        @default(now())
+  createdAt       DateTime        @default(now())
 
-  tenant      Tenant?      @relation(fields: [tenantId], references: [id])
-  unit        Unit?        @relation(fields: [unitId], references: [id])
-  property    Property?    @relation(fields: [propertyId], references: [id])
-  workOrders  MaintenanceWorkOrder[]
+  tenant     Tenant?                @relation(fields: [tenantId], references: [id])
+  unit       Unit?                  @relation(fields: [unitId], references: [id])
+  property   Property?              @relation(fields: [propertyId], references: [id])
+  workOrders MaintenanceWorkOrder[]
 
   @@map("service_requests")
 }
 
 model MaintenanceWorkOrder {
-  id              String          @id @default(cuid())
+  id               String          @id @default(cuid())
   serviceRequestId String
-  vendorId        String?
-  scheduledDate   DateTime?
-  estimatedCost   Float?
-  actualCost      Float?
-  status          WorkOrderStatus @default(scheduled)
-  completedDate   DateTime?
-  notes           String?
-  createdAt       DateTime        @default(now())
-  serviceRequest  ServiceRequest  @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  vendorId         String?
+  scheduledDate    DateTime?
+  estimatedCost    Float?
+  actualCost       Float?
+  status           WorkOrderStatus @default(scheduled)
+  completedDate    DateTime?
+  notes            String?
+  createdAt        DateTime        @default(now())
+  serviceRequest   ServiceRequest  @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  vendor           Contractor?     @relation(fields: [vendorId], references: [id])
 
   @@map("maintenance_work_orders")
 }
@@ -1230,9 +1262,9 @@ model CommunityPost {
   moderationReason String?
   createdAt        DateTime         @default(now())
 
-  property    Property?      @relation(fields: [propertyId], references: [id])
-  author      User?          @relation(fields: [authorId], references: [id])
-  moderatedBy User?          @relation("PostModeratedBy", fields: [moderatedById], references: [id])
+  property    Property?     @relation(fields: [propertyId], references: [id])
+  author      User?         @relation(fields: [authorId], references: [id])
+  moderatedBy User?         @relation("PostModeratedBy", fields: [moderatedById], references: [id])
   comments    PostComment[]
   reports     PostReport[]
 
@@ -1259,18 +1291,18 @@ model PostComment {
 }
 
 model PostReport {
-  id            String       @id @default(cuid())
-  postId        String?
-  commentId     String?
-  reportedById  String?
-  reporterName  String?
-  reason        String
-  details       String?
-  status        ReportStatus @default(open)
-  resolvedById  String?
-  resolvedAt    DateTime?
+  id             String       @id @default(cuid())
+  postId         String?
+  commentId      String?
+  reportedById   String?
+  reporterName   String?
+  reason         String
+  details        String?
+  status         ReportStatus @default(open)
+  resolvedById   String?
+  resolvedAt     DateTime?
   resolutionNote String?
-  createdAt     DateTime     @default(now())
+  createdAt      DateTime     @default(now())
 
   post       CommunityPost? @relation(fields: [postId], references: [id])
   comment    PostComment?   @relation(fields: [commentId], references: [id])
@@ -1281,13 +1313,13 @@ model PostReport {
 }
 
 model ModerationLog {
-  id           String               @id @default(cuid())
-  targetType   ModerationTargetType
-  targetId     String
-  action       ModerationAction
-  reason       String?
+  id            String               @id @default(cuid())
+  targetType    ModerationTargetType
+  targetId      String
+  action        ModerationAction
+  reason        String?
   performedById String?
-  createdAt    DateTime             @default(now())
+  createdAt     DateTime             @default(now())
 
   performedBy User? @relation("ModerationPerformer", fields: [performedById], references: [id])
 
@@ -1302,6 +1334,7 @@ enum DocOwnerType {
   project
   unit
 }
+
 enum DocumentType {
   lease_agreement
   id_proof
@@ -1311,6 +1344,7 @@ enum DocumentType {
   statement
   other
 }
+
 enum SignatureStatus {
   pending
   sent
@@ -1320,26 +1354,26 @@ enum SignatureStatus {
 }
 
 model DocumentVault {
-  id            String        @id @default(cuid())
-  ownerType     DocOwnerType
-  ownerId       String
-  documentType  DocumentType
-  title         String
-  fileName      String?
-  fileUrl       String
-  mimeType      String?
-  fileSize      Int?
-  uploadedById  String?
-  uploadedAt    DateTime      @default(now())
-  expiryDate    DateTime?
-  isSigned      Boolean       @default(false)
-  propertyId    String?
-  unitId        String?
-  leaseId       String?
-  signatures    DocumentSignature[]
+  id           String              @id @default(cuid())
+  ownerType    DocOwnerType
+  ownerId      String
+  documentType DocumentType
+  title        String
+  fileName     String?
+  fileUrl      String
+  mimeType     String?
+  fileSize     Int?
+  uploadedById String?
+  uploadedAt   DateTime            @default(now())
+  expiryDate   DateTime?
+  isSigned     Boolean             @default(false)
+  propertyId   String?
+  unitId       String?
+  leaseId      String?
+  signatures   DocumentSignature[]
 
-  property Property?      @relation(fields: [propertyId], references: [id])
-  unit     Unit?          @relation(fields: [unitId], references: [id])
+  property Property?       @relation(fields: [propertyId], references: [id])
+  unit     Unit?           @relation(fields: [unitId], references: [id])
   lease    LeaseAgreement? @relation(fields: [leaseId], references: [id])
 
   @@map("document_vaults")
@@ -1367,22 +1401,22 @@ enum PnlStatus {
 }
 
 model OwnerPnlStatement {
-  id             String       @id @default(uuid())
-  ownerId        String
-  propertyId     String?
-  leaseId        String?
-  periodStart    DateTime
-  periodEnd      DateTime
-  grossRentalIncome Float     @default(0)
-  totalExpenses  Float        @default(0)
-  managementFee  Float        @default(0)
-  netIncome      Float        @default(0)
-  yieldPct       Float?
-  status         PnlStatus    @default(draft)
-  generatedAt    DateTime     @default(now())
-  owner          User         @relation(fields: [ownerId], references: [id])
-  property       Property?    @relation(fields: [propertyId], references: [id])
-  lease          LeaseAgreement? @relation(fields: [leaseId], references: [id])
+  id                String          @id @default(uuid())
+  ownerId           String
+  propertyId        String?
+  leaseId           String?
+  periodStart       DateTime
+  periodEnd         DateTime
+  grossRentalIncome Float           @default(0)
+  totalExpenses     Float           @default(0)
+  managementFee     Float           @default(0)
+  netIncome         Float           @default(0)
+  yieldPct          Float?
+  status            PnlStatus       @default(draft)
+  generatedAt       DateTime        @default(now())
+  owner             User            @relation(fields: [ownerId], references: [id])
+  property          Property?       @relation(fields: [propertyId], references: [id])
+  lease             LeaseAgreement? @relation(fields: [leaseId], references: [id])
 
   @@map("owner_pnl_statements")
 }
@@ -1440,24 +1474,24 @@ enum StatementStatus {
 }
 
 model StatementOfAccount {
-  id             String         @id @default(uuid())
+  id             String          @id @default(uuid())
   tenantId       String?
   ownerId        String?
   propertyId     String?
   leaseId        String?
   periodStart    DateTime
   periodEnd      DateTime
-  openingBalance Decimal        @db.Decimal(14, 2)
-  totalBilled    Decimal        @db.Decimal(14, 2)
-  totalPaid      Decimal        @db.Decimal(14, 2)
-  closingBalance Decimal        @db.Decimal(14, 2)
+  openingBalance Decimal         @db.Decimal(14, 2)
+  totalBilled    Decimal         @db.Decimal(14, 2)
+  totalPaid      Decimal         @db.Decimal(14, 2)
+  closingBalance Decimal         @db.Decimal(14, 2)
   status         StatementStatus @default(draft)
   pdfUrl         String?
-  createdAt      DateTime       @default(now())
+  createdAt      DateTime        @default(now())
 
-  tenant   Tenant?        @relation(fields: [tenantId], references: [id])
-  owner    User?          @relation(fields: [ownerId], references: [id])
-  property Property?      @relation(fields: [propertyId], references: [id])
+  tenant   Tenant?         @relation(fields: [tenantId], references: [id])
+  owner    User?           @relation(fields: [ownerId], references: [id])
+  property Property?       @relation(fields: [propertyId], references: [id])
   lease    LeaseAgreement? @relation(fields: [leaseId], references: [id])
 
   @@map("statements_of_account")
@@ -1518,12 +1552,12 @@ model CollectionCase {
   resolutionNotes  String?
   createdAt        DateTime               @default(now())
 
-  tenant      Tenant?         @relation(fields: [tenantId], references: [id])
-  lease       LeaseAgreement? @relation(fields: [leaseId], references: [id])
-  assignedTo  User?           @relation(fields: [assignedToId], references: [id])
-  activities  CollectionActivity[]
-  notes       CollectionCaseNote[]
-  arActions   ArCollectionAction[]
+  tenant     Tenant?              @relation(fields: [tenantId], references: [id])
+  lease      LeaseAgreement?      @relation(fields: [leaseId], references: [id])
+  assignedTo User?                @relation(fields: [assignedToId], references: [id])
+  activities CollectionActivity[]
+  notes      CollectionCaseNote[]
+  arActions  ArCollectionAction[]
 
   @@map("collection_cases")
 }
@@ -1546,71 +1580,71 @@ model CollectionCaseNote {
 // ─────────────────────────────────────────────
 
 enum SchemeType {
-  standard_rental    // Monthly lease with deposit + penalty terms
-  spot_cash          // Full upfront payment with optional discount
-  installment        // DP + Equity + Balance phases (in-house financing)
-  mortgage_assisted  // DP in-house, balance via bank mortgage
-  rent_to_own        // Rent with equity accumulation toward purchase
+  standard_rental // Monthly lease with deposit + penalty terms
+  spot_cash // Full upfront payment with optional discount
+  installment // DP + Equity + Balance phases (in-house financing)
+  mortgage_assisted // DP in-house, balance via bank mortgage
+  rent_to_own // Rent with equity accumulation toward purchase
 }
 
 model Scheme {
-  id                String     @id @default(uuid())
-  code              String     @unique
-  name              String?
-  schemeType        SchemeType
-  remarks           String?
-  projectId         String?
-  isLocked          Boolean    @default(false)
-  isActive          Boolean    @default(true)
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  id         String     @id @default(uuid())
+  code       String     @unique
+  name       String?
+  schemeType SchemeType
+  remarks    String?
+  projectId  String?
+  isLocked   Boolean    @default(false)
+  isActive   Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
   // ── Standard Rental ──
-  securityDepositPercent   Decimal? @db.Decimal(8, 4)   // % of monthly rent
-  penaltyPercent           Decimal? @db.Decimal(8, 4)   // late fee % per day
-  graceDays                Int?                         // days before penalty
+  securityDepositPercent Decimal? @db.Decimal(8, 4) // % of monthly rent
+  penaltyPercent         Decimal? @db.Decimal(8, 4) // late fee % per day
+  graceDays              Int? // days before penalty
 
   // ── Spot Cash ──
-  discountPercent          Decimal? @db.Decimal(8, 4)   // cash discount %
+  discountPercent Decimal? @db.Decimal(8, 4) // cash discount %
 
   // ── Installment (DP / Equity / Balance) ──
-  dpNumberOfPayments       Int?
-  dpNumberOfDaysFromDp     Int?
-  dpAmount                 Decimal? @db.Decimal(12, 2)
-  dpRemarks                String?
+  dpNumberOfPayments   Int?
+  dpNumberOfDaysFromDp Int?
+  dpAmount             Decimal? @db.Decimal(12, 2)
+  dpRemarks            String?
 
   eqNumberOfPayments       Int?
   eqNumberOfDaysFromDp     Int?
   eqAmount                 Decimal? @db.Decimal(12, 2)
-  eqPaymentPercentage      Decimal? @db.Decimal(8, 4)   // % of selling price allocated to equity
-  eqDownpaymentPercentage  Decimal? @db.Decimal(8, 4)   // equity share used for DP computation
-  eqMonthlyAmortPercentage Decimal? @db.Decimal(8, 4)   // equity share spread monthly
-  eqDiscountPercentage     Decimal? @db.Decimal(8, 4)   // discount on equity portion
+  eqPaymentPercentage      Decimal? @db.Decimal(8, 4) // % of selling price allocated to equity
+  eqDownpaymentPercentage  Decimal? @db.Decimal(8, 4) // equity share used for DP computation
+  eqMonthlyAmortPercentage Decimal? @db.Decimal(8, 4) // equity share spread monthly
+  eqDiscountPercentage     Decimal? @db.Decimal(8, 4) // discount on equity portion
   eqPaymentOrderNumber     Int?
   eqRemarks                String?
 
-  blNumberOfPayments       Int?
-  blNumberOfDaysFromDp     Int?
-  blAmount                 Decimal? @db.Decimal(12, 2)
-  blPaymentPercentage      Decimal? @db.Decimal(8, 4)   // % of selling price allocated to balance
-  blMiscPercentage         Decimal? @db.Decimal(8, 4)   // transfer fees / misc
-  blIsChangeOrder          Boolean  @default(false)
-  blIncludeDpAmort         Boolean  @default(false)      // spread misc across DP+EQ months
-  blRemarks                String?
+  blNumberOfPayments   Int?
+  blNumberOfDaysFromDp Int?
+  blAmount             Decimal? @db.Decimal(12, 2)
+  blPaymentPercentage  Decimal? @db.Decimal(8, 4) // % of selling price allocated to balance
+  blMiscPercentage     Decimal? @db.Decimal(8, 4) // transfer fees / misc
+  blIsChangeOrder      Boolean  @default(false)
+  blIncludeDpAmort     Boolean  @default(false) // spread misc across DP+EQ months
+  blRemarks            String?
 
   // ── Mortgage Assisted ──
-  mortgageDownPaymentPercent  Decimal? @db.Decimal(8, 4) // buyer's downpayment to bank
-  interestRatePercent         Decimal? @db.Decimal(8, 4) // annual interest rate
-  loanTermMonths              Int?                       // bank loan term
+  mortgageDownPaymentPercent Decimal? @db.Decimal(8, 4) // buyer's downpayment to bank
+  interestRatePercent        Decimal? @db.Decimal(8, 4) // annual interest rate
+  loanTermMonths             Int? // bank loan term
 
   // ── Rent-to-Own ──
-  optionFeePercent            Decimal? @db.Decimal(8, 4) // option fee as % of contract value
-  equityAccumulationPercent   Decimal? @db.Decimal(8, 4) // % of rent that accumulates as equity
-  targetPurchaseYears         Int?                       // years until purchase option matures
+  optionFeePercent          Decimal? @db.Decimal(8, 4) // option fee as % of contract value
+  equityAccumulationPercent Decimal? @db.Decimal(8, 4) // % of rent that accumulates as equity
+  targetPurchaseYears       Int? // years until purchase option matures
 
   // ── Commissions (all sale types) ──
-  agentCommissionPercentage     Decimal? @db.Decimal(8, 4)
-  companyCommissionPercentage   Decimal? @db.Decimal(8, 4)
+  agentCommissionPercentage   Decimal? @db.Decimal(8, 4)
+  companyCommissionPercentage Decimal? @db.Decimal(8, 4)
 
   leases LeaseAgreement[]
 
@@ -1622,18 +1656,18 @@ model Scheme {
 // ─────────────────────────────────────────────
 
 enum TitleTransferStatus {
-  pending          // Requested / initiated, awaiting requirements
-  in_progress      // Documents being processed (BIR, Registry of Deeds)
-  completed        // Title transferred; buyer is new owner of record
-  cancelled        // Transfer aborted
+  pending // Requested / initiated, awaiting requirements
+  in_progress // Documents being processed (BIR, Registry of Deeds)
+  completed // Title transferred; buyer is new owner of record
+  cancelled // Transfer aborted
 }
 
 enum TitleTransferBasis {
-  spot_cash        // Fully paid in cash
+  spot_cash // Fully paid in cash
   installment_paid // In-house installment fully paid
-  rto_exercised    // Rent-to-own option exercised / equity complete
+  rto_exercised // Rent-to-own option exercised / equity complete
   mortgage_settled // Bank/Pag-IBIG loan released to developer
-  manual           // Administrative / other
+  manual // Administrative / other
 }
 
 model TitleTransfer {
@@ -1643,11 +1677,11 @@ model TitleTransfer {
   unitId              String?
   leaseAgreementId    String?
   rtoContractId       String?
-  buyerUserId         String              // becomes the new owner of record
-  previousOwnerUserId String?             // prior owner (developer/landlord) if known
+  buyerUserId         String // becomes the new owner of record
+  previousOwnerUserId String? // prior owner (developer/landlord) if known
   basis               TitleTransferBasis
   status              TitleTransferStatus @default(pending)
-  titleNumber         String?             // TCT / CCT number issued
+  titleNumber         String? // TCT / CCT number issued
   contractValue       Decimal?            @db.Decimal(14, 2)
   amountSettled       Decimal?            @db.Decimal(14, 2)
   transferFeeAmount   Decimal?            @db.Decimal(12, 2)
@@ -1694,7 +1728,7 @@ enum NotificationRole {
 }
 
 model Notification {
-  id        String            @id @default(cuid())
+  id        String           @id @default(cuid())
   role      NotificationRole
   userId    String?
   tenantId  String?
@@ -1704,11 +1738,122 @@ model Notification {
   message   String
   link      String?
   refId     String?
-  isRead    Boolean           @default(false)
-  createdAt DateTime          @default(now())
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
 
   user   User?   @relation(fields: [userId], references: [id])
   tenant Tenant? @relation(fields: [tenantId], references: [id])
 
   @@map("notifications")
+}
+
+// ─────────────────────────────────────────────
+// GENERAL LEDGER & ACCOUNTS PAYABLE (PHASE 8)
+// ─────────────────────────────────────────────
+
+enum AccountType {
+  asset
+  liability
+  equity
+  revenue
+  expense
+}
+
+model ChartOfAccount {
+  id          String      @id @default(uuid())
+  tenantId    String
+  accountCode String
+  name        String
+  type        AccountType
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  journalLines JournalLine[]
+
+  @@unique([tenantId, accountCode])
+  @@map("chart_of_accounts")
+}
+
+model JournalEntry {
+  id        String   @id @default(uuid())
+  tenantId  String
+  reference String?
+  date      DateTime @default(now())
+  notes     String?
+  createdAt DateTime @default(now())
+
+  tenant Tenant        @relation(fields: [tenantId], references: [id])
+  lines  JournalLine[]
+
+  @@map("journal_entries")
+}
+
+model JournalLine {
+  id             String  @id @default(uuid())
+  journalEntryId String
+  accountId      String
+  debitAmount    Decimal @default(0) @db.Decimal(14, 2)
+  creditAmount   Decimal @default(0) @db.Decimal(14, 2)
+  description    String?
+
+  journalEntry JournalEntry   @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  account      ChartOfAccount @relation(fields: [accountId], references: [id])
+
+  @@map("journal_lines")
+}
+
+model FinancialMapping {
+  id              String @id @default(uuid())
+  tenantId        String
+  transactionType String // e.g. WORK_ORDER_COMPLETED
+  debitAccountId  String
+  creditAccountId String
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, transactionType])
+  @@map("financial_mappings")
+}
+
+enum ApInvoiceStatus {
+  pending_approval
+  approved
+  paid
+  cancelled
+}
+
+model ApInvoice {
+  id            String          @id @default(uuid())
+  tenantId      String
+  sourceType    String // e.g. WORK_ORDER, COMMISSION, MISC_EXPENSE
+  sourceId      String?
+  vendorId      String?
+  invoiceNumber String?
+  amount        Decimal         @db.Decimal(14, 2)
+  dueDate       DateTime?
+  status        ApInvoiceStatus @default(pending_approval)
+  notes         String?
+  createdAt     DateTime        @default(now())
+
+  tenant        Tenant           @relation(fields: [tenantId], references: [id])
+  vendor        Contractor?      @relation(fields: [vendorId], references: [id])
+  disbursements ApDisbursement[]
+
+  @@map("ap_invoices")
+}
+
+model ApDisbursement {
+  id            String   @id @default(uuid())
+  invoiceId     String
+  amount        Decimal  @db.Decimal(14, 2)
+  paymentDate   DateTime @default(now())
+  paymentMethod String?
+  reference     String?
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  invoice ApInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("ap_disbursements")
 }

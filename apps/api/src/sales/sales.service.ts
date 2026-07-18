@@ -175,6 +175,29 @@ export class SalesService {
         };
       }
 
+      // ── 4. GL Integration (Sales/Receivables) ──
+      const isSale = ['spot_cash', 'installment', 'mortgage_assisted'].includes(scheme.schemeType);
+      if (isSale && value > 0) {
+        const mapping = await tx.financialMapping.findFirst({
+          where: { tenantId, transactionType: 'SALE_CONTRACT_SIGNED' },
+        });
+        if (mapping && mapping.debitAccountId && mapping.creditAccountId) {
+          await tx.journalEntry.create({
+            data: {
+              tenantId,
+              reference: `SALE-${lease.id.substring(0, 8)}`,
+              notes: `Sale Contract Signed for unit ${unit.unitNumber} (${scheme.schemeType})`,
+              lines: {
+                create: [
+                  { accountId: mapping.debitAccountId, debitAmount: value, description: 'Accounts Receivable' },
+                  { accountId: mapping.creditAccountId, creditAmount: value, description: 'Sales Income' },
+                ]
+              }
+            }
+          });
+        }
+      }
+
       return result;
     });
   }

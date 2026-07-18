@@ -46,6 +46,9 @@ import { SalesModule } from './sales/sales.module';
 import { SchemesModule } from './schemes/schemes.module';
 import { TitlesModule } from './titles/titles.module';
 import { ImagesModule } from './images/images.module';
+import { ApInvoicesModule } from './ap-invoices/ap-invoices.module';
+import { GeneralLedgerModule } from './general-ledger/general-ledger.module';
+import { RolesModule } from './roles/roles.module';
 
 @Module({
   imports: [
@@ -98,6 +101,9 @@ import { ImagesModule } from './images/images.module';
         limit: 60,
       },
     ]),
+    ApInvoicesModule,
+    GeneralLedgerModule,
+    RolesModule,
   ],
   providers: [
     {

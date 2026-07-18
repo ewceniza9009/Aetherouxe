@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -123,9 +124,10 @@ export default function SalesPage() {
       };
       if (price) payload.totalContractValue = Number(price);
       if (isRto && monthlyRent) payload.monthlyRentAmount = Number(monthlyRent);
-      const { data } = await api.post("/v1/sales/apply-scheme", payload);
-      setResult(data);
-      goNext();
+      const { data } = await api.post("/sales/apply-scheme", payload);
+      setResult(data.data ?? data);
+      toast.success("Scheme applied successfully");
+      setStep(3);
     } catch (e: any) {
       setError(e?.response?.data?.message || e.message || "Something went wrong");
     } finally {

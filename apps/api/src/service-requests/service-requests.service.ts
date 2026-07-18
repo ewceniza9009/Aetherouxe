@@ -83,7 +83,10 @@ export class ServiceRequestsService {
     const request = await this.prisma.serviceRequest.findUnique({
       where: { id },
       include: {
-        workOrders: { orderBy: { createdAt: 'desc' } },
+        workOrders: { 
+          include: { vendor: true },
+          orderBy: { createdAt: 'desc' } 
+        },
       },
     });
     if (!request) throw new NotFoundException('Service request not found');
@@ -164,22 +167,22 @@ export class ServiceRequestsService {
     return this.prisma.maintenanceWorkOrder.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: { serviceRequest: true },
+      include: { serviceRequest: true, vendor: true },
     });
   }
 
   async findOneWorkOrder(id: string) {
     const workOrder = await this.prisma.maintenanceWorkOrder.findUnique({
       where: { id },
-      include: { serviceRequest: true },
+      include: { serviceRequest: true, vendor: true },
     });
     if (!workOrder) throw new NotFoundException('Maintenance work order not found');
     return workOrder;
   }
 
   async updateWorkOrder(id: string, dto: UpdateWorkOrderDto) {
-    await this.findOneWorkOrder(id);
-    return this.prisma.maintenanceWorkOrder.update({
+    const existing = await this.findOneWorkOrder(id);
+    const updated = await this.prisma.maintenanceWorkOrder.update({
       where: { id },
       data: {
         status: dto.status,
@@ -192,6 +195,25 @@ export class ServiceRequestsService {
           dto.status === 'completed' ? new Date() : undefined,
       },
     });
+
+    if (existing.status !== 'completed' && dto.status === 'completed' && dto.actualCost) {
+      if (existing.vendorId && existing.serviceRequest?.tenantId) {
+        await this.prisma.apInvoice.create({
+          data: {
+            tenantId: existing.serviceRequest.tenantId,
+            sourceType: 'WORK_ORDER',
+            sourceId: existing.id,
+            vendorId: existing.vendorId,
+            amount: dto.actualCost,
+            status: 'pending_approval',
+            notes: `Auto-generated from completed Work Order ${existing.id}`,
+            dueDate: new Date(new Date().setDate(new Date().getDate() + 30)), // Due in 30 days
+          }
+        });
+      }
+    }
+
+    return updated;
   }
 
   async removeWorkOrder(id: string) {

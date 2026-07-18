@@ -61,6 +61,7 @@ export interface WorkOrder {
   notes?: string | null;
   status: WorkOrderStatus;
   createdAt: string;
+  vendor?: { id: string; companyName: string } | null;
 }
 
 export interface ServiceRequestQuery {
@@ -232,3 +233,35 @@ export function useCreateWorkOrder() {
     },
   });
 }
+
+export function useUpdateWorkOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: Partial<WorkOrder> & { id: string }) => {
+      const { data } = await api.patch<ApiResponse<WorkOrder>>(`/work-orders/${id}`, payload);
+      return data.data;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['work-orders'] });
+      if (result?.serviceRequestId) {
+        queryClient.invalidateQueries({
+          queryKey: ['service-request', result.serviceRequestId],
+        });
+      }
+    },
+  });
+}
+
+export function useDeleteWorkOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/work-orders/${id}`);
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['work-orders'] });
+    },
+  });
+}
+
