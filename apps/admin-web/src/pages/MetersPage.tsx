@@ -69,7 +69,7 @@ function tenantName(meter?: UtilityMeter["resident"]) {
 }
 
 function unitPropertyLabel(meter: UtilityMeter): string {
-  const unit = meter.unit?.unitLabel;
+  const unit = meter.unit?.unitNumber;
   const prop = meter.property?.propertyCode || meter.property?.name;
   if (unit && prop) return `${prop} · ${unit}`;
   return unit || prop || "—";

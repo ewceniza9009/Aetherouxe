@@ -89,6 +89,9 @@ export class UtilityMetersService {
     const meter = await this.prisma.utilityMeter.findUnique({
       where: { id },
       include: {
+        property: true,
+        unit: true,
+        tenant: true,
         readings: { orderBy: { readingDate: 'desc' }, take: 10 },
         bills: { orderBy: { issuedDate: 'desc' }, take: 10 },
       },

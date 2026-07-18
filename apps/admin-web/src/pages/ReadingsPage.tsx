@@ -26,11 +26,23 @@ import {
   useMeters,
   type UtilityType,
 } from "@/hooks/use-utilities";
-import {
-  AddReadingDialog,
-  BulkReadingsDialog,
-} from "@/components/utilities/ReadingDialogs";
+import { AddReadingDialog, BulkReadingsDialog } from "@/components/utilities/ReadingDialogs";
 import { utilityTypeMeta, formatDate } from "@/lib/utility-meta";
+import { type UtilityMeter } from "@/hooks/use-utilities";
+
+function unitPropertyLabel(meter: UtilityMeter | null | undefined): string {
+  if (!meter) return "—";
+  const unit = meter.unit?.unitNumber;
+  const prop = meter.property?.propertyCode || meter.property?.name;
+  if (unit && prop) return `${prop} · ${unit}`;
+  return unit || prop || "—";
+}
+
+function tenantName(resident?: UtilityMeter["resident"]): string | null {
+  if (!resident) return null;
+  const full = [resident.firstName, resident.lastName].filter(Boolean).join(" ").trim();
+  return full || resident.email;
+}
 
 export default function ReadingsPage() {
   const navigate = useNavigate();
@@ -141,6 +153,8 @@ export default function ReadingsPage() {
                 <TableRow>
                   <TableHead>Meter</TableHead>
                   <TableHead>Type</TableHead>
+                  <TableHead>Unit / Property</TableHead>
+                  <TableHead>Tenant</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Value</TableHead>
                   <TableHead>Reader</TableHead>
@@ -172,6 +186,12 @@ export default function ReadingsPage() {
                         ) : (
                           "—"
                         )}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {unitPropertyLabel(meters.find((m) => m.id === r.meterId))}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {tenantName(meters.find((m) => m.id === r.meterId)?.resident) ?? "—"}
                       </TableCell>
                       <TableCell className="text-sm">
                         {formatDate(r.readingDate)}

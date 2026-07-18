@@ -52,7 +52,7 @@ function tenantUnitLabel(bill: UtilityBill): string {
   const tenant = bill.resident
     ? [bill.resident.firstName, bill.resident.lastName].filter(Boolean).join(" ") || bill.resident.email
     : null;
-  const unit = bill.unit?.unitLabel;
+  const unit = bill.unit?.unitNumber;
   if (tenant && unit) return `${tenant} · ${unit}`;
   return tenant || unit || "—";
 }

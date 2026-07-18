@@ -118,7 +118,9 @@ export default function CommissionsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Rules</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Percent className="h-5 w-5 text-accent" /> Rules
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (

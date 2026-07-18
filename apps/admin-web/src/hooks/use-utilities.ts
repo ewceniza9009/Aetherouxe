@@ -20,7 +20,7 @@ export interface UtilityMeterTenant {
 
 export interface UtilityMeterUnit {
   id: string;
-  unitLabel?: string | null;
+  unitNumber?: string | null;
 }
 
 export interface UtilityMeterProperty {
@@ -68,7 +68,7 @@ export interface UtilityBillTenant {
 
 export interface UtilityBillUnit {
   id: string;
-  unitLabel?: string | null;
+  unitNumber?: string | null;
 }
 
 export interface UtilityBill {

@@ -11,6 +11,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +50,7 @@ import {
   Trash2,
   MoreHorizontal,
   Pencil,
+  User,
 } from "lucide-react";
 import {
   useMeter,
@@ -47,9 +58,13 @@ import {
   useMeters,
   useBills,
   useDeleteMeter,
+  useUpdateMeter,
   useDeleteReading,
   type UtilityType,
+  type UtilityMeter,
 } from "@/hooks/use-utilities";
+import { useProperties } from "@/hooks/use-properties";
+import { useUnits } from "@/hooks/use-units";
 import { AddReadingDialog, BulkReadingsDialog, EditReadingDialog } from "@/components/utilities/ReadingDialogs";
 import { utilityTypeMeta, billStatusMeta, money, formatDate } from "@/lib/utility-meta";
 
@@ -153,21 +168,32 @@ export default function MeterDetailPage() {
                 <Badge variant="secondary">Inactive</Badge>
               )}
             </div>
-            <p className="text-muted-foreground flex items-center gap-1 mt-1">
-              <Gauge className="h-4 w-4" />
-              {meter.property?.propertyCode || meter.property?.name || "Unassigned"}
-              {meter.unit?.unitLabel ? ` · ${meter.unit.unitLabel}` : ""}
-            </p>
+            <div className="flex flex-col">
+              <p className="text-muted-foreground flex items-center gap-1 mt-1">
+                <Gauge className="h-4 w-4" />
+                {meter.property?.propertyCode || meter.property?.name || "Unassigned"}
+                {meter.unit?.unitNumber ? ` · ${meter.unit.unitNumber}` : ""}
+              </p>
+              {meter.resident && (
+                <p className="text-muted-foreground flex items-center gap-1 mt-1">
+                  <User className="h-4 w-4" />
+                  {[meter.resident.firstName, meter.resident.lastName].filter(Boolean).join(" ") || meter.resident.email}
+                </p>
+              )}
+            </div>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-destructive"
-          onClick={() => setConfirmDelete(true)}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <EditMeterDialog meter={meter} />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive"
+            onClick={() => setConfirmDelete(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -349,6 +375,144 @@ export default function MeterDetailPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function EditMeterDialog({ meter }: { meter: UtilityMeter }) {
+  const updateMeter = useUpdateMeter();
+  const [open, setOpen] = useState(false);
+  const [meterNumber, setMeterNumber] = useState(meter.meterNumber);
+  const [utilityType, setUtilityType] = useState<UtilityType>(meter.utilityType);
+  const [propertyId, setPropertyId] = useState(meter.propertyId || "");
+  const [unitId, setUnitId] = useState(meter.unitId || "");
+  const [multiplier, setMultiplier] = useState(String(meter.multiplier));
+  const [installationDate, setInstallationDate] = useState(
+    meter.installationDate ? meter.installationDate.split("T")[0] : ""
+  );
+  const [isActive, setIsActive] = useState(meter.isActive);
+
+  const { data: propertiesData } = useProperties({ limit: 200 });
+  const properties = propertiesData?.data ?? [];
+
+  const { data: unitsData } = useUnits({ propertyId: propertyId || undefined, limit: 200 });
+  const units = unitsData?.data ?? [];
+
+  const submit = async () => {
+    await updateMeter.mutateAsync({
+      id: meter.id,
+      meterNumber,
+      utilityType,
+      propertyId: propertyId || null,
+      unitId: unitId || null,
+      multiplier: parseFloat(multiplier) || 1,
+      installationDate: installationDate ? new Date(installationDate).toISOString() : null,
+      isActive,
+    } as any);
+    setOpen(false);
+  };
+
+  const canSubmit = meterNumber && utilityType;
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        <Pencil className="mr-2 h-4 w-4" /> Edit Meter
+      </Button>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Utility Meter</DialogTitle>
+          <DialogDescription>Update the details and assignment for this meter.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label>Meter Number</Label>
+            <Input value={meterNumber} onChange={(e) => setMeterNumber(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label>Utility Type</Label>
+            <Select value={utilityType} onValueChange={(v) => setUtilityType(v as UtilityType)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="water">Water</SelectItem>
+                <SelectItem value="electricity">Electricity</SelectItem>
+                <SelectItem value="gas">Gas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label>Property</Label>
+              <Select
+                value={propertyId || "none"}
+                onValueChange={(v) => {
+                  setPropertyId(v === "none" ? "" : v);
+                  setUnitId("");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Unassigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Unassigned</SelectItem>
+                  {properties.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Unit</Label>
+              <Select
+                value={unitId || "none"}
+                onValueChange={(v) => setUnitId(v === "none" ? "" : v)}
+                disabled={!propertyId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Unassigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Unassigned</SelectItem>
+                  {units.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.unitNumber}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label>Multiplier</Label>
+              <Input type="number" step="0.01" value={multiplier} onChange={(e) => setMultiplier(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label>Installation Date</Label>
+              <Input type="date" value={installationDate} onChange={(e) => setInstallationDate(e.target.value)} />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <Checkbox
+              id="is-active"
+              checked={isActive}
+              onCheckedChange={(c) => setIsActive(c as boolean)}
+            />
+            <Label htmlFor="is-active">Active Meter</Label>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={submit} disabled={!canSubmit || updateMeter.isPending}>
+            {updateMeter.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Save Changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
