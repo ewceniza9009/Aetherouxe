@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CommissionsService } from '../commissions/commissions.service';
+import { LedgerService } from '../ledger/ledger.service';
 import {
   CreateTransactionDto,
   UpdateTransactionDto,
@@ -12,6 +13,7 @@ export class AgentTransactionsService {
   constructor(
     private prisma: PrismaService,
     private commissionsService: CommissionsService,
+    private ledger: LedgerService,
   ) {}
 
   async create(dto: CreateTransactionDto) {
@@ -105,10 +107,8 @@ export class AgentTransactionsService {
 
   serializeTransaction(t: any) {
     const owed = Number(t.finalCommission ?? t.calculatedCommission ?? 0);
-    const paidAmount = Array.isArray(t.commissionReleases)
-      ? t.commissionReleases
-          .filter((r: any) => r.status !== 'cancelled')
-          .reduce((s: number, r: any) => s + Number(r.amount), 0)
+    const bal = Array.isArray(t.commissionReleases)
+      ? this.ledger.commissionBalance(t, ['cancelled'])
       : undefined;
     return {
       ...t,
@@ -116,8 +116,8 @@ export class AgentTransactionsService {
       amount: t.transactionAmount,
       commissionAmount: t.calculatedCommission,
       owedCommission: owed,
-      ...(paidAmount !== undefined
-        ? { paidCommission: paidAmount, remainingCommission: Math.max(0, owed - paidAmount) }
+      ...(bal
+        ? { paidCommission: bal.paid, remainingCommission: bal.remaining }
         : {}),
       propertyName: t.property?.name ?? t.property?.propertyCode ?? null,
       agentName: t.agent?.user

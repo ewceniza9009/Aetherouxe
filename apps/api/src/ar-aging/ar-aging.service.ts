@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { LedgerService } from '../ledger/ledger.service';
 
 type BucketName = 'Current' | 'Bucket31_60' | 'Bucket61_90' | 'Bucket91_120' | 'Bucket120Plus';
 
@@ -21,7 +22,7 @@ export function bucketForDays(days: number): BucketName {
 
 @Injectable()
 export class ArAgingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private ledger: LedgerService) {}
 
   async generateArAgingReport(asOfDate?: string, tenantId?: string) {
     const asOf = asOfDate ? new Date(asOfDate) : new Date();
@@ -97,11 +98,10 @@ export class ArAgingService {
     }> = [];
 
     for (const invoice of invoices) {
-      const paid = (invoice.payments || []).reduce(
-        (sum, p) => sum + Number(p.amount),
-        0,
+      const outstanding = this.ledger.invoiceOutstanding(invoice);
+      const paid = this.ledger.toMoney(
+        (invoice.payments || []).reduce((sum, p) => sum + Number(p.amount), 0),
       );
-      const outstanding = Number(invoice.amount) - paid;
       if (outstanding <= 0) continue;
 
       const dueDate = new Date(invoice.dueDate);

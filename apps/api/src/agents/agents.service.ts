@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { LedgerService } from '../ledger/ledger.service';
 import {
   CreateAgentDto,
   UpdateAgentDto,
@@ -10,7 +11,7 @@ import {
 
 @Injectable()
 export class AgentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private ledger: LedgerService) {}
 
   async create(dto: CreateAgentDto) {
     const user = await this.prisma.user.findUnique({ where: { id: dto.userId } });
@@ -192,11 +193,9 @@ export class AgentsService {
       const amount = Number(t.transactionAmount);
       totalSalesVolume += amount;
 
-      const earned = Number(t.finalCommission ?? t.calculatedCommission);
-      totalCommissionEarned += earned;
-
-      const paid = t.commissionReleases.reduce((sum, r) => sum + Number(r.amount), 0);
-      totalCommissionPaid += paid;
+      const bal = this.ledger.commissionBalance(t);
+      totalCommissionEarned += bal.owed;
+      totalCommissionPaid += bal.paid;
 
       if (t.transactionType === 'sale' && (t.status === 'approved' || t.status === 'fully_paid' || t.status === 'partially_paid')) {
         propertiesSold += 1;

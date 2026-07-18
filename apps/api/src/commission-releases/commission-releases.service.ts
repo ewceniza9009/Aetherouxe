@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { LedgerService } from '../ledger/ledger.service';
 import {
   CreateReleaseDto,
   UpdateReleaseDto,
@@ -20,7 +21,7 @@ function bucketForDays(days: number): AgingBucketType {
 
 @Injectable()
 export class CommissionReleasesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private ledger: LedgerService) {}
 
   async create(dto: CreateReleaseDto) {
     const tx = await this.prisma.agentTransaction.findUnique({
@@ -69,7 +70,7 @@ export class CommissionReleasesService {
       throw new BadRequestException('Cannot pay a disputed commission');
     }
 
-    const owed = Number(tx.finalCommission ?? tx.calculatedCommission ?? 0);
+    const owed = this.ledger.toMoney(tx.finalCommission ?? tx.calculatedCommission ?? 0);
     const alreadyPaid = await this.totalReleasedFor(agentTransactionId);
     const remaining = Math.max(0, owed - alreadyPaid);
 
@@ -182,7 +183,7 @@ export class CommissionReleasesService {
     if (!tx) return null;
     if (tx.status === 'disputed') return tx.status;
 
-    const owed = Number(tx.finalCommission ?? tx.calculatedCommission ?? 0);
+    const owed = this.ledger.toMoney(tx.finalCommission ?? tx.calculatedCommission ?? 0);
     const paid = await this.totalReleasedFor(agentTransactionId);
 
     let status: string;

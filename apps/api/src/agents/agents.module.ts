@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { AgentsController } from './agents.controller';
 import { AgentsService } from './agents.service';
 import { PrismaModule } from '../prisma/prisma.module';
+import { LedgerModule } from '../ledger/ledger.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, LedgerModule],
   controllers: [AgentsController],
   providers: [AgentsService],
   exports: [AgentsService],

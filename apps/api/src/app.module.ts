@@ -49,6 +49,7 @@ import { ImagesModule } from './images/images.module';
 import { ApInvoicesModule } from './ap-invoices/ap-invoices.module';
 import { GeneralLedgerModule } from './general-ledger/general-ledger.module';
 import { RolesModule } from './roles/roles.module';
+import { LedgerModule } from './ledger/ledger.module';
 
 @Module({
   imports: [
@@ -104,6 +105,7 @@ import { RolesModule } from './roles/roles.module';
     ApInvoicesModule,
     GeneralLedgerModule,
     RolesModule,
+    LedgerModule,
   ],
   providers: [
     {

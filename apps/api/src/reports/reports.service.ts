@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { InvoiceStatus } from '@prisma/client';
+import { LedgerService } from '../ledger/ledger.service';
 
 export interface PortfolioKpis {
   totalProperties: number;
@@ -23,7 +23,7 @@ export interface RevenueTrendPoint {
 
 @Injectable()
 export class ReportsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private ledger: LedgerService) {}
 
   private toNum(v: any): number {
     if (v === null || v === undefined) return 0;
@@ -42,8 +42,6 @@ export class ReportsService {
       : { status: 'active' as any };
     const srWhere = tenantId ? { tenantId } : {};
     const ccWhere = tenantId ? { tenantId } : {};
-
-    const outstandingStatuses: InvoiceStatus[] = ['pending', 'overdue', 'partially_paid'];
 
     const totalProperties = await this.prisma.property.count({ where: propertyWhere });
     const totalUnits = await this.prisma.unit.count({ where: unitWhere });
@@ -74,21 +72,10 @@ export class ReportsService {
     const monthlyRecurringRevenue = this.toNum(mrrAgg._sum.monthlyRentAmount);
 
     // Single source of truth for receivables = the AR ledger (ar_invoices),
-    // exactly as the AR Aging report computes it. rental_payments is the billing
-    // schedule; it is NOT a parallel receivable ledger.
-    const invoices = await this.prisma.arInvoice.findMany({
-      where: {
-        status: { in: outstandingStatuses },
-        ...(tenantId ? { tenantId } : {}),
-      },
-      include: { payments: true },
-    });
-    let totalReceivable = 0;
-    for (const inv of invoices) {
-      const paid = (inv.payments ?? []).reduce((sum: number, p: { amount: any }) => sum + this.toNum(p.amount), 0);
-      const outstanding = this.toNum(inv.amount) - paid;
-      if (outstanding > 0) totalReceivable += outstanding;
-    }
+    // delegated to LedgerService so the figure can never diverge from the
+    // AR Aging report. rental_payments is the billing schedule, NOT a
+    // parallel receivable ledger.
+    const totalReceivable = await this.ledger.totalReceivable(tenantId);
 
     const openServiceRequests = await this.prisma.serviceRequest.count({
       where: { status: { in: ['open', 'assigned', 'in_progress'] }, ...srWhere },

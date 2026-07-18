@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { LedgerService } from '../ledger/ledger.service';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -28,7 +29,7 @@ export interface BucketAccumulator {
 
 @Injectable()
 export class CommissionAgingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private ledger: LedgerService) {}
 
   async generateAgingReport(tenantId?: string, asOfDate?: Date) {
     const asOf = asOfDate ? new Date(asOfDate) : new Date();
@@ -70,9 +71,7 @@ export class CommissionAgingService {
     let totalUnpaid = 0;
 
     for (const tx of transactions) {
-      const owed = Number(tx.finalCommission ?? tx.calculatedCommission);
-      const paid = tx.commissionReleases.reduce((sum, r) => sum + Number(r.amount), 0);
-      const unpaid = owed - paid;
+      const unpaid = this.ledger.commissionBalance(tx).remaining;
       if (unpaid <= 0) continue;
 
       // Anchor the aging on the most recent commission release date when
