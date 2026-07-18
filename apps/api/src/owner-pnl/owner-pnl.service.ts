@@ -19,7 +19,8 @@ export class OwnerPnlService {
       { field: 'propertyId', type: 'eq' },
       { field: 'status', type: 'enum' },
     ],
-    sortable: ['createdAt', 'generatedAt', 'periodStart', 'periodEnd', 'grossRentalIncome', 'netIncome', 'status'],
+    search: ['owner.firstName', 'owner.lastName', 'property.propertyCode'],
+    sortable: ['generatedAt', 'periodStart', 'periodEnd', 'grossRentalIncome', 'netIncome', 'status', 'yieldPct'],
   };
 
   async createPnl(dto: CreatePnlDto) {
@@ -45,7 +46,7 @@ export class OwnerPnlService {
       page: query.page,
       limit: query.limit,
       where: built.where,
-      orderBy: built.orderBy,
+      defaultSort: { generatedAt: 'desc' },
       allowedSortFields: this.fieldMap.sortable,
       include: { owner: true, property: true },
     });

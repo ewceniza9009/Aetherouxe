@@ -66,6 +66,7 @@ export class TitlesService {
       { field: 'status', type: 'eq' },
     ],
     sortable: ['requestedDate', 'completedDate', 'createdAt', 'contractValue', 'status', 'propertyId'],
+    search: ['buyer.firstName', 'buyer.lastName', 'buyer.email', 'property.propertyCode'],
   };
 
   async findAll(query: TitleTransferQueryDto, tenantId: string) {

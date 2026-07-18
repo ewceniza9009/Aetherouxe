@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
@@ -41,8 +41,6 @@ async function bootstrap() {
     },
     credentials: true,
   });
-
-  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
   app.useGlobalPipes(
     new ValidationPipe({

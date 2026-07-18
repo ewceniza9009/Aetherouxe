@@ -59,6 +59,7 @@ export class RtoService {
       { field: 'propertyId', type: 'relation', relation: 'leaseAgreement', fk: 'propertyId' },
     ],
     sortable: ['createdAt', 'updatedAt', 'status', 'totalContractValue', 'accumulatedEquity'],
+    search: ['leaseAgreement.tenant.firstName', 'leaseAgreement.tenant.lastName', 'leaseAgreement.tenant.email'],
   };
 
   async findAll(query: RtoQueryDto) {

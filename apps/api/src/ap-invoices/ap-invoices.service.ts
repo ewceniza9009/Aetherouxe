@@ -14,7 +14,8 @@ export class ApInvoicesService {
       { field: 'sourceType', type: 'eq' },
       { field: 'vendorId', type: 'eq' },
     ],
-    sortable: ['createdAt', 'updatedAt', 'dueDate', 'amount', 'invoiceNumber'],
+    search: ['invoiceNumber', 'vendor.companyName', 'notes'],
+    sortable: ['createdAt', 'dueDate', 'amount', 'invoiceNumber'],
   };
 
   async findAll(tenantId: string, query: ApInvoiceQueryDto) {

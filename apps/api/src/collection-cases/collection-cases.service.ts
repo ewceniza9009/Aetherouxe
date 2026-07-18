@@ -67,6 +67,7 @@ export class CollectionCasesService {
       { field: 'tenantId', type: 'eq' },
       { field: 'leaseId', type: 'eq' },
     ],
+    search: ['caseNumber', 'tenant.name', 'resolutionNotes'],
     sortable: ['createdAt', 'updatedAt', 'lastActivityAt', 'nextActionDate', 'openedAt', 'priority', 'status', 'totalOutstanding'],
   };
 

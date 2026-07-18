@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState, useMemo } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
   LayoutDashboard,
@@ -206,7 +206,16 @@ export default function Sidebar() {
   const { pathname } = useLocation();
   const { logout } = useAuth();
 
-  const isActivePath = (path: string) => pathname.startsWith(path);
+  // Determine the most specific active path
+  const activeItemPath = useMemo(() => {
+    const allPaths = navGroups.flatMap(g => g.items.map(i => i.path));
+    // Find the longest path that matches the current pathname
+    return allPaths
+      .filter(p => pathname === p || pathname.startsWith(p + "/"))
+      .sort((a, b) => b.length - a.length)[0];
+  }, [pathname]);
+
+  const isActivePath = (path: string) => path === activeItemPath;
 
   const groupHasActive = (group: NavGroup) =>
     group.items.some((i) => isActivePath(i.path));

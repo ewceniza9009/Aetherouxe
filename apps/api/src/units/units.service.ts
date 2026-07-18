@@ -42,6 +42,7 @@ export class UnitsService {
       { field: 'unitType', type: 'enum' },
     ],
     sortable: ['createdAt', 'updatedAt', 'unitNumber', 'squareMeters', 'listPrice'],
+    search: ['unitNumber', 'unitType'],
   };
 
   async findAll(query: UnitQueryDto, tenantId: string) {

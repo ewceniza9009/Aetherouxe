@@ -44,7 +44,8 @@ export class CommissionsService {
       { field: 'agentTier', type: 'eq' },
       { field: 'propertyType', type: 'eq' },
     ],
-    sortable: ['createdAt', 'updatedAt', 'name', 'agentTier', 'propertyType', 'isActive'],
+    sortable: ['createdAt', 'name', 'agentTier', 'propertyType', 'isActive', 'effectiveFrom'],
+    search: ['name', 'commissionType'],
   };
 
   async findAll(query: CommissionQueryDto) {

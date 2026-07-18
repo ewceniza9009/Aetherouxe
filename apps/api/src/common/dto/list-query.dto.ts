@@ -93,7 +93,7 @@ export async function paginate<T>(
       : undefined;
   const orderBy = sortBy
     ? { [sortBy]: args.sortDir ?? 'desc' }
-    : args.defaultSort ?? { createdAt: 'desc' };
+    : args.orderBy ?? args.defaultSort ?? { createdAt: 'desc' };
 
   const [data, total] = await Promise.all([
     delegate.findMany({

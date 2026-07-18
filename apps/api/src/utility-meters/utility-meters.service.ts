@@ -36,7 +36,8 @@ export class UtilityMetersService {
       { field: 'tenantId', type: 'eq' },
       { field: 'isActive', type: 'bool' },
     ],
-    sortable: ['createdAt', 'updatedAt', 'utilityType', 'isActive', 'serialNumber'],
+    sortable: ['createdAt', 'updatedAt', 'utilityType', 'isActive', 'meterNumber'],
+    search: ['meterNumber'],
   };
 
   async findAll(query: MeterQueryDto) {

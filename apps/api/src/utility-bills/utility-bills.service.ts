@@ -98,6 +98,7 @@ export class UtilityBillsService {
       { field: 'utilityType', type: 'relation', relation: 'meter', fk: 'utilityType' },
     ],
     sortable: ['issuedDate', 'dueDate', 'createdAt', 'status', 'amount'],
+    search: ['meter.meterNumber', 'tenant.name', 'notes'],
   };
 
   async findAll(query: BillQueryDto) {
