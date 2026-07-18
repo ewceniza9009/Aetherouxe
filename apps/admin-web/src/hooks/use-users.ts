@@ -31,6 +31,8 @@ export interface UserQuery {
   search?: string;
   userType?: AppUserType;
   isActive?: boolean;
+  sort?: string;
+  order?: "asc" | "desc";
 }
 
 interface Paginated<T> {
@@ -48,6 +50,8 @@ export function useUsers(query: UserQuery) {
       if (query.search) params.set("search", query.search);
       if (query.userType) params.set("userType", query.userType);
       if (typeof query.isActive === "boolean") params.set("isActive", String(query.isActive));
+      if (query.sort) params.set("sort", query.sort);
+      if (query.order) params.set("order", query.order);
       const { data } = await api.get<ApiResponse<AppUser[]>>(`/users?${params}`);
       return { data: data.data ?? [], meta: data.meta } as Paginated<AppUser>;
     },

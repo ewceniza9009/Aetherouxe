@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridState } from "@/components/GridToolbar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -117,20 +118,22 @@ const emptyForm: FormState = {
 };
 
 export default function TitleTransfersPage() {
+  const listQuery = useListQuery(20);
+  const { page, setPage, sort, setSort, order, setOrder, query, sortHeader, sortIndicator } = listQuery;
   const [tab, setTab] = useState<string>("all");
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<TitleTransfer | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<string>("requestedDate");
-  const [order, setOrder] = useState<"asc" | "desc">("desc");
-  const LIMIT = 20;
 
-  const { data, isLoading, isError } = useTitleTransfers(
-    tab !== "all"
-      ? { status: tab as TitleTransferStatus, page, limit: LIMIT, sort, order }
-      : { page, limit: LIMIT, sort, order }
+  const fullQuery = useMemo(
+    () => ({
+      ...query,
+      ...(tab !== "all" ? { status: tab as TitleTransferStatus } : {}),
+    }),
+    [query, tab]
   );
+
+  const { data, isLoading, isError } = useTitleTransfers(fullQuery);
   const { data: propertiesResult } = useProperties({ limit: 300 });
   const { data: usersResult } = useUsers({ limit: 300, isActive: true });
   const { data: unitsResult } = useUnits({ limit: 300, propertyId: form.propertyId });
@@ -280,56 +283,40 @@ export default function TitleTransfersPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {isError ? (
-            <div className="py-12 text-center text-destructive">
-              <p className="font-semibold">Failed to load title transfers</p>
-            </div>
-          ) : isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : transfers.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center py-12 text-center min-h-[400px]">
-              <ScrollText className="h-12 w-12 text-muted-foreground/40 mb-3" />
-              <p className="font-medium">No title transfers in this stage</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Create a transfer to begin tracking ownership handover.
-              </p>
-            </div>
-          ) : (
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={transfers.length === 0}
+            onRetry={() => {}}
+            emptyState={
+              <div className="flex-1 flex flex-col items-center justify-center py-12 text-center min-h-[400px]">
+                <ScrollText className="h-12 w-12 text-muted-foreground/40 mb-3" />
+                <p className="font-medium">No title transfers in this stage</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Create a transfer to begin tracking ownership handover.
+                </p>
+              </div>
+            }
+          >
             <div className="rounded-md border scroll-grid overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50 text-left text-sm font-medium text-muted-foreground">
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => { setSort("propertyId"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
-                  >
-                    Property {sort === "propertyId" ? (order === "asc" ? "▲" : "▼") : ""}
+                  <TableHead {...sortHeader("propertyId")}>
+                    Property{sortIndicator("propertyId")}
                   </TableHead>
                   <TableHead>Buyer</TableHead>
                   <TableHead>Basis</TableHead>
                   <TableHead>Title No.</TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => { setSort("contractValue"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
-                  >
-                    Contract Value {sort === "contractValue" ? (order === "asc" ? "▲" : "▼") : ""}
+                  <TableHead {...sortHeader("contractValue")}>
+                    Contract Value{sortIndicator("contractValue")}
                   </TableHead>
                   <TableHead>Settled</TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => { setSort("status"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
-                  >
-                    Status {sort === "status" ? (order === "asc" ? "▲" : "▼") : ""}
+                  <TableHead {...sortHeader("status")}>
+                    Status{sortIndicator("status")}
                   </TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => { setSort("requestedDate"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
-                  >
-                    Requested {sort === "requestedDate" ? (order === "asc" ? "▲" : "▼") : ""}
+                  <TableHead {...sortHeader("requestedDate")}>
+                    Requested{sortIndicator("requestedDate")}
                   </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -389,10 +376,10 @@ export default function TitleTransfersPage() {
                 </TableBody>
               </Table>
             </div>
-          )}
+            <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="transfers" />
+          </GridState>
         </CardContent>
       </Card>
-      <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="transfers" />
 
       <TransferDialog
         open={createOpen}

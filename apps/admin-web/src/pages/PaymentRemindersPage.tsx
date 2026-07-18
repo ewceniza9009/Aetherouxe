@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
 import {
   Card,
   CardContent,
@@ -8,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -27,6 +28,7 @@ import {
   type ReminderChannel,
   formatDate,
 } from "@/hooks/use-collections";
+import { ListPager } from "@/components/ListPager";
 
 const channelIcon: Record<ReminderChannel, React.ReactNode> = {
   email: <Mail className="h-3.5 w-3.5" />,
@@ -37,14 +39,23 @@ const channelIcon: Record<ReminderChannel, React.ReactNode> = {
 
 export default function PaymentRemindersPage() {
   const navigate = useNavigate();
+  const listQuery = useListQuery(20);
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [showOnlyPending, setShowOnlyPending] = useState(false);
-  const { data, isLoading, isError } = usePaymentReminders(
-    showOnlyPending ? { status: "pending" } : undefined
+
+  const fullQuery = useMemo(
+    () => ({
+      ...query,
+      ...(showOnlyPending ? { status: "pending" as const } : {}),
+    }),
+    [query, showOnlyPending]
   );
+
+  const { data, isLoading, isError } = usePaymentReminders(fullQuery);
   const generate = useGenerateReminders();
   const markSent = useMarkReminderSent();
 
-  const reminders = data ?? [];
+  const reminders = data?.data ?? [];
 
   return (
     <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
@@ -84,31 +95,37 @@ export default function PaymentRemindersPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isError ? (
-            <div className="py-12 text-center text-sm text-destructive">
-              Failed to load reminders.
-            </div>
-          ) : isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : reminders.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-12 text-center">
-              <BellRing className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No reminders found.</p>
-            </div>
-          ) : (
+          <GridToolbar
+            search={search}
+            onSearchChange={setSearch}
+            placeholder="Search reminders..."
+          />
+
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={reminders.length === 0}
+            onRetry={() => {}}
+          >
             <div className="rounded-md border scroll-grid">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Recipient</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Channel</TableHead>
-                    <TableHead>Scheduled</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead {...sortHeader("recipientName")}>
+                      Recipient{sortIndicator("recipientName")}
+                    </TableHead>
+                    <TableHead {...sortHeader("type")}>
+                      Type{sortIndicator("type")}
+                    </TableHead>
+                    <TableHead {...sortHeader("channel")}>
+                      Channel{sortIndicator("channel")}
+                    </TableHead>
+                    <TableHead {...sortHeader("scheduledAt")}>
+                      Scheduled{sortIndicator("scheduledAt")}
+                    </TableHead>
+                    <TableHead {...sortHeader("status")}>
+                      Status{sortIndicator("status")}
+                    </TableHead>
                     <TableHead>Message</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
@@ -161,7 +178,9 @@ export default function PaymentRemindersPage() {
                 </TableBody>
               </Table>
             </div>
-          )}
+
+            <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="reminders" />
+          </GridState>
         </CardContent>
       </Card>
     </div>

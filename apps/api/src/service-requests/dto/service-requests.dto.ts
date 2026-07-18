@@ -1,6 +1,7 @@
 import { IsString, IsOptional, IsNumber, IsDateString, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ServiceCategory, Priority, ServiceStatus, WorkOrderStatus } from '@prisma/client';
+import { ListQueryDto } from '../../common/dto/list-query.dto';
 
 export class CreateServiceRequestDto {
   @ApiPropertyOptional() @IsOptional() @IsString() tenantId?: string;
@@ -28,9 +29,7 @@ export class AssignRequestDto {
   @ApiPropertyOptional() @IsOptional() @IsDateString() scheduledAt?: string;
 }
 
-export class ServiceRequestQueryDto {
-  @ApiPropertyOptional() @IsOptional() page?: number;
-  @ApiPropertyOptional() @IsOptional() limit?: number;
+export class ServiceRequestQueryDto extends ListQueryDto {
   @ApiPropertyOptional({ enum: ServiceStatus }) @IsOptional() @IsEnum(ServiceStatus) status?: ServiceStatus;
   @ApiPropertyOptional({ enum: Priority }) @IsOptional() @IsEnum(Priority) priority?: Priority;
   @ApiPropertyOptional({ enum: ServiceCategory }) @IsOptional() @IsEnum(ServiceCategory) category?: ServiceCategory;

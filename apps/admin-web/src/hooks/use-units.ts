@@ -27,6 +27,9 @@ export interface Unit {
 export interface UnitQuery {
   page?: number;
   limit?: number;
+  search?: string;
+  sort?: string;
+  order?: string;
   propertyId?: string;
   type?: string;
   status?: string;
@@ -47,6 +50,9 @@ export function useUnits(query: UnitQuery) {
       if (query.propertyId) params.set("propertyId", query.propertyId);
       if (query.type) params.set("type", query.type);
       if (query.status) params.set("status", query.status);
+      if (query.search) params.set("search", query.search);
+      if (query.sort) params.set("sort", query.sort);
+      if (query.order) params.set("order", query.order);
       const { data } = await api.get<ApiResponse<any[]>>(`/units?${params}`);
       const transformed = (data.data ?? []).map((u: any) => ({
         id: u.id,

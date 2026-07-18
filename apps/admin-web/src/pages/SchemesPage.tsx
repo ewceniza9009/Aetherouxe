@@ -1,12 +1,10 @@
-import { useState, useEffect } from "react";
-import { useDebouncedValue } from "@/hooks/use-debounce";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ListPager } from "@/components/ListPager";
 import {
   Select,
   SelectContent,
@@ -14,8 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, ClipboardList, Lock, Unlock, FileCode } from "lucide-react";
-import { useSchemes, useDeleteScheme, SCHEME_TYPES, type Scheme } from "@/hooks/use-schemes";
+import { Plus, Lock, Unlock, FileCode } from "lucide-react";
+import { useSchemes, SCHEME_TYPES, type Scheme } from "@/hooks/use-schemes";
+import { ListPager } from "@/components/ListPager";
 
 const schemeTypeMeta: Record<string, { label: string; className: string }> = {
   standard_rental: { label: "Rental", className: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
@@ -44,22 +43,19 @@ function schemeSummary(s: Scheme): string {
 
 export default function SchemesPage() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
+  const listQuery = useListQuery(20);
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [page, setPage] = useState(1);
-  const LIMIT = 20;
-  const debouncedSearch = useDebouncedValue(search, 350);
-  const { data: schemesResult, isLoading } = useSchemes({
-    type: typeFilter === "all" ? undefined : typeFilter,
-    search: debouncedSearch || undefined,
-    page,
-    limit: LIMIT,
-  });
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch]);
-  const deleteScheme = useDeleteScheme();
+  const fullQuery = useMemo(
+    () => ({
+      ...query,
+      type: typeFilter !== "all" ? typeFilter : undefined,
+    }),
+    [query, typeFilter]
+  );
+
+  const { data: schemesResult, isLoading, isError } = useSchemes(fullQuery);
 
   const schemes = schemesResult?.data ?? [];
   const meta = schemesResult?.meta;
@@ -78,17 +74,12 @@ export default function SchemesPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            <div className="relative flex-1 min-w-[200px] max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search schemes..."
-                className="pl-9 bg-transparent"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-              <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
+          <GridToolbar
+            search={search}
+            onSearchChange={setSearch}
+            placeholder="Search schemes..."
+            filters={
+              <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); resetPage(); }}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="All Types" />
                 </SelectTrigger>
@@ -99,32 +90,34 @@ export default function SchemesPage() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-          {isLoading ? (
-            <div className="p-4 space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
-            </div>
-          ) : schemes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <ClipboardList className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No schemes found.</p>
-              <Button variant="outline" size="sm" onClick={() => navigate({ to: "/schemes/$id", params: { id: "new" } })}>
-                <Plus className="mr-2 h-4 w-4" /> Create a Scheme
-              </Button>
-            </div>
-          ) : (
-            <>
+            }
+          />
+
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={schemes.length === 0}
+            onRetry={() => {}}
+          >
             <div className="rounded-md border scroll-grid">
               <table className="w-full">
                 <thead>
                   <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Code</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Type</th>
+                    <th {...sortHeader("code", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Code{sortIndicator("code")}
+                    </th>
+                    <th {...sortHeader("name", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Name{sortIndicator("name")}
+                    </th>
+                    <th {...sortHeader("schemeType", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Type{sortIndicator("schemeType")}
+                    </th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Terms</th>
                     <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Agent %</th>
                     <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Company %</th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">Status</th>
+                    <th {...sortHeader("isLocked", "px-4 py-3 text-center text-sm font-medium text-muted-foreground")}>
+                      Status{sortIndicator("isLocked")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -164,9 +157,8 @@ export default function SchemesPage() {
                 </tbody>
               </table>
             </div>
-            {meta && <ListPager meta={meta} page={page} onPageChange={setPage} />}
-            </>
-          )}
+            <ListPager meta={meta} page={page} onPageChange={setPage} />
+          </GridState>
         </CardContent>
       </Card>
     </div>

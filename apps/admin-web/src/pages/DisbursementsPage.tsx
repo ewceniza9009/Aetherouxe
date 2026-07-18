@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useListQuery } from '@/hooks/use-list-query';
+import { GridToolbar, GridState } from '@/components/GridToolbar';
 import { useApInvoices, useDisburse } from '@/hooks/use-ap';
 import {
   Table,
@@ -13,11 +15,17 @@ import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { ListPager } from '@/components/ListPager';
 
 export default function DisbursementsPage() {
-  const { data: invoices, isLoading } = useApInvoices();
+  const listQuery = useListQuery(20);
+  const { search, setSearch, page, setPage, query, sortHeader, sortIndicator } = listQuery;
+  const { data, isLoading, isError } = useApInvoices(query);
   const disburseMutation = useDisburse();
   const [processingId, setProcessingId] = useState<string | null>(null);
+
+  const invoices = data?.data ?? [];
+  const meta = data?.meta;
 
   const handleDisburse = (id: string, amount: number) => {
     setProcessingId(id);
@@ -45,32 +53,37 @@ export default function DisbursementsPage() {
         </p>
       </div>
 
+      <GridToolbar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search invoices..."
+      />
+
       <div className="rounded-md border border-white/10 bg-black/40 backdrop-blur-xl">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-white/10 hover:bg-transparent">
-              <TableHead className="text-white/60">Source</TableHead>
-              <TableHead className="text-white/60">Notes</TableHead>
-              <TableHead className="text-white/60">Amount</TableHead>
-              <TableHead className="text-white/60">Status</TableHead>
-              <TableHead className="text-right text-white/60">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  <Loader2 className="mx-auto h-6 w-6 animate-spin text-white/40" />
-                </TableCell>
+        <GridState
+          isLoading={isLoading}
+          isError={isError}
+          isEmpty={invoices.length === 0}
+          onRetry={() => {}}
+        >
+          <Table>
+            <TableHeader>
+              <TableRow className="border-white/10 hover:bg-transparent">
+                <TableHead {...sortHeader("sourceType", "text-white/60")}>
+                  Source{sortIndicator("sourceType")}
+                </TableHead>
+                <TableHead className="text-white/60">Notes</TableHead>
+                <TableHead {...sortHeader("amount", "text-white/60")}>
+                  Amount{sortIndicator("amount")}
+                </TableHead>
+                <TableHead {...sortHeader("status", "text-white/60")}>
+                  Status{sortIndicator("status")}
+                </TableHead>
+                <TableHead className="text-right text-white/60">Actions</TableHead>
               </TableRow>
-            ) : !invoices?.length ? (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-white/40">
-                  No pending invoices found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              invoices.map((invoice: any) => (
+            </TableHeader>
+            <TableBody>
+              {invoices.map((invoice: any) => (
                 <TableRow key={invoice.id} className="border-white/10 hover:bg-white/5 transition-colors">
                   <TableCell className="font-medium text-white">
                     <Badge variant="outline" className="border-white/20 text-white/80">
@@ -112,10 +125,11 @@ export default function DisbursementsPage() {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableBody>
+          </Table>
+          <ListPager meta={meta} page={page} onPageChange={setPage} itemLabel="invoices" />
+        </GridState>
       </div>
     </div>
   );

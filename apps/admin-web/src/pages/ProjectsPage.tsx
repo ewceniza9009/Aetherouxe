@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
-import { useDebouncedValue } from "@/hooks/use-debounce";
 import { useNavigate } from "@tanstack/react-router";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
+import { ListPager } from "@/components/ListPager";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -13,16 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  flexRender,
-  createColumnHelper,
-} from "@tanstack/react-table";
-import { Plus, Search, MapPin, SearchX, CheckCircle2, ChevronRight, ExternalLink, Calendar, Building2, Hammer, ArrowUpDown, Eye } from "lucide-react";
+import { Plus, MapPin, Building2, Eye } from "lucide-react";
 import { useProjects, useDeleteProject, projectTypeLabels, projectStatusLabels } from "@/hooks/use-projects";
 import type { Project, ProjectType, ProjectStatus } from "@/hooks/use-projects";
 
@@ -38,110 +29,28 @@ const statusVariant: Record<ProjectStatus, "default" | "secondary" | "success" |
 const projectTypeOptions = Object.keys(projectTypeLabels) as ProjectType[];
 const projectStatusOptions = Object.keys(projectStatusLabels) as ProjectStatus[];
 
-const columnHelper = createColumnHelper<Project>();
-
 export default function ProjectsPage() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
+  const listQuery = useListQuery(10);
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-  const debouncedSearch = useDebouncedValue(search, 350);
 
-  const query = useMemo(() => ({
-    page: pagination.pageIndex + 1,
-    limit: pagination.pageSize,
-    search: debouncedSearch || undefined,
+  const fullQuery = useMemo(() => ({
+    ...query,
     status: statusFilter !== "all" ? (statusFilter as ProjectStatus) : undefined,
     projectType: typeFilter !== "all" ? (typeFilter as ProjectType) : undefined,
-  }), [pagination.pageIndex, pagination.pageSize, debouncedSearch, statusFilter, typeFilter]);
+  }), [query, statusFilter, typeFilter]);
 
-  const { data, isLoading, isError } = useProjects(query);
+  const { data, isLoading, isError, refetch } = useProjects(fullQuery);
   const deleteProject = useDeleteProject();
 
-  const columns = useMemo(() => [
-    columnHelper.accessor("name", {
-      header: "Name",
-      cell: (info) => (
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-            <Building2 className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <div className="font-medium">{info.getValue()}</div>
-            <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <MapPin className="h-3 w-3" /> {info.row.original.address || "No address provided"}
-            </div>
-          </div>
-        </div>
-      ),
-    }),
-    columnHelper.accessor("projectType", {
-      header: "Type",
-      cell: (info) => (
-        <span className="text-sm text-muted-foreground">
-          {projectTypeLabels[info.getValue()]}
-        </span>
-      ),
-    }),
-    columnHelper.accessor("status", {
-      header: "Status",
-      cell: (info) => (
-        <Badge variant={statusVariant[info.getValue()]}>
-          {info.getValue().replace(/_/g, " ")}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor("totalPhases", {
-      header: "Phases",
-      cell: (info) => (
-        <span className="text-sm text-muted-foreground">{info.getValue() ?? 0}</span>
-      ),
-    }),
-    columnHelper.accessor("targetCompletionDate", {
-      header: "Target Completion",
-      cell: (info) => {
-        const v = info.getValue();
-        return (
-          <span className="text-sm">
-            {v ? new Date(v).toLocaleDateString() : "—"}
-          </span>
-        );
-      },
-    }),
-    columnHelper.display({
-      id: "actions",
-      header: "",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => { e.stopPropagation(); navigate({ to: `/projects/${row.original.id}` }); }}
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    }),
-  ], [navigate]);
-
-  const table = useReactTable({
-    data: data?.data ?? [],
-    columns,
-    pageCount: data?.meta?.totalPages ?? -1,
-    state: { pagination },
-    onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    manualPagination: true,
-  });
+  const projects = data?.data ?? [];
+  const meta = data?.meta;
 
   if (isError) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+      <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Development Projects</h1>
         </div>
@@ -167,20 +76,14 @@ export default function ProjectsPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            <div className="relative flex-1 min-w-[200px] max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search projects..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 bg-transparent"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[160px]">
+      <GridToolbar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search projects…"
+        filters={
+          <>
+            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); resetPage(); }}>
+              <SelectTrigger className="w-full sm:w-[160px]">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent>
@@ -190,8 +93,8 @@ export default function ProjectsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[180px]">
+            <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); resetPage(); }}>
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
@@ -201,99 +104,86 @@ export default function ProjectsPage() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </>
+        }
+      />
 
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full" />
-              ))}
-            </div>
-          ) : (data?.data ?? []).length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center py-12 text-center min-h-[400px]">
-              <Hammer className="h-12 w-12 text-muted-foreground/40 mb-3" />
-              <p className="font-medium">No projects found</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                {search || statusFilter !== "all" || typeFilter !== "all"
-                  ? "Try adjusting your filters."
-                  : "Get started by creating your first project."}
-              </p>
-              {!search && statusFilter === "all" && typeFilter === "all" && (
-                <Button className="mt-4" onClick={() => navigate({ to: "/projects/new" })}>
-                  <Plus className="mr-2 h-4 w-4" /> New Project
-                </Button>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="rounded-md border scroll-grid">
-                <table className="w-full">
-                  <thead>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <tr key={headerGroup.id} className="border-b bg-muted/50">
-                        {headerGroup.headers.map((header) => (
-                          <th
-                            key={header.id}
-                            className="px-4 py-3 text-left text-sm font-medium text-muted-foreground"
+      <Card>
+        <CardContent className="pt-6">
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={projects.length === 0}
+            onRetry={() => refetch()}
+          >
+            <div className="rounded-md border scroll-grid">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th {...sortHeader("name", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Name{sortIndicator("name")}
+                    </th>
+                    <th {...sortHeader("projectType", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Type{sortIndicator("projectType")}
+                    </th>
+                    <th {...sortHeader("status", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Status{sortIndicator("status")}
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Phases</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Target Completion</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projects.map((p: Project) => (
+                    <tr
+                      key={p.id}
+                      className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
+                      onClick={() => navigate({ to: `/projects/${p.id}` })}
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                            <Building2 className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <div className="font-medium">{p.name}</div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <MapPin className="h-3 w-3" /> {p.address || "No address provided"}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-muted-foreground">{projectTypeLabels[p.projectType]}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant={statusVariant[p.status]}>
+                          {p.status.replace(/_/g, " ")}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{p.totalPhases ?? 0}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {p.targetCompletionDate ? new Date(p.targetCompletionDate).toLocaleDateString() : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => { e.stopPropagation(); navigate({ to: `/projects/${p.id}` }); }}
                           >
-                            {header.isPlaceholder ? null : (
-                              <span className="flex items-center gap-1">
-                                {flexRender(header.column.columnDef.header, header.getContext())}
-                                {header.column.getCanSort() && (
-                                  <ArrowUpDown className="h-3 w-3" />
-                                )}
-                              </span>
-                            )}
-                          </th>
-                        ))}
-                      </tr>
-                    ))}
-                  </thead>
-                  <tbody>
-                    {table.getRowModel().rows.map((row) => (
-                      <tr
-                        key={row.id}
-                        className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
-                        onClick={() => navigate({ to: `/projects/${row.original.id}` })}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <td key={cell.id} className="px-4 py-3 text-sm">
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="flex items-center justify-between mt-4">
-                <span className="text-sm text-muted-foreground">
-                  {data?.meta?.total ?? 0} total projects
-                </span>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                  >
-                    Previous
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    Page {pagination.pageIndex + 1} of {table.getPageCount()}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <ListPager meta={meta} page={page} onPageChange={setPage} />
+          </GridState>
         </CardContent>
       </Card>
     </div>

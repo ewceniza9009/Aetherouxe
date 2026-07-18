@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
+import { ListPager } from "@/components/ListPager";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,19 +25,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  ChevronLeft,
-  ChevronRight,
-  AlertCircle,
   Plus,
-  Dumbbell,
   Loader2,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/agent-meta";
@@ -70,19 +60,16 @@ function money(n: number) {
 
 export default function AmenitiesPage() {
   const navigate = useNavigate();
+  const listQuery = useListQuery(10);
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [page, setPage] = useState(1);
 
-  const query = useMemo(
-    () => ({
-      page,
-      limit: 10,
-      type: typeFilter !== "all" ? (typeFilter as AmenityType) : undefined,
-    }),
-    [page, typeFilter]
-  );
+  const fullQuery = {
+    ...query,
+    type: typeFilter !== "all" ? (typeFilter as AmenityType) : undefined,
+  };
 
-  const { data, isLoading, isError, refetch } = useAmenities(query);
+  const { data, isLoading, isError, refetch } = useAmenities(fullQuery);
   const createAmenity = useCreateAmenity();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -98,7 +85,6 @@ export default function AmenitiesPage() {
 
   const amenities = data?.data ?? [];
   const meta = data?.meta;
-  const totalPages = meta?.totalPages ?? 1;
 
   const resetForm = () =>
     setForm({
@@ -144,138 +130,99 @@ export default function AmenitiesPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Dumbbell className="h-5 w-5 text-accent" /> Facilities
-            </CardTitle>
-            <Select
-              value={typeFilter}
-              onValueChange={(v) => {
-                setTypeFilter(v);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {(Object.keys(amenityTypeMeta) as AmenityType[]).map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {amenityTypeMeta[t].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isError ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-              <p className="text-sm text-muted-foreground">Failed to load amenities.</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
-                Retry
-              </Button>
-            </div>
-          ) : isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+      <GridToolbar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search amenities…"
+        action={{ label: "New Amenity", onClick: () => setOpen(true) }}
+        filters={
+          <Select
+            value={typeFilter}
+            onValueChange={(v) => { setTypeFilter(v); resetPage(); }}
+          >
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              {(Object.keys(amenityTypeMeta) as AmenityType[]).map((t) => (
+                <SelectItem key={t} value={t}>
+                  {amenityTypeMeta[t].label}
+                </SelectItem>
               ))}
-            </div>
-          ) : amenities.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <Dumbbell className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No amenities found.</p>
-            </div>
-          ) : (
-            <>
-              <div className="rounded-md border scroll-grid">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        Name
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        Type
-                      </th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
-                        Capacity
-                      </th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
-                        Hourly Rate
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {amenities.map((a: Amenity) => (
-                      <tr
-                        key={a.id}
-                        className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
-                        onClick={() => navigate({ to: `/amenities/${a.id}` })}
-                      >
-                        <td className="px-4 py-3">
-                          <div className="font-medium">{a.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {a.location || "—"}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <Badge className={amenityTypeMeta[a.type].className}>
-                            {amenityTypeMeta[a.type].label}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums">
-                          {a.capacity ?? "—"}
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums">
-                          {a.hourlyRate != null ? money(a.hourlyRate) : "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          {a.isActive ? (
-                            <Badge variant="success">Active</Badge>
-                          ) : (
-                            <Badge variant="secondary">Inactive</Badge>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            </SelectContent>
+          </Select>
+        }
+      />
 
-              <div className="flex items-center justify-between pt-4">
-                <p className="text-sm text-muted-foreground">
-                  Page {page} of {totalPages} · {meta?.total ?? 0} total
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page <= 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" /> Prev
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page >= totalPages}
-                  >
-                    Next <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
+      <Card>
+        <CardContent className="pt-6">
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={amenities.length === 0}
+            onRetry={() => refetch()}
+          >
+            <div className="rounded-md border scroll-grid">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th {...sortHeader("name", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Name{sortIndicator("name")}
+                    </th>
+                    <th {...sortHeader("type", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Type{sortIndicator("type")}
+                    </th>
+                    <th {...sortHeader("capacity", "px-4 py-3 text-right text-sm font-medium text-muted-foreground")}>
+                      Capacity{sortIndicator("capacity")}
+                    </th>
+                    <th {...sortHeader("hourlyRate", "px-4 py-3 text-right text-sm font-medium text-muted-foreground")}>
+                      Hourly Rate{sortIndicator("hourlyRate")}
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {amenities.map((a: Amenity) => (
+                    <tr
+                      key={a.id}
+                      className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+                      onClick={() => navigate({ to: `/amenities/${a.id}` })}
+                    >
+                      <td className="px-4 py-3">
+                        <div className="font-medium">{a.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {a.location || "—"}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge className={amenityTypeMeta[a.type].className}>
+                          {amenityTypeMeta[a.type].label}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {a.capacity ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {a.hourlyRate != null ? money(a.hourlyRate) : "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {a.isActive ? (
+                          <Badge variant="success">Active</Badge>
+                        ) : (
+                          <Badge variant="secondary">Inactive</Badge>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <ListPager meta={meta} page={page} onPageChange={setPage} />
+          </GridState>
         </CardContent>
       </Card>
 

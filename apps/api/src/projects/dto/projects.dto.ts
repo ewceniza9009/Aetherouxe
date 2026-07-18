@@ -1,6 +1,7 @@
 import { IsString, IsOptional, IsEnum, IsInt, IsUUID, IsDateString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProjectType, ProjectStatus } from '@prisma/client';
+import { ListQueryDto } from '../../common/dto/list-query.dto';
 
 export class CreateProjectDto {
   @ApiProperty() @IsString() @IsUUID() tenantId: string;
@@ -35,14 +36,11 @@ export class UpdateProjectDto {
   @ApiPropertyOptional() @IsOptional() @IsString() address?: string;
 }
 
-export class ProjectQueryDto {
-  @ApiPropertyOptional() @IsOptional() page?: number;
-  @ApiPropertyOptional() @IsOptional() limit?: number;
+export class ProjectQueryDto extends ListQueryDto {
   @ApiPropertyOptional({ enum: ProjectStatus })
   @IsOptional() @IsEnum(ProjectStatus)
   status?: ProjectStatus;
   @ApiPropertyOptional({ enum: ProjectType })
   @IsOptional() @IsEnum(ProjectType)
   projectType?: ProjectType;
-  @ApiPropertyOptional() @IsOptional() @IsString() search?: string;
 }

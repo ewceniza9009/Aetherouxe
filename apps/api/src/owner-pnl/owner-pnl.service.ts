@@ -6,10 +6,21 @@ import {
   GeneratePnlDto,
   PnlQueryDto,
 } from './dto/owner-pnl.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 
 @Injectable()
 export class OwnerPnlService {
   constructor(private prisma: PrismaService) {}
+
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'ownerId', type: 'eq' },
+      { field: 'propertyId', type: 'eq' },
+      { field: 'status', type: 'enum' },
+    ],
+    sortable: ['createdAt', 'generatedAt', 'periodStart', 'periodEnd', 'grossRentalIncome', 'netIncome', 'status'],
+  };
 
   async createPnl(dto: CreatePnlDto) {
     return this.prisma.ownerPnlStatement.create({
@@ -29,27 +40,15 @@ export class OwnerPnlService {
   }
 
   async findAllPnl(query: PnlQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-    if (query.ownerId) where.ownerId = query.ownerId;
-    if (query.propertyId) where.propertyId = query.propertyId;
-    if (query.status) where.status = query.status;
-
-    const [data, total] = await Promise.all([
-      this.prisma.ownerPnlStatement.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { generatedAt: 'desc' },
-        include: { owner: true, property: true },
-      }),
-      this.prisma.ownerPnlStatement.count({ where }),
-    ]);
-
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    const built = buildListQuery(query, this.fieldMap, { generatedAt: 'desc' });
+    return paginate(this.prisma.ownerPnlStatement, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+      include: { owner: true, property: true },
+    });
   }
 
   async findOnePnl(id: string) {

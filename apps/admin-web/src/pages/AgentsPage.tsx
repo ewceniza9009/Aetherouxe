@@ -1,27 +1,12 @@
 import { useMemo, useState } from "react";
-import { useDebouncedValue } from "@/hooks/use-debounce";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
+import { ListPager } from "@/components/ListPager";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  createColumnHelper,
-  type SortingState,
-} from "@tanstack/react-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -30,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Search, UserCheck, Users, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus } from "lucide-react";
 import {
   useAgents,
   type Agent,
@@ -39,7 +24,6 @@ import {
 import {
   TIER_LABELS,
   tierBadgeVariant,
-  licenseStatusVariant,
   licenseDotColor,
   AGENT_STATUS_LABELS,
   agentStatusVariant,
@@ -48,130 +32,24 @@ import {
 
 export default function AgentsPage() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
+  const listQuery = useListQuery(10);
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [tier, setTier] = useState<AgentTierValue | "all">("all");
   const [internalOnly, setInternalOnly] = useState(false);
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const debouncedSearch = useDebouncedValue(search, 350);
 
-  const sortField = sorting[0]?.id;
-  const sortDir = sorting[0]?.desc ? "desc" : "asc";
-
-  const { data, isLoading, isError } = useAgents({
-    search: debouncedSearch || undefined,
-    tier: tier === "all" ? undefined : tier,
-    isInternal: internalOnly || undefined,
-    limit: 100,
-    sort: sortField,
-    order: sortField ? sortDir : undefined,
-  });
-
-  const agents = data?.data ?? [];
-
-  const columnHelper = createColumnHelper<Agent>();
-  const columns = useMemo(
-    () => [
-      columnHelper.accessor("name", {
-        header: "Agent",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9">
-              {row.original.avatarUrl && <AvatarImage src={row.original.avatarUrl} />}
-              <AvatarFallback className="bg-muted text-xs">
-                {getInitials(row.original.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-medium leading-tight">{row.original.name}</p>
-              <p className="text-xs text-muted-foreground">{row.original.email}</p>
-            </div>
-          </div>
-        ),
-      }),
-      columnHelper.accessor("tier", {
-        header: "Tier",
-        cell: ({ getValue }) => {
-          const t = getValue();
-          return (
-            <Badge variant={tierBadgeVariant(t)} className="capitalize">
-              {TIER_LABELS[t]}
-            </Badge>
-          );
-        },
-      }),
-      columnHelper.accessor("isInternal", {
-        header: "Type",
-        cell: ({ getValue }) =>
-          getValue() ? (
-            <Badge variant="outline" className="border-primary/40 text-primary">
-              Internal
-            </Badge>
-          ) : (
-            <Badge variant="secondary">External</Badge>
-          ),
-      }),
-      columnHelper.display({
-        id: "manager",
-        header: "Manager",
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">
-            {row.original.managerName ?? "—"}
-          </span>
-        ),
-      }),
-      columnHelper.accessor("licenseStatus", {
-        header: "License",
-        cell: ({ getValue }) => {
-          const status = getValue();
-          return (
-            <div className="flex items-center gap-2">
-              <span
-                className={`h-2.5 w-2.5 rounded-full ${licenseDotColor(status)}`}
-              />
-              <span className="text-sm capitalize">{status}</span>
-            </div>
-          );
-        },
-      }),
-      columnHelper.accessor("transactionCount", {
-        header: "# Transactions",
-        cell: ({ getValue }) => (
-          <span className="font-medium tabular-nums">{getValue() ?? 0}</span>
-        ),
-      }),
-      columnHelper.accessor("status", {
-        header: "Status",
-        cell: ({ getValue }) => {
-          const status = getValue();
-          return (
-            <Badge variant={agentStatusVariant(status)}>
-              {AGENT_STATUS_LABELS[status]}
-            </Badge>
-          );
-        },
-      }),
-      columnHelper.display({
-        id: "actions",
-        header: "",
-        cell: () => (
-          <Button variant="ghost" size="sm">
-            View
-          </Button>
-        ),
-      }),
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+  const fullQuery = useMemo(
+    () => ({
+      ...query,
+      tier: tier === "all" ? undefined : tier,
+      isInternal: internalOnly || undefined,
+    }),
+    [query, tier, internalOnly]
   );
 
-  const table = useReactTable({
-    data: agents,
-    columns,
-    state: { sorting },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    manualSorting: true,
-  });
+  const { data, isLoading, isError, refetch } = useAgents(fullQuery);
+
+  const agents = data?.data ?? [];
+  const meta = data?.meta;
 
   return (
     <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
@@ -187,22 +65,13 @@ export default function AgentsPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            <div className="relative flex-1 min-w-[200px] max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search name or license..."
-                className="pl-9 bg-transparent"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <Select
-              value={tier}
-              onValueChange={(v) => setTier(v as AgentTierValue | "all")}
-            >
+      <GridToolbar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search name or license…"
+        filters={
+          <>
+            <Select value={tier} onValueChange={(v) => { setTier(v as AgentTierValue | "all"); resetPage(); }}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="Tier" />
               </SelectTrigger>
@@ -217,86 +86,120 @@ export default function AgentsPage() {
             <label className="flex items-center gap-2 text-sm text-muted-foreground">
               <Switch
                 checked={internalOnly}
-                onCheckedChange={(checked) => setInternalOnly(checked)}
+                onCheckedChange={(checked) => { setInternalOnly(checked); resetPage(); }}
               />
               Internal only
             </label>
-          </div>
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full" />
-              ))}
-            </div>
-          ) : isError ? (
-            <div className="py-12 text-center text-destructive">
-              Failed to load agents. Please try again.
-            </div>
-          ) : agents.length === 0 ? (
-            <div className="py-16 text-center">
-              <UserCheck className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />
-              <p className="font-medium text-muted-foreground">No agents found</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Adjust filters or add a new agent to get started.
-              </p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder ? null : (
-                          <button
-                            type="button"
-                            className="flex items-center gap-1 hover:text-foreground"
-                          >
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                            {header.column.getCanSort() &&
-                              (sorting.find((s) => s.id === header.column.id)
-                                ?.desc ? (
-                                <ChevronDown className="h-3 w-3" />
-                              ) : (
-                                <ChevronUp className="h-3 w-3" />
-                              ))}
-                          </button>
+          </>
+        }
+      />
+
+      <Card>
+        <CardContent className="pt-6">
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={agents.length === 0}
+            onRetry={() => refetch()}
+          >
+            <div className="rounded-md border scroll-grid">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th {...sortHeader("name", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Agent{sortIndicator("name")}
+                    </th>
+                    <th {...sortHeader("tier", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Tier{sortIndicator("tier")}
+                    </th>
+                    <th {...sortHeader("isInternal", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Type{sortIndicator("isInternal")}
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Manager</th>
+                    <th {...sortHeader("licenseStatus", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      License{sortIndicator("licenseStatus")}
+                    </th>
+                    <th {...sortHeader("transactionCount", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      # Transactions{sortIndicator("transactionCount")}
+                    </th>
+                    <th {...sortHeader("status", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Status{sortIndicator("status")}
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {agents.map((a: Agent) => (
+                    <tr
+                      key={a.id}
+                      className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+                      onClick={() => navigate({ to: `/agents/${a.id}` })}
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9">
+                            {a.avatarUrl && <AvatarImage src={a.avatarUrl} />}
+                            <AvatarFallback className="bg-muted text-xs">
+                              {getInitials(a.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium leading-tight">{a.name}</p>
+                            <p className="text-xs text-muted-foreground">{a.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant={tierBadgeVariant(a.tier)} className="capitalize">
+                          {TIER_LABELS[a.tier]}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        {a.isInternal ? (
+                          <Badge variant="outline" className="border-primary/40 text-primary">
+                            Internal
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">External</Badge>
                         )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    className="cursor-pointer"
-                    onClick={() =>
-                      navigate({ to: `/agents/${row.original.id}` })
-                    }
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-          {!isLoading && !isError && data?.meta && data.meta.totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-              <span>
-                Page {data.meta.page} of {data.meta.totalPages} ·{" "}
-                {data.meta.total} agents
-              </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {a.managerName ?? "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className={`h-2.5 w-2.5 rounded-full ${licenseDotColor(a.licenseStatus)}`} />
+                          <span className="text-sm capitalize">{a.licenseStatus}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 font-medium tabular-nums">
+                        {a.transactionCount ?? 0}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant={agentStatusVariant(a.status)}>
+                          {AGENT_STATUS_LABELS[a.status]}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate({ to: `/agents/${a.id}` });
+                          }}
+                        >
+                          View
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
+
+            <ListPager meta={meta} page={page} onPageChange={setPage} />
+          </GridState>
         </CardContent>
       </Card>
     </div>

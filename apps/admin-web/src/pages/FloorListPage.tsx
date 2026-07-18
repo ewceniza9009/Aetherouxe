@@ -1,11 +1,11 @@
 import { useState, useCallback } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
+import { GridState } from "@/components/GridToolbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -81,21 +81,6 @@ export default function FloorListPage() {
 
   const sortedFloors = floors ? [...floors].sort((a, b) => a.sortOrder - b.sortOrder) : [];
 
-  if (error) {
-    return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
-        <Button variant="outline" size="icon" onClick={() => navigate({ to: "/buildings" })}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <Card>
-          <CardContent className="py-12 text-center text-red-500">
-            <p className="text-lg font-semibold">Failed to load floors</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -141,18 +126,18 @@ export default function FloorListPage() {
           <CardTitle>All Floors</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full" />
-              ))}
-            </div>
-          ) : sortedFloors.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-lg font-semibold text-muted-foreground">No floors added yet</p>
-              <p className="text-sm text-muted-foreground">Add a floor using the form above.</p>
-            </div>
-          ) : (
+          <GridState
+            isLoading={isLoading}
+            isError={!!error}
+            isEmpty={sortedFloors.length === 0}
+            onRetry={() => {}}
+            emptyState={
+              <div className="text-center py-12">
+                <p className="text-lg font-semibold text-muted-foreground">No floors added yet</p>
+                <p className="text-sm text-muted-foreground">Add a floor using the form above.</p>
+              </div>
+            }
+          >
             <div className="space-y-2">
               {sortedFloors.map((floor, idx) => (
                 <div
@@ -200,7 +185,7 @@ export default function FloorListPage() {
                 </div>
               ))}
             </div>
-          )}
+          </GridState>
         </CardContent>
       </Card>
 

@@ -7,10 +7,23 @@ import {
   CreateSignatureDto,
   UpdateSignatureDto,
 } from './dto/documents.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 
 @Injectable()
 export class DocumentsService {
   constructor(private prisma: PrismaService) {}
+
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'ownerType', type: 'enum' },
+      { field: 'ownerId', type: 'eq' },
+      { field: 'documentType', type: 'enum' },
+      { field: 'isSigned', type: 'bool' },
+    ],
+    search: ['title', 'fileName'],
+    sortable: ['uploadedAt', 'createdAt', 'expiryDate', 'title', 'documentType', 'isSigned'],
+  };
 
   // ─── Document Vault ────────────────────────
   async createDocument(dto: CreateDocumentDto) {
@@ -32,22 +45,14 @@ export class DocumentsService {
   }
 
   async findAllDocuments(query: DocumentQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-    if (query.ownerType) where.ownerType = query.ownerType;
-    if (query.ownerId) where.ownerId = query.ownerId;
-    if (query.documentType) where.documentType = query.documentType;
-    if (query.isSigned !== undefined) where.isSigned = query.isSigned;
-
-    const [data, total] = await Promise.all([
-      this.prisma.documentVault.findMany({ where, skip, take: limit, orderBy: { uploadedAt: 'desc' } }),
-      this.prisma.documentVault.count({ where }),
-    ]);
-
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    const built = buildListQuery(query, this.fieldMap, { uploadedAt: 'desc' });
+    return paginate(this.prisma.documentVault, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+    });
   }
 
   async findOneDocument(id: string) {

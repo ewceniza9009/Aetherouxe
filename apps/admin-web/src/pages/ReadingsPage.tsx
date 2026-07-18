@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -20,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AlertCircle, Gauge } from "lucide-react";
+import { Gauge } from "lucide-react";
 import {
   useReadings,
   useMeters,
@@ -29,6 +30,7 @@ import {
 import { AddReadingDialog, BulkReadingsDialog } from "@/components/utilities/ReadingDialogs";
 import { utilityTypeMeta, formatDate } from "@/lib/utility-meta";
 import { type UtilityMeter } from "@/hooks/use-utilities";
+import { ListPager } from "@/components/ListPager";
 
 function unitPropertyLabel(meter: UtilityMeter | null | undefined): string {
   if (!meter) return "—";
@@ -46,6 +48,8 @@ function tenantName(resident?: UtilityMeter["resident"]): string | null {
 
 export default function ReadingsPage() {
   const navigate = useNavigate();
+  const listQuery = useListQuery(20);
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [meterId, setMeterId] = useState<string>("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -53,19 +57,19 @@ export default function ReadingsPage() {
   const { data: metersData } = useMeters({ limit: 500 });
   const meters = metersData?.data ?? [];
 
-  const { data, isLoading, isError, refetch } = useReadings({
-    meterId: meterId !== "all" ? meterId : undefined,
-    from: from || undefined,
-    to: to || undefined,
-  });
+  const fullQuery = useMemo(
+    () => ({
+      ...query,
+      meterId: meterId !== "all" ? meterId : undefined,
+      from: from || undefined,
+      to: to || undefined,
+    }),
+    [query, meterId, from, to]
+  );
 
-  const readings = useMemo(() => {
-    const all = data?.data ?? [];
-    return [...all].sort(
-      (a, b) =>
-        new Date(b.readingDate).getTime() - new Date(a.readingDate).getTime(),
-    );
-  }, [data]);
+  const { data, isLoading, isError, refetch } = useReadings(fullQuery);
+
+  const readings = data?.data ?? [];
 
   return (
     <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
@@ -91,71 +95,65 @@ export default function ReadingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center mb-4">
-            <Select value={meterId} onValueChange={setMeterId}>
-              <SelectTrigger className="w-full sm:w-72">
-                <SelectValue placeholder="Meter" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Meters</SelectItem>
-                {meters.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.meterNumber} · {m.utilityType}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <span className="text-sm font-medium text-muted-foreground">From</span>
-              <Input
-                type="date"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                className="w-full sm:w-40"
-              />
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <span className="text-sm font-medium text-muted-foreground">To</span>
-              <Input
-                type="date"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className="w-full sm:w-40"
-              />
-            </div>
-          </div>
-          {isError ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-              <p className="text-sm text-muted-foreground">
-                Failed to load readings.
-              </p>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
-                Retry
-              </Button>
-            </div>
-          ) : isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </div>
-          ) : readings.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <Gauge className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                No readings found.
-              </p>
-            </div>
-          ) : (
+          <GridToolbar
+            search={search}
+            onSearchChange={setSearch}
+            placeholder="Search readings..."
+            filters={
+              <>
+                <Select value={meterId} onValueChange={(v) => { setMeterId(v); resetPage(); }}>
+                  <SelectTrigger className="w-full sm:w-72">
+                    <SelectValue placeholder="Meter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Meters</SelectItem>
+                    {meters.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.meterNumber} · {m.utilityType}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <span className="text-sm font-medium text-muted-foreground">From</span>
+                  <Input
+                    type="date"
+                    value={from}
+                    onChange={(e) => { setFrom(e.target.value); resetPage(); }}
+                    className="w-full sm:w-40"
+                  />
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <span className="text-sm font-medium text-muted-foreground">To</span>
+                  <Input
+                    type="date"
+                    value={to}
+                    onChange={(e) => { setTo(e.target.value); resetPage(); }}
+                    className="w-full sm:w-40"
+                  />
+                </div>
+              </>
+            }
+          />
+
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={readings.length === 0}
+            onRetry={() => refetch()}
+          >
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Meter</TableHead>
+                  <TableHead {...sortHeader("meterNumber")}>
+                    Meter{sortIndicator("meterNumber")}
+                  </TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Unit / Property</TableHead>
                   <TableHead>Tenant</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead {...sortHeader("readingDate")}>
+                    Date{sortIndicator("readingDate")}
+                  </TableHead>
                   <TableHead className="text-right">Value</TableHead>
                   <TableHead>Reader</TableHead>
                   <TableHead>Note</TableHead>
@@ -210,7 +208,9 @@ export default function ReadingsPage() {
                 })}
               </TableBody>
             </Table>
-          )}
+
+            <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="readings" />
+          </GridState>
         </CardContent>
       </Card>
     </div>

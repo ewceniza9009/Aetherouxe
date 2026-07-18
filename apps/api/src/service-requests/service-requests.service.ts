@@ -8,10 +8,25 @@ import {
   CreateWorkOrderDto,
   UpdateWorkOrderDto,
 } from './dto/service-requests.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 
 @Injectable()
 export class ServiceRequestsService {
   constructor(private prisma: PrismaService) {}
+
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'status', type: 'enum' },
+      { field: 'priority', type: 'enum' },
+      { field: 'category', type: 'enum' },
+      { field: 'tenantId', type: 'eq' },
+      { field: 'propertyId', type: 'eq' },
+      { field: 'unitId', type: 'eq' },
+    ],
+    search: ['description'],
+    sortable: ['createdAt', 'updatedAt', 'requestedAt', 'priority', 'status', 'category'],
+  };
 
   // ─── Service Requests ──────────────────────
   async createServiceRequest(dto: CreateServiceRequestDto) {
@@ -30,30 +45,16 @@ export class ServiceRequestsService {
   }
 
   async findAllServiceRequests(query: ServiceRequestQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-    if (query.status) where.status = query.status;
-    if (query.priority) where.priority = query.priority;
-    if (query.category) where.category = query.category;
-    if (query.tenantId) where.tenantId = query.tenantId;
-    if (query.propertyId) where.propertyId = query.propertyId;
-    if (query.unitId) where.unitId = query.unitId;
-
-    const [rows, total] = await Promise.all([
-      this.prisma.serviceRequest.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { requestedAt: 'desc' },
-      }),
-      this.prisma.serviceRequest.count({ where }),
-    ]);
-
+    const built = buildListQuery(query, this.fieldMap, { requestedAt: 'desc' });
+    const { data: rows, meta } = await paginate(this.prisma.serviceRequest, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+    });
     const data = await this.attachRelations(rows);
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return { data, meta };
   }
 
   private async attachRelations(rows: any[]) {

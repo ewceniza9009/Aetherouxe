@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridState } from "@/components/GridToolbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -63,11 +64,15 @@ const EMPTY_FORM: CommissionRulePayload = {
 
 export default function CommissionsPage() {
   const navigate = useNavigate();
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<string>("createdAt");
-  const [order, setOrder] = useState<"asc" | "desc">("desc");
-  const LIMIT = 20;
-  const { data, isLoading, isError } = useCommissions({ limit: LIMIT, page, sort, order });
+  const listQuery = useListQuery(20);
+  const { page, setPage, sort, setSort, order, setOrder, query, sortHeader, sortIndicator } = listQuery;
+
+  const fullQuery = useMemo(() => ({
+    ...query,
+    status: undefined as "active" | "inactive" | undefined,
+  }), [query]);
+
+  const { data, isLoading, isError } = useCommissions(fullQuery);
   const createCommission = useCreateCommission();
   const updateCommission = useUpdateCommission();
   const deleteCommission = useDeleteCommission();
@@ -128,53 +133,37 @@ export default function CommissionsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : isError ? (
-            <div className="py-12 text-center text-destructive">
-              Failed to load commission rules.
-            </div>
-          ) : rules.length === 0 ? (
-            <div className="py-16 text-center">
-              <Percent className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />
-              <p className="font-medium text-muted-foreground">No commission rules</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Create a rule to start calculating agent commissions.
-              </p>
-            </div>
-          ) : (
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={rules.length === 0}
+            onRetry={() => {}}
+            emptyState={
+              <div className="py-16 text-center">
+                <Percent className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />
+                <p className="font-medium text-muted-foreground">No commission rules</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Create a rule to start calculating agent commissions.
+                </p>
+              </div>
+            }
+          >
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => { setSort("name"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
-                  >
-                    Rule Name {sort === "name" ? (order === "asc" ? "▲" : "▼") : ""}
+                  <TableHead {...sortHeader("name")}>
+                    Rule Name{sortIndicator("name")}
                   </TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => { setSort("agentTier"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
-                  >
-                    Tier {sort === "agentTier" ? (order === "asc" ? "▲" : "▼") : ""}
+                  <TableHead {...sortHeader("tier")}>
+                    Tier{sortIndicator("tier")}
                   </TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => { setSort("propertyType"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
-                  >
-                    Property Type {sort === "propertyType" ? (order === "asc" ? "▲" : "▼") : ""}
+                  <TableHead {...sortHeader("propertyType")}>
+                    Property Type{sortIndicator("propertyType")}
                   </TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Value</TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => { setSort("isActive"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
-                  >
-                    Status {sort === "isActive" ? (order === "asc" ? "▲" : "▼") : ""}
+                  <TableHead {...sortHeader("isActive")}>
+                    Status{sortIndicator("isActive")}
                   </TableHead>
                   <TableHead></TableHead>
                 </TableRow>
@@ -243,10 +232,11 @@ export default function CommissionsPage() {
                 ))}
               </TableBody>
             </Table>
-          )}
+
+            <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="rules" />
+          </GridState>
         </CardContent>
       </Card>
-      <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="rules" />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>

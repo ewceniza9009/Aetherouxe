@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto, UserQueryDto } from './dto/users.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 import * as bcrypt from 'bcrypt';
 import { UserType } from '@prisma/client';
 
@@ -23,27 +25,26 @@ const USER_SELECT = {
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(query: UserQueryDto, tenantId: string) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-    const where: any = { tenantId };
-    if (query.search) {
-      where.OR = [
-        { email: { contains: query.search, mode: 'insensitive' } },
-        { firstName: { contains: query.search, mode: 'insensitive' } },
-        { lastName: { contains: query.search, mode: 'insensitive' } },
-        { phone: { contains: query.search, mode: 'insensitive' } },
-      ];
-    }
-    if (query.userType) where.userType = query.userType;
-    if (typeof query.isActive === 'boolean') where.isActive = query.isActive;
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'userType', type: 'enum' },
+      { field: 'isActive', type: 'bool' },
+    ],
+    search: ['email', 'firstName', 'lastName', 'phone'],
+    sortable: ['createdAt', 'updatedAt', 'email', 'userType', 'isActive'],
+  };
 
-    const [data, total] = await Promise.all([
-      this.prisma.user.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, select: USER_SELECT }),
-      this.prisma.user.count({ where }),
-    ]);
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  async findAll(query: UserQueryDto, tenantId: string) {
+    const built = buildListQuery(query, this.fieldMap, { createdAt: 'desc' });
+    const where: any = { tenantId, ...built.where };
+    return paginate(this.prisma.user, {
+      page: query.page,
+      limit: query.limit,
+      where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+      select: USER_SELECT,
+    });
   }
 
   async findOne(id: string, tenantId: string) {

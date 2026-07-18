@@ -23,10 +23,56 @@ import {
   ModerationTargetType,
   ModerationAction,
 } from '@prisma/client';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 
 @Injectable()
 export class CommunityService {
   constructor(private prisma: PrismaService) {}
+
+  private readonly amenityFieldMap: FieldMap = {
+    filters: [
+      { field: 'type', type: 'enum' },
+      { field: 'propertyId', type: 'eq' },
+      { field: 'isActive', type: 'bool' },
+    ],
+    search: ['name', 'description', 'location'],
+    sortable: ['createdAt', 'updatedAt', 'name', 'type', 'hourlyRate', 'capacity'],
+  };
+
+  private readonly bookingFieldMap: FieldMap = {
+    filters: [
+      { field: 'amenityId', type: 'eq' },
+      { field: 'tenantId', type: 'eq' },
+      { field: 'status', type: 'enum' },
+    ],
+    sortable: ['createdAt', 'bookingStart', 'bookingEnd', 'totalAmount', 'status'],
+  };
+
+  private readonly postFieldMap: FieldMap = {
+    filters: [
+      { field: 'postType', type: 'enum' },
+      { field: 'audience', type: 'enum' },
+      { field: 'moderationStatus', type: 'enum' },
+    ],
+    search: ['title', 'body'],
+    sortable: ['createdAt', 'updatedAt', 'publishedAt', 'postType', 'moderationStatus'],
+  };
+
+  private readonly commentFieldMap: FieldMap = {
+    filters: [
+      { field: 'postId', type: 'eq' },
+      { field: 'moderationStatus', type: 'enum' },
+    ],
+    sortable: ['createdAt', 'updatedAt', 'moderationStatus'],
+  };
+
+  private readonly reportFieldMap: FieldMap = {
+    filters: [
+      { field: 'status', type: 'enum' },
+    ],
+    sortable: ['createdAt', 'updatedAt', 'resolvedAt'],
+  };
 
   // ─── Amenities ─────────────────────────────
   async createAmenity(dto: CreateAmenityDto) {
@@ -45,21 +91,14 @@ export class CommunityService {
   }
 
   async findAllAmenities(query: AmenityQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-    if (query.type) where.type = query.type;
-    if (query.propertyId) where.propertyId = query.propertyId;
-    if (query.isActive !== undefined) where.isActive = query.isActive;
-
-    const [data, total] = await Promise.all([
-      this.prisma.amenity.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }),
-      this.prisma.amenity.count({ where }),
-    ]);
-
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    const built = buildListQuery(query, this.amenityFieldMap, { createdAt: 'desc' });
+    return paginate(this.prisma.amenity, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.amenityFieldMap.sortable,
+    });
   }
 
   async findOneAmenity(id: string) {
@@ -103,26 +142,21 @@ export class CommunityService {
   }
 
   async findAllBookings(query: BookingQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-    if (query.amenityId) where.amenityId = query.amenityId;
-    if (query.tenantId) where.tenantId = query.tenantId;
-    if (query.status) where.status = query.status;
+    const built = buildListQuery(query, this.bookingFieldMap, { bookingStart: 'desc' });
+    const where: any = { ...built.where };
     if (query.fromDate || query.toDate) {
-      where.bookingStart = {};
+      where.bookingStart = { ...where.bookingStart };
       if (query.fromDate) where.bookingStart.gte = new Date(query.fromDate);
       if (query.toDate) where.bookingStart.lte = new Date(query.toDate);
     }
-
-    const [data, total] = await Promise.all([
-      this.prisma.amenityBooking.findMany({ where, skip, take: limit, orderBy: { bookingStart: 'desc' }, include: { tenant: true, unit: true } }),
-      this.prisma.amenityBooking.count({ where }),
-    ]);
-
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return paginate(this.prisma.amenityBooking, {
+      page: query.page,
+      limit: query.limit,
+      where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.bookingFieldMap.sortable,
+      include: { tenant: true, unit: true },
+    });
   }
 
   async findOneBooking(id: string) {
@@ -179,34 +213,22 @@ export class CommunityService {
   }
 
   async findAllPosts(query: PostQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-    if (query.postType) where.postType = query.postType;
-    if (query.audience) where.audience = query.audience;
-    if (query.moderationStatus) where.moderationStatus = query.moderationStatus;
-
-    const [data, total] = await Promise.all([
-      this.prisma.communityPost.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          _count: {
-            select: {
-              comments: true,
-              reports: { where: { status: 'open' } },
-            },
+    const built = buildListQuery(query, this.postFieldMap, { createdAt: 'desc' });
+    return paginate(this.prisma.communityPost, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.postFieldMap.sortable,
+      include: {
+        _count: {
+          select: {
+            comments: true,
+            reports: { where: { status: 'open' } },
           },
         },
-      }),
-      this.prisma.communityPost.count({ where }),
-    ]);
-
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+      },
+    });
   }
 
   async findOnePost(id: string) {
@@ -284,30 +306,19 @@ export class CommunityService {
   }
 
   async findAllComments(query: CommentQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-    if (query.postId) where.postId = query.postId;
-    if (query.moderationStatus) where.moderationStatus = query.moderationStatus;
-
-    const [data, total] = await Promise.all([
-      this.prisma.postComment.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          author: { select: { id: true, firstName: true, lastName: true } },
-          post: { select: { id: true, title: true } },
-          _count: { select: { reports: { where: { status: 'open' } } } },
-        },
-      }),
-      this.prisma.postComment.count({ where }),
-    ]);
-
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    const built = buildListQuery(query, this.commentFieldMap, { createdAt: 'desc' });
+    return paginate(this.prisma.postComment, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.commentFieldMap.sortable,
+      include: {
+        author: { select: { id: true, firstName: true, lastName: true } },
+        post: { select: { id: true, title: true } },
+        _count: { select: { reports: { where: { status: 'open' } } } },
+      },
+    });
   }
 
   async moderateComment(id: string, dto: ModerateCommentDto) {
@@ -368,29 +379,19 @@ export class CommunityService {
   }
 
   async findAllReports(query: ReportQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-    if (query.status) where.status = query.status;
-
-    const [data, total] = await Promise.all([
-      this.prisma.postReport.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          post: { select: { id: true, title: true, moderationStatus: true } },
-          comment: { select: { id: true, body: true, moderationStatus: true } },
-          reportedBy: { select: { id: true, firstName: true, lastName: true } },
-        },
-      }),
-      this.prisma.postReport.count({ where }),
-    ]);
-
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    const built = buildListQuery(query, this.reportFieldMap, { createdAt: 'desc' });
+    return paginate(this.prisma.postReport, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.reportFieldMap.sortable,
+      include: {
+        post: { select: { id: true, title: true, moderationStatus: true } },
+        comment: { select: { id: true, body: true, moderationStatus: true } },
+        reportedBy: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
   }
 
   async resolveReport(id: string, dto: ResolveReportDto) {

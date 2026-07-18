@@ -1,11 +1,12 @@
 import { useState, useMemo, Fragment } from "react";
-import { useDebouncedValue } from "@/hooks/use-debounce";
 import { useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
+import { ListPager } from "@/components/ListPager";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -22,54 +23,35 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  flexRender,
-  createColumnHelper,
-} from "@tanstack/react-table";
-import {
   Plus,
-  Search,
-  ArrowUpDown,
   ChevronDown,
   ChevronRight,
-  Building2,
   HardHat,
   Phone,
   Mail,
-  Eye,
-  DollarSign,
 } from "lucide-react";
 import { useContractors, useEngagements, useCreateContractor } from "@/hooks/use-contractors";
 import type { Contractor } from "@/hooks/use-contractors";
 import { formatCurrency } from "@/lib/agent-meta";
 
-const columnHelper = createColumnHelper<Contractor>();
-
 export default function ContractorsPage() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
+  const listQuery = useListQuery(10);
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [specFilter, setSpecFilter] = useState<string>("all");
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [engagementFilter, setEngagementFilter] = useState<string>("");
-  const debouncedSearch = useDebouncedValue(search, 350);
 
-  const query = useMemo(() => ({
-    page: pagination.pageIndex + 1,
-    limit: pagination.pageSize,
-    search: debouncedSearch || undefined,
+  const fullQuery = useMemo(() => ({
+    ...query,
     specialization: specFilter !== "all" ? specFilter : undefined,
-  }), [pagination.pageIndex, pagination.pageSize, debouncedSearch, specFilter]);
+  }), [query, specFilter]);
 
-  const { data, isLoading, isError } = useContractors(query);
+  const { data, isLoading, isError, refetch } = useContractors(fullQuery);
   const { data: engagements } = useEngagements(
     engagementFilter ? { contractorId: engagementFilter } : {}
   );
-  
+
   const createContractor = useCreateContractor();
   const [newContractorDialog, setNewContractorDialog] = useState(false);
   const [newContractorForm, setNewContractorForm] = useState({
@@ -80,6 +62,9 @@ export default function ContractorsPage() {
     specialization: "",
     licenseNumber: "",
   });
+
+  const contractors = data?.data ?? [];
+  const meta = data?.meta;
 
   const handleCreateContractor = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,96 +80,9 @@ export default function ContractorsPage() {
     });
   };
 
-  const columns = useMemo(() => [
-    columnHelper.accessor("companyName", {
-      header: "Company",
-      cell: (info) => (
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-            <HardHat className="h-4 w-4 text-primary" />
-          </div>
-          <span className="font-medium">{info.getValue()}</span>
-        </div>
-      ),
-    }),
-    columnHelper.accessor("contactName", {
-      header: "Contact",
-      cell: (info) => (
-        <div>
-          <p className="text-sm">{info.getValue()}</p>
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            <Mail className="h-3 w-3" /> {info.row.original.email}
-          </p>
-          {info.row.original.phone && (
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Phone className="h-3 w-3" /> {info.row.original.phone}
-            </p>
-          )}
-        </div>
-      ),
-    }),
-    columnHelper.accessor("specialization", {
-      header: "Specialization",
-      cell: (info) => (
-        <Badge variant="secondary">{info.getValue()}</Badge>
-      ),
-    }),
-    columnHelper.accessor("licenseNumber", {
-      header: "License",
-      cell: (info) => (
-        <span className="text-sm text-muted-foreground">
-          {info.getValue() || "—"}
-        </span>
-      ),
-    }),
-    columnHelper.accessor("isActive", {
-      header: "Status",
-      cell: (info) => (
-        <Badge variant={info.getValue() ? "success" : "secondary"}>
-          {info.getValue() ? "Active" : "Inactive"}
-        </Badge>
-      ),
-    }),
-    columnHelper.display({
-      id: "expand",
-      header: "",
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            const id = row.original.id;
-            setExpandedRow(expandedRow === id ? null : id);
-            setEngagementFilter(expandedRow === id ? "" : id);
-          }}
-        >
-          {expandedRow === row.original.id ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-        </Button>
-      ),
-    }),
-  ], [expandedRow, navigate]);
-
-  const table = useReactTable({
-    data: data?.data ?? [],
-    columns,
-    pageCount: data?.meta?.totalPages ?? -1,
-    state: { pagination },
-    onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    manualPagination: true,
-  });
-
   if (isError) {
     return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
+      <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Contractors</h1>
         </div>
@@ -276,91 +174,121 @@ export default function ContractorsPage() {
         </Dialog>
       </div>
 
+      <GridToolbar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search contractors…"
+        filters={
+          <Select value={specFilter} onValueChange={(v) => { setSpecFilter(v); resetPage(); }}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectValue placeholder="All Specializations" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Specializations</SelectItem>
+              <SelectItem value="general_contractor">General Contractor</SelectItem>
+              <SelectItem value="electrical">Electrical</SelectItem>
+              <SelectItem value="plumbing">Plumbing</SelectItem>
+              <SelectItem value="hvac">HVAC</SelectItem>
+              <SelectItem value="roofing">Roofing</SelectItem>
+              <SelectItem value="concrete">Concrete</SelectItem>
+              <SelectItem value="framing">Framing</SelectItem>
+              <SelectItem value="painting">Painting</SelectItem>
+              <SelectItem value="landscaping">Landscaping</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        }
+      />
+
       <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search contractors..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Select value={specFilter} onValueChange={setSpecFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="All Specializations" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Specializations</SelectItem>
-                <SelectItem value="general_contractor">General Contractor</SelectItem>
-                <SelectItem value="electrical">Electrical</SelectItem>
-                <SelectItem value="plumbing">Plumbing</SelectItem>
-                <SelectItem value="hvac">HVAC</SelectItem>
-                <SelectItem value="roofing">Roofing</SelectItem>
-                <SelectItem value="concrete">Concrete</SelectItem>
-                <SelectItem value="framing">Framing</SelectItem>
-                <SelectItem value="painting">Painting</SelectItem>
-                <SelectItem value="landscaping">Landscaping</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : (data?.data ?? []).length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center py-12 text-center min-h-[400px]">
-              <Building2 className="h-12 w-12 text-muted-foreground/40 mb-3" />
-              <p className="font-medium">No contractors found</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                {search || specFilter !== "all"
-                  ? "Try adjusting your filters."
-                  : "Add your first contractor."}
-              </p>
-            </div>
-          ) : (
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={contractors.length === 0}
+            onRetry={() => refetch()}
+          >
             <div className="rounded-md border scroll-grid">
               <table className="w-full">
                 <thead>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <tr key={headerGroup.id} className="border-b bg-muted/50">
-                      {headerGroup.headers.map((header) => (
-                        <th
-                          key={header.id}
-                          className="px-4 py-3 text-left text-sm font-medium text-muted-foreground"
-                        >
-                          {header.isPlaceholder ? null : (
-                            <span className="flex items-center gap-1">
-                              {flexRender(header.column.columnDef.header, header.getContext())}
-                            </span>
-                          )}
-                        </th>
-                      ))}
-                    </tr>
-                  ))}
+                  <tr className="border-b bg-muted/50">
+                    <th {...sortHeader("companyName", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Company{sortIndicator("companyName")}
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Contact</th>
+                    <th {...sortHeader("specialization", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Specialization{sortIndicator("specialization")}
+                    </th>
+                    <th {...sortHeader("licenseNumber", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      License{sortIndicator("licenseNumber")}
+                    </th>
+                    <th {...sortHeader("isActive", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Status{sortIndicator("isActive")}
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground"></th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {table.getRowModel().rows.map((row) => (
-                    <Fragment key={row.id}>
-                      <tr 
+                  {contractors.map((c: Contractor) => (
+                    <Fragment key={c.id}>
+                      <tr
                         className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
-                        onClick={() => navigate({ to: `/contractors/${row.original.id}` })}
+                        onClick={() => navigate({ to: `/contractors/${c.id}` })}
                       >
-                        {row.getVisibleCells().map((cell) => (
-                          <td key={cell.id} className="px-4 py-3 text-sm">
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                              <HardHat className="h-4 w-4 text-primary" />
+                            </div>
+                            <span className="font-medium">{c.companyName}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div>
+                            <p className="text-sm">{c.contactName}</p>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Mail className="h-3 w-3" /> {c.email}
+                            </p>
+                            {c.phone && (
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Phone className="h-3 w-3" /> {c.phone}
+                              </p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant="secondary">{c.specialization}</Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-muted-foreground">{c.licenseNumber || "—"}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant={c.isActive ? "success" : "secondary"}>
+                            {c.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const id = c.id;
+                              setExpandedRow(expandedRow === id ? null : id);
+                              setEngagementFilter(expandedRow === id ? "" : id);
+                            }}
+                          >
+                            {expandedRow === c.id ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </td>
                       </tr>
-                      {expandedRow === row.original.id && engagements && (
+                      {expandedRow === c.id && engagements && (
                         <tr className="border-b bg-muted/20">
-                          <td colSpan={row.getVisibleCells().length} className="p-0 border-t">
+                          <td colSpan={6} className="p-0 border-t">
                             <div className="px-4 py-3">
                               <p className="text-sm font-medium mb-2">Engagements</p>
                               {engagements.length === 0 ? (
@@ -371,11 +299,11 @@ export default function ContractorsPage() {
                                     <div key={eng.id} className="flex items-center justify-between bg-background rounded-md border p-3">
                                       <div>
                                         <p className="text-sm font-medium">{eng.projectName || `Project ${eng.projectId}`}</p>
-                                         <p className="text-xs text-muted-foreground">{formatCurrency(Number(eng.contractAmount))} contract</p>
+                                        <p className="text-xs text-muted-foreground">{formatCurrency(Number(eng.contractAmount))} contract</p>
                                       </div>
                                       <div className="flex items-center gap-3">
                                         <div className="text-right">
-                                           <p className="text-sm">{formatCurrency(Number(eng.paidAmount))} paid</p>
+                                          <p className="text-sm">{formatCurrency(Number(eng.paidAmount))} paid</p>
                                           <p className="text-xs text-muted-foreground">
                                             {eng.contractAmount > 0
                                               ? `${((eng.paidAmount / eng.contractAmount) * 100).toFixed(0)}%`
@@ -403,26 +331,8 @@ export default function ContractorsPage() {
                 </tbody>
               </table>
             </div>
-          )}
-
-          {!isLoading && (data?.data ?? []).length > 0 && (
-            <div className="flex items-center justify-between mt-4">
-              <span className="text-sm text-muted-foreground">
-                {data?.meta?.total ?? 0} total contractors
-              </span>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-                  Previous
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  Page {pagination.pageIndex + 1} of {table.getPageCount()}
-                </span>
-                <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
+            <ListPager meta={meta} page={page} onPageChange={setPage} />
+          </GridState>
         </CardContent>
       </Card>
     </div>

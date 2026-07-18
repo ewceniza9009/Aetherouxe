@@ -1,6 +1,7 @@
 import { IsString, IsOptional, IsNumber, IsDateString, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PnlStatus } from '@prisma/client';
+import { ListQueryDto } from '../../common/dto/list-query.dto';
 
 export class CreatePnlDto {
   @ApiProperty() @IsString() ownerId: string;
@@ -36,9 +37,7 @@ export class GeneratePnlDto {
   @ApiPropertyOptional() @IsOptional() @IsNumber() managementFeeRate?: number;
 }
 
-export class PnlQueryDto {
-  @ApiPropertyOptional() @IsOptional() page?: number;
-  @ApiPropertyOptional() @IsOptional() limit?: number;
+export class PnlQueryDto extends ListQueryDto {
   @ApiPropertyOptional() @IsOptional() @IsString() ownerId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() propertyId?: string;
   @ApiPropertyOptional({ enum: PnlStatus }) @IsOptional() @IsEnum(PnlStatus) status?: PnlStatus;

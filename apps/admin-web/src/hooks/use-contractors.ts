@@ -45,6 +45,8 @@ export interface ContractorQuery {
   page?: number;
   limit?: number;
   search?: string;
+  sort?: string;
+  order?: string;
   specialization?: string;
   status?: string;
 }
@@ -64,6 +66,8 @@ export function useContractors(query: ContractorQuery) {
       if (query.search) params.set("search", query.search);
       if (query.specialization) params.set("specialization", query.specialization);
       if (query.status) params.set("status", query.status);
+      if (query.sort) params.set("sort", query.sort);
+      if (query.order) params.set("order", query.order);
       const { data } = await api.get<ApiResponse<Contractor[]>>(`/contractors?${params}`);
       return { data: data.data, meta: data.meta } as PaginatedResult<Contractor>;
     },

@@ -1,12 +1,13 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
+import { ListPager } from "@/components/ListPager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -23,17 +24,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  ChevronLeft,
-  ChevronRight,
-  AlertCircle,
   Plus,
   FileText,
   Loader2,
@@ -100,22 +90,19 @@ const docTypeMeta: Record<DocumentType, { label: string; className: string }> = 
 
 export default function DocumentsPage() {
   const navigate = useNavigate();
+  const listQuery = useListQuery(10);
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [ownerTypeFilter, setOwnerTypeFilter] = useState<string>("all");
   const [signedFilter, setSignedFilter] = useState<string>("all");
-  const [page, setPage] = useState(1);
 
-  const query = useMemo(
-    () => ({
-      page,
-      limit: 10,
-      ownerType:
-        ownerTypeFilter !== "all" ? (ownerTypeFilter as DocumentOwnerType) : undefined,
-      isSigned: signedFilter === "signed" ? true : signedFilter === "unsigned" ? false : undefined,
-    }),
-    [page, ownerTypeFilter, signedFilter]
-  );
+  const fullQuery = {
+    ...query,
+    ownerType:
+      ownerTypeFilter !== "all" ? (ownerTypeFilter as DocumentOwnerType) : undefined,
+    isSigned: signedFilter === "signed" ? true : signedFilter === "unsigned" ? false : undefined,
+  };
 
-  const { data, isLoading, isError, refetch } = useDocuments(query);
+  const { data, isLoading, isError, refetch } = useDocuments(fullQuery);
   const uploadDocument = useUploadDocument();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -131,7 +118,6 @@ export default function DocumentsPage() {
 
   const documents = data?.data ?? [];
   const meta = data?.meta;
-  const totalPages = meta?.totalPages ?? 1;
 
   const handleUpload = async () => {
     setSaving(true);
@@ -174,173 +160,131 @@ export default function DocumentsPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-accent" /> Document Vault
-            </CardTitle>
-            <div className="flex flex-wrap gap-2">
-              <Select
-                value={ownerTypeFilter}
-                onValueChange={(v) => {
-                  setOwnerTypeFilter(v);
-                  setPage(1);
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-40">
-                  <SelectValue placeholder="Owner Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Owner Types</SelectItem>
-                  {(Object.keys(ownerTypeMeta) as DocumentOwnerType[]).map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {ownerTypeMeta[t]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={signedFilter}
-                onValueChange={(v) => {
-                  setSignedFilter(v);
-                  setPage(1);
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-36">
-                  <SelectValue placeholder="Signed" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="signed">Signed</SelectItem>
-                  <SelectItem value="unsigned">Unsigned</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isError ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-              <p className="text-sm text-muted-foreground">Failed to load documents.</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
-                Retry
-              </Button>
-            </div>
-          ) : isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : documents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <FileText className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No documents found.</p>
-            </div>
-          ) : (
-            <>
-              <div className="rounded-md border scroll-grid">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        Owner
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        Type
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        Title
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        File
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        Expiry
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        Signed
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {documents.map((d: DocumentVault) => (
-                      <tr
-                        key={d.id}
-                        className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
-                        onClick={() => navigate({ to: `/documents/${d.id}` })}
-                      >
-                        <td className="px-4 py-3 text-sm">
-                          <div className="font-medium">{ownerTypeMeta[d.ownerType]}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {d.ownerId.slice(0, 8).toUpperCase()}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <Badge className={docTypeMeta[d.documentType].className}>
-                            {docTypeMeta[d.documentType].label}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3 text-sm font-medium">{d.title}</td>
-                        <td className="px-4 py-3 text-sm">
-                          {d.fileUrl ? (
-                            <a
-                              href={d.fileUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-accent hover:underline"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Link2 className="h-3.5 w-3.5" />
-                              {d.fileName || "open"}
-                            </a>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          {d.expiryDate ? new Date(d.expiryDate).toLocaleDateString() : "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          {d.isSigned ? (
-                            <Badge variant="success">Signed</Badge>
-                          ) : (
-                            <Badge variant="warning">Unsigned</Badge>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+      <GridToolbar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search documents…"
+        action={{ label: "Upload Document", onClick: () => setOpen(true) }}
+        filters={
+          <>
+            <Select
+              value={ownerTypeFilter}
+              onValueChange={(v) => { setOwnerTypeFilter(v); resetPage(); }}
+            >
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Owner Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Owner Types</SelectItem>
+                {(Object.keys(ownerTypeMeta) as DocumentOwnerType[]).map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {ownerTypeMeta[t]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={signedFilter}
+              onValueChange={(v) => { setSignedFilter(v); resetPage(); }}
+            >
+              <SelectTrigger className="w-full sm:w-36">
+                <SelectValue placeholder="Signed" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="signed">Signed</SelectItem>
+                <SelectItem value="unsigned">Unsigned</SelectItem>
+              </SelectContent>
+            </Select>
+          </>
+        }
+      />
 
-              <div className="flex items-center justify-between pt-4">
-                <p className="text-sm text-muted-foreground">
-                  Page {page} of {totalPages} · {meta?.total ?? 0} total
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page <= 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" /> Prev
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page >= totalPages}
-                  >
-                    Next <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
+      <Card>
+        <CardContent className="pt-6">
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={documents.length === 0}
+            onRetry={() => refetch()}
+          >
+            <div className="rounded-md border scroll-grid">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      Owner
+                    </th>
+                    <th {...sortHeader("documentType", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Type{sortIndicator("documentType")}
+                    </th>
+                    <th {...sortHeader("title", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Title{sortIndicator("title")}
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      File
+                    </th>
+                    <th {...sortHeader("expiryDate", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Expiry{sortIndicator("expiryDate")}
+                    </th>
+                    <th {...sortHeader("isSigned", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Signed{sortIndicator("isSigned")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {documents.map((d: DocumentVault) => (
+                    <tr
+                      key={d.id}
+                      className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+                      onClick={() => navigate({ to: `/documents/${d.id}` })}
+                    >
+                      <td className="px-4 py-3 text-sm">
+                        <div className="font-medium">{ownerTypeMeta[d.ownerType]}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {d.ownerId.slice(0, 8).toUpperCase()}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge className={docTypeMeta[d.documentType].className}>
+                          {docTypeMeta[d.documentType].label}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium">{d.title}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {d.fileUrl ? (
+                          <a
+                            href={d.fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-accent hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Link2 className="h-3.5 w-3.5" />
+                            {d.fileName || "open"}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {d.expiryDate ? new Date(d.expiryDate).toLocaleDateString() : "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {d.isSigned ? (
+                          <Badge variant="success">Signed</Badge>
+                        ) : (
+                          <Badge variant="warning">Unsigned</Badge>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <ListPager meta={meta} page={page} onPageChange={setPage} />
+          </GridState>
         </CardContent>
       </Card>
 

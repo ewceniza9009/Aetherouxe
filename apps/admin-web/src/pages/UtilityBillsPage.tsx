@@ -1,4 +1,6 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
 import {
   Card,
   CardContent,
@@ -7,7 +9,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -33,7 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Receipt, AlertCircle, Loader2, CheckCircle2, Sparkles } from "lucide-react";
+import { Plus, Receipt, Loader2, CheckCircle2, Sparkles } from "lucide-react";
 import {
   useBills,
   useMeters,
@@ -59,29 +60,27 @@ function tenantUnitLabel(bill: UtilityBill): string {
 }
 
 export default function UtilityBillsPage() {
+  const listQuery = useListQuery(20);
+  const { search, setSearch, page, setPage, sort, setSort, order, setOrder, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [status, setStatus] = useState<string>("all");
   const [utilityType, setUtilityType] = useState<string>("all");
   const [tenantId, setTenantId] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<string>("issuedDate");
-  const [order, setOrder] = useState<"asc" | "desc">("desc");
-  const LIMIT = 20;
 
-  useEffect(() => { setPage(1); }, [status, utilityType, tenantId, from, to, sort, order]);
+  const fullQuery = useMemo(
+    () => ({
+      ...query,
+      status: status !== "all" ? (status as UtilityBillStatus) : undefined,
+      utilityType: utilityType !== "all" ? (utilityType as UtilityType) : undefined,
+      tenantId: tenantId || undefined,
+      from: from || undefined,
+      to: to || undefined,
+    }),
+    [query, status, utilityType, tenantId, from, to]
+  );
 
-  const { data, isLoading, isError, refetch } = useBills({
-    status: status !== "all" ? (status as UtilityBillStatus) : undefined,
-    utilityType: utilityType !== "all" ? (utilityType as UtilityType) : undefined,
-    tenantId: tenantId || undefined,
-    from: from || undefined,
-    to: to || undefined,
-    sort,
-    order,
-    page,
-    limit: LIMIT,
-  });
+  const { data, isLoading, isError, refetch } = useBills(fullQuery);
 
   const { data: metersData } = useMeters({ limit: 500 });
   const meters = metersData?.data ?? [];
@@ -94,6 +93,15 @@ export default function UtilityBillsPage() {
     [bills]
   );
   const unpaidCount = bills.filter((b) => b.status !== "paid" && b.status !== "waived").length;
+
+  const resetFilters = () => {
+    setStatus("all");
+    setUtilityType("all");
+    setTenantId("");
+    setFrom("");
+    setTo("");
+    resetPage();
+  };
 
   return (
     <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
@@ -108,7 +116,7 @@ export default function UtilityBillsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="bg-amber-50 border-amber-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-amber-800">Outstanding Bills</CardTitle>
@@ -136,72 +144,57 @@ export default function UtilityBillsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2 sm:items-center mb-4">
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-full sm:w-44">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="partially_paid">Partially Paid</SelectItem>
-                <SelectItem value="waived">Waived</SelectItem>
-                <SelectItem value="disputed">Disputed</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={utilityType} onValueChange={setUtilityType}>
-              <SelectTrigger className="w-full sm:w-44">
-                <SelectValue placeholder="Utility" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Utilities</SelectItem>
-                <SelectItem value="water">Water</SelectItem>
-                <SelectItem value="electricity">Electricity</SelectItem>
-                <SelectItem value="gas">Gas</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input
-              placeholder="Tenant ID"
-              value={tenantId}
-              onChange={(e) => setTenantId(e.target.value)}
-              className="w-full sm:w-40"
-            />
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full sm:w-40" />
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full sm:w-40" />
-            <Button
-              variant="outline"
-              onClick={() => {
-                setStatus("all");
-                setUtilityType("all");
-                setTenantId("");
-                setFrom("");
-                setTo("");
-              }}
-            >
-              Reset
-            </Button>
-          </div>
-          {isError ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-              <p className="text-sm text-muted-foreground">Failed to load utility bills.</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
-                Retry
-              </Button>
-            </div>
-          ) : isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : bills.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <Receipt className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No utility bills found.</p>
-            </div>
-          ) : (
+          <GridToolbar
+            search={search}
+            onSearchChange={setSearch}
+            placeholder="Search bills..."
+            filters={
+              <>
+                <Select value={status} onValueChange={(v) => { setStatus(v); resetPage(); }}>
+                  <SelectTrigger className="w-full sm:w-44">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="partially_paid">Partially Paid</SelectItem>
+                    <SelectItem value="waived">Waived</SelectItem>
+                    <SelectItem value="disputed">Disputed</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={utilityType} onValueChange={(v) => { setUtilityType(v); resetPage(); }}>
+                  <SelectTrigger className="w-full sm:w-44">
+                    <SelectValue placeholder="Utility" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Utilities</SelectItem>
+                    <SelectItem value="water">Water</SelectItem>
+                    <SelectItem value="electricity">Electricity</SelectItem>
+                    <SelectItem value="gas">Gas</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  placeholder="Tenant ID"
+                  value={tenantId}
+                  onChange={(e) => { setTenantId(e.target.value); resetPage(); }}
+                  className="w-full sm:w-40"
+                />
+                <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); resetPage(); }} className="w-full sm:w-40" />
+                <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); resetPage(); }} className="w-full sm:w-40" />
+                <Button variant="outline" onClick={resetFilters}>
+                  Reset
+                </Button>
+              </>
+            }
+          />
+
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={bills.length === 0}
+            onRetry={() => refetch()}
+          >
             <Table>
               <TableHeader>
                 <TableRow>
@@ -210,23 +203,14 @@ export default function UtilityBillsPage() {
                   <TableHead>Period</TableHead>
                   <TableHead className="text-right">Consumption</TableHead>
                   <TableHead className="text-right">Rate</TableHead>
-                  <TableHead
-                    className="text-right cursor-pointer select-none"
-                    onClick={() => { setSort("amount"); setOrder(order === "asc" ? "desc" : "asc"); }}
-                  >
-                    Amount Due {sort === "amount" ? (order === "asc" ? "▲" : "▼") : ""}
+                  <TableHead {...sortHeader("amountDue", "text-right")}>
+                    Amount Due{sortIndicator("amountDue")}
                   </TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => { setSort("status"); setOrder(order === "asc" ? "desc" : "asc"); }}
-                  >
-                    Status {sort === "status" ? (order === "asc" ? "▲" : "▼") : ""}
+                  <TableHead {...sortHeader("status")}>
+                    Status{sortIndicator("status")}
                   </TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => { setSort("dueDate"); setOrder(order === "asc" ? "desc" : "asc"); }}
-                  >
-                    Due {sort === "dueDate" ? (order === "asc" ? "▲" : "▼") : ""}
+                  <TableHead {...sortHeader("dueDate")}>
+                    Due{sortIndicator("dueDate")}
                   </TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
@@ -259,10 +243,11 @@ export default function UtilityBillsPage() {
                 ))}
               </TableBody>
             </Table>
-          )}
+
+            <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="bills" />
+          </GridState>
         </CardContent>
       </Card>
-      <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="bills" />
     </div>
   );
 }
@@ -339,7 +324,7 @@ function NewBillDialog({ meters }: { meters: { id: string; meterNumber: string; 
               </SelectContent>
             </Select>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="start">Period Start</Label>
               <Input id="start" type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
@@ -438,7 +423,7 @@ function GenerateBillsDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="property">Property</Label>
               <Select value={propertyId} onValueChange={(v) => { setPropertyId(v); setUnitId(""); }}>

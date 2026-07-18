@@ -1,15 +1,13 @@
-import { useMemo, useState, useEffect } from "react";
-import { useDebouncedValue } from "@/hooks/use-debounce";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -36,7 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Droplets, Flame, AlertCircle, Loader2, Search, Zap } from "lucide-react";
+import { Plus, Droplets, Flame, Loader2, Zap } from "lucide-react";
 import {
   useMeters,
   useCreateMeter,
@@ -79,44 +77,26 @@ function unitPropertyLabel(meter: UtilityMeter): string {
 
 export default function MetersPage() {
   const navigate = useNavigate();
+  const listQuery = useListQuery(20);
+  const { search, setSearch, page, setPage, sort, setSort, order, setOrder, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [utilityType, setUtilityType] = useState<string>("all");
   const [propertyId, setPropertyId] = useState<string>("all");
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<string>("createdAt");
-  const [order, setOrder] = useState<"asc" | "desc">("desc");
-  const LIMIT = 20;
-  const debouncedSearch = useDebouncedValue(search, 350);
 
-  const { data, isLoading, isError, refetch } = useMeters({
-    utilityType: utilityType !== "all" ? (utilityType as UtilityType) : undefined,
-    propertyId: propertyId !== "all" ? propertyId : undefined,
-    search: debouncedSearch || undefined,
-    sort,
-    order,
-    page,
-    limit: LIMIT,
-  });
+  const fullQuery = useMemo(
+    () => ({
+      ...query,
+      utilityType: utilityType !== "all" ? (utilityType as UtilityType) : undefined,
+      propertyId: propertyId !== "all" ? propertyId : undefined,
+    }),
+    [query, utilityType, propertyId]
+  );
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch]);
+  const { data, isLoading, isError, refetch } = useMeters(fullQuery);
 
   const { data: propertiesData } = useProperties({ limit: 200 });
   const properties = propertiesData?.data ?? [];
 
-  const meters = useMemo(() => {
-    const all = data?.data ?? [];
-    if (!search) return all;
-    const q = search.toLowerCase();
-    return all.filter(
-      (m) =>
-        m.meterNumber.toLowerCase().includes(q) ||
-        (m.property?.name ?? "").toLowerCase().includes(q) ||
-        (m.property?.propertyCode ?? "").toLowerCase().includes(q) ||
-        (tenantName(m.resident) ?? "").toLowerCase().includes(q)
-    );
-  }, [data, search]);
+  const meters = data?.data ?? [];
 
   return (
     <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
@@ -130,78 +110,57 @@ export default function MetersPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            <div className="relative flex-1 min-w-[200px] max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search meters..."
-                className="pl-9 bg-transparent"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <Select value={utilityType} onValueChange={(v) => { setUtilityType(v); setPage(1); }}>
-              <SelectTrigger className="w-full sm:w-44">
-                <SelectValue placeholder="Utility type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="water">Water</SelectItem>
-                <SelectItem value="electricity">Electricity</SelectItem>
-                <SelectItem value="gas">Gas</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={propertyId} onValueChange={(v) => { setPropertyId(v); setPage(1); }}>
-              <SelectTrigger className="w-full sm:w-56">
-                <SelectValue placeholder="Property" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Properties</SelectItem>
-                {properties.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {isError ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-              <p className="text-sm text-muted-foreground">Failed to load utility meters.</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
-                Retry
-              </Button>
-            </div>
-          ) : isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : meters.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <Droplets className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No meters found.</p>
-            </div>
-          ) : (
+          <GridToolbar
+            search={search}
+            onSearchChange={setSearch}
+            placeholder="Search meters..."
+            filters={
+              <>
+                <Select value={utilityType} onValueChange={(v) => { setUtilityType(v); resetPage(); }}>
+                  <SelectTrigger className="w-full sm:w-44">
+                    <SelectValue placeholder="Utility type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="water">Water</SelectItem>
+                    <SelectItem value="electricity">Electricity</SelectItem>
+                    <SelectItem value="gas">Gas</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={propertyId} onValueChange={(v) => { setPropertyId(v); resetPage(); }}>
+                  <SelectTrigger className="w-full sm:w-56">
+                    <SelectValue placeholder="Property" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Properties</SelectItem>
+                    {properties.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
+            }
+          />
+
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={meters.length === 0}
+            onRetry={() => refetch()}
+          >
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Meter #</TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => { setSort("utilityType"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
-                  >
-                    Type {sort === "utilityType" ? (order === "asc" ? "▲" : "▼") : ""}
+                  <TableHead {...sortHeader("utilityType")}>
+                    Type{sortIndicator("utilityType")}
                   </TableHead>
                   <TableHead>Unit / Property</TableHead>
                   <TableHead>Tenant</TableHead>
-                  <TableHead
-                    className="cursor-pointer select-none"
-                    onClick={() => { setSort("isActive"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
-                  >
-                    Status {sort === "isActive" ? (order === "asc" ? "▲" : "▼") : ""}
+                  <TableHead {...sortHeader("isActive")}>
+                    Status{sortIndicator("isActive")}
                   </TableHead>
                   <TableHead className="text-right">Readings</TableHead>
                 </TableRow>
@@ -238,10 +197,11 @@ export default function MetersPage() {
                 ))}
               </TableBody>
             </Table>
-          )}
+
+            <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="meters" />
+          </GridState>
         </CardContent>
       </Card>
-      <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="meters" />
     </div>
   );
 }

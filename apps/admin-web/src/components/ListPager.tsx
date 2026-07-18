@@ -21,7 +21,7 @@ export function ListPager({ meta, page, onPageChange, itemLabel = "items" }: Lis
   const to = Math.min(page * meta.limit, meta.total);
 
   return (
-    <div className="flex items-center justify-between mt-4">
+    <div className="flex items-center justify-between border-t px-6 py-4">
       <p className="text-sm text-muted-foreground">
         Showing {from} to {to} of {meta.total} {itemLabel}
       </p>

@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import {
   Select,
@@ -21,7 +22,6 @@ import {
   Check,
   CheckCircle2,
   Home,
-  Search,
   Banknote,
   ClipboardList,
   Users,
@@ -52,6 +52,10 @@ const STEPS = [
 
 export default function SalesPage() {
   const navigate = useNavigate();
+  const schemeListQuery = useListQuery(500);
+  const unitListQuery = useListQuery(500);
+  const { search: schemeSearch, setSearch: setSchemeSearch } = schemeListQuery;
+  const { search: unitSearch, setSearch: setUnitSearch } = unitListQuery;
   const { data: unitsData, isLoading: unitsLoading } = useUnits({ limit: 500 });
   const { data: residentsData } = useUsers({ limit: 500 });
   const { data: agentsData, isLoading: agentsLoading } = useAgents({ limit: 500 });
@@ -73,25 +77,25 @@ export default function SalesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
-  const [schemeSearch, setSchemeSearch] = useState("");
-  const [unitSearch, setUnitSearch] = useState("");
 
+  const debouncedSchemeSearch = schemeListQuery.debouncedSearch;
   const filteredTemplates = useMemo(() => {
-    if (!schemeSearch) return templates;
-    const q = schemeSearch.toLowerCase();
+    if (!debouncedSchemeSearch) return templates;
+    const q = debouncedSchemeSearch.toLowerCase();
     return templates.filter((t: any) =>
       t.code?.toLowerCase().includes(q) || t.name?.toLowerCase().includes(q) || t.schemeType?.toLowerCase().includes(q)
     );
-  }, [templates, schemeSearch]);
+  }, [templates, debouncedSchemeSearch]);
 
+  const debouncedUnitSearch = unitListQuery.debouncedSearch;
   const availableUnits = useMemo(() => {
     return units.filter((u: any) => {
       if (u.status && u.status !== "available") return false;
-      if (!unitSearch) return true;
-      const q = unitSearch.toLowerCase();
+      if (!debouncedUnitSearch) return true;
+      const q = debouncedUnitSearch.toLowerCase();
       return u.unitNumber?.toLowerCase().includes(q) || u.property?.propertyCode?.toLowerCase().includes(q);
     });
-  }, [units, unitSearch]);
+  }, [units, debouncedUnitSearch]);
 
   const isRto = selectedTemplate?.schemeType === "rent_to_own";
   const needsValue = selectedTemplate && !["standard_rental"].includes(selectedTemplate.schemeType);
@@ -219,26 +223,18 @@ export default function SalesPage() {
               </Button>
             </div>
 
-            <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by code, name, or type..."
-                className="pl-9 h-11 text-sm bg-transparent"
-                value={schemeSearch}
-                onChange={(e) => setSchemeSearch(e.target.value)}
-              />
-            </div>
+            <GridToolbar
+              search={schemeSearch}
+              onSearchChange={setSchemeSearch}
+              placeholder="Search by code, name, or type..."
+            />
 
-            {schemesLoading ? (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-36 rounded-2xl" />)}
-              </div>
-            ) : filteredTemplates.length === 0 ? (
-              <div className="py-20 text-center">
-                <ClipboardList className="mx-auto h-10 w-10 text-muted-foreground/30" />
-                <p className="mt-4 text-base text-muted-foreground">No scheme templates found.</p>
-              </div>
-            ) : (
+            <GridState
+              isLoading={schemesLoading}
+              isError={false}
+              isEmpty={filteredTemplates.length === 0}
+              onRetry={() => {}}
+            >
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredTemplates.map((t: any) => {
                   const badge = TYPE_BADGE[t.schemeType] ?? { label: t.schemeType, cls: "" };
@@ -266,7 +262,7 @@ export default function SalesPage() {
                   );
                 })}
               </div>
-            )}
+            </GridState>
           </div>
         )}
 
@@ -291,29 +287,27 @@ export default function SalesPage() {
               </Button>
             </div>
 
-            <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search units by block, lot, or code..."
-                className="pl-9 h-11 text-sm bg-transparent"
-                value={unitSearch}
-                onChange={(e) => setUnitSearch(e.target.value)}
-              />
-            </div>
+            <GridToolbar
+              search={unitSearch}
+              onSearchChange={setUnitSearch}
+              placeholder="Search units by block, lot, or code..."
+            />
 
             <div className="rounded-2xl border border-border/60 overflow-hidden">
-              {unitsLoading ? (
-                <div className="p-8 space-y-4">
-                  {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
-                </div>
-              ) : availableUnits.length === 0 ? (
-                <div className="py-20 text-center">
-                  <Home className="mx-auto h-10 w-10 text-muted-foreground/30" />
-                  <p className="mt-4 text-base text-muted-foreground">
-                    {unitSearch ? "No units match your search." : "All units are occupied or reserved."}
-                  </p>
-                </div>
-              ) : (
+              <GridState
+                isLoading={unitsLoading}
+                isError={false}
+                isEmpty={availableUnits.length === 0}
+                onRetry={() => {}}
+                emptyState={
+                  <div className="py-20 text-center">
+                    <Home className="mx-auto h-10 w-10 text-muted-foreground/30" />
+                    <p className="mt-4 text-base text-muted-foreground">
+                      {unitSearch ? "No units match your search." : "All units are occupied or reserved."}
+                    </p>
+                  </div>
+                }
+              >
                 <div className="scroll-grid max-h-[calc(100vh-300px)]">
                   <table className="w-full text-sm">
                     <thead>
@@ -355,7 +349,7 @@ export default function SalesPage() {
                     </tbody>
                   </table>
                 </div>
-              )}
+              </GridState>
             </div>
           </div>
         )}

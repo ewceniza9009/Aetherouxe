@@ -1,6 +1,7 @@
 import { IsString, IsOptional, IsNumber, IsDateString, IsEnum, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DocOwnerType, DocumentType, SignatureStatus } from '@prisma/client';
+import { ListQueryDto } from '../../common/dto/list-query.dto';
 
 export class CreateDocumentDto {
   @ApiProperty({ enum: DocOwnerType }) @IsEnum(DocOwnerType) ownerType: DocOwnerType;
@@ -26,9 +27,7 @@ export class UpdateDocumentDto {
   @ApiPropertyOptional() @IsOptional() @IsDateString() expiryDate?: string;
 }
 
-export class DocumentQueryDto {
-  @ApiPropertyOptional() @IsOptional() page?: number;
-  @ApiPropertyOptional() @IsOptional() limit?: number;
+export class DocumentQueryDto extends ListQueryDto {
   @ApiPropertyOptional({ enum: DocOwnerType }) @IsOptional() @IsEnum(DocOwnerType) ownerType?: DocOwnerType;
   @ApiPropertyOptional() @IsOptional() @IsString() ownerId?: string;
   @ApiPropertyOptional({ enum: DocumentType }) @IsOptional() @IsEnum(DocumentType) documentType?: DocumentType;

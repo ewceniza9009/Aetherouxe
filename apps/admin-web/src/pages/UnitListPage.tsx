@@ -1,15 +1,11 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  type ColumnDef,
-} from "@tanstack/react-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
+import { ListPager } from "@/components/ListPager";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -25,8 +21,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, Eye, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-import { useUnits, useDeleteUnit, type Unit, type UnitQuery } from "@/hooks/use-units";
+import { ArrowLeft, Plus, Eye, Trash2 } from "lucide-react";
+import { useUnits, useDeleteUnit, type Unit } from "@/hooks/use-units";
 import { useProperty } from "@/hooks/use-properties";
 import { formatCurrency } from "@/lib/agent-meta";
 
@@ -34,120 +30,23 @@ export default function UnitListPage() {
   const { propertyId } = useParams({ from: "/protected/properties/$propertyId/units" });
   const navigate = useNavigate();
   const { data: property } = useProperty(propertyId);
+  const listQuery = useListQuery(10);
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [typeFilter, setTypeFilter] = useState("all");
-  const [page, setPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Unit | null>(null);
-  const limit = 10;
 
-  const query: UnitQuery = useMemo(() => ({
-    page,
-    limit,
+  const fullQuery = useMemo(() => ({
+    ...query,
     propertyId,
     type: typeFilter !== "all" ? typeFilter : undefined,
-  }), [page, propertyId, typeFilter]);
+  }), [query, propertyId, typeFilter]);
 
-  const { data: result, isLoading, error } = useUnits(query);
+  const { data: result, isLoading, isError, refetch } = useUnits(fullQuery);
   const deleteUnit = useDeleteUnit();
 
-  const columns = useMemo<ColumnDef<Unit>[]>(
-    () => [
-      {
-        accessorKey: "unitNumber",
-        header: "Unit Number",
-        cell: ({ row }) => <span className="font-mono font-medium">{row.getValue("unitNumber")}</span>,
-      },
-      {
-        accessorKey: "type",
-        header: "Type",
-        cell: ({ row }) => {
-          const type = row.getValue("type") as string;
-          return <Badge variant="secondary">{type || "--"}</Badge>;
-        },
-      },
-      {
-        accessorKey: "size",
-        header: "Size",
-        cell: ({ row }) => {
-          const size = row.getValue("size") as number;
-          return size ? <span>{size} sq ft</span> : <span className="text-muted-foreground">--</span>;
-        },
-      },
-      {
-        accessorKey: "bedrooms",
-        header: "Bed",
-        cell: ({ row }) => <span>{row.getValue("bedrooms") ?? "--"}</span>,
-      },
-      {
-        accessorKey: "bathrooms",
-        header: "Bath",
-        cell: ({ row }) => <span>{row.getValue("bathrooms") ?? "--"}</span>,
-      },
-      {
-        accessorKey: "listPrice",
-        header: "List Price",
-        cell: ({ row }) => {
-          const price = row.getValue("listPrice") as number;
-          return price ? <span className="tabular-nums">{formatCurrency(price)}</span> : <span className="text-muted-foreground">--</span>;
-        },
-      },
-      {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => {
-          const status = row.getValue("status") as string;
-          const variant = status === "occupied" ? "success" : status === "available" ? "default" : "secondary";
-          return <Badge variant={variant as any}>{status || "unknown"}</Badge>;
-        },
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={(e) => {
-              e.stopPropagation();
-              navigate({ to: `/properties/${propertyId}/units/${row.original.id}/edit` });
-            }}>
-              <Eye className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={(e) => {
-              e.stopPropagation();
-              setDeleteTarget(row.original);
-              setDeleteDialogOpen(true);
-            }}>
-              <Trash2 className="h-4 w-4 text-red-500" />
-            </Button>
-          </div>
-        ),
-      },
-    ],
-    [navigate, propertyId]
-  );
-
-  const data = useMemo(() => result?.data ?? [], [result]);
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    manualPagination: true,
-    pageCount: result?.meta?.totalPages ?? 1,
-  });
-
-  if (error) {
-    return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
-        <Button variant="outline" size="icon" onClick={() => navigate({ to: `/properties/${propertyId}` })}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <Card>
-          <CardContent className="py-12 text-center text-red-500">
-            <p className="text-lg font-semibold">Failed to load units</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const units = result?.data ?? [];
+  const meta = result?.meta;
 
   return (
     <div className="space-y-6">
@@ -168,88 +67,103 @@ export default function UnitListPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>All Units</CardTitle>
-            <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="Unit Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="studio">Studio</SelectItem>
-                <SelectItem value="one_br">1 BR</SelectItem>
-                <SelectItem value="two_br">2 BR</SelectItem>
-                <SelectItem value="three_br">3 BR</SelectItem>
-                <SelectItem value="penthouse">Penthouse</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : data.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-lg font-semibold text-muted-foreground">No units found</p>
-              <p className="text-sm text-muted-foreground">Create your first unit for this property.</p>
-            </div>
-          ) : (
-            <>
-              <div className="rounded-md border scroll-grid">
-                <table className="w-full">
-                  <thead>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <tr key={headerGroup.id} className="border-b bg-muted/50">
-                        {headerGroup.headers.map((header) => (
-                          <th key={header.id} className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                          </th>
-                        ))}
-                      </tr>
-                    ))}
-                  </thead>
-                  <tbody>
-                    {table.getRowModel().rows.map((row) => (
-                      <tr key={row.id} className="border-b hover:bg-muted/30 transition-colors">
-                        {row.getVisibleCells().map((cell) => (
-                          <td key={cell.id} className="px-4 py-3 text-sm">
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+      <GridToolbar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search units…"
+        filters={
+          <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); resetPage(); }}>
+            <SelectTrigger className="w-full sm:w-36">
+              <SelectValue placeholder="Unit Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="studio">Studio</SelectItem>
+              <SelectItem value="one_br">1 BR</SelectItem>
+              <SelectItem value="two_br">2 BR</SelectItem>
+              <SelectItem value="three_br">3 BR</SelectItem>
+              <SelectItem value="penthouse">Penthouse</SelectItem>
+            </SelectContent>
+          </Select>
+        }
+      />
 
-              <div className="flex items-center justify-between mt-4">
-                <p className="text-sm text-muted-foreground">
-                  {result?.meta
-                    ? `Showing ${(page - 1) * limit + 1} to ${Math.min(page * limit, result.meta.total)} of ${result.meta.total} units`
-                    : ""}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  {result?.meta && Array.from({ length: result.meta.totalPages }, (_, i) => (
-                    <Button key={i} variant={page === i + 1 ? "default" : "outline"} size="sm" onClick={() => setPage(i + 1)}>
-                      {i + 1}
-                    </Button>
-                  ))}
-                  <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={!result?.meta || page >= result.meta.totalPages}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
+      <Card>
+        <CardContent className="pt-6">
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={units.length === 0}
+            onRetry={() => refetch()}
+          >
+            <div className="rounded-md border scroll-grid">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th {...sortHeader("unitNumber", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Unit Number{sortIndicator("unitNumber")}
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Type</th>
+                    <th {...sortHeader("squareMeters", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Size{sortIndicator("squareMeters")}
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Bed</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Bath</th>
+                    <th {...sortHeader("listPrice", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      List Price{sortIndicator("listPrice")}
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Status</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {units.map((u: Unit) => {
+                    const status = u.status;
+                    const variant = status === "occupied" ? "success" : status === "available" ? "default" : "secondary";
+                    return (
+                      <tr key={u.id} className="border-b hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-3">
+                          <span className="font-mono font-medium">{u.unitNumber}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant="secondary">{u.type || "--"}</Badge>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {u.size ? <span>{u.size} sq ft</span> : <span className="text-muted-foreground">--</span>}
+                        </td>
+                        <td className="px-4 py-3 text-sm">{u.bedrooms ?? "--"}</td>
+                        <td className="px-4 py-3 text-sm">{u.bathrooms ?? "--"}</td>
+                        <td className="px-4 py-3 text-sm">
+                          {u.listPrice ? <span className="tabular-nums">{formatCurrency(u.listPrice)}</span> : <span className="text-muted-foreground">--</span>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant={variant as any}>{status || "unknown"}</Badge>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button variant="ghost" size="sm" onClick={(e) => {
+                              e.stopPropagation();
+                              navigate({ to: `/properties/${propertyId}/units/${u.id}/edit` });
+                            }}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteTarget(u);
+                              setDeleteDialogOpen(true);
+                            }}>
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <ListPager meta={meta} page={page} onPageChange={setPage} />
+          </GridState>
         </CardContent>
       </Card>
 

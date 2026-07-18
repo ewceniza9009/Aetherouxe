@@ -1,15 +1,15 @@
-import { useMemo, useState, useEffect } from "react";
-import { useDebouncedValue } from "@/hooks/use-debounce";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
+import { ListPager } from "@/components/ListPager";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Search, Phone, Mail } from "lucide-react";
+import { Plus, Phone, Mail } from "lucide-react";
 import { useUsers } from "@/hooks/use-users";
 import { useLeases } from "@/hooks/use-leases";
-import { ListPager } from "@/components/ListPager";
 
 interface TenantRow {
   id: string;
@@ -26,20 +26,14 @@ interface TenantRow {
 
 export default function TenantsPage() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const LIMIT = 20;
-  const debouncedSearch = useDebouncedValue(search, 350);
+  const listQuery = useListQuery(20);
+  const { search, setSearch, page, setPage, query, sortHeader, sortIndicator } = listQuery;
+
   const { data: usersResult, isLoading } = useUsers({
+    ...query,
     userType: "tenant",
-    search: debouncedSearch || undefined,
-    page,
-    limit: LIMIT,
   });
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch]);
   const { data: leasesData } = useLeases({ limit: 500 });
 
   const tenants = useMemo<TenantRow[]>(() => {
@@ -76,7 +70,7 @@ export default function TenantsPage() {
 
   return (
     <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Tenants</h1>
           <p className="text-muted-foreground">Manage all tenant records</p>
@@ -86,94 +80,94 @@ export default function TenantsPage() {
         </Button>
       </div>
 
+      <GridToolbar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search tenants..."
+      />
+
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            <div className="relative flex-1 min-w-[200px] max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search tenants..."
-                className="pl-9 bg-transparent"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground p-4">Loading tenants…</p>
-          ) : tenants.length === 0 ? (
-            <p className="text-sm text-muted-foreground p-4">No tenants found.</p>
-          ) : (
-            <>
-              <div
-                className="scroll-grid cursor-pointer"
-                onClick={(e) => {
-                  const row = (e.target as HTMLElement).closest("[data-tenant-id]");
-                  if (row) navigate({ to: `/tenants/${row.getAttribute("data-tenant-id")}` });
-                }}
-              >
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr>
-                      <th>Tenant</th>
-                      <th>Contact</th>
-                      <th>Property</th>
-                      <th>Unit</th>
-                      <th>Lease Until</th>
-                      <th className="text-right">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tenants.map((tenant) => (
-                      <tr key={tenant.id} data-tenant-id={tenant.id} className="cursor-pointer">
-                        <td className="font-medium">
-                          <span className="flex items-center gap-3">
-                            <Avatar className="h-7 w-7">
-                              {tenant.avatarUrl && <AvatarImage src={tenant.avatarUrl} />}
-                              <AvatarFallback className="text-xs">{tenant.initials}</AvatarFallback>
-                            </Avatar>
-                            {tenant.name}
+          <GridState
+            isLoading={isLoading}
+            isError={false}
+            isEmpty={tenants.length === 0}
+            onRetry={() => {}}
+          >
+            <div
+              className="rounded-md border scroll-grid cursor-pointer"
+              onClick={(e) => {
+                const row = (e.target as HTMLElement).closest("[data-tenant-id]");
+                if (row) navigate({ to: `/tenants/${row.getAttribute("data-tenant-id")}` });
+              }}
+            >
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th {...sortHeader("firstName", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Tenant{sortIndicator("firstName")}
+                    </th>
+                    <th {...sortHeader("email", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Contact{sortIndicator("email")}
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Property</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Unit</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Lease Until</th>
+                    <th {...sortHeader("isActive", "px-4 py-3 text-right text-sm font-medium text-muted-foreground")}>
+                      Status{sortIndicator("isActive")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tenants.map((tenant) => (
+                    <tr key={tenant.id} data-tenant-id={tenant.id} className="border-b hover:bg-muted/30 transition-colors cursor-pointer">
+                      <td className="px-4 py-3 font-medium">
+                        <span className="flex items-center gap-3">
+                          <Avatar className="h-7 w-7">
+                            {tenant.avatarUrl && <AvatarImage src={tenant.avatarUrl} />}
+                            <AvatarFallback className="text-xs">{tenant.initials}</AvatarFallback>
+                          </Avatar>
+                          {tenant.name}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        <div className="flex flex-col">
+                          <span className="flex items-center gap-1">
+                            <Mail className="h-3 w-3" /> {tenant.email}
                           </span>
-                        </td>
-                        <td className="text-muted-foreground">
-                          <div className="flex flex-col">
+                          {tenant.phone && (
                             <span className="flex items-center gap-1">
-                              <Mail className="h-3 w-3" /> {tenant.email}
+                              <Phone className="h-3 w-3" /> {tenant.phone}
                             </span>
-                            {tenant.phone && (
-                              <span className="flex items-center gap-1">
-                                <Phone className="h-3 w-3" /> {tenant.phone}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td>{tenant.property}</td>
-                        <td>{tenant.unit}</td>
-                        <td>{tenant.leaseEnd}</td>
-                        <td className="text-right">
-                          <Badge
-                            variant={
-                              tenant.status === "active"
-                                ? "success"
-                                : tenant.status === "late" ||
-                                  tenant.status === "rto_delinquent"
-                                ? "destructive"
-                                : tenant.status === "no lease"
-                                ? "secondary"
-                                : "warning"
-                            }
-                          >
-                            {tenant.status}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {meta && <ListPager meta={meta} page={page} onPageChange={setPage} />}
-            </>
-          )}
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">{tenant.property}</td>
+                      <td className="px-4 py-3">{tenant.unit}</td>
+                      <td className="px-4 py-3">{tenant.leaseEnd}</td>
+                      <td className="px-4 py-3 text-right">
+                        <Badge
+                          variant={
+                            tenant.status === "active"
+                              ? "success"
+                              : tenant.status === "late" ||
+                                tenant.status === "rto_delinquent"
+                              ? "destructive"
+                              : tenant.status === "no lease"
+                              ? "secondary"
+                              : "warning"
+                          }
+                        >
+                          {tenant.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <ListPager meta={meta} page={page} onPageChange={setPage} />
+          </GridState>
         </CardContent>
       </Card>
     </div>

@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect } from "react";
-import { useDebouncedValue } from "@/hooks/use-debounce";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
+import { ListPager } from "@/components/ListPager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,14 +23,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  AlertCircle,
-  Pencil,
-  UserX,
-} from "lucide-react";
+import { Plus, Pencil, UserX } from "lucide-react";
 import {
   useUsers,
   useCreateUser,
@@ -85,11 +79,10 @@ const EMPTY_FORM: FormState = {
 };
 
 export default function UsersPage() {
-  const [search, setSearch] = useState("");
+  const listQuery = useListQuery(10);
+  const { search, setSearch, page, setPage, sort, setSort, order, setOrder, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [activeFilter, setActiveFilter] = useState<string>("all");
-  const [page, setPage] = useState(1);
-  const debouncedSearch = useDebouncedValue(search, 350);
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<AppUser | null>(null);
@@ -98,29 +91,22 @@ export default function UsersPage() {
 
   const [deactivateTarget, setDeactivateTarget] = useState<AppUser | null>(null);
 
-  const query = useMemo(
+  const fullQuery = useMemo(
     () => ({
-      page,
-      limit: 10,
-      search: debouncedSearch || undefined,
-      userType: (typeFilter !== "all" ? (typeFilter as AppUserType) : undefined),
+      ...query,
+      userType: typeFilter !== "all" ? (typeFilter as AppUserType) : undefined,
       isActive: activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined,
     }),
-    [page, debouncedSearch, typeFilter, activeFilter]
+    [query, typeFilter, activeFilter]
   );
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch]);
-
-  const { data, isLoading, isError, refetch } = useUsers(query);
+  const { data, isLoading, isError, refetch } = useUsers(fullQuery);
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
 
   const users = data?.data ?? [];
   const meta = data?.meta;
-  const totalPages = meta?.totalPages ?? 1;
 
   const openCreate = () => {
     setEditing(null);
@@ -188,16 +174,14 @@ export default function UsersPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap gap-2">
-            <Input
-              placeholder="Search name or email…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full sm:w-64"
-            />
-            <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
+      <GridToolbar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search name or email…"
+        action={{ label: "New User", onClick: openCreate }}
+        filters={
+          <>
+            <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); resetPage(); }}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
@@ -208,7 +192,7 @@ export default function UsersPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={activeFilter} onValueChange={(v) => { setActiveFilter(v); setPage(1); }}>
+            <Select value={activeFilter} onValueChange={(v) => { setActiveFilter(v); resetPage(); }}>
               <SelectTrigger className="w-full sm:w-44">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -218,109 +202,96 @@ export default function UsersPage() {
                 <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isError ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-              <p className="text-sm text-muted-foreground">Failed to load users.</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
-            </div>
-          ) : isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : users.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <AlertCircle className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No users found.</p>
-            </div>
-          ) : (
-            <>
-              <div className="rounded-md border scroll-grid">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Name</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Email</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Role</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Status</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Created</th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((u: AppUser) => {
-                      const roleMeta = userTypeMeta(u.userType);
-                      return (
-                        <tr key={u.id} className="border-b hover:bg-muted/30 transition-colors">
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-8 w-8">
-                                {u.avatarUrl && <AvatarImage src={u.avatarUrl} />}
-                                <AvatarFallback className="text-xs">
-                                  {([u.firstName, u.lastName].filter(Boolean).join(" ") || u.email || "—").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium">
-                                  {[u.firstName, u.lastName].filter(Boolean).join(" ") || "—"}
-                                </div>
-                                <div className="text-xs text-muted-foreground">{u.phone || ""}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-sm">{u.email}</td>
-                          <td className="px-4 py-3">
-                            <Badge className={roleMeta.className}>{roleMeta.label}</Badge>
-                          </td>
-                          <td className="px-4 py-3">
-                            {u.isActive ? (
-                              <Badge variant="success">Active</Badge>
-                            ) : (
-                              <Badge variant="destructive">Inactive</Badge>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground">
-                            {new Date(u.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button variant="outline" size="sm" onClick={() => openEdit(u)}>
-                                <Pencil className="mr-1 h-3.5 w-3.5" /> Edit
-                              </Button>
-                              {u.isActive && (
-                                <Button variant="outline" size="sm" onClick={() => setDeactivateTarget(u)}>
-                                  <UserX className="mr-1 h-3.5 w-3.5" /> Deactivate
-                                </Button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+          </>
+        }
+      />
 
-              <div className="flex items-center justify-between pt-4">
-                <p className="text-sm text-muted-foreground">
-                  Page {page} of {totalPages} · {meta?.total ?? 0} total
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
-                    <ChevronLeft className="h-4 w-4" /> Prev
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
-                    Next <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
+      <Card>
+        <CardContent className="pt-6">
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={users.length === 0}
+            onRetry={() => refetch()}
+          >
+            <div className="rounded-md border scroll-grid">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th {...sortHeader("firstName", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Name{sortIndicator("firstName")}
+                    </th>
+                    <th {...sortHeader("email", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Email{sortIndicator("email")}
+                    </th>
+                    <th {...sortHeader("userType", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Role{sortIndicator("userType")}
+                    </th>
+                    <th {...sortHeader("isActive", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Status{sortIndicator("isActive")}
+                    </th>
+                    <th {...sortHeader("createdAt", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Created{sortIndicator("createdAt")}
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((u: AppUser) => {
+                    const roleMeta = userTypeMeta(u.userType);
+                    return (
+                      <tr key={u.id} className="border-b hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8">
+                              {u.avatarUrl && <AvatarImage src={u.avatarUrl} />}
+                              <AvatarFallback className="text-xs">
+                                {([u.firstName, u.lastName].filter(Boolean).join(" ") || u.email || "—").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">
+                                {[u.firstName, u.lastName].filter(Boolean).join(" ") || "—"}
+                              </div>
+                              <div className="text-xs text-muted-foreground">{u.phone || ""}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm">{u.email}</td>
+                        <td className="px-4 py-3">
+                          <Badge className={roleMeta.className}>{roleMeta.label}</Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          {u.isActive ? (
+                            <Badge variant="success">Active</Badge>
+                          ) : (
+                            <Badge variant="destructive">Inactive</Badge>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">
+                          {new Date(u.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="sm" onClick={() => openEdit(u)}>
+                              <Pencil className="mr-1 h-3.5 w-3.5" /> Edit
+                            </Button>
+                            {u.isActive && (
+                              <Button variant="outline" size="sm" onClick={() => setDeactivateTarget(u)}>
+                                <UserX className="mr-1 h-3.5 w-3.5" /> Deactivate
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <ListPager meta={meta} page={page} onPageChange={setPage} />
+          </GridState>
         </CardContent>
       </Card>
 

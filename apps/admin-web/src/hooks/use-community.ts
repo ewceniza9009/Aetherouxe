@@ -111,6 +111,8 @@ export interface AmenityQuery {
   type?: AmenityType;
   propertyId?: string;
   isActive?: boolean;
+  sort?: string;
+  order?: "asc" | "desc";
 }
 
 export interface BookingQuery {
@@ -127,6 +129,8 @@ export interface PostQuery {
   postType?: PostType;
   audience?: PostAudience;
   moderationStatus?: ModerationStatus;
+  sort?: string;
+  order?: "asc" | "desc";
 }
 
 export interface CommentQuery {

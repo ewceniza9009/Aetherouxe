@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
 import {
   Card,
   CardContent,
@@ -8,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -38,7 +39,6 @@ import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
   FolderOpen,
-  AlertTriangle,
   Plus,
   Trash2,
   RefreshCw,
@@ -73,15 +73,13 @@ const STATUS_OPTIONS: { value: CollectionCaseStatus; label: string }[] = [
 
 export default function CollectionCasesPage() {
   const navigate = useNavigate();
+  const listQuery = useListQuery(20);
+  const { page, setPage, sort, setSort, order, setOrder, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<string>("");
-  const [sort, setSort] = useState<string>("lastActivityAt");
-  const [order, setOrder] = useState<"asc" | "desc">("desc");
-  const [page, setPage] = useState(1);
-  const LIMIT = 20;
   const [form, setForm] = useState({
     leaseId: "",
     totalOutstanding: "",
@@ -90,14 +88,16 @@ export default function CollectionCasesPage() {
   });
   const [amountEdited, setAmountEdited] = useState(false);
 
-  const { data, isLoading, isError } = useCollectionCases({
-    status: statusFilter !== "all" ? (statusFilter as CollectionCaseStatus) : undefined,
-    priority: priorityFilter !== "all" ? (priorityFilter as CollectionCasePriority) : undefined,
-    sort,
-    order,
-    page,
-    limit: LIMIT,
-  });
+  const fullQuery = useMemo(
+    () => ({
+      ...query,
+      status: statusFilter !== "all" ? (statusFilter as CollectionCaseStatus) : undefined,
+      priority: priorityFilter !== "all" ? (priorityFilter as CollectionCasePriority) : undefined,
+    }),
+    [query, statusFilter, priorityFilter]
+  );
+
+  const { data, isLoading, isError } = useCollectionCases(fullQuery);
   const { data: leasesResult } = useLeases({ limit: 200 });
   const leases = leasesResult?.data ?? [];
   const { data: leasePayments, isLoading: loadingPayments } = useLeasePayments(
@@ -222,7 +222,7 @@ export default function CollectionCasesPage() {
               <FolderOpen className="h-5 w-5 text-accent" /> Cases
             </CardTitle>
             <div className="flex flex-wrap gap-2">
-              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); resetPage(); }}>
                 <SelectTrigger className="w-full sm:w-44">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -235,7 +235,7 @@ export default function CollectionCasesPage() {
                   <SelectItem value="written_off">Written Off</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={priorityFilter} onValueChange={(v) => { setPriorityFilter(v); setPage(1); }}>
+              <Select value={priorityFilter} onValueChange={(v) => { setPriorityFilter(v); resetPage(); }}>
                 <SelectTrigger className="w-full sm:w-44">
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
@@ -286,22 +286,12 @@ export default function CollectionCasesPage() {
               </Button>
             </div>
           )}
-          {isError ? (
-            <div className="py-12 text-center text-sm text-destructive">
-              Failed to load collection cases.
-            </div>
-          ) : isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : cases.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-12 text-center">
-              <AlertTriangle className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No collection cases found.</p>
-            </div>
-          ) : (
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={cases.length === 0}
+            onRetry={() => {}}
+          >
             <div className="rounded-md border scroll-grid">
               <Table>
                 <TableHeader>
@@ -317,30 +307,18 @@ export default function CollectionCasesPage() {
                     <TableHead>Person (Renter/Buyer)</TableHead>
                     <TableHead>Property / Unit</TableHead>
                     <TableHead>Owed For</TableHead>
-                    <TableHead
-                      className="cursor-pointer select-none"
-                      onClick={() => { setSort("priority"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
-                    >
-                      Priority {sort === "priority" ? (order === "asc" ? "▲" : "▼") : ""}
+                    <TableHead {...sortHeader("priority")}>
+                      Priority{sortIndicator("priority")}
                     </TableHead>
-                    <TableHead
-                      className="cursor-pointer select-none"
-                      onClick={() => { setSort("status"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
-                    >
-                      Status {sort === "status" ? (order === "asc" ? "▲" : "▼") : ""}
+                    <TableHead {...sortHeader("status")}>
+                      Status{sortIndicator("status")}
                     </TableHead>
-                    <TableHead
-                      className="cursor-pointer select-none text-right"
-                      onClick={() => { setSort("totalOutstanding"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
-                    >
-                      Outstanding {sort === "totalOutstanding" ? (order === "asc" ? "▲" : "▼") : ""}
+                    <TableHead {...sortHeader("totalOutstanding", "text-right")}>
+                      Outstanding{sortIndicator("totalOutstanding")}
                     </TableHead>
                     <TableHead>Assigned</TableHead>
-                    <TableHead
-                      className="cursor-pointer select-none"
-                      onClick={() => { setSort("nextActionDate"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
-                    >
-                      Next Action {sort === "nextActionDate" ? (order === "asc" ? "▲" : "▼") : ""}
+                    <TableHead {...sortHeader("nextActionDate")}>
+                      Next Action{sortIndicator("nextActionDate")}
                     </TableHead>
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
@@ -420,7 +398,9 @@ export default function CollectionCasesPage() {
                 </TableBody>
               </Table>
             </div>
-          )}
+
+            <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="cases" />
+          </GridState>
         </CardContent>
       </Card>
 
@@ -534,7 +514,6 @@ export default function CollectionCasesPage() {
           </form>
           </DialogContent>
       </Dialog>
-      <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="cases" />
     </div>
   );
 }

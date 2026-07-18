@@ -66,7 +66,7 @@ export default function CollectionsPage() {
   const openCasesCount = casesRows.filter(
     (c) => c.status === "open" || c.status === "in_progress" || c.status === "escalated"
   ).length;
-  const overdueReminders = (reminders ?? []).length;
+  const overdueReminders = (reminders?.data ?? []).length;
   const recentCases = casesRows.slice(0, 8);
 
   return (

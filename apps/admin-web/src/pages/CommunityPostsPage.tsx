@@ -1,11 +1,14 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
+import { ListPager } from "@/components/ListPager";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -28,9 +31,6 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import {
-  ChevronLeft,
-  ChevronRight,
-  AlertCircle,
   Plus,
   Megaphone,
   Loader2,
@@ -142,24 +142,21 @@ export default function CommunityPostsPage() {
 }
 
 function PostsTab() {
+  const listQuery = useListQuery(10);
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [audienceFilter, setAudienceFilter] = useState<string>("all");
   const [moderationFilter, setModerationFilter] = useState<string>("all");
-  const [page, setPage] = useState(1);
 
-  const query = useMemo(
-    () => ({
-      page,
-      limit: 10,
-      postType: typeFilter !== "all" ? (typeFilter as PostType) : undefined,
-      audience: audienceFilter !== "all" ? (audienceFilter as PostAudience) : undefined,
-      moderationStatus:
-        moderationFilter !== "all" ? (moderationFilter as ModerationStatus) : undefined,
-    }),
-    [page, typeFilter, audienceFilter, moderationFilter]
-  );
+  const fullQuery = {
+    ...query,
+    postType: typeFilter !== "all" ? (typeFilter as PostType) : undefined,
+    audience: audienceFilter !== "all" ? (audienceFilter as PostAudience) : undefined,
+    moderationStatus:
+      moderationFilter !== "all" ? (moderationFilter as ModerationStatus) : undefined,
+  };
 
-  const { data, isLoading, isError, refetch } = usePosts(query);
+  const { data, isLoading, isError, refetch } = usePosts(fullQuery);
   const createPost = useCreatePost();
   const updatePost = useUpdatePost();
   const deletePost = useDeletePost();
@@ -172,7 +169,6 @@ function PostsTab() {
 
   const posts = data?.data ?? [];
   const meta = data?.meta;
-  const totalPages = meta?.totalPages ?? 1;
 
   const openCreate = () => {
     setEditing(null);
@@ -235,234 +231,186 @@ function PostsTab() {
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Megaphone className="h-5 w-5 text-accent" /> Posts
-          </CardTitle>
-          <div className="flex flex-wrap gap-2">
-            <Select
-              value={typeFilter}
-              onValueChange={(v) => {
-                setTypeFilter(v);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {(Object.keys(postTypeMeta) as PostType[]).map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {postTypeMeta[t].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={audienceFilter}
-              onValueChange={(v) => {
-                setAudienceFilter(v);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Audience" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Audiences</SelectItem>
-                {(Object.keys(audienceMeta) as PostAudience[]).map((a) => (
-                  <SelectItem key={a} value={a}>
-                    {audienceMeta[a].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={moderationFilter}
-              onValueChange={(v) => {
-                setModerationFilter(v);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="hidden">Hidden</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={openCreate} disabled={createPost.isPending}>
-              <Plus className="mr-2 h-4 w-4" /> New Post
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isError ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-            <AlertCircle className="h-8 w-8 text-destructive" />
-            <p className="text-sm text-muted-foreground">Failed to load posts.</p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
-              Retry
-            </Button>
-          </div>
-        ) : isLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-            <Megaphone className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">No posts found.</p>
-          </div>
-        ) : (
-          <>
-            <div className="rounded-md border scroll-grid">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                      Title
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                      Type
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                      Audience
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                      Engagement
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                      Status
-                    </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {posts.map((p) => (
-                    <tr key={p.id} className="border-b hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="font-medium">{p.title}</div>
-                        <div className="line-clamp-1 text-xs text-muted-foreground">
-                          {p.body}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge className={(postTypeMeta[p.postType] ?? META_FALLBACK).className}>
-                          {(postTypeMeta[p.postType] ?? META_FALLBACK).label}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge className={(audienceMeta[p.audience] ?? META_FALLBACK).className}>
-                          {(audienceMeta[p.audience] ?? META_FALLBACK).label}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className="inline-flex items-center gap-1 text-muted-foreground">
-                          <MessageSquare className="h-3.5 w-3.5" /> {p.commentCount ?? 0}
-                        </span>
-                        {(p.openReportCount ?? 0) > 0 && (
-                          <span className="ml-3 inline-flex items-center gap-1 text-destructive">
-                            <Flag className="h-3.5 w-3.5" /> {p.openReportCount}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant={moderationMeta[p.moderationStatus].variant}>
-                          {moderationMeta[p.moderationStatus].label}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          {p.moderationStatus !== "published" ? (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              title="Publish"
-                              onClick={() => handleModerate(p, "published")}
-                            >
-                              <Eye className="h-4 w-4 text-emerald-600" />
-                            </Button>
-                          ) : (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              title="Hide"
-                              onClick={() => handleModerate(p, "hidden")}
-                            >
-                              <EyeOff className="h-4 w-4 text-amber-600" />
-                            </Button>
-                          )}
-                          {p.moderationStatus !== "archived" && (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              title="Archive"
-                              onClick={() => handleModerate(p, "archived")}
-                            >
-                              <Archive className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          )}
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            title="Edit"
-                            onClick={() => openEdit(p)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            title="Delete"
-                            onClick={() => handleDelete(p)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
+      <CardContent className="pt-6">
+        <GridToolbar
+          search={search}
+          onSearchChange={setSearch}
+          placeholder="Search posts…"
+          action={{ label: "New Post", onClick: openCreate }}
+          filters={
+            <>
+              <Select
+                value={typeFilter}
+                onValueChange={(v) => { setTypeFilter(v); resetPage(); }}
+              >
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {(Object.keys(postTypeMeta) as PostType[]).map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {postTypeMeta[t].label}
+                    </SelectItem>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </SelectContent>
+              </Select>
+              <Select
+                value={audienceFilter}
+                onValueChange={(v) => { setAudienceFilter(v); resetPage(); }}
+              >
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue placeholder="Audience" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Audiences</SelectItem>
+                  {(Object.keys(audienceMeta) as PostAudience[]).map((a) => (
+                    <SelectItem key={a} value={a}>
+                      {audienceMeta[a].label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={moderationFilter}
+                onValueChange={(v) => { setModerationFilter(v); resetPage(); }}
+              >
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="hidden">Hidden</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
+          }
+        />
 
-            <div className="flex items-center justify-between pt-4">
-              <p className="text-sm text-muted-foreground">
-                Page {page} of {totalPages} · {meta?.total ?? 0} total
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                >
-                  <ChevronLeft className="h-4 w-4" /> Prev
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages}
-                >
-                  Next <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
-      </CardContent>
+        <GridState
+          isLoading={isLoading}
+          isError={isError}
+          isEmpty={posts.length === 0}
+          onRetry={() => refetch()}
+        >
+          <div className="rounded-md border scroll-grid">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    Title
+                  </th>
+                  <th {...sortHeader("postType", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                    Type{sortIndicator("postType")}
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    Audience
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    Engagement
+                  </th>
+                  <th {...sortHeader("moderationStatus", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                    Status{sortIndicator("moderationStatus")}
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {posts.map((p) => (
+                  <tr key={p.id} className="border-b hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="font-medium">{p.title}</div>
+                      <div className="line-clamp-1 text-xs text-muted-foreground">
+                        {p.body}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge className={(postTypeMeta[p.postType] ?? META_FALLBACK).className}>
+                        {(postTypeMeta[p.postType] ?? META_FALLBACK).label}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge className={(audienceMeta[p.audience] ?? META_FALLBACK).className}>
+                        {(audienceMeta[p.audience] ?? META_FALLBACK).label}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                        <MessageSquare className="h-3.5 w-3.5" /> {p.commentCount ?? 0}
+                      </span>
+                      {(p.openReportCount ?? 0) > 0 && (
+                        <span className="ml-3 inline-flex items-center gap-1 text-destructive">
+                          <Flag className="h-3.5 w-3.5" /> {p.openReportCount}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={moderationMeta[p.moderationStatus].variant}>
+                        {moderationMeta[p.moderationStatus].label}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-1">
+                        {p.moderationStatus !== "published" ? (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Publish"
+                            onClick={() => handleModerate(p, "published")}
+                          >
+                            <Eye className="h-4 w-4 text-emerald-600" />
+                          </Button>
+                        ) : (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Hide"
+                            onClick={() => handleModerate(p, "hidden")}
+                          >
+                            <EyeOff className="h-4 w-4 text-amber-600" />
+                          </Button>
+                        )}
+                        {p.moderationStatus !== "archived" && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Archive"
+                            onClick={() => handleModerate(p, "archived")}
+                          >
+                            <Archive className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        )}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Edit"
+                          onClick={() => openEdit(p)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Delete"
+                          onClick={() => handleDelete(p)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <ListPager meta={meta} page={page} onPageChange={setPage} />
+        </GridState>
+        </CardContent>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

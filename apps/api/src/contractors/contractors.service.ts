@@ -1,33 +1,32 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateContractorDto, UpdateContractorDto, ContractorQueryDto } from './dto/contractors.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 
 @Injectable()
 export class ContractorsService {
   constructor(private prisma: PrismaService) {}
+
+  private readonly fieldMap: FieldMap = {
+    filters: [{ field: 'specialization', type: 'eq' }],
+    search: ['companyName', 'contactPerson', 'email', 'licenseNumber'],
+    sortable: ['createdAt', 'updatedAt', 'companyName', 'licenseNumber', 'specialization', 'isActive'],
+  };
 
   async create(dto: CreateContractorDto) {
     return this.prisma.contractor.create({ data: dto as any });
   }
 
   async findAll(query: ContractorQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-    const where: any = {};
-    if (query.specialization) where.specialization = query.specialization;
-    if (query.search) {
-      where.OR = [
-        { companyName: { contains: query.search, mode: 'insensitive' } },
-        { contactPerson: { contains: query.search, mode: 'insensitive' } },
-        { email: { contains: query.search, mode: 'insensitive' } },
-      ];
-    }
-    const [data, total] = await Promise.all([
-      this.prisma.contractor.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }),
-      this.prisma.contractor.count({ where }),
-    ]);
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    const built = buildListQuery(query, this.fieldMap, { createdAt: 'desc' });
+    return paginate(this.prisma.contractor, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+    });
   }
 
   async findOne(id: string) {

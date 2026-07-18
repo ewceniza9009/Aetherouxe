@@ -71,6 +71,8 @@ export interface ServiceRequestQuery {
   priority?: ServicePriority;
   category?: ServiceCategory;
   propertyId?: string;
+  sort?: string;
+  order?: "asc" | "desc";
 }
 
 export interface WorkOrderQuery {

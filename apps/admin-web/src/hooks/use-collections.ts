@@ -303,6 +303,9 @@ export function usePaymentReminders(query?: {
   type?: ReminderType;
   tenantId?: string;
   limit?: number;
+  page?: number;
+  sort?: string;
+  order?: "asc" | "desc";
 }) {
   return useQuery({
     queryKey: ["payment-reminders", query],
@@ -310,7 +313,10 @@ export function usePaymentReminders(query?: {
       const { data } = await api.get<ApiResponse<PaymentReminder[]>>(
         `/payment-reminders${buildParams(query)}`
       );
-      return data.data ?? [];
+      return { data: data.data ?? [], meta: data.meta } as {
+        data: PaymentReminder[];
+        meta: PaginationMeta;
+      };
     },
   });
 }
@@ -369,6 +375,9 @@ export function useStatements(query?: {
   tenantId?: string;
   status?: StatementStatus;
   limit?: number;
+  page?: number;
+  sort?: string;
+  order?: "asc" | "desc";
 }) {
   return useQuery({
     queryKey: ["statements", query],
@@ -376,7 +385,10 @@ export function useStatements(query?: {
       const { data } = await api.get<ApiResponse<Statement[]>>(
         `/statements${buildParams(query)}`
       );
-      return (data.data ?? []) as Statement[];
+      return { data: (data.data ?? []) as Statement[], meta: data.meta } as {
+        data: Statement[];
+        meta: PaginationMeta;
+      };
     },
   });
 }

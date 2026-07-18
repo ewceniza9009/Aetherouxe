@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BudgetsService } from '../budgets/budgets.service';
 import { CreateProjectDto, UpdateProjectDto, ProjectQueryDto } from './dto/projects.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 
 @Injectable()
 export class ProjectsService {
@@ -9,6 +11,15 @@ export class ProjectsService {
     private prisma: PrismaService,
     private budgetsService: BudgetsService,
   ) {}
+
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'status', type: 'enum' },
+      { field: 'projectType', type: 'enum' },
+    ],
+    search: ['name', 'address'],
+    sortable: ['createdAt', 'updatedAt', 'name', 'status', 'projectType'],
+  };
 
   async create(dto: CreateProjectDto) {
     return this.prisma.project.create({
@@ -29,18 +40,14 @@ export class ProjectsService {
   }
 
   async findAll(query: ProjectQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-    const where: any = {};
-    if (query.status) where.status = query.status;
-    if (query.projectType) where.projectType = query.projectType;
-    if (query.search) where.name = { contains: query.search, mode: 'insensitive' };
-    const [data, total] = await Promise.all([
-      this.prisma.project.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }),
-      this.prisma.project.count({ where }),
-    ]);
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    const built = buildListQuery(query, this.fieldMap, { createdAt: 'desc' });
+    return paginate(this.prisma.project, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+    });
   }
 
   async findOne(id: string) {

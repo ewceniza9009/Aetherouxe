@@ -45,6 +45,8 @@ export interface PnlQuery {
   ownerId?: string;
   propertyId?: string;
   status?: PnlStatus;
+  sort?: string;
+  order?: "asc" | "desc";
 }
 
 interface Paginated<T> {

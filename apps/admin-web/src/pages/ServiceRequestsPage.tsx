@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
+import { ListPager } from "@/components/ListPager";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,19 +25,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  ChevronLeft,
-  ChevronRight,
-  AlertCircle,
   Plus,
-  Wrench,
   Loader2,
 } from "lucide-react";
 import {
@@ -100,25 +90,22 @@ export default function ServiceRequestsPage() {
   const navigate = useNavigate();
   const { data: propertiesData } = useProperties({ limit: 200 });
   const { data: unitsData } = useUnits({ limit: 200 });
+  const listQuery = useListQuery(10);
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [page, setPage] = useState(1);
 
-  const query = useMemo(
-    () => ({
-      page,
-      limit: 10,
-      status: statusFilter !== "all" ? (statusFilter as ServiceStatus) : undefined,
-      priority:
-        priorityFilter !== "all" ? (priorityFilter as ServicePriority) : undefined,
-      category:
-        categoryFilter !== "all" ? (categoryFilter as ServiceCategory) : undefined,
-    }),
-    [page, statusFilter, priorityFilter, categoryFilter]
-  );
+  const fullQuery = {
+    ...query,
+    status: statusFilter !== "all" ? (statusFilter as ServiceStatus) : undefined,
+    priority:
+      priorityFilter !== "all" ? (priorityFilter as ServicePriority) : undefined,
+    category:
+      categoryFilter !== "all" ? (categoryFilter as ServiceCategory) : undefined,
+  };
 
-  const { data, isLoading, isError, refetch } = useServiceRequests(query);
+  const { data, isLoading, isError, refetch } = useServiceRequests(fullQuery);
   const createRequest = useCreateServiceRequest();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -134,7 +121,6 @@ export default function ServiceRequestsPage() {
 
   const requests = data?.data ?? [];
   const meta = data?.meta;
-  const totalPages = meta?.totalPages ?? 1;
 
   const handleCreate = async () => {
     setSaving(true);
@@ -177,20 +163,16 @@ export default function ServiceRequestsPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wrench className="h-5 w-5 text-accent" /> Requests
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2 mb-4">
+      <GridToolbar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search requests…"
+        action={{ label: "New Request", onClick: () => setOpen(true) }}
+        filters={
+          <>
             <Select
               value={statusFilter}
-              onValueChange={(v) => {
-                setStatusFilter(v);
-                setPage(1);
-              }}
+              onValueChange={(v) => { setStatusFilter(v); resetPage(); }}
             >
               <SelectTrigger className="w-full sm:w-36">
                 <SelectValue placeholder="Status" />
@@ -206,10 +188,7 @@ export default function ServiceRequestsPage() {
             </Select>
             <Select
               value={priorityFilter}
-              onValueChange={(v) => {
-                setPriorityFilter(v);
-                setPage(1);
-              }}
+              onValueChange={(v) => { setPriorityFilter(v); resetPage(); }}
             >
               <SelectTrigger className="w-full sm:w-36">
                 <SelectValue placeholder="Priority" />
@@ -225,10 +204,7 @@ export default function ServiceRequestsPage() {
             </Select>
             <Select
               value={categoryFilter}
-              onValueChange={(v) => {
-                setCategoryFilter(v);
-                setPage(1);
-              }}
+              onValueChange={(v) => { setCategoryFilter(v); resetPage(); }}
             >
               <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="Category" />
@@ -242,115 +218,82 @@ export default function ServiceRequestsPage() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          {isError ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-              <p className="text-sm text-muted-foreground">Failed to load requests.</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
-                Retry
-              </Button>
-            </div>
-          ) : isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : requests.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <Wrench className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No service requests found.</p>
-            </div>
-          ) : (
-            <>
-              <div className="rounded-md border scroll-grid">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        ID
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        Category
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        Priority
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        Status
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        Requested
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        Organization / Unit
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {requests.map((r: ServiceRequest) => (
-                      <tr
-                        key={r.id}
-                        className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
-                        onClick={() => navigate({ to: `/service-requests/${r.id}` })}
-                      >
-                        <td className="px-4 py-3 font-mono text-xs">
-                          #{r.id.slice(0, 8).toUpperCase()}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          {categoryMeta[r.category]}
-                        </td>
-                        <td className="px-4 py-3">
-                          <Badge className={priorityMeta[r.priority].className}>
-                            {priorityMeta[r.priority].label}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3">
-                          <Badge variant={statusMeta[r.status].variant}>
-                            {statusMeta[r.status].label}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          {new Date(r.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          <div>{r.tenant?.name || "—"}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {r.unit?.unitNumber || "—"}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          </>
+        }
+      />
 
-              <div className="flex items-center justify-between pt-4">
-                <p className="text-sm text-muted-foreground">
-                  Page {page} of {totalPages} · {meta?.total ?? 0} total
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page <= 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" /> Prev
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page >= totalPages}
-                  >
-                    Next <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
+      <Card>
+        <CardContent className="pt-6">
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={requests.length === 0}
+            onRetry={() => refetch()}
+          >
+            <div className="rounded-md border scroll-grid">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      ID
+                    </th>
+                    <th {...sortHeader("category", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Category{sortIndicator("category")}
+                    </th>
+                    <th {...sortHeader("priority", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Priority{sortIndicator("priority")}
+                    </th>
+                    <th {...sortHeader("status", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Status{sortIndicator("status")}
+                    </th>
+                    <th {...sortHeader("createdAt", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
+                      Requested{sortIndicator("createdAt")}
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      Organization / Unit
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {requests.map((r: ServiceRequest) => (
+                    <tr
+                      key={r.id}
+                      className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+                      onClick={() => navigate({ to: `/service-requests/${r.id}` })}
+                    >
+                      <td className="px-4 py-3 font-mono text-xs">
+                        #{r.id.slice(0, 8).toUpperCase()}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {categoryMeta[r.category]}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge className={priorityMeta[r.priority].className}>
+                          {priorityMeta[r.priority].label}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant={statusMeta[r.status].variant}>
+                          {statusMeta[r.status].label}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {new Date(r.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <div>{r.tenant?.name || "—"}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {r.unit?.unitNumber || "—"}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <ListPager meta={meta} page={page} onPageChange={setPage} />
+          </GridState>
         </CardContent>
       </Card>
 

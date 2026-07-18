@@ -59,6 +59,8 @@ export interface DocumentQuery {
   ownerId?: string;
   documentType?: DocumentType;
   isSigned?: boolean;
+  sort?: string;
+  order?: "asc" | "desc";
 }
 
 interface Paginated<T> {

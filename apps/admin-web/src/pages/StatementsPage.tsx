@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useListQuery } from "@/hooks/use-list-query";
+import { GridToolbar, GridState } from "@/components/GridToolbar";
 import {
   Card,
   CardContent,
@@ -10,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +47,7 @@ import {
   type Statement,
 } from "@/hooks/use-collections";
 import { useUsers } from "@/hooks/use-users";
+import { ListPager } from "@/components/ListPager";
 
 function getTenantId(): string | undefined {
   try {
@@ -83,7 +85,9 @@ function formatPeriodRange(start?: string | null, end?: string | null): string {
 
 export default function StatementsPage() {
   const navigate = useNavigate();
-  const { data, isLoading, isError } = useStatements();
+  const listQuery = useListQuery(20);
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
+  const { data, isLoading, isError } = useStatements(query);
   const createStatement = useCreateStatement();
   const generateStatement = useGenerateStatement();
   const { data: ownersData } = useUsers({ userType: "owner" });
@@ -96,7 +100,7 @@ export default function StatementsPage() {
   const [billed, setBilled] = useState("");
   const [paid, setPaid] = useState("0");
 
-  const statements = data ?? [];
+  const statements = data?.data ?? [];
   const owners = ownersData?.data ?? [];
 
   const resetForm = () => {
@@ -164,32 +168,36 @@ export default function StatementsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isError ? (
-            <div className="py-12 text-center text-sm text-destructive">
-              Failed to load statements.
-            </div>
-          ) : isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : statements.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-12 text-center">
-              <FileText className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">No statements yet.</p>
-            </div>
-          ) : (
+          <GridToolbar
+            search={search}
+            onSearchChange={setSearch}
+            placeholder="Search statements..."
+          />
+
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={statements.length === 0}
+            onRetry={() => {}}
+          >
             <div className="rounded-md border scroll-grid">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Recipient</TableHead>
+                    <TableHead {...sortHeader("ownerId")}>
+                      Recipient{sortIndicator("ownerId")}
+                    </TableHead>
                     <TableHead>Period</TableHead>
-                    <TableHead>Billed</TableHead>
-                    <TableHead>Paid</TableHead>
+                    <TableHead {...sortHeader("totalBilled")}>
+                      Billed{sortIndicator("totalBilled")}
+                    </TableHead>
+                    <TableHead {...sortHeader("totalPaid")}>
+                      Paid{sortIndicator("totalPaid")}
+                    </TableHead>
                     <TableHead>Closing</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead {...sortHeader("status")}>
+                      Status{sortIndicator("status")}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -225,7 +233,9 @@ export default function StatementsPage() {
                 </TableBody>
               </Table>
             </div>
-          )}
+
+            <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="statements" />
+          </GridState>
         </CardContent>
       </Card>
 

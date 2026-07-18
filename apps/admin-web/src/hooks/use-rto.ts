@@ -81,6 +81,9 @@ export interface RtoContract {
 export interface RtoQuery {
   page?: number;
   limit?: number;
+  search?: string;
+  sort?: string;
+  order?: string;
   status?: RtoStatus;
   propertyId?: string;
 }
@@ -117,6 +120,9 @@ export function useRtoContracts(query: RtoQuery) {
       if (query.limit) params.set("limit", String(query.limit));
       if (query.status) params.set("status", query.status);
       if (query.propertyId) params.set("propertyId", query.propertyId);
+      if (query.search) params.set("search", query.search);
+      if (query.sort) params.set("sort", query.sort);
+      if (query.order) params.set("order", query.order);
       const { data } = await api.get<ApiResponse<any[]>>(`/rto-contracts?${params}`);
       const raw = data.data;
       const transformed = raw.map((c: any) => ({

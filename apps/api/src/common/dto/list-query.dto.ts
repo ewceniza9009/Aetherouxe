@@ -51,6 +51,7 @@ export interface PaginateArgs {
   limit?: number;
   where?: Record<string, any>;
   include?: Record<string, any>;
+  select?: Record<string, any>;
   orderBy?: Record<string, any> | Record<string, any>[];
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
@@ -98,6 +99,7 @@ export async function paginate<T>(
     delegate.findMany({
       where: args.where,
       include: args.include,
+      select: args.select,
       orderBy,
       ...(limited ? { skip, take: limit } : {}),
     }),
