@@ -8,6 +8,6 @@ import { S3Service } from './s3.service';
   imports: [PrismaModule],
   controllers: [ImagesController],
   providers: [ImagesService, S3Service],
-  exports: [ImagesService],
+  exports: [ImagesService, S3Service],
 })
 export class ImagesModule {}

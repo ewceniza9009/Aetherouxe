@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
+import { useCompanyMeta } from "@/lib/settings-store";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -12,15 +13,18 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
+  const companyMeta = useCompanyMeta();
   
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
       <div className="flex flex-1 flex-col min-h-0">
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card/70 px-6 backdrop-blur-sm">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card/70 px-6 backdrop-blur-sm">
           <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="Logo" className="h-7 w-7 rounded object-cover" />
-            <span className="font-serif text-lg font-bold gold-text">Aetherouxe Estates</span>
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-primary/20 bg-white shadow-sm">
+              <img src={companyMeta.logoUrl || "/favicon.png"} alt="Logo" className="h-full w-full object-contain p-[3px]" />
+            </div>
+            <span className="font-serif text-lg font-bold gold-text ml-1">{companyMeta.name}</span>
           </div>
           <div className="flex items-center gap-4">
             <NotificationBell role="admin" />

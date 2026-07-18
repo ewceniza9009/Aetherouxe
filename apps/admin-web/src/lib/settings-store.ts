@@ -5,7 +5,13 @@ export interface CurrencyMeta {
   symbol: string;
 }
 
+export interface CompanyMeta {
+  name?: string;
+  logoUrl?: string;
+}
+
 let currencyMeta: CurrencyMeta = { code: "PHP", symbol: "₱" };
+let companyMeta: CompanyMeta = { name: "Aetherouxe Estates" };
 
 export function getCurrencyMeta(): CurrencyMeta {
   return currencyMeta;
@@ -18,6 +24,30 @@ export function setCurrencyMeta(meta: Partial<CurrencyMeta>): void {
   };
 }
 
+import { useState, useEffect } from "react";
+
+export function getCompanyMeta(): CompanyMeta {
+  return companyMeta;
+}
+
+export function setCompanyMeta(meta: Partial<CompanyMeta>): void {
+  companyMeta = {
+    name: meta.name ?? companyMeta.name,
+    logoUrl: meta.logoUrl ?? companyMeta.logoUrl,
+  };
+  window.dispatchEvent(new Event('company-meta-updated'));
+}
+
+export function useCompanyMeta() {
+  const [meta, setMeta] = useState(companyMeta);
+  useEffect(() => {
+    const handler = () => setMeta(companyMeta);
+    window.addEventListener('company-meta-updated', handler);
+    return () => window.removeEventListener('company-meta-updated', handler);
+  }, []);
+  return meta;
+}
+
 let bootstrapPromise: Promise<void> | null = null;
 
 export function bootstrapSettings(): Promise<void> {
@@ -28,6 +58,12 @@ export function bootstrapSettings(): Promise<void> {
       const data = res.data?.data ?? res.data;
       if (data && (data.currency || data.currencySymbol)) {
         setCurrencyMeta({ code: data.currency, symbol: data.currencySymbol });
+      }
+      if (data && data.company) {
+        setCompanyMeta({ 
+          name: data.company.tradeName || data.company.legalName || "Aetherouxe Estates",
+          logoUrl: data.branding?.logoUrl
+        });
       }
     } catch {
       // Keep defaults if unauthenticated or unavailable.

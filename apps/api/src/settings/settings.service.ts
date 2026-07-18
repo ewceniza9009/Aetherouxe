@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Service } from '../images/s3.service';
 import { UpdateSettingsDto } from './dto/settings.dto';
 
 interface CompanySettings {
@@ -17,6 +18,7 @@ interface BrandingSettings {
   primaryColor?: string;
   accentColor?: string;
   theme?: string;
+  logoUrl?: string;
 }
 
 export interface AppSettings {
@@ -33,7 +35,23 @@ export interface AppSettings {
 
 @Injectable()
 export class SettingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly s3: S3Service,
+  ) {}
+
+  async uploadLogo(tenantId: string, file: any): Promise<{ logoUrl: string }> {
+    if (!file) throw new BadRequestException('File is required');
+    const folder = `tenants/${tenantId}/branding`;
+    const result = await this.s3.upload(file, folder);
+    
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { logoUrl: result.url },
+    });
+    
+    return { logoUrl: result.url };
+  }
 
   async getSettings(tenantId: string): Promise<AppSettings> {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
@@ -47,7 +65,10 @@ export class SettingsService {
       timezone: raw.timezone ?? 'Asia/Manila',
       dateFormat: raw.dateFormat ?? 'MMM DD, YYYY',
       fiscalYearStartMonth: raw.fiscalYearStartMonth ?? 1,
-      branding: raw.branding ?? {},
+      branding: {
+        ...(raw.branding ?? {}),
+        logoUrl: tenant.logoUrl ?? undefined,
+      },
       features: raw.features ?? {},
     };
   }

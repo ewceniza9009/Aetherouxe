@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import api from "@/lib/api";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { setCompanyMeta } from "@/lib/settings-store";
 
 interface CompanySettings {
   company: {
@@ -24,7 +25,7 @@ interface CompanySettings {
   timezone?: string;
   dateFormat?: string;
   fiscalYearStartMonth?: number;
-  branding?: { primaryColor?: string; accentColor?: string; theme?: string };
+  branding?: { primaryColor?: string; accentColor?: string; theme?: string; logoUrl?: string };
   features?: Record<string, boolean>;
 }
 
@@ -39,6 +40,7 @@ export default function SettingsPage() {
 
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -61,7 +63,7 @@ export default function SettingsPage() {
     setSaving(true);
     setMsg(null);
     try {
-      await api.patch("/settings/company", {
+      const res = await api.patch("/settings/company", {
         legalName: settings.company.legalName,
         tradeName: settings.company.tradeName,
         tin: settings.company.tin,
@@ -80,11 +82,44 @@ export default function SettingsPage() {
         accentColor: settings.branding?.accentColor,
         theme: settings.branding?.theme,
       });
-      setMsg({ type: "success", text: "Company settings saved successfully" });
+      if (res.data?.data) {
+        setSettings(res.data.data);
+        setCompanyMeta({
+          name: res.data.data.company.tradeName || res.data.data.company.legalName || "Aetherouxe Estates",
+          logoUrl: res.data.data.branding?.logoUrl
+        });
+      }
+      setMsg({ type: "success", text: "Settings saved successfully" });
     } catch (err: any) {
-      setMsg({ type: "error", text: err.response?.data?.message ?? "Failed to save company settings" });
+      setMsg({ type: "error", text: err.response?.data?.message || "Failed to save settings" });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleUploadLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogo(true);
+    setMsg(null);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await api.post("/settings/company/logo", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const responseData = res.data?.data ?? res.data;
+      if (responseData?.logoUrl) {
+        setSettings((s) => s ? { ...s, branding: { ...s.branding, logoUrl: responseData.logoUrl } } : s);
+        setCompanyMeta({ logoUrl: responseData.logoUrl });
+        setMsg({ type: "success", text: "Logo uploaded successfully" });
+      }
+    } catch (err: any) {
+      setMsg({ type: "error", text: err.response?.data?.message || "Failed to upload logo" });
+    } finally {
+      setUploadingLogo(false);
     }
   };
 
@@ -151,6 +186,39 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <Label htmlFor="website">Website</Label>
                 <Input id="website" value={settings?.company.website ?? ""} onChange={(e) => setCompany({ website: e.target.value })} />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Company Logo</Label>
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-16 rounded-md border flex items-center justify-center overflow-hidden bg-muted">
+                    {settings?.branding?.logoUrl ? (
+                      <img 
+                        src={settings.branding.logoUrl} 
+                        alt="Logo" 
+                        className="h-full w-full object-cover" 
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <span className={settings?.branding?.logoUrl ? "hidden text-xs text-muted-foreground" : "text-xs text-muted-foreground"}>
+                      No Logo
+                    </span>
+                  </div>
+                  <div>
+                    <Input 
+                      id="logo-upload" 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleUploadLogo} 
+                      disabled={uploadingLogo} 
+                      className="max-w-[280px] cursor-pointer file:cursor-pointer file:border-0 file:bg-transparent file:font-medium file:text-primary" 
+                    />
+                    {uploadingLogo && <p className="text-xs text-muted-foreground mt-1">Uploading...</p>}
+                  </div>
+                </div>
               </div>
 
               <Separator />
