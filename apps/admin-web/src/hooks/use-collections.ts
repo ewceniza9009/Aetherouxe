@@ -271,12 +271,12 @@ export function useArAging(params?: { propertyId?: string }) {
           outstanding: Number(u.totalOutstanding ?? 0),
           worstBucket: worstBucketOf(u.buckets),
         })),
-        byProperty: (raw.byProperty ?? []).map((p: any) => ({
+        byProperty: (raw.byProperty ?? []).map((p: { propertyId?: string; propertyCode?: string; propertyName?: string; totalOutstanding?: number }) => ({
           propertyId: p.propertyId,
           propertyName: p.propertyCode ?? p.propertyName ?? "—",
           outstanding: Number(p.totalOutstanding ?? 0),
         })),
-        invoices: (raw.invoices ?? []).map((i: any) => ({
+        invoices: (raw.invoices ?? []).map((i: { invoiceId: string; invoiceNumber?: string; invoiceType: string; userName?: string; propertyCode?: string | null; amount: number; paid: number; outstanding: number; dueDate: string; daysOverdue: number; bucket?: string; status?: string }) => ({
           invoiceId: i.invoiceId,
           invoiceNumber: i.invoiceNumber ?? i.invoiceId,
           invoiceType: i.invoiceType,
@@ -287,7 +287,7 @@ export function useArAging(params?: { propertyId?: string }) {
           outstanding: Number(i.outstanding ?? 0),
           dueDate: i.dueDate,
           daysOverdue: Number(i.daysOverdue ?? 0),
-          bucket: AR_BUCKET_LABELS[i.bucket] ?? i.bucket,
+          bucket: i.bucket ? AR_BUCKET_LABELS[i.bucket] ?? i.bucket : "—",
           status: i.status,
         })),
       };
@@ -735,3 +735,4 @@ export function formatDate(value?: string | null): string {
     day: "numeric",
   });
 }
+

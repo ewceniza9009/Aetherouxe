@@ -1,25 +1,25 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   ArrowLeft,
   Building2,
@@ -518,4 +518,6 @@ export default function ContractorDetailPage() {
     </div>
   );
 }
+
+
 

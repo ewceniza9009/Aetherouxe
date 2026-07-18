@@ -2,11 +2,11 @@ import { useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { formatCurrency } from "@/lib/agent-meta";
 import * as Tabs from "@radix-ui/react-tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { Separator } from "@elite-realty/shared-ui/components/ui";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   ArrowLeft,
   AlertCircle,
@@ -28,7 +28,7 @@ import {
   ArrowUpCircle,
   BadgeDollarSign,
 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@elite-realty/shared-ui/hooks";
 import {
   useRtoContract,
   useExerciseOption,
@@ -404,4 +404,6 @@ function LedgerRow({ entry }: { entry: RtoLedgerEntry }) {
     </div>
   );
 }
+
+
 

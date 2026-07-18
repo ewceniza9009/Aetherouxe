@@ -8,19 +8,19 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@elite-realty/shared-ui/components/ui";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -29,7 +29,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   Table,
   TableBody,
@@ -516,4 +516,6 @@ function EditMeterDialog({ meter }: { meter: UtilityMeter }) {
     </Dialog>
   );
 }
+
+
 

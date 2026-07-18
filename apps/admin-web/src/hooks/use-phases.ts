@@ -47,18 +47,37 @@ function progressFor(status: string): number {
   }
 }
 
-function mapPhase(p: any): Phase {
+interface RawPhaseApi {
+  id: string;
+  projectId: string;
+  phaseName?: string;
+  name?: string;
+  phaseOrder?: number;
+  order?: number;
+  progress?: number;
+  progressPercent?: number;
+  status?: string;
+  targetStart?: string | null;
+  targetEnd?: string | null;
+  actualStart?: string | null;
+  actualEnd?: string | null;
+  completedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function mapPhase(p: RawPhaseApi): Phase {
   return {
     id: p.id,
     projectId: p.projectId,
-    name: p.phaseName ?? p.name,
-    status: p.status,
+    name: p.phaseName ?? p.name ?? "",
+    status: (p.status ?? "pending") as Phase["status"],
     targetStart: p.targetStart ?? undefined,
     targetEnd: p.targetEnd ?? undefined,
     actualStart: p.actualStart ?? undefined,
     actualEnd: p.actualEnd ?? undefined,
     order: p.phaseOrder ?? p.order ?? 0,
-    progress: p.progress ?? progressFor(p.status),
+    progress: p.progress ?? progressFor(p.status ?? "pending"),
     createdAt: p.createdAt,
   };
 }
@@ -138,3 +157,4 @@ export function useDeletePhase() {
     },
   });
 }
+

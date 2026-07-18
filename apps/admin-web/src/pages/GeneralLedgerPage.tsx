@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { GridState } from '@/components/GridToolbar';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useGeneralLedgerEntries, useChartOfAccounts } from '@/hooks/use-gl';
+import { useGeneralLedgerEntries, useChartOfAccounts, type GlEntry, type GlEntryLine, type Account } from '@/hooks/use-gl';
 import {
   Table,
   TableBody,
@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
 
 export default function GeneralLedgerPage() {
   const { data: entries, isLoading: loadingEntries } = useGeneralLedgerEntries();
@@ -62,8 +62,8 @@ export default function GeneralLedgerPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {entries?.map((entry: any) => (
-                        entry.lines.map((line: any, idx: number) => (
+{entries?.map((entry: GlEntry) => (
+                        entry.lines.map((line: GlEntryLine, idx: number) => (
                           <TableRow key={line.id}>
                             <TableCell className="text-muted-foreground whitespace-nowrap">
                               {idx === 0 ? format(new Date(entry.date), 'MMM dd, yyyy') : ''}
@@ -71,21 +71,21 @@ export default function GeneralLedgerPage() {
                             <TableCell className="font-medium">
                               {idx === 0 ? (
                                 <div className="flex flex-col">
-                                  <span>{entry.reference}</span>
-                                  <span className="text-xs text-muted-foreground font-normal">{entry.notes}</span>
+                                  <span>{entry.entryNumber}</span>
+                                  <span className="text-xs text-muted-foreground font-normal">{entry.description}</span>
                                 </div>
                               ) : ''}
                             </TableCell>
                             <TableCell>
-                              <span className={Number(line.creditAmount) > 0 ? "ml-4 text-muted-foreground" : ""}>
-                                {line.account?.accountCode} - {line.account?.name}
+                              <span className={Number(line.credit) > 0 ? "ml-4 text-muted-foreground" : ""}>
+                                {line.accountCode} - {line.accountName}
                               </span>
                             </TableCell>
                             <TableCell className="text-right font-mono text-emerald-600 dark:text-emerald-400">
-                              {Number(line.debitAmount) > 0 ? formatCurrency(line.debitAmount) : ''}
+                              {Number(line.debit) > 0 ? formatCurrency(line.debit) : ''}
                             </TableCell>
                             <TableCell className="text-right font-mono text-amber-600 dark:text-amber-400">
-                              {Number(line.creditAmount) > 0 ? formatCurrency(line.creditAmount) : ''}
+                              {Number(line.credit) > 0 ? formatCurrency(line.credit) : ''}
                             </TableCell>
                           </TableRow>
                         ))
@@ -111,10 +111,10 @@ export default function GeneralLedgerPage() {
                 <EmptyState title="No accounts found" />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {accounts.map((account: any) => (
+                  {accounts.map((account: Account) => (
                     <div key={account.id} className="p-4 rounded-lg border bg-card text-card-foreground flex items-center justify-between shadow-sm">
                       <div>
-                        <div className="text-lg font-mono font-medium">{account.accountCode}</div>
+                        <div className="text-lg font-mono font-medium">{account.code}</div>
                         <div className="text-sm text-muted-foreground">{account.name}</div>
                       </div>
                       <Badge variant="secondary" className="uppercase text-[10px]">
@@ -131,3 +131,5 @@ export default function GeneralLedgerPage() {
     </div>
   );
 }
+
+

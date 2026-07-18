@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
 import { Calendar, Clock, Dumbbell, Waves, Trees, Tv } from "lucide-react";
 
 const amenities = [
@@ -99,3 +99,5 @@ export default function AmenitiesPage() {
     </div>
   );
 }
+
+

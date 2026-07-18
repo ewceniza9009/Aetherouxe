@@ -5,7 +5,7 @@ import {
   redirect,
   Outlet,
 } from "@tanstack/react-router";
-import LoginPage from "./pages/LoginPage";
+import { LoginPage } from "@elite-realty/shared-ui/pages";
 import OwnerDashboardPage from "./pages/DashboardPage";
 import OwnerPropertiesPage from "./pages/PropertiesPage";
 import OwnerProjectsPage from "./pages/ProjectsPage";

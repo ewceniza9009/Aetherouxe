@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+import type { RawBudget, RawBudgetItem } from "@/types/api";
 
 export interface Budget {
   id: string;
@@ -55,8 +56,8 @@ interface PaginatedResult<T> {
 // Map the API budget object (budgetName / totalBudgetAmount / versionNumber /
 // lineItems[].plannedAmount) onto the frontend Budget interface
 // (name / totalPlanned / totalActual / version).
-function mapBudget(raw: any): Budget {
-  const lineItems: any[] = Array.isArray(raw?.lineItems) ? raw.lineItems : [];
+function mapBudget(raw: RawBudget): Budget {
+  const lineItems: RawBudgetItem[] = Array.isArray(raw?.lineItems) ? raw.lineItems : [];
   const plannedFromLines = lineItems.reduce(
     (sum, li) => sum + (Number(li?.plannedAmount) || 0),
     0
@@ -74,7 +75,7 @@ function mapBudget(raw: any): Budget {
     version: raw?.versionNumber ?? raw?.version ?? 1,
     totalPlanned,
     totalActual,
-    status: raw?.status ?? "draft",
+    status: (raw?.status ?? "draft") as Budget["status"],
     createdAt: raw?.createdAt,
     updatedAt: raw?.updatedAt,
   };
@@ -173,3 +174,4 @@ export function useUpdateLineItem() {
     },
   });
 }
+

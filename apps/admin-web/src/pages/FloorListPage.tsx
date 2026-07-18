@@ -2,11 +2,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useState, useCallback } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { GridState } from "@/components/GridToolbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@elite-realty/shared-ui/components/ui";
 import { ArrowLeft, Plus, Trash2, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
 import { useFloors, useCreateFloor, useUpdateFloor, useDeleteFloor, type Floor } from "@/hooks/use-floors";
 import { useBuilding } from "@/hooks/use-buildings";
@@ -209,3 +209,5 @@ export default function FloorListPage() {
     </div>
   );
 }
+
+

@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Separator } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   KeyRound,
   Home,
@@ -25,7 +25,7 @@ import {
   ShieldCheck,
   Coins,
 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@elite-realty/shared-ui/hooks";
 import {
   useMyRto,
   useExerciseOption,
@@ -372,3 +372,5 @@ function LedgerRow({ entry }: { entry: RtoLedgerEntry }) {
     </div>
   );
 }
+
+

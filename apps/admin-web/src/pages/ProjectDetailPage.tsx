@@ -3,12 +3,12 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
@@ -17,15 +17,19 @@ import {
   DialogTitle,
   DialogFooter,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@elite-realty/shared-ui/components/ui";
+import { PropertyType, PropertyStatus } from "@elite-realty/shared-types";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@elite-realty/shared-ui/components/ui";
 import * as Tabs from "@radix-ui/react-tabs";
+import { Unit } from "@/hooks/use-units";
+import { Property } from "@/hooks/use-properties";
+import { InventoryUnit } from "@/hooks/use-project-inventory";
 import {
   ArrowLeft,
   Edit,
@@ -681,20 +685,20 @@ function InventoryTab({ projectId }: { projectId: string }) {
     }
   };
 
-  const handleListAsProperty = async (e: React.MouseEvent, unit: any, buildingName: string) => {
+  const handleListAsProperty = async (e: React.MouseEvent, unit: InventoryUnit, buildingName: string) => {
     e.stopPropagation();
     try {
-      const propertyTypeMap: Record<string, string> = {
-        studio: 'condo_unit', one_br: 'condo_unit', two_br: 'condo_unit', three_br: 'condo_unit',
-        penthouse: 'condo_unit', commercial: 'commercial_space', parking: 'parking_slot'
+      const propertyTypeMap: Record<string, PropertyType> = {
+        studio: PropertyType.CondoUnit, one_br: PropertyType.CondoUnit, two_br: PropertyType.CondoUnit, three_br: PropertyType.CondoUnit,
+        penthouse: PropertyType.CondoUnit, commercial: PropertyType.CommercialSpace, parking: PropertyType.ParkingSlot
       };
       
       const newProperty = await createProperty.mutateAsync({
         projectId,
-        propertyType: propertyTypeMap[unit.unitType] || 'condo_unit',
-        status: 'available' as any,
-        propertyCode: `${buildingName.substring(0,3).toUpperCase()}-${unit.unitNumber}`,
-      } as any);
+        type: propertyTypeMap[unit.unitType ?? ""] || PropertyType.CondoUnit,
+        status: PropertyStatus.Available,
+        code: `${buildingName.substring(0,3).toUpperCase()}-${unit.unitNumber}`,
+      });
       
       await updateUnit.mutateAsync({
         id: unit.id,
@@ -910,3 +914,5 @@ function InventoryTab({ projectId }: { projectId: string }) {
     </div>
   );
 }
+
+

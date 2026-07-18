@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
+import { Textarea } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { Separator } from "@elite-realty/shared-ui/components/ui";
 import {
   Dialog,
   DialogContent,
@@ -14,14 +14,14 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@elite-realty/shared-ui/components/ui";
 import { Wrench, Plus, Loader2, AlertCircle, Inbox } from "lucide-react";
 import {
   useMyServiceRequests,
@@ -278,3 +278,5 @@ export default function ServiceRequestsPage() {
     </div>
   );
 }
+
+

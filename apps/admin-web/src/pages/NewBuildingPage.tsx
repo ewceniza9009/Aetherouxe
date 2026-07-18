@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@elite-realty/shared-ui/components/ui";
 import { ArrowLeft, Save } from "lucide-react";
 import { useCreateBuilding } from "@/hooks/use-buildings";
 
@@ -37,7 +37,7 @@ export default function NewBuildingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         name: form.name,
         type: form.type,
         floorCount: parseInt(form.floorCount) || 0,
@@ -135,3 +135,5 @@ export default function NewBuildingPage() {
     </div>
   );
 }
+
+

@@ -4,10 +4,10 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
 import {
   Table,
   TableBody,
@@ -21,7 +21,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs";
+} from "@elite-realty/shared-ui/components/ui";
 import { ArrowLeft, Clock, Users, Building2, FileText, BarChart3 } from "lucide-react";
 import {
   useArAging,
@@ -472,3 +472,5 @@ export default function ArAgingPage() {
     </div>
   );
 }
+
+

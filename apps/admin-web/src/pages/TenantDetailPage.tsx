@@ -2,12 +2,12 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { formatCurrency } from "@/lib/agent-meta";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@elite-realty/shared-ui/components/ui";
 import {
   ArrowLeft,
   Home,
@@ -481,3 +481,5 @@ function Detail({
     </div>
   );
 }
+
+

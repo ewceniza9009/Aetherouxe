@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
 import { useNavigate } from "@tanstack/react-router";
 import { DollarSign, Wrench, Bell, FileText, AlertCircle, Calculator, CalendarClock, Home } from "lucide-react";
 import { useMyLease, useLeasePayments } from "@/hooks/use-leases";
@@ -185,3 +185,5 @@ export default function ResidentDashboardPage() {
     </div>
   );
 }
+
+

@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
 import { Building2, MapPin } from "lucide-react";
 
 const ownedProperties = [
@@ -65,3 +65,5 @@ export default function OwnerPropertiesPage() {
     </div>
   );
 }
+
+

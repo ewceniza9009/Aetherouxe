@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@elite-realty/shared-ui/hooks";
 import type { ApiResponse } from "@elite-realty/shared-types";
 
 /* ------------------------------------------------------------------ *

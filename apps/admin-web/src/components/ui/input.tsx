@@ -4,27 +4,51 @@ import { cn } from "@/lib/utils";
 import { DatePicker } from "@/components/ui/date-picker";
 import { AmountInput, QuantityInput, NumberInput } from "@/components/ui/number-input";
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+export type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 const DATE_TYPES = ["date", "datetime-local", "month", "week"];
 const TIME_TYPES = ["time"];
 const NUMBER_TYPES = ["number"];
+
+interface DataAmountProps {
+  "data-amount"?: boolean | string;
+}
+
+function getDataAmount(props: React.InputHTMLAttributes<HTMLInputElement>): boolean | string | undefined {
+  const dataProps = props as React.InputHTMLAttributes<HTMLInputElement> & DataAmountProps;
+  return dataProps["data-amount"];
+}
+
+function makeChangeHandler(onChange: React.InputHTMLAttributes<HTMLInputElement>["onChange"]): (v: string) => void {
+  return (v: string) => {
+    if (typeof onChange === "function") {
+      const handler = onChange as (e: { target: { value: string } }) => void;
+      handler({ target: { value: v } });
+    }
+  };
+}
+
+function extraPropsFromInput(props: React.InputHTMLAttributes<HTMLInputElement>): Record<string, unknown> {
+  const { className: _c, type: _t, value: _v, onChange: _o, step: _s, ...rest } = props;
+  return rest as Record<string, unknown>;
+}
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, value, onChange, step, ...props }, ref) => {
     const isDate = type ? DATE_TYPES.includes(type) : false;
     const isTime = type ? TIME_TYPES.includes(type) : false;
     const isNumber = type ? NUMBER_TYPES.includes(type) : false;
+    const handleChange = makeChangeHandler(onChange);
+    const allExtraProps = extraPropsFromInput({ className, type, value, onChange, step, ...props });
 
     if (isDate) {
-      const handleChange = onChange as ((e: { target: { value: string } }) => void) | undefined;
       return (
         <DatePicker
           value={typeof value === "string" ? value : undefined}
           includeTime={type === "datetime-local"}
-          onChange={(v) => handleChange?.({ target: { value: v } } as any)}
+          onChange={handleChange}
           className={className}
-          {...(props as any)}
+          {...allExtraProps}
         />
       );
     }
@@ -33,22 +57,19 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       const stepStr = step !== undefined ? String(step) : "";
       const hasDecimalStep = stepStr !== "" && stepStr.includes(".");
       const decimals = hasDecimalStep ? stepStr.split(".")[1].length : 2;
-      // Explicit money markers: data-amount attribute OR step="0.01".
       const isAmount =
-        (props as any)["data-amount"] === "true" ||
-        (props as any)["data-amount"] === true ||
+        getDataAmount(props) === "true" ||
+        getDataAmount(props) === true ||
         stepStr === "0.01";
-      // Whole-number step (e.g. step="1") → integer quantity, no decimals.
       const isQuantity = stepStr !== "" && !hasDecimalStep && !isAmount;
-      const handleChange = onChange as ((e: { target: { value: string } }) => void) | undefined;
 
       if (isQuantity) {
         return (
           <QuantityInput
             value={value === undefined || value === null ? "" : (value as string | number)}
-            onChange={(raw) => handleChange?.({ target: { value: raw } } as any)}
+            onChange={handleChange}
             className={className}
-            {...(props as any)}
+            {...allExtraProps}
           />
         );
       }
@@ -57,21 +78,20 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         return (
           <AmountInput
             value={value === undefined || value === null ? "" : (value as string | number)}
-            onChange={(raw) => handleChange?.({ target: { value: raw } } as any)}
+            onChange={handleChange}
             className={className}
-            {...(props as any)}
+            {...allExtraProps}
           />
         );
       }
 
-      // Default: masked number with decimals (no ₱). Best of both worlds.
       return (
         <NumberInput
           value={value === undefined || value === null ? "" : (value as string | number)}
           decimals={decimals}
-          onChange={(raw) => handleChange?.({ target: { value: raw } } as any)}
+          onChange={handleChange}
           className={className}
-          {...(props as any)}
+          {...allExtraProps}
         />
       );
     }

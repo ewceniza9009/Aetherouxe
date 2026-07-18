@@ -1,7 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import type { UserType } from "@elite-realty/shared-types";
-import api from "@/lib/api";
-import { bootstrapSettings } from "@/lib/settings-store";
 
 interface User {
   id: string;
@@ -25,7 +23,13 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+interface AuthProviderProps {
+  children: ReactNode;
+  api: any; // axios instance
+  onBootstrapSettings?: () => void;
+}
+
+export function AuthProvider({ children, api, onBootstrapSettings }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(() => {
     try {
       const stored = localStorage.getItem("user");
@@ -46,14 +50,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // ignore
     }
-  }, []);
+  }, [api]);
 
   useEffect(() => {
     if (localStorage.getItem("accessToken")) {
-      void bootstrapSettings();
+      onBootstrapSettings?.();
       void refetchUser();
     }
-  }, [refetchUser]);
+  }, [refetchUser, onBootstrapSettings]);
 
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
@@ -65,11 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("refreshToken", body.refreshToken);
       localStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
-      void bootstrapSettings();
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [api]);
 
   const logout = useCallback(() => {
     localStorage.removeItem("accessToken");

@@ -32,7 +32,9 @@ api.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem("refreshToken");
         const resp = await axios.post("/api/v1/auth/refresh", { refreshToken });
-        const inner = (resp.data && (resp.data as any).data) ? (resp.data as any).data : resp.data;
+        const inner: { accessToken: string } = (resp.data && (resp.data as { data?: unknown }).data)
+          ? (resp.data as { data: { accessToken: string } }).data
+          : resp.data as { accessToken: string };
         localStorage.setItem("accessToken", inner.accessToken);
         originalRequest.headers.Authorization = `Bearer ${inner.accessToken}`;
         return api(originalRequest);

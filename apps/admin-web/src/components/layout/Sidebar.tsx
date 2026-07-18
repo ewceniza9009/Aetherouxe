@@ -46,8 +46,8 @@ import {
   HardHat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { useAuth } from "@elite-realty/shared-ui/hooks";
 
 interface NavItem {
   label: string;
@@ -411,3 +411,5 @@ export default function Sidebar() {
     </aside>
   );
 }
+
+

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@elite-realty/shared-ui/hooks";
 import type { ApiResponse } from "@elite-realty/shared-types";
 
 /* ------------------------------------------------------------------ *
@@ -326,3 +326,4 @@ export function useMyDocuments() {
     enabled: !!user?.id,
   });
 }
+

@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+import type { RawAgent } from "@/types/api";
 
-function mapAgent(a: any): Agent {
+function mapAgent(a: RawAgent): Agent {
   const user = a.user ?? {};
   const first = user.firstName ?? "";
   const last = user.lastName ?? "";
@@ -140,7 +141,7 @@ export function useAgents(query: AgentQuery) {
         params.set("isInternal", String(query.isInternal));
       if (query.status) params.set("status", query.status);
       const { data } = await api.get<ApiResponse<Agent[]>>(`/agents?${params}`);
-      const raw = (data.data ?? []) as any[];
+      const raw = (data.data ?? []) as RawAgent[];
       const mapped: Agent[] = raw.map((a) => mapAgent(a));
       return { data: mapped, meta: data.meta } as PaginatedResult<Agent>;
     },
@@ -282,3 +283,4 @@ export function useUpdateLicenseRenewal(agentId: string) {
     },
   });
 }
+

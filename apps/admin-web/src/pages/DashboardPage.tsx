@@ -1,8 +1,8 @@
 import { EmptyState } from "@/components/ui/empty-state";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
 import {
   Building2, Users, FileText, DollarSign, TrendingUp, Activity,
   Plus, ArrowRight, Hammer, CheckCircle2, Clock, AlertTriangle,
@@ -384,9 +384,9 @@ export default function DashboardPage() {
                   <BarChart data={revenueTrend} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                      <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
                      <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} width={56} tickFormatter={(v) => `₱${(Number(v) / 1000).toFixed(0)}k`} />
-                     <Tooltip
-                       contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 13 }}
-                       formatter={(v: any) => [formatCurrency(Number(v)), "Revenue"]}
+<Tooltip
+                        contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 13 }}
+                        formatter={(v: any) => [formatCurrency(Number(v)), "Revenue"]}
                     />
                     <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={48} />
                   </BarChart>
@@ -605,3 +605,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+

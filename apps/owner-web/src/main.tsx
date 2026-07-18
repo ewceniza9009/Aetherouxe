@@ -1,7 +1,8 @@
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider } from "@elite-realty/shared-ui/hooks";
+import api from "@/lib/api";
 import { RouterProvider } from "@tanstack/react-router";
 import router from "@/router";
 import "./index.css";
@@ -21,7 +22,7 @@ if (!rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
+        <AuthProvider api={api} onBootstrapSettings={() => {}}>
           <RouterProvider router={router} />
         </AuthProvider>
       </QueryClientProvider>

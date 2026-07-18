@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
+import { Separator } from "@elite-realty/shared-ui/components/ui";
 import api from "@/lib/api";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { setCompanyMeta } from "@/lib/settings-store";
+import { getErrorMessage } from "@/lib/error";
 
 interface CompanySettings {
   company: {
@@ -90,8 +91,8 @@ export default function SettingsPage() {
         });
       }
       setMsg({ type: "success", text: "Settings saved successfully" });
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.response?.data?.message || "Failed to save settings" });
+    } catch (err) {
+      setMsg({ type: "error", text: getErrorMessage(err, "Failed to save settings") });
     } finally {
       setSaving(false);
     }
@@ -116,8 +117,8 @@ export default function SettingsPage() {
         setCompanyMeta({ logoUrl: responseData.logoUrl });
         setMsg({ type: "success", text: "Logo uploaded successfully" });
       }
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.response?.data?.message || "Failed to upload logo" });
+    } catch (err) {
+      setMsg({ type: "error", text: getErrorMessage(err, "Failed to upload logo") });
     } finally {
       setUploadingLogo(false);
     }
@@ -302,3 +303,6 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+
+

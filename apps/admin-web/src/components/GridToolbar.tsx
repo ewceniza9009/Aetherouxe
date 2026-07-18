@@ -1,6 +1,6 @@
 import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
 import { Search, Plus, Loader2 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -101,3 +101,5 @@ export function GridState({
 
   return <>{children}</>;
 }
+
+

@@ -44,3 +44,4 @@ export function useRevenueTrend(months = 6) {
     },
   });
 }
+

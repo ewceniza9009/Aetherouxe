@@ -1,18 +1,18 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
+import { Textarea } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@elite-realty/shared-ui/components/ui";
 import { ArrowLeft, Save } from "lucide-react";
 import { useProject, useUpdateProject, projectTypeLabels, projectStatusLabels } from "@/hooks/use-projects";
 import type { ProjectType, ProjectStatus } from "@/hooks/use-projects";
@@ -184,3 +184,5 @@ export default function EditProjectPage() {
     </div>
   );
 }
+
+

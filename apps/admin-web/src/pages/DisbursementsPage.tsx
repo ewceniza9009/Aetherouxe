@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useListQuery } from '@/hooks/use-list-query';
 import { GridToolbar, GridState } from '@/components/GridToolbar';
-import { useApInvoices, useDisburse } from '@/hooks/use-ap';
+import { useApInvoices, useDisburse, type ApInvoice } from '@/hooks/use-ap';
 import {
   Table,
   TableBody,
@@ -85,7 +85,7 @@ export default function DisbursementsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoices.map((invoice: any) => (
+                {invoices.map((invoice: ApInvoice) => (
                   <TableRow key={invoice.id} className="border-white/10 hover:bg-white/5 transition-colors">
                     <TableCell className="font-medium text-white">
                       <Badge variant="outline" className="border-white/20 text-white/80">
@@ -137,3 +137,4 @@ export default function DisbursementsPage() {
     </div>
   );
 }
+

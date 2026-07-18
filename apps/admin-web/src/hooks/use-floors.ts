@@ -1,13 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import type { ApiResponse } from "@elite-realty/shared-types";
+import type { RawUnit } from "@/types/api";
 
 export interface Floor {
   id: string;
   buildingId: string;
   floorNumber: string;
   sortOrder: number;
-  units?: any[];
+  units?: RawUnit[];
+  unitsCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface RawFloorApi {
+  id: string;
+  buildingId: string;
+  floorNumber: string;
+  sortOrder: number;
+  units?: RawUnit[];
   unitsCount?: number;
   createdAt: string;
   updatedAt: string;
@@ -18,8 +30,8 @@ export function useFloors(buildingId: string) {
     queryKey: ["floors", buildingId],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<Floor[]>>(`/buildings/${buildingId}/floors`);
-      const floors = data.data ?? [];
-      return floors.map((f: any) => ({
+      const floors = (data.data ?? []) as RawFloorApi[];
+      return floors.map((f) => ({
         ...f,
         unitsCount: Array.isArray(f.units) ? f.units.length : (f.unitsCount ?? 0),
       })) as Floor[];
@@ -68,3 +80,4 @@ export function useDeleteFloor() {
     },
   });
 }
+

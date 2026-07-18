@@ -1,0 +1,16 @@
+{
+  "extends": "@elite-realty/config-tsconfig/base.json",
+  "compilerOptions": {
+    "outDir": "dist/cjs",
+    "declarationDir": "dist/cjs",
+    "module": "CommonJS",
+    "jsx": "react",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

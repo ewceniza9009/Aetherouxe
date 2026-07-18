@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
 import { DollarSign, TrendingUp, TrendingDown, Banknote } from "lucide-react";
 
 export default function FinancialsPage() {
@@ -183,3 +183,5 @@ export default function FinancialsPage() {
     </div>
   );
 }
+
+

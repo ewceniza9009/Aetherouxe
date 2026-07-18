@@ -1,20 +1,20 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
+import { Textarea } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { Separator } from "@elite-realty/shared-ui/components/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   ArrowLeft,
   Save,
@@ -97,8 +97,7 @@ export default function EditUnitPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload: any = {
-        id: unitId,
+      const payload: Record<string, unknown> = {
         unitNumber: form.unitNumber,
         type: form.type,
         status: form.status,
@@ -111,7 +110,7 @@ export default function EditUnitPage() {
         buildingValue: form.buildingValue ? parseFloat(form.buildingValue) : undefined,
       };
       Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
-      await updateUnit.mutateAsync(payload);
+      await updateUnit.mutateAsync({ id: unitId, ...payload } as Partial<import("@/hooks/use-units").Unit> & { id: string });
       navigate({ to: `/properties/${propertyId}/units` });
     } catch (err) {
       console.error("Failed to update unit", err);
@@ -412,3 +411,5 @@ export default function EditUnitPage() {
     </div>
   );
 }
+
+

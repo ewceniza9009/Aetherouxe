@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import NotificationBell from "@/components/NotificationBell";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@elite-realty/shared-ui/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
@@ -62,3 +62,4 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     </div>
   );
 }
+

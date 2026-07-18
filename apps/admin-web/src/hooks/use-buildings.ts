@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+import type { RawBuilding } from "@/types/api";
 
 export interface Building {
   id: string;
@@ -29,16 +30,17 @@ interface PaginatedResult<T> {
   meta: PaginationMeta;
 }
 
-export function transformBuilding(b: any): Building {
+export function transformBuilding(b: RawBuilding): Building {
+  const unitsCount = b._count?.units ?? b.unitCount ?? (Array.isArray(b.units) ? b.units.length : 0);
   return {
     id: b.id,
     name: b.name,
-    type: b.buildingType || b.type,
+    type: b.buildingType || b.type || "",
     floorCount: b.floorCount ?? 0,
-    units: b._count?.units ?? b.unitCount ?? (Array.isArray(b.units) ? b.units.length : 0),
-    projectId: b.projectId,
+    units: unitsCount,
+    projectId: b.projectId ?? "",
     projectName: b.project?.name || b.projectName,
-    address: b.address,
+    address: b.address ?? "",
     createdAt: b.createdAt,
     updatedAt: b.updatedAt,
   };
@@ -55,7 +57,7 @@ export function useBuildings(query: BuildingQuery) {
       if (query.order) params.set("order", query.order);
       if (query.search) params.set("search", query.search);
       if (query.projectId) params.set("projectId", query.projectId);
-      const { data } = await api.get<ApiResponse<any[]>>(`/buildings?${params}`);
+      const { data } = await api.get<ApiResponse<RawBuilding[]>>(`/buildings?${params}`);
       const transformed = (data.data ?? []).map(transformBuilding);
       return { data: transformed, meta: data.meta } as PaginatedResult<Building>;
     },
@@ -66,7 +68,7 @@ export function useBuilding(id: string) {
   return useQuery({
     queryKey: ["building", id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<any>>(`/buildings/${id}`);
+      const { data } = await api.get<ApiResponse<RawBuilding>>(`/buildings/${id}`);
       return transformBuilding(data.data);
     },
     enabled: !!id,
@@ -111,3 +113,4 @@ export function useDeleteBuilding() {
     },
   });
 }
+

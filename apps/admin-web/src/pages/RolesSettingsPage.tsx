@@ -1,15 +1,16 @@
 import { EmptyState } from "@/components/ui/empty-state";
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
+import { Separator } from "@elite-realty/shared-ui/components/ui";
 import { Loader2, Plus, Shield, ShieldCheck, ShieldAlert, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { getErrorMessage } from "@/lib/error";
 
 type Role = {
   id: string;
@@ -47,8 +48,8 @@ export function RolesSettingsPage() {
     try {
       const { data } = await api.get("/roles");
       setRoles(data.data ?? data);
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message || "Failed to load roles");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed to load roles"));
     } finally {
       setLoading(false);
     }
@@ -95,8 +96,8 @@ export function RolesSettingsPage() {
       }
       setIsCreating(false);
       fetchRoles();
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message || "Failed to save role");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed to save role"));
     } finally {
       setSaving(false);
     }
@@ -108,8 +109,8 @@ export function RolesSettingsPage() {
       await api.delete(`/roles/${id}`);
       toast.success("Role deleted successfully");
       fetchRoles();
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message || "Failed to delete role");
+    } catch (e) {
+      toast.error(getErrorMessage(e, "Failed to delete role"));
     }
   };
 
@@ -239,3 +240,6 @@ export function RolesSettingsPage() {
     </div>
   );
 }
+
+
+

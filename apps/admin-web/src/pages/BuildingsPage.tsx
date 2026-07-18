@@ -3,16 +3,16 @@ import { useListQuery } from "@/hooks/use-list-query";
 import { GridToolbar, GridState } from "@/components/GridToolbar";
 import { ListPager } from "@/components/ListPager";
 import { useNavigate } from "@tanstack/react-router";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   Plus,
   Eye,
@@ -203,3 +203,5 @@ export default function BuildingsPage() {
     </div>
   );
 }
+
+

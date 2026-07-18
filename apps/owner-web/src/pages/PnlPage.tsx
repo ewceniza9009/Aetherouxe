@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { Separator } from "@elite-realty/shared-ui/components/ui";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, PieChart, TrendingUp, Building2, AlertCircle, FileSearch } from "lucide-react";
 import {
@@ -163,3 +163,5 @@ export default function PnlPage() {
     </div>
   );
 }
+
+

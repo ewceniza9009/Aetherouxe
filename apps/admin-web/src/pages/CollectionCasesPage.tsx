@@ -7,16 +7,16 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+} from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   Table,
   TableBody,
@@ -32,10 +32,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+} from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
 import { CurrencyInput } from "@/components/ui/number-input";
-import { Label } from "@/components/ui/label";
+import { Label } from "@elite-realty/shared-ui/components/ui";
 import {
   ArrowLeft,
   FolderOpen,
@@ -517,3 +517,5 @@ export default function CollectionCasesPage() {
     </div>
   );
 }
+
+

@@ -2,11 +2,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Separator } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
 import {
   ArrowLeft,
   Edit,
@@ -23,7 +23,7 @@ import {
   ZoomIn,
 } from "lucide-react";
 import * as Tabs from "@radix-ui/react-tabs";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@elite-realty/shared-ui/components/ui";
 import { useProperty, usePropertySpecs } from "@/hooks/use-properties";
 import { useUnits } from "@/hooks/use-units";
 import { formatCurrency } from "@/lib/agent-meta";
@@ -699,3 +699,5 @@ function ShowcaseTab({ property }: { property: any }) {
     </div>
   );
 }
+
+

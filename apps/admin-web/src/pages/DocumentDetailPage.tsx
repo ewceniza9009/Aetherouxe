@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import type { VariantProps } from "class-variance-authority";
+import { Badge, badgeVariants } from "@elite-realty/shared-ui/components/ui";
+
+type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@elite-realty/shared-ui/components/ui";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +17,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   Table,
   TableBody,
@@ -64,7 +67,7 @@ const docTypeLabel: Record<string, string> = {
   other: "Other",
 };
 
-const signatureStatusMeta: Record<SignatureStatus, { label: string; variant: any }> = {
+const signatureStatusMeta: Record<SignatureStatus, { label: string; variant: BadgeVariant }> = {
   pending: { label: "Pending", variant: "secondary" },
   sent: { label: "Sent", variant: "warning" },
   signed: { label: "Signed", variant: "success" },
@@ -340,4 +343,6 @@ export default function DocumentDetailPage() {
     </div>
   );
 }
+
+
 

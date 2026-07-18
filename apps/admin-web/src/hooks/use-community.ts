@@ -281,14 +281,42 @@ export function useCreateBooking() {
   });
 }
 
-function mapPost(p: any): CommunityPost {
-  const moderationStatus: ModerationStatus = p.moderationStatus ?? "published";
+interface RawCommunityPost {
+  id: string;
+  authorId: string;
+  title: string;
+  body: string;
+  category?: string;
+  postType?: PostType | string;
+  audience?: PostAudience | string;
+  status?: string;
+  moderationStatus?: ModerationStatus | string;
+  moderationReason?: string | null;
+  isPinned?: boolean;
+  imageUrl?: string | null;
+  propertyId?: string | null;
+  propertyName?: string | null;
+  property?: { name?: string; propertyCode?: string } | null;
+  scheduledAt?: string | null;
+  published?: boolean;
+  publishedAt?: string | null;
+  isPublished?: boolean;
+  commentsCount?: number;
+  commentCount?: number;
+  openReportCount?: number;
+  _count?: { comments?: number; reports?: number };
+  createdAt: string;
+  updatedAt: string;
+}
+
+function mapPost(p: RawCommunityPost): CommunityPost {
+  const moderationStatus = (p.moderationStatus ?? "published") as ModerationStatus;
   return {
     id: p.id,
     title: p.title,
     body: p.body,
-    postType: p.postType,
-    audience: p.audience,
+    postType: (p.postType ?? "general") as PostType,
+    audience: (p.audience ?? "all") as PostAudience,
     propertyId: p.propertyId ?? null,
     propertyName: p.property?.name ?? p.property?.propertyCode ?? p.propertyName ?? null,
     scheduledAt: p.scheduledAt ?? null,
@@ -537,3 +565,4 @@ export function useResolveReport() {
     },
   });
 }
+

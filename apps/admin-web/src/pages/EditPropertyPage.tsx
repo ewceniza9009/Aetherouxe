@@ -1,19 +1,19 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
+import { Textarea } from "@elite-realty/shared-ui/components/ui";
+import { Switch } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@elite-realty/shared-ui/components/ui";
 import { ArrowLeft, Save } from "lucide-react";
 import { useProperty, useUpdateProperty, usePropertySpecs, useUpdatePropertySpecs } from "@/hooks/use-properties";
 import { PropertyType, PropertyStatus } from "@elite-realty/shared-types";
@@ -102,26 +102,26 @@ export default function EditPropertyPage() {
   const showHouseFields = form.type === "house_and_lot";
   const showParkingFields = form.type === "parking_slot";
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload: any = {
+      const payload: Partial<import('@/hooks/use-properties').Property> & { id: string } = {
         id,
         name: form.name,
         code: form.code,
         address: form.address,
-        type: form.type,
-        status: form.status,
+        type: form.type as import('@elite-realty/shared-types').PropertyType,
+        status: form.status as import('@elite-realty/shared-types').PropertyStatus,
         description: form.description || undefined,
         yearBuilt: form.yearBuilt ? parseInt(form.yearBuilt) : undefined,
         lotSize: form.lotSize || undefined,
         totalSquareFeet: form.totalSquareFeet || undefined,
         units: parseInt(form.units) || 0,
       };
-      Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
+      Object.keys(payload).forEach((k) => (payload as any)[k] === undefined && delete (payload as any)[k]);
       await updateProperty.mutateAsync(payload);
 
-      const specsPayload: any = { id, propertyId: id };
+      const specsPayload: Partial<import('@/hooks/use-properties').PropertySpecs> & { id: string; propertyId?: string } = { id, propertyId: id };
       if (showCondoFields) {
         specsPayload.ceilingHeight = specForm.ceilingHeight || undefined;
         specsPayload.finishType = specForm.finishType || undefined;
@@ -144,7 +144,7 @@ export default function EditPropertyPage() {
         specsPayload.covered = specForm.covered;
         specsPayload.nearbyElevator = specForm.nearbyElevator;
       }
-      Object.keys(specsPayload).forEach((k) => specsPayload[k] === undefined && delete specsPayload[k]);
+      Object.keys(specsPayload).forEach((k) => (specsPayload as any)[k] === undefined && delete (specsPayload as any)[k]);
 
       if (Object.keys(specsPayload).length > 2) {
         await updateSpecs.mutateAsync(specsPayload);
@@ -395,3 +395,5 @@ export default function EditPropertyPage() {
     </div>
   );
 }
+
+

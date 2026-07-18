@@ -3,9 +3,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { useListQuery } from "@/hooks/use-list-query";
 import { GridToolbar, GridState } from "@/components/GridToolbar";
 import { ListPager } from "@/components/ListPager";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus, Phone, Mail } from "lucide-react";
 import { useUsers } from "@/hooks/use-users";
@@ -173,3 +173,5 @@ export default function TenantsPage() {
     </div>
   );
 }
+
+

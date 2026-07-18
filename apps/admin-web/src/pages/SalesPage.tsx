@@ -3,19 +3,19 @@ import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useListQuery } from "@/hooks/use-list-query";
 import { GridToolbar, GridState } from "@/components/GridToolbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
+import { Separator } from "@elite-realty/shared-ui/components/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   ArrowLeft,
   ArrowRight,
@@ -34,6 +34,7 @@ import { useAgents } from "@/hooks/use-agents";
 import { useSchemes } from "@/hooks/use-schemes";
 import { formatCurrency } from "@/lib/agent-meta";
 import api from "@/lib/api";
+import { getErrorMessage } from "@/lib/error";
 
 const TYPE_BADGE: Record<string, { label: string; cls: string }> = {
   standard_rental: { label: "Rental", cls: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" },
@@ -59,17 +60,17 @@ export default function SalesPage() {
   const { data: unitsData, isLoading: unitsLoading } = useUnits({ limit: 500 });
   const { data: residentsData } = useUsers({ limit: 500 });
   const { data: agentsData, isLoading: agentsLoading } = useAgents({ limit: 500 });
-  const { data: schemeTemplatesResult, isLoading: schemesLoading } = useSchemes();
+const { data: schemeTemplatesResult, isLoading: schemesLoading } = useSchemes();
   const schemeTemplates = schemeTemplatesResult?.data;
 
   const units = unitsData?.data ?? [];
   const residents = residentsData?.data ?? [];
   const agents = agentsData?.data ?? [];
-  const templates = useMemo(() => (schemeTemplates ?? []).filter((t: any) => t.isActive), [schemeTemplates]);
+  const templates = useMemo(() => (schemeTemplates ?? []).filter((t: { isActive?: boolean }) => t.isActive), [schemeTemplates]);
 
   const [step, setStep] = useState(0);
-  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
-  const [selectedUnit, setSelectedUnit] = useState<any>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<import('@/hooks/use-schemes').Scheme | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<import('@/hooks/use-units').Unit | null>(null);
   const [buyerId, setBuyerId] = useState("");
   const [agentId, setAgentId] = useState("");
   const [price, setPrice] = useState("");
@@ -133,8 +134,8 @@ export default function SalesPage() {
       setResult(data.data ?? data);
       toast.success("Scheme applied successfully");
       setStep(3);
-    } catch (e: any) {
-      setError(e?.response?.data?.message || e.message || "Something went wrong");
+    } catch (e) {
+      setError(getErrorMessage(e, "Something went wrong"));
     } finally {
       setSubmitting(false);
     }
@@ -276,8 +277,8 @@ export default function SalesPage() {
                 <h2 className="text-2xl font-bold">Choose a Unit</h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   Applying <span className="font-semibold text-primary">{selectedTemplate?.code}</span>
-                  <Badge variant="outline" className={`text-[10px] ml-2 ${TYPE_BADGE[selectedTemplate?.schemeType]?.cls ?? ""}`}>
-                    {TYPE_BADGE[selectedTemplate?.schemeType]?.label}
+                  <Badge variant="outline" className={`text-[10px] ml-2 ${TYPE_BADGE[selectedTemplate?.schemeType ?? ""]?.cls ?? ""}`}>
+                    {TYPE_BADGE[selectedTemplate?.schemeType ?? ""]?.label}
                   </Badge>
                 </p>
               </div>
@@ -381,8 +382,8 @@ export default function SalesPage() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
                     <span className="text-xl font-bold">{selectedTemplate?.code}</span>
-                    <Badge variant="outline" className={`text-[10px] ${TYPE_BADGE[selectedTemplate?.schemeType]?.cls ?? ""}`}>
-                      {TYPE_BADGE[selectedTemplate?.schemeType]?.label}
+                    <Badge variant="outline" className={`text-[10px] ${TYPE_BADGE[selectedTemplate?.schemeType ?? ""]?.cls ?? ""}`}>
+                      {TYPE_BADGE[selectedTemplate?.schemeType ?? ""]?.label}
                     </Badge>
                   </div>
                   {selectedTemplate?.name && <p className="text-sm text-muted-foreground">{selectedTemplate.name}</p>}
@@ -644,3 +645,6 @@ export default function SalesPage() {
     </div>
   );
 }
+
+
+

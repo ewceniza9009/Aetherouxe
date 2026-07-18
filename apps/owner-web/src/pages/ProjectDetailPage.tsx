@@ -1,9 +1,9 @@
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { Separator } from "@elite-realty/shared-ui/components/ui";
 import {
   ArrowLeft,
   MapPin,
@@ -236,3 +236,5 @@ export default function OwnerProjectDetailPage() {
     </div>
   );
 }
+
+

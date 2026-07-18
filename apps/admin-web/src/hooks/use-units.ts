@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+import type { RawUnit } from "@/types/api";
 
 export interface Unit {
   id: string;
@@ -53,8 +54,8 @@ export function useUnits(query: UnitQuery) {
       if (query.search) params.set("search", query.search);
       if (query.sort) params.set("sort", query.sort);
       if (query.order) params.set("order", query.order);
-      const { data } = await api.get<ApiResponse<any[]>>(`/units?${params}`);
-      const transformed = (data.data ?? []).map((u: any) => ({
+      const { data } = await api.get<ApiResponse<RawUnit[]>>(`/units?${params}`);
+      const transformed = (data.data ?? []).map((u: RawUnit) => ({
         id: u.id,
         propertyId: u.propertyId,
         buildingId: u.buildingId,
@@ -149,3 +150,4 @@ export function useDeleteUnit() {
     },
   });
 }
+

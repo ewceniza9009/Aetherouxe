@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@elite-realty/shared-ui/components/ui";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { PaginationMeta } from "@elite-realty/shared-types";
 
@@ -56,3 +56,5 @@ export function ListPager({ meta, page, onPageChange, itemLabel = "items" }: Lis
     </div>
   );
 }
+
+

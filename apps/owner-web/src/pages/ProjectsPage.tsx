@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
 import { useProjects } from "@/hooks/use-projects";
 import {
   Hammer,
@@ -176,3 +176,5 @@ export default function OwnerProjectsPage() {
     </div>
   );
 }
+
+

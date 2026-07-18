@@ -1,9 +1,9 @@
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { Separator } from "@elite-realty/shared-ui/components/ui";
 import { ArrowLeft, DollarSign, AlertTriangle, TrendingDown, CheckCircle2 } from "lucide-react";
 import { useBudgetHealth } from "@/hooks/use-budgets";
 
@@ -155,3 +155,5 @@ export default function OwnerBudgetHealthPage() {
     </div>
   );
 }
+
+

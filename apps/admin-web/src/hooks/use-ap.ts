@@ -2,6 +2,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import type { PaginationMeta } from '@elite-realty/shared-types';
 
+export interface ApInvoice {
+  id: string;
+  sourceType: string;
+  notes: string;
+  amount: number;
+  status: 'paid' | 'pending';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export function useApInvoices(query?: { page?: number; limit?: number; sort?: string; order?: "asc" | "desc" }) {
   return useQuery({
     queryKey: ['ap-invoices', query],
@@ -13,7 +23,7 @@ export function useApInvoices(query?: { page?: number; limit?: number; sort?: st
       if (query?.order) params.set("order", String(query.order));
       const qs = params.toString();
       const { data } = await api.get(`/ap-invoices${qs ? `?${qs}` : ""}`);
-      return { data: data.data ?? [], meta: data.meta } as { data: any[]; meta: PaginationMeta };
+      return { data: (data.data ?? []) as ApInvoice[], meta: data.meta } as { data: ApInvoice[]; meta: PaginationMeta };
     },
   });
 }
@@ -32,3 +42,4 @@ export function useDisburse() {
     },
   });
 }
+

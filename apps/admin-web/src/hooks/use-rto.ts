@@ -58,6 +58,23 @@ export interface RtoLeaseAgreement {
   tenant?: RtoLeaseTenant | null;
 }
 
+interface RawRtoApi {
+  id: string;
+  leaseAgreementId?: string;
+  leaseId?: string;
+  totalContractValue: string | number;
+  optionFeeAmount?: string | number;
+  monthlyRentPortion?: string | number;
+  monthlyEquityPortion?: string | number;
+  accumulatedEquity: string | number;
+  purchaseOptionPrice?: string | number | null;
+  targetPurchaseDate?: string | null;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  [key: string]: unknown;
+}
+
 export interface RtoContract {
   id: string;
   leaseAgreementId: string;
@@ -123,17 +140,18 @@ export function useRtoContracts(query: RtoQuery) {
       if (query.search) params.set("search", query.search);
       if (query.sort) params.set("sort", query.sort);
       if (query.order) params.set("order", query.order);
-      const { data } = await api.get<ApiResponse<any[]>>(`/rto-contracts?${params}`);
+      const { data } = await api.get<ApiResponse<RawRtoApi[]>>(`/rto-contracts?${params}`);
       const raw = data.data;
-      const transformed = raw.map((c: any) => ({
+      const transformed = raw.map((c) => ({
         ...c,
+        leaseAgreementId: c.leaseAgreementId ?? c.leaseId,
         totalContractValue: Number(c.totalContractValue),
-        optionFeeAmount: Number(c.optionFeeAmount),
-        monthlyRentPortion: Number(c.monthlyRentPortion),
-        monthlyEquityPortion: Number(c.monthlyEquityPortion),
+        optionFeeAmount: Number(c.optionFeeAmount ?? 0),
+        monthlyRentPortion: Number(c.monthlyRentPortion ?? 0),
+        monthlyEquityPortion: Number(c.monthlyEquityPortion ?? 0),
         accumulatedEquity: Number(c.accumulatedEquity),
         purchaseOptionPrice: c.purchaseOptionPrice ? Number(c.purchaseOptionPrice) : null,
-      }));
+      })) as RtoContract[];
       return { data: transformed, meta: data.meta } as PaginatedResult<RtoContract>;
     },
   });
@@ -197,3 +215,4 @@ export function useExerciseOption() {
     },
   });
 }
+

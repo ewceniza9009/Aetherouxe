@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import type { ApiResponse, PaginationMeta, PropertyType, PropertyStatus } from "@elite-realty/shared-types";
+import type { RawProperty, RawPropertyImage } from "@/types/api";
 
 export interface PropertyImage {
   id: string;
@@ -71,29 +72,40 @@ interface PaginatedResult<T> {
   meta: PaginationMeta;
 }
 
-export function transformProperty(p: any): Property {
+export function transformProperty(p: RawProperty): Property {
   const units = Array.isArray(p.units) ? p.units : [];
-  const building = units[0]?.building || p.building || p.buildings?.[0];
+  type BuildingLike = { name?: string; address?: string; id?: string };
+  const buildingRef = (units[0] as { building?: BuildingLike } | undefined)?.building
+    ?? (p.building as BuildingLike | null | undefined)
+    ?? (Array.isArray(p.buildings) ? p.buildings[0] : undefined);
+  const firstUnit = units[0] as { buildingId?: string; floorId?: string | null } | undefined;
+  const images: PropertyImage[] = (p.images ?? []).map((img: RawPropertyImage) => ({
+    id: img.id,
+    url: img.url,
+    alt: img.alt ?? undefined,
+    isPrimary: img.isPrimary ?? false,
+    sortOrder: img.sortOrder ?? 0,
+  }));
   return {
     id: p.id,
-    code: p.propertyCode || p.code,
-    name: building?.name || p.name || p.propertyCode || "Unnamed Property",
-    address: building?.address || p.address || "",
-    type: p.propertyType || p.type,
-    status: p.status,
+    code: p.propertyCode ?? p.code ?? "",
+    name: buildingRef?.name ?? p.name ?? p.propertyCode ?? "Unnamed Property",
+    address: buildingRef?.address ?? p.address ?? "",
+    type: (p.propertyType ?? p.type ?? "apartment") as PropertyType,
+    status: (p.status ?? "available") as PropertyStatus,
     projectId: p.projectId ?? p.project?.id,
     projectName: p.project?.name,
-    buildingId: p.buildingId || units[0]?.buildingId || building?.id,
-    floorId: p.floorId || units[0]?.floorId,
-    unitId: p.unitId,
-    description: p.description,
+    buildingId: p.buildingId ?? firstUnit?.buildingId ?? buildingRef?.id,
+    floorId: p.floorId ?? firstUnit?.floorId ?? undefined,
+    unitId: p.unitId ?? undefined,
+    description: p.description ?? undefined,
     units: p._count?.units ?? units.length,
-    yearBuilt: p.yearBuilt,
-    lotSize: p.lotSize,
-    totalSquareFeet: p.totalSquareFeet,
-    monthlyRevenue: p.monthlyRevenue,
-    occupancyRate: p.occupancyRate,
-    images: p.images || [],
+    yearBuilt: p.yearBuilt ?? undefined,
+    lotSize: p.lotSize ?? undefined,
+    totalSquareFeet: p.totalSquareFeet ?? undefined,
+    monthlyRevenue: p.monthlyRevenue ?? undefined,
+    occupancyRate: p.occupancyRate ?? undefined,
+    images,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
   };
@@ -112,7 +124,7 @@ export function useProperties(query: PropertyQuery) {
       if (query.type) params.set("type", query.type);
       if (query.status) params.set("status", query.status);
       if (query.projectId) params.set("projectId", query.projectId);
-      const { data } = await api.get<ApiResponse<any[]>>(`/properties?${params}`);
+      const { data } = await api.get<ApiResponse<RawProperty[]>>(`/properties?${params}`);
       const raw = data.data;
       const transformed = raw.map(transformProperty);
       return { data: transformed, meta: data.meta } as PaginatedResult<Property>;
@@ -124,7 +136,7 @@ export function useProperty(id: string) {
   return useQuery({
     queryKey: ["property", id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<any>>(`/properties/${id}`);
+      const { data } = await api.get<ApiResponse<RawProperty>>(`/properties/${id}`);
       return transformProperty(data.data);
     },
     enabled: !!id,
@@ -193,3 +205,4 @@ export function useUpdatePropertySpecs() {
     },
   });
 }
+

@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
 import { Building2, DollarSign, TrendingUp, PieChart, ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 const portfolioStats = [
@@ -92,3 +92,5 @@ export default function OwnerDashboardPage() {
     </div>
   );
 }
+
+

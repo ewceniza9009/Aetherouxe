@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useAuth } from "@/hooks/use-auth";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
+import { useAuth } from "@elite-realty/shared-ui/hooks";
 import api from "@/lib/api";
+import { getErrorMessage } from "@/lib/error";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
 
@@ -36,8 +37,8 @@ export default function ProfilePage() {
       await api.patch("/auth/me", { firstName, lastName, phone, email });
       await refetchUser();
       setMsg({ type: "success", text: "Profile saved successfully" });
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.response?.data?.message ?? "Failed to save profile" });
+    } catch (err) {
+      setMsg({ type: "error", text: getErrorMessage(err, "Failed to save profile") });
     } finally {
       setSaving(false);
     }
@@ -53,8 +54,8 @@ export default function ProfilePage() {
       setCurrentPassword("");
       setNewPassword("");
       setMsg({ type: "success", text: "Password changed successfully" });
-    } catch (err: any) {
-      setMsg({ type: "error", text: err.response?.data?.message ?? "Failed to change password" });
+    } catch (err) {
+      setMsg({ type: "error", text: getErrorMessage(err, "Failed to change password") });
     } finally {
       setSaving(false);
     }
@@ -149,3 +150,6 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+
+

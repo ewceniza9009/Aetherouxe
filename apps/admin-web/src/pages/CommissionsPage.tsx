@@ -2,24 +2,24 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useListQuery } from "@/hooks/use-list-query";
 import { GridState } from "@/components/GridToolbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   Table,
   TableBody,
@@ -199,7 +199,7 @@ export default function CommissionsPage() {
                         formatCurrency(Number(rule.value ?? 0))
                       ) : rule.type === "tiered" ? (
                         Array.isArray(rule.value)
-                          ? rule.value.map((t: any) => `${t.rate}%`).join(" / ")
+                          ? rule.value.map((t: { rate?: number }) => `${t.rate}%`).join(" / ")
                           : "—"
                       ) : (
                         `${Number(rule.value ?? 0)}%`
@@ -371,3 +371,5 @@ export default function CommissionsPage() {
     </div>
   );
 }
+
+

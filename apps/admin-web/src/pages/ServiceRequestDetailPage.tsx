@@ -1,22 +1,25 @@
 import { EmptyState } from "@/components/ui/empty-state";
 import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
+import { Button } from "@elite-realty/shared-ui/components/ui";
+import { Badge, badgeVariants } from "@elite-realty/shared-ui/components/ui";
+import type { VariantProps } from "class-variance-authority";
+
+type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
+import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { Input } from "@elite-realty/shared-ui/components/ui";
+import { Label } from "@elite-realty/shared-ui/components/ui";
+import { Textarea } from "@elite-realty/shared-ui/components/ui";
+import { Separator } from "@elite-realty/shared-ui/components/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+} from "@elite-realty/shared-ui/components/ui";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@elite-realty/shared-ui/components/ui";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +27,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
+} from "@elite-realty/shared-ui/components/ui";
 import {
   ArrowLeft,
   AlertCircle,
@@ -66,7 +69,7 @@ const priorityMeta: Record<ServicePriority, { label: string; className: string }
   emergency: { label: "Emergency", className: "bg-red-100 text-red-700 border-red-200" },
 };
 
-const statusMeta: Record<string, { label: string; variant: any }> = {
+const statusMeta: Record<string, { label: string; variant: BadgeVariant }> = {
   open: { label: "Open", variant: "default" },
   assigned: { label: "Assigned", variant: "secondary" },
   in_progress: { label: "In Progress", variant: "warning" },
@@ -84,7 +87,7 @@ const categoryMeta: Record<ServiceCategory, string> = {
   other: "Other",
 };
 
-const woStatusMeta: Record<WorkOrderStatus, { label: string; variant: any }> = {
+const woStatusMeta: Record<WorkOrderStatus, { label: string; variant: BadgeVariant }> = {
   scheduled: { label: "Scheduled", variant: "secondary" },
   in_progress: { label: "In Progress", variant: "warning" },
   completed: { label: "Completed", variant: "success" },
@@ -673,3 +676,5 @@ export default function ServiceRequestDetailPage() {
     </div>
   );
 }
+
+
