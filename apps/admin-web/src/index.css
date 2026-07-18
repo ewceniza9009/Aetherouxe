@@ -270,14 +270,14 @@ input[type="date"]:in-range::-webkit-datetime-edit-day-field {
 }
 
 /* The grid fills and scrolls. */
-.app-content:has(.scroll-grid) .scroll-grid {
+.app-content:has(.scroll-grid) .scroll-grid, .mini-grid {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
 }
 
 /* The one true grid container. */
-.scroll-grid {
+.scroll-grid, .mini-grid {
   min-height: 0;
   overflow: auto;
   border: 1px solid hsl(var(--border) / 0.6);
@@ -286,14 +286,16 @@ input[type="date"]:in-range::-webkit-datetime-edit-day-field {
 }
 /* The shadcn <Table> wraps itself in an inner overflow-auto div; neutralize
     it so the outer .scroll-grid owns the scroll and the header can stick. */
-.scroll-grid > div[class*="overflow-auto"] {
+.scroll-grid > div,
+.mini-grid > div[class*="overflow-auto"] {
   overflow: visible !important;
   height: 100%;
 }
 
 /* Tables inside a grid share ONE identical look, whether built with the
     shadcn <Table> or a raw <table>. */
-.scroll-grid table {
+.scroll-grid table,
+.mini-grid table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -302,7 +304,9 @@ input[type="date"]:in-range::-webkit-datetime-edit-day-field {
 
 /* Sticky, branded header — identical on every grid. */
 .scroll-grid thead th,
-.scroll-grid thead > tr > th {
+.scroll-grid thead > tr > th,
+.mini-grid thead th,
+.mini-grid thead > tr > th {
   position: sticky;
   top: 0;
   z-index: 10;
@@ -320,37 +324,48 @@ input[type="date"]:in-range::-webkit-datetime-edit-day-field {
   white-space: nowrap;
 }
 .scroll-grid thead th:first-child,
-.scroll-grid thead > tr > th:first-child {
+.scroll-grid thead > tr > th:first-child,
+.mini-grid thead th:first-child,
+.mini-grid thead > tr > th:first-child {
   border-top-left-radius: 0.75rem;
 }
 .scroll-grid thead th:last-child,
-.scroll-grid thead > tr > th:last-child {
+.scroll-grid thead > tr > th:last-child,
+.mini-grid thead th:last-child,
+.mini-grid thead > tr > th:last-child {
   border-top-right-radius: 0.75rem;
 }
 
 /* Right-aligned numeric header/cells (opt-in via .text-right on the th). */
 .scroll-grid thead th.text-right,
-.scroll-grid thead > tr > th.text-right {
+.scroll-grid thead > tr > th.text-right,
+.mini-grid thead th.text-right,
+.mini-grid thead > tr > th.text-right {
   text-align: right;
 }
-.scroll-grid tbody td.text-right {
+.scroll-grid tbody td.text-right,
+.mini-grid tbody td.text-right {
   text-align: right;
 }
 
 /* Uniform body rows. */
-.scroll-grid tbody td {
+.scroll-grid tbody td,
+.mini-grid tbody td {
   padding: 0.75rem 1rem;
   vertical-align: middle;
   border-bottom: 1px solid hsl(var(--border) / 0.4);
   color: hsl(var(--foreground));
 }
-.scroll-grid tbody tr {
+.scroll-grid tbody tr,
+.mini-grid tbody tr {
   transition: background-color 0.15s ease;
 }
-.scroll-grid tbody tr:hover {
+.scroll-grid tbody tr:hover,
+.mini-grid tbody tr:hover {
   background: hsl(var(--muted) / 0.3);
 }
-.scroll-grid tbody tr:last-child td {
+.scroll-grid tbody tr:last-child td,
+.mini-grid tbody tr:last-child td {
   border-bottom: none;
 }
 

@@ -37,6 +37,13 @@ export interface OwnerPnlStatement {
   status: PnlStatus;
   lineItems?: PnlLineItem[];
   createdAt: string;
+  owner?: {
+    firstName?: string | null;
+    lastName?: string | null;
+  };
+  property?: {
+    propertyCode: string;
+  };
 }
 
 export interface PnlQuery {

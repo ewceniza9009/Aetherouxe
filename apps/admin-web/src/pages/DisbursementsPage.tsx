@@ -16,6 +16,7 @@ import { formatCurrency } from '@/lib/utils';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { ListPager } from '@/components/ListPager';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function DisbursementsPage() {
   const listQuery = useListQuery(20);
@@ -59,78 +60,80 @@ export default function DisbursementsPage() {
         placeholder="Search invoices..."
       />
 
-      <div className="rounded-md border border-white/10 bg-black/40 backdrop-blur-xl">
-        <GridState
-          isLoading={isLoading}
-          isError={isError}
-          isEmpty={invoices.length === 0}
-          onRetry={() => {}}
-        >
-          <Table>
-            <TableHeader>
-              <TableRow className="border-white/10 hover:bg-transparent">
-                <TableHead {...sortHeader("sourceType", "text-white/60")}>
-                  Source{sortIndicator("sourceType")}
-                </TableHead>
-                <TableHead className="text-white/60">Notes</TableHead>
-                <TableHead {...sortHeader("amount", "text-white/60")}>
-                  Amount{sortIndicator("amount")}
-                </TableHead>
-                <TableHead {...sortHeader("status", "text-white/60")}>
-                  Status{sortIndicator("status")}
-                </TableHead>
-                <TableHead className="text-right text-white/60">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoices.map((invoice: any) => (
-                <TableRow key={invoice.id} className="border-white/10 hover:bg-white/5 transition-colors">
-                  <TableCell className="font-medium text-white">
-                    <Badge variant="outline" className="border-white/20 text-white/80">
-                      {invoice.sourceType.replace('_', ' ')}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-white/70">{invoice.notes}</TableCell>
-                  <TableCell className="font-semibold text-white">
-                    {formatCurrency(invoice.amount)}
-                  </TableCell>
-                  <TableCell>
-                    {invoice.status === 'paid' ? (
-                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/50">
-                        <CheckCircle2 className="w-3 h-3 mr-1" />
-                        Paid
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/50">
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        Pending
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant={invoice.status === 'paid' ? 'outline' : 'default'}
-                      size="sm"
-                      disabled={invoice.status === 'paid' || processingId === invoice.id}
-                      onClick={() => handleDisburse(invoice.id, invoice.amount)}
-                      className={invoice.status !== 'paid' ? 'bg-gold hover:bg-gold/90 text-black font-semibold' : 'border-white/20 text-white/50'}
-                    >
-                      {processingId === invoice.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : invoice.status === 'paid' ? (
-                        'Disbursed'
-                      ) : (
-                        'Disburse Funds'
-                      )}
-                    </Button>
-                  </TableCell>
+      <Card>
+        <CardContent className="p-0">
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={invoices.length === 0}
+            onRetry={() => {}}
+          >
+            <Table>
+              <TableHeader>
+                <TableRow className="border-white/10 hover:bg-transparent">
+                  <TableHead {...sortHeader("sourceType", "text-white/60")}>
+                    Source{sortIndicator("sourceType")}
+                  </TableHead>
+                  <TableHead className="text-white/60">Notes</TableHead>
+                  <TableHead {...sortHeader("amount", "text-white/60")}>
+                    Amount{sortIndicator("amount")}
+                  </TableHead>
+                  <TableHead {...sortHeader("status", "text-white/60")}>
+                    Status{sortIndicator("status")}
+                  </TableHead>
+                  <TableHead className="text-right text-white/60">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <ListPager meta={meta} page={page} onPageChange={setPage} itemLabel="invoices" />
-        </GridState>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {invoices.map((invoice: any) => (
+                  <TableRow key={invoice.id} className="border-white/10 hover:bg-white/5 transition-colors">
+                    <TableCell className="font-medium text-white">
+                      <Badge variant="outline" className="border-white/20 text-white/80">
+                        {invoice.sourceType.replace('_', ' ')}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-white/70">{invoice.notes}</TableCell>
+                    <TableCell className="font-semibold text-white">
+                      {formatCurrency(invoice.amount)}
+                    </TableCell>
+                    <TableCell>
+                      {invoice.status === 'paid' ? (
+                        <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/50">
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          Paid
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/50">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          Pending
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant={invoice.status === 'paid' ? 'outline' : 'default'}
+                        size="sm"
+                        disabled={invoice.status === 'paid' || processingId === invoice.id}
+                        onClick={() => handleDisburse(invoice.id, invoice.amount)}
+                        className={invoice.status !== 'paid' ? 'bg-gold hover:bg-gold/90 text-black font-semibold' : 'border-white/20 text-white/50'}
+                      >
+                        {processingId === invoice.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : invoice.status === 'paid' ? (
+                          'Disbursed'
+                        ) : (
+                          'Disburse Funds'
+                        )}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <ListPager meta={meta} page={page} onPageChange={setPage} itemLabel="invoices" />
+          </GridState>
+        </CardContent>
+      </Card>
     </div>
   );
 }

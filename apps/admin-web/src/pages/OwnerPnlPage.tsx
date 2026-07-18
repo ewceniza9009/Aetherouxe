@@ -153,10 +153,10 @@ export default function OwnerPnlPage() {
                       onClick={() => navigate({ to: `/owner-pnl/${s.id}` })}
                     >
                       <td className="px-4 py-3 font-medium">
-                        {s.ownerName || s.ownerId.slice(0, 8).toUpperCase()}
+                        {s.ownerName || (s.owner?.firstName ? `${s.owner.firstName} ${s.owner.lastName || ''}`.trim() : null) || s.ownerId.slice(0, 8).toUpperCase()}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {s.propertyName || s.propertyId?.slice(0, 8).toUpperCase() || "—"}
+                        {s.propertyName || s.property?.propertyCode || s.propertyId?.slice(0, 8).toUpperCase() || "-"}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         {new Date(s.periodStart).toLocaleDateString()} –{" "}

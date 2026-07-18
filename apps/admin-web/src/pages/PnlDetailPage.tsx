@@ -121,12 +121,12 @@ export default function PnlDetailPage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="font-serif text-2xl font-bold tracking-tight">
-                {statement.ownerName || statement.ownerId.slice(0, 8).toUpperCase()}
+                {statement.ownerName || (statement.owner?.firstName ? `${statement.owner.firstName} ${statement.owner.lastName || ''}`.trim() : null) || statement.ownerId.slice(0, 8).toUpperCase()}
               </h1>
               <Badge variant="secondary">{statement.status}</Badge>
             </div>
             <p className="text-muted-foreground mt-1">
-              {statement.propertyName || statement.propertyId?.slice(0, 8).toUpperCase() || "All properties"}{" "}
+              {statement.propertyName || statement.property?.propertyCode || statement.propertyId?.slice(0, 8).toUpperCase() || "All properties"}{" "}
               · {new Date(statement.periodStart).toLocaleDateString()} –{" "}
               {new Date(statement.periodEnd).toLocaleDateString()}
             </p>

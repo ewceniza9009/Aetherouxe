@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
@@ -42,7 +43,8 @@ import {
   Package,
   Image as ImageIcon,
   Loader2,
-  ZoomIn
+  ZoomIn,
+  Upload
 } from "lucide-react";
 import {
   useProject,
@@ -305,11 +307,12 @@ export default function ProjectDetailPage() {
           </div>
           
           {!images?.length ? (
-            <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
-              <CardContent className="py-12 text-center">
-                <ImageIcon className="mx-auto h-8 w-8 text-muted-foreground/50 mb-3" />
-                <p className="font-medium">No images uploaded</p>
-                <p className="text-sm text-muted-foreground">Upload some photos to create a gallery.</p>
+            <Card>
+              <CardContent className="p-0">
+                <EmptyState 
+                  title="No images uploaded" 
+                  description="Upload some photos to create a gallery." 
+                />
               </CardContent>
             </Card>
           ) : (
@@ -356,7 +359,11 @@ export default function ProjectDetailPage() {
         {/* ── Budgets ── */}
         <Tabs.Content value="budgets" className="space-y-4">
           {budgetList.length === 0 ? (
-            <EmptyState icon={<DollarSign className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />} text="No budgets created yet" />
+            <Card>
+              <CardContent className="p-0">
+                <EmptyState title="No budgets created yet" />
+              </CardContent>
+            </Card>
           ) : (
             budgetList.map((budget) => {
               const pct = budget.totalPlanned > 0 ? (budget.totalActual / budget.totalPlanned) * 100 : 0;
@@ -444,12 +451,6 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
-function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]"><CardContent className="py-12 text-center">{icon}<p className="font-medium">{text}</p></CardContent></Card>
-  );
-}
-
 /* ─────────────── Phases tab (full CRUD + reorder) ─────────────── */
 
 interface PhaseForm {
@@ -521,7 +522,11 @@ function PhasesTab({ projectId, phases }: { projectId: string; phases: Phase[] }
       </div>
 
       {sorted.length === 0 ? (
-        <EmptyState icon={<Layers className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />} text="No phases defined yet" />
+        <Card>
+          <CardContent className="p-0">
+            <EmptyState title="No phases defined yet" />
+          </CardContent>
+        </Card>
       ) : (
         sorted.map((phase, i) => (
           <Card key={phase.id}>
@@ -774,7 +779,11 @@ function InventoryTab({ projectId }: { projectId: string }) {
       </div>
 
       {isEmpty ? (
-        <EmptyState icon={<Building2 className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />} text="No buildings or units in this project yet" />
+        <Card>
+          <CardContent className="p-0">
+            <EmptyState title="No buildings or units in this project yet" />
+          </CardContent>
+        </Card>
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-4">
@@ -807,7 +816,7 @@ function InventoryTab({ projectId }: { projectId: string }) {
             {b.units.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">No units.</p>
             ) : (
-              <div className="rounded-md border scroll-grid max-h-[360px] overflow-y-auto">
+              <div className="rounded-md border mini-grid max-h-[360px] overflow-y-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr>
