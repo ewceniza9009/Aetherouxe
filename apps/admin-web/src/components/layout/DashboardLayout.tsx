@@ -53,8 +53,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             )}
           </div>
         </header>
-        <main className="flex-1 overflow-auto bg-background">
-          <div className="app-content animate-in fade-in-0 slide-in-from-bottom-2 duration-500 flex min-h-full flex-col p-6">
+        <main className="flex-1 bg-background flex flex-col min-h-0">
+          <div className="app-content animate-in fade-in-0 slide-in-from-bottom-2 duration-500 flex min-h-full flex-col p-6 flex-1 min-h-0 overflow-auto">
             {children}
           </div>
         </main>

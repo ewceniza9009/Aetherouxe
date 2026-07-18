@@ -5,6 +5,8 @@
 @layer base {
   :root,
   .dark {
+    color-scheme: dark;
+    
     /* Midnight Sovereign — deep sovereign base */
     --background: 222 64% 9%;          /* #0A1428 sovereign blue */
     --foreground: 210 20% 92%;          /* soft off-white */
@@ -225,14 +227,16 @@ input[type="date"]:in-range::-webkit-datetime-edit-day-field {
 }
 
 /* Grid pages ONLY: activate the full flex chain. */
-.app-content:has(.scroll-grid) {
+.app-content:has(.scroll-grid),
+.app-content:has(.empty-state-container) {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
 /* Page root fills the viewport height. */
-.app-content:has(.scroll-grid) > * {
+.app-content:has(.scroll-grid) > *,
+.app-content:has(.empty-state-container) > * {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -240,7 +244,8 @@ input[type="date"]:in-range::-webkit-datetime-edit-day-field {
 }
 
 /* Walk every wrapper that eventually contains a grid. */
-.app-content:has(.scroll-grid) *:has(.scroll-grid) {
+.app-content:has(.scroll-grid) *:has(.scroll-grid),
+.app-content:has(.empty-state-container) *:has(.empty-state-container) {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -252,7 +257,9 @@ input[type="date"]:in-range::-webkit-datetime-edit-day-field {
     stacks the left list and right panel vertically. Keep it a grid and let its
     columns own their own height. */
 .app-content:has(.scroll-grid) .unit-detail-grid,
-.app-content:has(.scroll-grid) .unit-detail-grid:has(.scroll-grid) {
+.app-content:has(.scroll-grid) .unit-detail-grid:has(.scroll-grid),
+.app-content:has(.empty-state-container) .unit-detail-grid,
+.app-content:has(.empty-state-container) .unit-detail-grid:has(.empty-state-container) {
   display: grid;
   flex: 0 0 auto;
   min-height: 0;
