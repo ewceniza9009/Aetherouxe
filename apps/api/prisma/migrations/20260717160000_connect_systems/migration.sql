@@ -12,36 +12,36 @@ ALTER TABLE units ADD COLUMN IF NOT EXISTS "status" "UnitStatus" DEFAULT 'availa
 UPDATE units SET "status" = 'available' WHERE "status" IS NULL;
 
 -- 3. Add FK columns to service_requests (Prisma manages these as nullable FKs)
-ALTER TABLE service_requests ADD COLUMN IF NOT EXISTS "tenantId" UUID;
-ALTER TABLE service_requests ADD COLUMN IF NOT EXISTS "unitId" UUID;
-ALTER TABLE service_requests ADD COLUMN IF NOT EXISTS "propertyId" UUID;
+ALTER TABLE service_requests ADD COLUMN IF NOT EXISTS "tenantId" TEXT;
+ALTER TABLE service_requests ADD COLUMN IF NOT EXISTS "unitId" TEXT;
+ALTER TABLE service_requests ADD COLUMN IF NOT EXISTS "propertyId" TEXT;
 
 -- 4. Add FK columns to community_posts
-ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS "propertyId" UUID;
-ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS "authorId" UUID;
+ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS "propertyId" TEXT;
+ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS "authorId" TEXT;
 
 -- 5. Add FK columns to notifications
-ALTER TABLE notifications ADD COLUMN IF NOT EXISTS "userId" UUID;
-ALTER TABLE notifications ADD COLUMN IF NOT EXISTS "tenantId" UUID;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS "userId" TEXT;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS "tenantId" TEXT;
 
 -- 6. Add collectionCaseId to ar_collection_actions
-ALTER TABLE ar_collection_actions ADD COLUMN IF NOT EXISTS "collectionCaseId" UUID;
+ALTER TABLE ar_collection_actions ADD COLUMN IF NOT EXISTS "collectionCaseId" TEXT;
 
 -- 7. Add leaseId to statements_of_account
-ALTER TABLE statements_of_account ADD COLUMN IF NOT EXISTS "leaseId" UUID;
+ALTER TABLE statements_of_account ADD COLUMN IF NOT EXISTS "leaseId" TEXT;
 
 -- 8. Add leaseId to owner_pnl_statements
-ALTER TABLE owner_pnl_statements ADD COLUMN IF NOT EXISTS "leaseId" UUID;
+ALTER TABLE owner_pnl_statements ADD COLUMN IF NOT EXISTS "leaseId" TEXT;
 
 -- 9. Add propertyId, unitId, leaseId to document_vaults
-ALTER TABLE document_vaults ADD COLUMN IF NOT EXISTS "propertyId" UUID;
-ALTER TABLE document_vaults ADD COLUMN IF NOT EXISTS "unitId" UUID;
-ALTER TABLE document_vaults ADD COLUMN IF NOT EXISTS "leaseId" UUID;
+ALTER TABLE document_vaults ADD COLUMN IF NOT EXISTS "propertyId" TEXT;
+ALTER TABLE document_vaults ADD COLUMN IF NOT EXISTS "unitId" TEXT;
+ALTER TABLE document_vaults ADD COLUMN IF NOT EXISTS "leaseId" TEXT;
 
 -- 10. Create property_images table
 CREATE TABLE IF NOT EXISTS "property_images" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  "propertyId" UUID NOT NULL,
+  "propertyId" TEXT NOT NULL,
   url TEXT NOT NULL,
   alt TEXT,
   "sortOrder" INTEGER NOT NULL DEFAULT 0,
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS "property_images" (
 -- 11. Create unit_images table
 CREATE TABLE IF NOT EXISTS "unit_images" (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  "unitId" UUID NOT NULL,
+  "unitId" TEXT NOT NULL,
   url TEXT NOT NULL,
   alt TEXT,
   "sortOrder" INTEGER NOT NULL DEFAULT 0,

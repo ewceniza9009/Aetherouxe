@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBuildingDto, UpdateBuildingDto, BuildingQueryDto, CreateFloorDto, UpdateFloorDto } from './dto/buildings.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 
 @Injectable()
 export class BuildingsService {
@@ -21,18 +23,24 @@ export class BuildingsService {
     });
   }
 
+  private readonly fieldMap: FieldMap = {
+    filters: [{ field: 'projectId', type: 'eq' }],
+    search: ['name'],
+    sortable: ['createdAt', 'updatedAt', 'name', 'floorCount', 'unitCount'],
+    sortAliases: { type: 'buildingType' },
+  };
+
   async findAll(query: BuildingQueryDto, tenantId: string) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-    const where: any = { tenantId };
-    if (query.projectId) where.projectId = query.projectId;
-    if (query.search) where.name = { contains: query.search, mode: 'insensitive' };
-    const [data, total] = await Promise.all([
-      this.prisma.building.findMany({ where, skip, take: limit, include: { floors: true, project: true, _count: { select: { units: true } } } }),
-      this.prisma.building.count({ where }),
-    ]);
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    const built = buildListQuery(query, this.fieldMap, { createdAt: 'desc' });
+    const where: any = { tenantId, ...built.where };
+    return paginate(this.prisma.building, {
+      page: query.page,
+      limit: query.limit,
+      where,
+      include: { floors: true, project: true, _count: { select: { units: true } } },
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+    });
   }
 
   async findOne(id: string, tenantId: string) {

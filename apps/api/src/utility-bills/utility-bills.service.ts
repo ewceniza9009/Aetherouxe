@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBillDto, UpdateBillDto, BillQueryDto, GenerateBillsDto } from './dto/utility-bills.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 
 @Injectable()
 export class UtilityBillsService {
@@ -86,34 +88,35 @@ export class UtilityBillsService {
     });
   }
 
-  async findAll(query: BillQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'meterId', type: 'eq' },
+      { field: 'tenantId', type: 'eq' },
+      { field: 'unitId', type: 'eq' },
+      { field: 'propertyId', type: 'eq' },
+      { field: 'status', type: 'eq' },
+      { field: 'utilityType', type: 'relation', relation: 'meter', fk: 'utilityType' },
+    ],
+    sortable: ['issuedDate', 'dueDate', 'createdAt', 'status', 'amount'],
+  };
 
-    const where: any = {};
-    if (query.meterId) where.meterId = query.meterId;
-    if (query.tenantId) where.tenantId = query.tenantId;
-    if (query.unitId) where.unitId = query.unitId;
-    if (query.propertyId) where.propertyId = query.propertyId;
-    if (query.status) where.status = query.status;
-    if (query.utilityType) where.meter = { utilityType: query.utilityType };
+  async findAll(query: BillQueryDto) {
+    const built = buildListQuery(query, this.fieldMap, { issuedDate: 'desc' });
+    const where: any = { ...built.where };
     if (query.fromDate || query.toDate) {
       where.issuedDate = {};
       if (query.fromDate) where.issuedDate.gte = new Date(query.fromDate);
       if (query.toDate) where.issuedDate.lte = new Date(query.toDate);
     }
 
-    const [rows, total] = await Promise.all([
-      this.prisma.utilityBill.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { issuedDate: 'desc' },
-        include: { meter: true, tenant: true, unit: true },
-      }),
-      this.prisma.utilityBill.count({ where }),
-    ]);
+    const { data: rows, meta } = await paginate(this.prisma.utilityBill, {
+      page: query.page,
+      limit: query.limit,
+      where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+      include: { meter: true, tenant: true, unit: true },
+    });
 
     const data = await this.attachResidents(
       rows.map((b) => ({
@@ -123,7 +126,7 @@ export class UtilityBillsService {
       })),
     );
 
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return { data, meta };
   }
 
   private async attachResidents(rows: any[]) {

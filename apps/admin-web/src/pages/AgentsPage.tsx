@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useDebouncedValue } from "@/hooks/use-debounce";
 import { useNavigate } from "@tanstack/react-router";
 import {
   useReactTable,
@@ -51,12 +52,18 @@ export default function AgentsPage() {
   const [tier, setTier] = useState<AgentTierValue | "all">("all");
   const [internalOnly, setInternalOnly] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const debouncedSearch = useDebouncedValue(search, 350);
+
+  const sortField = sorting[0]?.id;
+  const sortDir = sorting[0]?.desc ? "desc" : "asc";
 
   const { data, isLoading, isError } = useAgents({
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     tier: tier === "all" ? undefined : tier,
     isInternal: internalOnly || undefined,
     limit: 100,
+    sort: sortField,
+    order: sortField ? sortDir : undefined,
   });
 
   const agents = data?.data ?? [];

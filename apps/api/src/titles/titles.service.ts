@@ -10,6 +10,8 @@ import {
   UpdateTitleTransferDto,
   TitleTransferQueryDto,
 } from './dto/titles.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 
 const includeRelations = {
   property: { include: { project: true } },
@@ -57,18 +59,26 @@ export class TitlesService {
     });
   }
 
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'propertyId', type: 'eq' },
+      { field: 'buyerUserId', type: 'eq' },
+      { field: 'status', type: 'eq' },
+    ],
+    sortable: ['requestedDate', 'completedDate', 'createdAt', 'contractValue', 'status', 'propertyId'],
+  };
+
   async findAll(query: TitleTransferQueryDto, tenantId: string) {
-    const data = await this.prisma.titleTransfer.findMany({
-      where: {
-        tenantId,
-        propertyId: query.propertyId,
-        buyerUserId: query.buyerUserId,
-        status: query.status,
-      },
-      orderBy: { requestedDate: 'desc' },
+    const built = buildListQuery(query, this.fieldMap, { requestedDate: 'desc' });
+    const where: any = { tenantId, ...built.where };
+    return paginate(this.prisma.titleTransfer, {
+      page: query.page,
+      limit: query.limit,
+      where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
       include: includeRelations,
     });
-    return { data, meta: { total: data.length } };
   }
 
   async findOne(id: string, tenantId: string) {

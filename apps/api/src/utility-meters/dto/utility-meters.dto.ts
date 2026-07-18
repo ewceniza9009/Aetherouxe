@@ -1,6 +1,7 @@
 import { IsString, IsOptional, IsNumber, IsBoolean, IsDateString, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UtilityType } from '@prisma/client';
+import { ListQueryDto } from '../../common/dto/list-query.dto';
 
 export class CreateMeterDto {
   @ApiPropertyOptional() @IsOptional() @IsString() tenantId?: string;
@@ -24,9 +25,7 @@ export class UpdateMeterDto {
   @ApiPropertyOptional() @IsOptional() @IsDateString() installationDate?: string;
 }
 
-export class MeterQueryDto {
-  @ApiPropertyOptional() @IsOptional() page?: number;
-  @ApiPropertyOptional() @IsOptional() limit?: number;
+export class MeterQueryDto extends ListQueryDto {
   @ApiPropertyOptional({ enum: UtilityType }) @IsOptional() @IsEnum(UtilityType) utilityType?: UtilityType;
   @ApiPropertyOptional() @IsOptional() @IsString() unitId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() propertyId?: string;

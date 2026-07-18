@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMeterDto, UpdateMeterDto, MeterQueryDto } from './dto/utility-meters.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 
 @Injectable()
 export class UtilityMetersService {
@@ -26,36 +28,35 @@ export class UtilityMetersService {
     });
   }
 
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'utilityType', type: 'eq' },
+      { field: 'unitId', type: 'eq' },
+      { field: 'propertyId', type: 'eq' },
+      { field: 'tenantId', type: 'eq' },
+      { field: 'isActive', type: 'bool' },
+    ],
+    sortable: ['createdAt', 'updatedAt', 'utilityType', 'isActive', 'serialNumber'],
+  };
+
   async findAll(query: MeterQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-    if (query.utilityType) where.utilityType = query.utilityType;
-    if (query.unitId) where.unitId = query.unitId;
-    if (query.propertyId) where.propertyId = query.propertyId;
-    if (query.tenantId) where.tenantId = query.tenantId;
-    if (query.isActive !== undefined) where.isActive = query.isActive;
-
-    const [rows, total] = await Promise.all([
-      this.prisma.utilityMeter.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          unit: true,
-          property: true,
-          tenant: true,
-          _count: { select: { readings: true } },
-        },
-      }),
-      this.prisma.utilityMeter.count({ where }),
-    ]);
+    const built = buildListQuery(query, this.fieldMap, { createdAt: 'desc' });
+    const { data: rows, meta } = await paginate(this.prisma.utilityMeter, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+      include: {
+        unit: true,
+        property: true,
+        tenant: true,
+        _count: { select: { readings: true } },
+      },
+    });
 
     const data = await this.attachResidents(rows);
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return { data, meta };
   }
 
   private async attachResidents(rows: any[]) {

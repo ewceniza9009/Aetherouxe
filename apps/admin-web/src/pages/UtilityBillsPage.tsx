@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -47,6 +47,7 @@ import {
 import { useProperties } from "@/hooks/use-properties";
 import { useUnits } from "@/hooks/use-units";
 import { utilityTypeMeta, billStatusMeta, money, formatDate } from "@/lib/utility-meta";
+import { ListPager } from "@/components/ListPager";
 
 function tenantUnitLabel(bill: UtilityBill): string {
   const tenant = bill.resident
@@ -63,6 +64,12 @@ export default function UtilityBillsPage() {
   const [tenantId, setTenantId] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<string>("issuedDate");
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const LIMIT = 20;
+
+  useEffect(() => { setPage(1); }, [status, utilityType, tenantId, from, to, sort, order]);
 
   const { data, isLoading, isError, refetch } = useBills({
     status: status !== "all" ? (status as UtilityBillStatus) : undefined,
@@ -70,6 +77,10 @@ export default function UtilityBillsPage() {
     tenantId: tenantId || undefined,
     from: from || undefined,
     to: to || undefined,
+    sort,
+    order,
+    page,
+    limit: LIMIT,
   });
 
   const { data: metersData } = useMeters({ limit: 500 });
@@ -199,9 +210,24 @@ export default function UtilityBillsPage() {
                   <TableHead>Period</TableHead>
                   <TableHead className="text-right">Consumption</TableHead>
                   <TableHead className="text-right">Rate</TableHead>
-                  <TableHead className="text-right">Amount Due</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Due</TableHead>
+                  <TableHead
+                    className="text-right cursor-pointer select-none"
+                    onClick={() => { setSort("amount"); setOrder(order === "asc" ? "desc" : "asc"); }}
+                  >
+                    Amount Due {sort === "amount" ? (order === "asc" ? "▲" : "▼") : ""}
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => { setSort("status"); setOrder(order === "asc" ? "desc" : "asc"); }}
+                  >
+                    Status {sort === "status" ? (order === "asc" ? "▲" : "▼") : ""}
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => { setSort("dueDate"); setOrder(order === "asc" ? "desc" : "asc"); }}
+                  >
+                    Due {sort === "dueDate" ? (order === "asc" ? "▲" : "▼") : ""}
+                  </TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -236,6 +262,7 @@ export default function UtilityBillsPage() {
           )}
         </CardContent>
       </Card>
+      <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="bills" />
     </div>
   );
 }

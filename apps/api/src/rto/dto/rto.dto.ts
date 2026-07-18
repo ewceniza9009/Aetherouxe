@@ -1,9 +1,8 @@
 import { IsString, IsOptional, IsEnum, IsUUID, IsNumber } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ListQueryDto } from '../../common/dto/list-query.dto';
 
-export class RtoQueryDto {
-  @ApiPropertyOptional() @IsOptional() page?: number;
-  @ApiPropertyOptional() @IsOptional() limit?: number;
+export class RtoQueryDto extends ListQueryDto {
   @ApiPropertyOptional({
     enum: ['active', 'grace_period', 'defaulted', 'exercised', 'completed'],
   })

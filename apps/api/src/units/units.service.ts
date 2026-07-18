@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUnitDto, UpdateUnitDto, UnitQueryDto } from './dto/units.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 
 @Injectable()
 export class UnitsService {
@@ -32,25 +34,31 @@ export class UnitsService {
     });
   }
 
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'propertyId', type: 'eq' },
+      { field: 'buildingId', type: 'eq' },
+      { field: 'floorId', type: 'eq' },
+      { field: 'unitType', type: 'enum' },
+    ],
+    sortable: ['createdAt', 'updatedAt', 'unitNumber', 'squareMeters', 'listPrice'],
+  };
+
   async findAll(query: UnitQueryDto, tenantId: string) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-    const where: any = { building: { tenantId } };
-    if (query.propertyId) where.propertyId = query.propertyId;
-    if (query.buildingId) where.buildingId = query.buildingId;
-    if (query.floorId) where.floorId = query.floorId;
-    if (query.unitType) where.unitType = query.unitType;
-    const [data, total] = await Promise.all([
-      this.prisma.unit.findMany({
-        where,
-        skip,
-        take: limit,
-        include: { property: true, building: true, floor: true },
-      }),
-      this.prisma.unit.count({ where }),
-    ]);
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    const built = buildListQuery(query, this.fieldMap, { createdAt: 'desc' });
+    const where: any = { building: { tenantId }, ...built.where };
+    if (query.propertyStatus) {
+      where.property = { ...(where.property || {}), status: query.propertyStatus };
+    }
+
+    return paginate(this.prisma.unit, {
+      page: query.page,
+      limit: query.limit,
+      where,
+      include: { property: true, building: true, floor: true },
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+    });
   }
 
   async findOne(id: string, tenantId: string) {

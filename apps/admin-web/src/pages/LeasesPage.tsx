@@ -1,13 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useDebouncedValue } from "@/hooks/use-debounce";
 import { useNavigate } from "@tanstack/react-router";
 import {
   useReactTable,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
   flexRender,
   createColumnHelper,
-  type FilterFn,
 } from "@tanstack/react-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,22 +51,13 @@ const statusLabel: Record<LeaseStatus, string> = {
   terminated: "Terminated",
 };
 
-const globalFilterFn: FilterFn<Lease> = (row, _columnId, filterValue) => {
-  const search = String(filterValue).toLowerCase();
-  const lease = row.original;
-  return (
-    lease.tenantName.toLowerCase().includes(search) ||
-    lease.tenantEmail.toLowerCase().includes(search) ||
-    lease.propertyName?.toLowerCase().includes(search) === true
-  );
-};
-
 export default function LeasesPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
+  const debouncedSearch = useDebouncedValue(search, 350);
 
   const query: LeaseQuery = useMemo(
     () => ({
@@ -76,12 +65,16 @@ export default function LeasesPage() {
       limit: 10,
       sort: "createdAt",
       order: "desc",
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       type: typeFilter !== "all" ? (typeFilter as LeaseType) : undefined,
       status: statusFilter !== "all" ? (statusFilter as LeaseStatus) : undefined,
     }),
-    [page, search, typeFilter, statusFilter]
+    [page, debouncedSearch, typeFilter, statusFilter]
   );
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   const { data, isLoading, isError, refetch } = useLeases(query);
 
@@ -161,13 +154,6 @@ export default function LeasesPage() {
     data: data?.data ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    state: {
-      globalFilter: search,
-    },
-    onGlobalFilterChange: setSearch,
-    globalFilterFn,
   });
 
   const meta = data?.meta;
@@ -194,10 +180,7 @@ export default function LeasesPage() {
                 placeholder="Search leases..."
                 className="pl-9 bg-transparent"
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
               <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>

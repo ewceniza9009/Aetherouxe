@@ -1,15 +1,32 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
+import { ApInvoiceQueryDto } from './dto/ap-invoices.dto';
 
 @Injectable()
 export class ApInvoicesService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(tenantId: string) {
-    return this.prisma.apInvoice.findMany({
-      where: { tenantId },
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'status', type: 'eq' },
+      { field: 'sourceType', type: 'eq' },
+      { field: 'vendorId', type: 'eq' },
+    ],
+    sortable: ['createdAt', 'updatedAt', 'dueDate', 'amount', 'invoiceNumber'],
+  };
+
+  async findAll(tenantId: string, query: ApInvoiceQueryDto) {
+    const built = buildListQuery(query, this.fieldMap, { createdAt: 'desc' });
+    const where: any = { tenantId, ...built.where };
+    return paginate(this.prisma.apInvoice, {
+      page: query.page,
+      limit: query.limit,
+      where,
       include: { disbursements: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
     });
   }
 

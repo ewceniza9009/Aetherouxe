@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 import {
   CreateCaseDto,
   UpdateCaseDto,
@@ -57,39 +59,36 @@ export class CollectionCasesService {
     });
   }
 
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'status', type: 'eq' },
+      { field: 'priority', type: 'eq' },
+      { field: 'assignedToId', type: 'eq' },
+      { field: 'tenantId', type: 'eq' },
+      { field: 'leaseId', type: 'eq' },
+    ],
+    sortable: ['createdAt', 'updatedAt', 'lastActivityAt', 'nextActionDate', 'openedAt', 'priority', 'status', 'totalOutstanding'],
+  };
+
   async findAll(query: CaseQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-    if (query.status) where.status = query.status;
-    if (query.priority) where.priority = query.priority;
-    if (query.assignedToId) where.assignedToId = query.assignedToId;
-    if (query.tenantId) where.tenantId = query.tenantId;
-    if (query.leaseId) where.leaseId = query.leaseId;
-
-    const [data, total] = await Promise.all([
-      this.prisma.collectionCase.findMany({
-        where,
-        skip,
-        take: limit,
-        include: {
-          tenant: true,
-          assignedTo: true,
-          lease: {
-            include: {
-              tenant: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
-              property: { select: { id: true, propertyCode: true } },
-            },
+    const built = buildListQuery(query, this.fieldMap, { lastActivityAt: 'desc' });
+    return paginate(this.prisma.collectionCase, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      include: {
+        tenant: true,
+        assignedTo: true,
+        lease: {
+          include: {
+            tenant: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
+            property: { select: { id: true, propertyCode: true } },
           },
         },
-        orderBy: { lastActivityAt: 'desc' },
-      }),
-      this.prisma.collectionCase.count({ where }),
-    ]);
-
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+      },
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+    });
   }
 
   async findOne(id: string) {

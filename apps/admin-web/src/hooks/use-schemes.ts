@@ -66,14 +66,31 @@ export interface Scheme {
   companyCommissionPercentage?: number;
 }
 
-export function useSchemes(type?: string) {
+export interface SchemeQuery {
+  type?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+  sort?: string;
+  order?: "asc" | "desc";
+}
+
+export function useSchemes(query: SchemeQuery = {}) {
   return useQuery({
-    queryKey: ["schemes", { type }],
+    queryKey: ["schemes", query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (type) params.set("type", type);
+      if (query.type) params.set("type", query.type);
+      if (query.search) params.set("search", query.search);
+      if (query.page) params.set("page", String(query.page));
+      if (query.limit) params.set("limit", String(query.limit));
+      if (query.sort) params.set("sort", query.sort);
+      if (query.order) params.set("order", query.order);
       const { data } = await api.get<ApiResponse<Scheme[]>>(`/schemes?${params}`);
-      return data.data ?? [];
+      return { data: data.data ?? [], meta: data.meta } as {
+        data: Scheme[];
+        meta: PaginationMeta;
+      };
     },
   });
 }

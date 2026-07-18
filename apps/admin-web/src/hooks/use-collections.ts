@@ -418,6 +418,10 @@ export function useGenerateStatement() {
 export function useCollectionCases(query?: {
   status?: CollectionCaseStatus;
   priority?: CollectionCasePriority;
+  page?: number;
+  limit?: number;
+  sort?: string;
+  order?: "asc" | "desc";
 }) {
   return useQuery({
     queryKey: ["collection-cases", query],
@@ -425,7 +429,7 @@ export function useCollectionCases(query?: {
       const { data } = await api.get<ApiResponse<CollectionCase[]>>(
         `/collection-cases${buildParams(query)}`
       );
-      return (data.data ?? []) as CollectionCase[];
+      return { data: (data.data ?? []) as CollectionCase[], meta: data.meta } as PaginatedResult<CollectionCase>;
     },
   });
 }

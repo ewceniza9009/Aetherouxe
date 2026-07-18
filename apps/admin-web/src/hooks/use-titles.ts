@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
-import type { ApiResponse } from "@elite-realty/shared-types";
+import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+
+interface PaginatedResult<T> {
+  data: T[];
+  meta?: PaginationMeta;
+}
 
 export type TitleTransferStatus = "pending" | "in_progress" | "completed" | "cancelled";
 export type TitleTransferBasis =
@@ -76,6 +81,10 @@ export interface TitleTransferQuery {
   propertyId?: string;
   buyerUserId?: string;
   status?: TitleTransferStatus;
+  page?: number;
+  limit?: number;
+  sort?: string;
+  order?: "asc" | "desc";
 }
 
 export function useTitleTransfers(query: TitleTransferQuery = {}) {
@@ -86,10 +95,14 @@ export function useTitleTransfers(query: TitleTransferQuery = {}) {
       if (query.propertyId) params.set("propertyId", query.propertyId);
       if (query.buyerUserId) params.set("buyerUserId", query.buyerUserId);
       if (query.status) params.set("status", query.status);
+      if (query.page) params.set("page", String(query.page));
+      if (query.limit) params.set("limit", String(query.limit));
+      if (query.sort) params.set("sort", query.sort);
+      if (query.order) params.set("order", query.order);
       const { data } = await api.get<ApiResponse<TitleTransfer[]>>(
         `/title-transfers?${params}`
       );
-      return data.data ?? [];
+      return { data: data.data ?? [], meta: data.meta } as PaginatedResult<TitleTransfer>;
     },
   });
 }

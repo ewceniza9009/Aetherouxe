@@ -11,12 +11,12 @@ export class ListQueryDto {
   @ApiPropertyOptional({ type: Number, default: 1 })
   @IsOptional()
   @Type(() => Number)
-  page?: number = 1;
+  page?: number;
 
-  @ApiPropertyOptional({ type: Number, default: 10 })
+  @ApiPropertyOptional({ type: Number, description: 'Absent or 0 returns all rows (no pagination).' })
   @IsOptional()
   @Type(() => Number)
-  limit?: number = 10;
+  limit?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -32,6 +32,18 @@ export class ListQueryDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortDir?: 'asc' | 'desc' = 'desc';
+
+  // Legacy frontend aliases for `sortBy` / `sortDir`. Kept so existing
+  // hooks that send `sort` / `order` keep working without changes.
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  sort?: string;
+
+  @ApiPropertyOptional({ enum: ['asc', 'desc'] })
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  order?: 'asc' | 'desc';
 }
 
 export interface PaginateArgs {
@@ -43,6 +55,9 @@ export interface PaginateArgs {
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
   defaultSort?: Record<string, any>;
+  /** Whitelist of sortable fields. If sortBy is not in this list it is ignored
+   *  (falls back to defaultSort). Prevents unindexed/invalid sort injection. */
+  allowedSortFields?: string[];
 }
 
 export interface PaginatedResult<T> {
@@ -61,12 +76,22 @@ export async function paginate<T>(
   },
   args: PaginateArgs,
 ): Promise<PaginatedResult<T>> {
-  const page = Math.max(1, Math.floor(Number(args.page) || 1));
-  const limit = Math.max(1, Math.min(100, Math.floor(Number(args.limit) || 10)));
-  const skip = (page - 1) * limit;
+  const page = Math.max(1, Math.floor(Number(args.page) || 1) || 1);
+  // limit === 0 (or absent) means "return everything" — used by list screens
+  // and dashboards that need the full set rather than a paged slice. This
+  // avoids silently clipping previously-unbounded endpoints when they were
+  // migrated to the shared paginate() helper.
+  const rawLimit = Math.floor(Number(args.limit));
+  const limited = rawLimit > 0;
+  const limit = limited ? Math.min(100, rawLimit) : 0;
+  const skip = limited ? (page - 1) * limit : 0;
 
-  const orderBy = args.sortBy
-    ? { [args.sortBy]: args.sortDir ?? 'desc' }
+  const sortBy =
+    args.sortBy && args.allowedSortFields?.includes(args.sortBy)
+      ? args.sortBy
+      : undefined;
+  const orderBy = sortBy
+    ? { [sortBy]: args.sortDir ?? 'desc' }
     : args.defaultSort ?? { createdAt: 'desc' };
 
   const [data, total] = await Promise.all([
@@ -74,8 +99,7 @@ export async function paginate<T>(
       where: args.where,
       include: args.include,
       orderBy,
-      skip,
-      take: limit,
+      ...(limited ? { skip, take: limit } : {}),
     }),
     delegate.count({ where: args.where }),
   ]);
@@ -84,9 +108,10 @@ export async function paginate<T>(
     data,
     meta: {
       page,
-      limit,
+      limit: limited ? limit : total,
       total,
-      totalPages: Math.ceil(total / limit),
+      // When unpaged, everything is one page.
+      totalPages: limited ? (total === 0 ? 1 : Math.ceil(total / limit)) : 1,
     },
   };
 }

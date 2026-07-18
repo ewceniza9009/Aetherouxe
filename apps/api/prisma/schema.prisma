@@ -311,11 +311,16 @@ model RealEstateAgent {
   user            User                  @relation(fields: [userId], references: [id])
   manager         RealEstateAgent?      @relation("AgentHierarchy", fields: [managerId], references: [id])
   subordinates    RealEstateAgent[]     @relation("AgentHierarchy")
-  transactions    AgentTransaction[]
-  leases          LeaseAgreement[]
-  licenseRenewals AgentLicenseRenewal[]
+    transactions    AgentTransaction[]
+    leases          LeaseAgreement[]
+    licenseRenewals AgentLicenseRenewal[]
 
-  @@map("real_estate_agents")
+    // Multi-tenant list performance: filter/sort fields used by the agents
+    // list endpoint are queried per-tenant.
+    @@index([tenantId, tier])
+    @@index([tenantId, isInternal])
+    @@index([tenantId, createdAt])
+    @@map("real_estate_agents")
 }
 
 // ─────────────────────────────────────────────
@@ -368,6 +373,12 @@ model Property {
   images            PropertyImage[]
   titleTransfers    TitleTransfer[]
 
+  // List performance: filter/sort fields used by the properties list endpoint.
+  @@index([tenantId, propertyType])
+  @@index([tenantId, status])
+  @@index([tenantId, projectId])
+  @@index([tenantId, createdAt])
+
   @@map("properties")
 }
 
@@ -386,6 +397,11 @@ model Building {
   project Project @relation(fields: [projectId], references: [id])
   floors  Floor[]
   units   Unit[]
+
+  // List performance: filter/sort fields used by the buildings list endpoint.
+  @@index([tenantId, projectId])
+  @@index([tenantId, name])
+  @@index([tenantId, createdAt])
 
   @@map("buildings")
 }
@@ -433,6 +449,14 @@ model Unit {
   bookings        AmenityBooking[]
   images          UnitImage[]
   titleTransfers  TitleTransfer[]
+
+  // List performance: filter/sort fields used by the units list endpoint.
+  @@index([propertyId])
+  @@index([buildingId])
+  @@index([floorId])
+  @@index([unitType])
+  @@index([status])
+  @@index([createdAt])
 
   @@map("units")
 }
@@ -665,6 +689,13 @@ model LeaseAgreement {
   documents         DocumentVault[]
   titleTransfers    TitleTransfer[]
 
+  // List performance: filter/sort fields used by the leases list endpoint.
+  @@index([leaseType])
+  @@index([isActive])
+  @@index([unitId])
+  @@index([tenantUserId])
+  @@index([propertyId, createdAt])
+
   @@map("lease_agreements")
 }
 
@@ -759,6 +790,11 @@ model RtoContract {
   paymentAllocations RtoPaymentAllocation[]
   equityLedger       RtoEquityLedger[]
 
+  // List performance: filter/sort fields used by the rto list endpoint.
+  @@index([status])
+  @@index([leaseAgreementId])
+  @@index([createdAt])
+
   @@map("rto_contracts")
 }
 
@@ -814,6 +850,13 @@ model AgentCommission {
 
   tenant       Tenant             @relation(fields: [tenantId], references: [id])
   transactions AgentTransaction[]
+
+  // List performance: filter/sort fields used by the commissions list endpoint.
+  @@index([tenantId, agentTier])
+  @@index([tenantId, propertyType])
+  @@index([tenantId, projectId])
+  @@index([tenantId, isActive])
+  @@index([tenantId, createdAt])
 
   @@map("agent_commissions")
 }
@@ -1012,6 +1055,14 @@ model UtilityMeter {
   property Property?            @relation(fields: [propertyId], references: [id])
   unit     Unit?                @relation(fields: [unitId], references: [id])
 
+  // List performance: filter/sort fields used by the utility-meters list endpoint.
+  @@index([utilityType])
+  @@index([unitId])
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([isActive])
+  @@index([createdAt])
+
   @@map("utility_meters")
 }
 
@@ -1055,6 +1106,15 @@ model UtilityBill {
   tenant   Tenant?              @relation(fields: [tenantId], references: [id])
   property Property?            @relation(fields: [propertyId], references: [id])
   unit     Unit?                @relation(fields: [unitId], references: [id])
+
+  // List performance: filter/sort fields used by the utility-bills list endpoint.
+  @@index([meterId])
+  @@index([tenantId])
+  @@index([unitId])
+  @@index([propertyId])
+  @@index([status])
+  @@index([issuedDate])
+  @@index([dueDate])
 
   @@map("utility_bills")
 }
@@ -1559,6 +1619,15 @@ model CollectionCase {
   notes      CollectionCaseNote[]
   arActions  ArCollectionAction[]
 
+  // List performance: filter/sort fields used by the collection-cases list endpoint.
+  @@index([status])
+  @@index([priority])
+  @@index([assignedToId])
+  @@index([tenantId])
+  @@index([leaseId])
+  @@index([lastActivityAt])
+  @@index([nextActionDate])
+
   @@map("collection_cases")
 }
 
@@ -1704,6 +1773,11 @@ model TitleTransfer {
   @@index([propertyId])
   @@index([buyerUserId])
   @@index([status])
+  // Multi-tenant list scoping for the titles list endpoint.
+  @@index([tenantId, propertyId])
+  @@index([tenantId, buyerUserId])
+  @@index([tenantId, status])
+  @@index([tenantId, requestedDate])
   @@map("title_transfers")
 }
 
@@ -1839,6 +1913,13 @@ model ApInvoice {
   tenant        Tenant           @relation(fields: [tenantId], references: [id])
   vendor        Contractor?      @relation(fields: [vendorId], references: [id])
   disbursements ApDisbursement[]
+
+  // List performance: filter/sort fields used by the ap-invoices list endpoint.
+  @@index([tenantId, status])
+  @@index([tenantId, sourceType])
+  @@index([tenantId, vendorId])
+  @@index([tenantId, dueDate])
+  @@index([tenantId, createdAt])
 
   @@map("ap_invoices")
 }

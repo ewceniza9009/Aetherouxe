@@ -62,11 +62,12 @@ export default function CollectionsPage() {
       bar: expected.bar,
     };
   });
-  const openCasesCount = (cases ?? []).filter(
+  const casesRows = cases?.data ?? [];
+  const openCasesCount = casesRows.filter(
     (c) => c.status === "open" || c.status === "in_progress" || c.status === "escalated"
   ).length;
   const overdueReminders = (reminders ?? []).length;
-  const recentCases = (cases ?? []).slice(0, 8);
+  const recentCases = casesRows.slice(0, 8);
 
   return (
     <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">

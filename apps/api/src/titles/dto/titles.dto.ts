@@ -8,6 +8,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TitleTransferBasis, TitleTransferStatus } from '@prisma/client';
+import { ListQueryDto } from '../../common/dto/list-query.dto';
 
 export class CreateTitleTransferDto {
   @ApiProperty()
@@ -125,7 +126,7 @@ export class UpdateTitleTransferDto {
   notes?: string;
 }
 
-export class TitleTransferQueryDto {
+export class TitleTransferQueryDto extends ListQueryDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()

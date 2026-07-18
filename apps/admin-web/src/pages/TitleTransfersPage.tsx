@@ -58,6 +58,7 @@ import { useProperties } from "@/hooks/use-properties";
 import { useUsers } from "@/hooks/use-users";
 import { useUnits } from "@/hooks/use-units";
 import { formatCurrency } from "@/lib/settings-store";
+import { ListPager } from "@/components/ListPager";
 
 const statusVariant: Record<TitleTransferStatus, "default" | "secondary" | "success" | "warning" | "destructive"> = {
   pending: "secondary",
@@ -120,15 +121,21 @@ export default function TitleTransfersPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<TitleTransfer | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<string>("requestedDate");
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const LIMIT = 20;
 
   const { data, isLoading, isError } = useTitleTransfers(
-    tab !== "all" ? { status: tab as TitleTransferStatus } : {}
+    tab !== "all"
+      ? { status: tab as TitleTransferStatus, page, limit: LIMIT, sort, order }
+      : { page, limit: LIMIT, sort, order }
   );
   const { data: propertiesResult } = useProperties({ limit: 300 });
   const { data: usersResult } = useUsers({ limit: 300, isActive: true });
   const { data: unitsResult } = useUnits({ limit: 300, propertyId: form.propertyId });
 
-  const transfers = data ?? [];
+  const transfers = data?.data ?? [];
   const properties = propertiesResult?.data ?? [];
   const users = usersResult?.data ?? [];
   const units = unitsResult?.data ?? [];
@@ -296,14 +303,34 @@ export default function TitleTransfersPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50 text-left text-sm font-medium text-muted-foreground">
-                    <TableHead>Property</TableHead>
-                    <TableHead>Buyer</TableHead>
-                    <TableHead>Basis</TableHead>
-                    <TableHead>Title No.</TableHead>
-                    <TableHead>Contract Value</TableHead>
-                    <TableHead>Settled</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Requested</TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => { setSort("propertyId"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
+                  >
+                    Property {sort === "propertyId" ? (order === "asc" ? "▲" : "▼") : ""}
+                  </TableHead>
+                  <TableHead>Buyer</TableHead>
+                  <TableHead>Basis</TableHead>
+                  <TableHead>Title No.</TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => { setSort("contractValue"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
+                  >
+                    Contract Value {sort === "contractValue" ? (order === "asc" ? "▲" : "▼") : ""}
+                  </TableHead>
+                  <TableHead>Settled</TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => { setSort("status"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
+                  >
+                    Status {sort === "status" ? (order === "asc" ? "▲" : "▼") : ""}
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => { setSort("requestedDate"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
+                  >
+                    Requested {sort === "requestedDate" ? (order === "asc" ? "▲" : "▼") : ""}
+                  </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -365,6 +392,7 @@ export default function TitleTransfersPage() {
           )}
         </CardContent>
       </Card>
+      <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="transfers" />
 
       <TransferDialog
         open={createOpen}

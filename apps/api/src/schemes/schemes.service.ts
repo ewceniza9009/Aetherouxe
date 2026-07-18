@@ -1,15 +1,29 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSchemeDto, UpdateSchemeDto } from './dto/scheme.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate, ListQueryDto } from '../common/dto/list-query.dto';
 
 @Injectable()
 export class SchemesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(type?: string) {
-    const where: any = {};
-    if (type) where.schemeType = type;
-    return this.prisma.scheme.findMany({ where, orderBy: { code: 'asc' } });
+  private readonly fieldMap: FieldMap = {
+    filters: [{ field: 'schemeType', type: 'enum' }],
+    search: ['code', 'name'],
+    sortable: ['code', 'name', 'createdAt', 'updatedAt'],
+    sortAliases: { type: 'schemeType' },
+  };
+
+  async findAll(query: ListQueryDto) {
+    const built = buildListQuery(query, this.fieldMap, { code: 'asc' });
+    return paginate(this.prisma.scheme, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+    });
   }
 
   async findOne(id: string) {

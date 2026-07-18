@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 import {
   CreateCommissionDto,
   UpdateCommissionDto,
@@ -37,28 +39,29 @@ export class CommissionsService {
     });
   }
 
-  async findAll(query: CommissionQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'agentTier', type: 'eq' },
+      { field: 'propertyType', type: 'eq' },
+    ],
+    sortable: ['createdAt', 'updatedAt', 'name', 'agentTier', 'propertyType', 'isActive'],
+  };
 
-    const where: any = {};
-    if (query.agentTier) where.agentTier = query.agentTier;
-    if (query.propertyType) where.propertyType = query.propertyType;
+  async findAll(query: CommissionQueryDto) {
+    const built = buildListQuery(query, this.fieldMap, { createdAt: 'desc' });
+    const where: any = { ...built.where };
     if (query.isActive !== undefined && query.isActive !== null) where.isActive = query.isActive;
 
-    const [rows, total] = await Promise.all([
-      this.prisma.agentCommission.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.agentCommission.count({ where }),
-    ]);
+    const { data: rows, meta } = await paginate(this.prisma.agentCommission, {
+      page: query.page,
+      limit: query.limit,
+      where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+    });
 
     const data = rows.map((r) => this.serializeRule(r));
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return { data, meta };
   }
 
   serializeRule(r: any) {

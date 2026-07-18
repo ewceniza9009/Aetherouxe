@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDebouncedValue } from "@/hooks/use-debounce";
 import { useNavigate } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ListPager } from "@/components/ListPager";
 import {
   Select,
   SelectContent,
@@ -44,14 +46,23 @@ export default function SchemesPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const { data: schemes, isLoading } = useSchemes(typeFilter === "all" ? undefined : typeFilter);
+  const [page, setPage] = useState(1);
+  const LIMIT = 20;
+  const debouncedSearch = useDebouncedValue(search, 350);
+  const { data: schemesResult, isLoading } = useSchemes({
+    type: typeFilter === "all" ? undefined : typeFilter,
+    search: debouncedSearch || undefined,
+    page,
+    limit: LIMIT,
+  });
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
   const deleteScheme = useDeleteScheme();
 
-  const filtered = (schemes ?? []).filter(
-    (s) =>
-      s.code.toLowerCase().includes(search.toLowerCase()) ||
-      (s.name ?? "").toLowerCase().includes(search.toLowerCase())
-  );
+  const schemes = schemesResult?.data ?? [];
+  const meta = schemesResult?.meta;
 
   return (
     <div className="space-y-6 flex flex-col min-h-[calc(100vh-6rem)]">
@@ -70,9 +81,14 @@ export default function SchemesPage() {
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <div className="relative flex-1 min-w-[200px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search schemes..." className="pl-9 bg-transparent" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input
+                placeholder="Search schemes..."
+                className="pl-9 bg-transparent"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="All Types" />
                 </SelectTrigger>
@@ -88,7 +104,7 @@ export default function SchemesPage() {
             <div className="p-4 space-y-3">
               {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
             </div>
-          ) : filtered.length === 0 ? (
+          ) : schemes.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
               <ClipboardList className="h-8 w-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">No schemes found.</p>
@@ -97,6 +113,7 @@ export default function SchemesPage() {
               </Button>
             </div>
           ) : (
+            <>
             <div className="rounded-md border scroll-grid">
               <table className="w-full">
                 <thead>
@@ -111,7 +128,7 @@ export default function SchemesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((s) => {
+                  {schemes.map((s) => {
                     const meta = schemeTypeMeta[s.schemeType] ?? { label: s.schemeType, className: "" };
                     return (
                       <tr
@@ -147,6 +164,8 @@ export default function SchemesPage() {
                 </tbody>
               </table>
             </div>
+            {meta && <ListPager meta={meta} page={page} onPageChange={setPage} />}
+            </>
           )}
         </CardContent>
       </Card>

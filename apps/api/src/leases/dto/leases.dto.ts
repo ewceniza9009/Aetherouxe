@@ -40,10 +40,36 @@ export class LeaseQueryDto {
   @ApiPropertyOptional({ enum: ['standard_rental', 'rent_to_own', 'corporate_lease', 'short_term'] })
   @IsOptional() @IsEnum(['standard_rental', 'rent_to_own', 'corporate_lease', 'short_term'])
   leaseType?: string;
+  @ApiPropertyOptional({ enum: ['standard_rental', 'rent_to_own', 'corporate_lease', 'short_term'] })
+  @IsOptional() @IsEnum(['standard_rental', 'rent_to_own', 'corporate_lease', 'short_term'])
+  type?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @IsUUID() tenantUserId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @IsUUID() unitId?: string;
-  @ApiPropertyOptional({ enum: ['active', 'inactive'] })
-  @IsOptional() @IsEnum(['active', 'inactive'])
+  @ApiPropertyOptional({
+    enum: [
+      'active',
+      'inactive',
+      'pending',
+      'expiring',
+      'expired',
+      'terminated',
+      'rto_active',
+      'rto_delinquent',
+      'rto_converted',
+    ],
+  })
+  @IsOptional()
+  @IsEnum([
+    'active',
+    'inactive',
+    'pending',
+    'expiring',
+    'expired',
+    'terminated',
+    'rto_active',
+    'rto_delinquent',
+    'rto_converted',
+  ])
   status?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() search?: string;
 }

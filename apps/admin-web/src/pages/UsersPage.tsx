@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useDebouncedValue } from "@/hooks/use-debounce";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -88,6 +89,7 @@ export default function UsersPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
+  const debouncedSearch = useDebouncedValue(search, 350);
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<AppUser | null>(null);
@@ -100,12 +102,16 @@ export default function UsersPage() {
     () => ({
       page,
       limit: 10,
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       userType: (typeFilter !== "all" ? (typeFilter as AppUserType) : undefined),
       isActive: activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined,
     }),
-    [page, search, typeFilter, activeFilter]
+    [page, debouncedSearch, typeFilter, activeFilter]
   );
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   const { data, isLoading, isError, refetch } = useUsers(query);
   const createUser = useCreateUser();
@@ -188,10 +194,7 @@ export default function UsersPage() {
             <Input
               placeholder="Search name or email…"
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
+              onChange={(e) => setSearch(e.target.value)}
               className="w-full sm:w-64"
             />
             <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>

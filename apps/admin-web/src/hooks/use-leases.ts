@@ -84,7 +84,7 @@ export function transformLease(l: any): Lease {
     securityDeposit: l.securityDepositAmount ? Number(l.securityDepositAmount) : undefined,
     penaltyPercent: l.latePaymentPenaltyPercent ? Number(l.latePaymentPenaltyPercent) : undefined,
     graceDays: l.gracePeriodDays,
-    status: l.isActive ? "active" : "expired",
+    status: (l.status as LeaseStatus) ?? (l.isActive ? "active" : "expired"),
     createdAt: l.createdAt,
     updatedAt: l.updatedAt,
   };

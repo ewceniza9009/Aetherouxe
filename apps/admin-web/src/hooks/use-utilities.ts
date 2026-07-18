@@ -104,6 +104,8 @@ export interface MeterQuery {
   unitId?: string;
   isActive?: boolean;
   search?: string;
+  sort?: string;
+  order?: "asc" | "desc";
 }
 
 export interface ReadingQuery {
@@ -124,6 +126,8 @@ export interface BillQuery {
   status?: UtilityBillStatus;
   from?: string;
   to?: string;
+  sort?: string;
+  order?: "asc" | "desc";
 }
 
 interface PaginatedResult<T> {

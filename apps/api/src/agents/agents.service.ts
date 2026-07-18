@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../ledger/ledger.service';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 import {
   CreateAgentDto,
   UpdateAgentDto,
@@ -39,40 +41,29 @@ export class AgentsService {
     });
   }
 
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'tier', type: 'enum' },
+      { field: 'isInternal', type: 'bool' },
+    ],
+    search: ['licenseNumber', 'user.firstName', 'user.lastName'],
+    sortable: ['createdAt', 'updatedAt', 'licenseNumber', 'name', 'tier', 'isInternal', 'licenseStatus', 'transactionCount', 'status'],
+  };
+
   async findAll(query: AgentQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-    if (query.tier) where.tier = query.tier;
-    if (query.isInternal !== undefined && query.isInternal !== null) {
-      where.isInternal = query.isInternal;
-    }
-    if (query.search) {
-      where.OR = [
-        { licenseNumber: { contains: query.search, mode: 'insensitive' } },
-        { user: { firstName: { contains: query.search, mode: 'insensitive' } } },
-        { user: { lastName: { contains: query.search, mode: 'insensitive' } } },
-      ];
-    }
-
-    const [data, total] = await Promise.all([
-      this.prisma.realEstateAgent.findMany({
-        where,
-        skip,
-        take: limit,
-        include: {
-          user: true,
-          manager: { include: { user: true } },
-          subordinates: { include: { user: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.realEstateAgent.count({ where }),
-    ]);
-
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    const built = buildListQuery(query, this.fieldMap, { createdAt: 'desc' });
+    return paginate(this.prisma.realEstateAgent, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      include: {
+        user: true,
+        manager: { include: { user: true } },
+        subordinates: { include: { user: true } },
+      },
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+    });
   }
 
   async findOne(id: string) {

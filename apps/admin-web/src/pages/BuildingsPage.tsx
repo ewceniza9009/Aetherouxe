@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useDebouncedValue } from "@/hooks/use-debounce";
 import { useNavigate } from "@tanstack/react-router";
 import {
   useReactTable,
@@ -49,6 +50,7 @@ export default function BuildingsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Building | null>(null);
   const limit = 10;
+  const debouncedSearch = useDebouncedValue(search, 350);
 
   const query: BuildingQuery = useMemo(() => {
     const sortField = sorting[0];
@@ -57,10 +59,14 @@ export default function BuildingsPage() {
       limit,
       sort: sortField?.id,
       order: sortField?.desc ? "desc" : "asc",
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       projectId: projectFilter !== "all" ? projectFilter : undefined,
     };
-  }, [page, search, projectFilter, sorting]);
+  }, [page, debouncedSearch, projectFilter, sorting]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   const { data: result, isLoading, error } = useBuildings(query);
   const deleteBuilding = useDeleteBuilding();

@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useDebouncedValue } from "@/hooks/use-debounce";
 import { useNavigate } from "@tanstack/react-router";
 import {
   useReactTable,
@@ -53,6 +54,7 @@ export default function PropertiesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Property | null>(null);
   const limit = 10;
+  const debouncedSearch = useDebouncedValue(search, 350);
 
   const query: PropertyQuery = useMemo(() => {
     const sortField = sorting[0];
@@ -61,12 +63,16 @@ export default function PropertiesPage() {
       limit,
       sort: sortField?.id === "name" ? "code" : sortField?.id,
       order: sortField?.desc ? "desc" : "asc",
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       type: typeFilter !== "all" ? (typeFilter as PropertyType) : undefined,
       status: statusFilter !== "all" ? (statusFilter as PropertyStatus) : undefined,
       projectId: projectFilter !== "all" ? projectFilter : undefined,
     };
-  }, [page, search, typeFilter, statusFilter, projectFilter, sorting]);
+  }, [page, debouncedSearch, typeFilter, statusFilter, projectFilter, sorting]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   const { data: result, isLoading, error } = useProperties(query);
   const { data: projectsResult } = useProjects({ limit: 200 });
@@ -223,10 +229,7 @@ export default function PropertiesPage() {
               <Input
                 placeholder="Search properties..."
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
+                onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 bg-transparent"
               />
             </div>

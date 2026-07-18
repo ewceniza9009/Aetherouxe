@@ -2,6 +2,7 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } fro
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SchemesService } from './schemes.service';
 import { CreateSchemeDto, UpdateSchemeDto } from './dto/scheme.dto';
+import { ListQueryDto } from '../common/dto/list-query.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('schemes')
@@ -9,9 +10,8 @@ export class SchemesController {
   constructor(private readonly schemesService: SchemesService) {}
 
   @Get()
-  async findAll(@Query('type') type?: string) {
-    const data = await this.schemesService.findAll(type);
-    return { data, meta: { total: data.length } };
+  async findAll(@Query() query: ListQueryDto) {
+    return this.schemesService.findAll(query);
   }
 
   @Get('stats')

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useDebouncedValue } from "@/hooks/use-debounce";
 import { useNavigate } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,14 +46,15 @@ export default function ProjectsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+  const debouncedSearch = useDebouncedValue(search, 350);
 
   const query = useMemo(() => ({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     status: statusFilter !== "all" ? (statusFilter as ProjectStatus) : undefined,
     projectType: typeFilter !== "all" ? (typeFilter as ProjectType) : undefined,
-  }), [pagination.pageIndex, pagination.pageSize, search, statusFilter, typeFilter]);
+  }), [pagination.pageIndex, pagination.pageSize, debouncedSearch, statusFilter, typeFilter]);
 
   const { data, isLoading, isError } = useProjects(query);
   const deleteProject = useDeleteProject();

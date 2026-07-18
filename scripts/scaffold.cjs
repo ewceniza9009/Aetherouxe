@@ -187,6 +187,7 @@ function buildService() {
 import { PrismaService } from '../prisma/prisma.service';
 import { Create${entity}Dto, Update${entity}Dto } from './dto/${routeBase}.dto';
 import { paginate, ListQueryDto } from '../common/dto/list-query.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
 
 @Injectable()
 export class ${entity}Service {
@@ -196,11 +197,31 @@ export class ${entity}Service {
     return this.prisma.${entityLower}.create({ data: { ...dto, tenantId } as any });
   }
 
+  // Declarative list contract: only these fields are filterable / searchable /
+  // sortable. Extend per entity. Sortable fields should map to indexed columns.
+  private readonly fieldMap: FieldMap = {
+    filters: [${editable
+      .filter((f) => f.type === 'enum' || f.type === 'boolean')
+      .map((f) => `{ field: '${f.name}', type: '${f.type === 'boolean' ? 'bool' : 'enum'}' }`)
+      .join(', ')}],
+    search: [${editable
+      .filter((f) => f.type === 'string')
+      .map((f) => `'${f.name}'`)
+      .join(', ')}],
+    sortable: ['createdAt', 'updatedAt'${editable
+      .filter((f) => f.type === 'string' || f.type === 'number')
+      .map((f) => `, '${f.name}'`)
+      .join('')}],
+  };
+
   async findAll(tenantId: string, query: ListQueryDto) {
+    const built = buildListQuery(query, this.fieldMap, { createdAt: 'desc' });
     return paginate(this.prisma.${entityLower}, {
-      ...query,
-      where: { tenantId },
-      defaultSort: { createdAt: 'desc' },
+      page: query.page,
+      limit: query.limit,
+      where: { tenantId, ...built.where },
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
     });
   }
 

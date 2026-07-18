@@ -4,7 +4,6 @@ import { formatCurrency } from "@/lib/agent-meta";
 import {
   useReactTable,
   getCoreRowModel,
-  getPaginationRowModel,
   flexRender,
   createColumnHelper,
 } from "@tanstack/react-table";
@@ -179,7 +178,6 @@ export default function RtoContractsPage() {
     data: contracts,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
   });
 
   const meta = data?.meta;

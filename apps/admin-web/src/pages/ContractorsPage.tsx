@@ -1,4 +1,5 @@
 import { useState, useMemo, Fragment } from "react";
+import { useDebouncedValue } from "@/hooks/use-debounce";
 import { useNavigate } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,13 +56,14 @@ export default function ContractorsPage() {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [engagementFilter, setEngagementFilter] = useState<string>("");
+  const debouncedSearch = useDebouncedValue(search, 350);
 
   const query = useMemo(() => ({
     page: pagination.pageIndex + 1,
     limit: pagination.pageSize,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     specialization: specFilter !== "all" ? specFilter : undefined,
-  }), [pagination.pageIndex, pagination.pageSize, search, specFilter]);
+  }), [pagination.pageIndex, pagination.pageSize, debouncedSearch, specFilter]);
 
   const { data, isLoading, isError } = useContractors(query);
   const { data: engagements } = useEngagements(

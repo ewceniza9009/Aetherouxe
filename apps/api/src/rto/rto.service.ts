@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RtoQueryDto } from './dto/rto.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 
 @Injectable()
 export class RtoService {
@@ -51,39 +53,31 @@ export class RtoService {
     return contract;
   }
 
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'status', type: 'eq' },
+      { field: 'propertyId', type: 'relation', relation: 'leaseAgreement', fk: 'propertyId' },
+    ],
+    sortable: ['createdAt', 'updatedAt', 'status', 'totalContractValue', 'accumulatedEquity'],
+  };
+
   async findAll(query: RtoQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-    if (query.status) where.status = query.status;
-    if (query.propertyId) {
-      where.leaseAgreement = { propertyId: query.propertyId };
-    }
-
-    const [data, total] = await Promise.all([
-      this.prisma.rtoContract.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          leaseAgreement: {
-            include: {
-              property: true,
-              tenant: true,
-            },
+    const built = buildListQuery(query, this.fieldMap, { createdAt: 'desc' });
+    return paginate(this.prisma.rtoContract, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+      include: {
+        leaseAgreement: {
+          include: {
+            property: true,
+            tenant: true,
           },
         },
-      }),
-      this.prisma.rtoContract.count({ where }),
-    ]);
-
-    return {
-      data,
-      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    };
+      },
+    });
   }
 
   async findOne(id: string) {

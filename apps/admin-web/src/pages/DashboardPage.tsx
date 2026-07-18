@@ -125,7 +125,7 @@ export default function DashboardPage() {
   const { data: arReport, isLoading: loadingAr } = useArAging();
   const totalReceivable = arReport?.totalReceivable ?? 0;
   const { data: collectionCases, isLoading: loadingCases } = useCollectionCases();
-  const openCasesCount = (collectionCases ?? []).filter(
+  const openCasesCount = (collectionCases?.data ?? []).filter(
     (c) => c.status === "open" || c.status === "in_progress" || c.status === "escalated"
   ).length;
 

@@ -55,7 +55,8 @@ export default function SalesPage() {
   const { data: unitsData, isLoading: unitsLoading } = useUnits({ limit: 500 });
   const { data: residentsData } = useUsers({ limit: 500 });
   const { data: agentsData, isLoading: agentsLoading } = useAgents({ limit: 500 });
-  const { data: schemeTemplates, isLoading: schemesLoading } = useSchemes();
+  const { data: schemeTemplatesResult, isLoading: schemesLoading } = useSchemes();
+  const schemeTemplates = schemeTemplatesResult?.data;
 
   const units = unitsData?.data ?? [];
   const residents = residentsData?.data ?? [];

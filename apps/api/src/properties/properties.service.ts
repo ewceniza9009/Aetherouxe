@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NumberingEngineService } from '../numbering-engine/numbering-engine.service';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 import { PropertySpecService } from '../mongodb/property-spec.service';
 import { CreatePropertyDto, UpdatePropertyDto, PropertyQueryDto } from './dto/properties.dto';
 
@@ -52,26 +54,31 @@ export class PropertiesService {
     throw lastError;
   }
 
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'propertyType', type: 'enum' },
+      { field: 'status', type: 'enum' },
+      { field: 'projectId', type: 'eq' },
+    ],
+    search: ['propertyCode'],
+    sortable: ['createdAt', 'updatedAt', 'propertyCode', 'propertyType', 'status'],
+    sortAliases: { code: 'propertyCode', type: 'propertyType' },
+  };
+
   async findAll(query: PropertyQueryDto, tenantId: string) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-    const where: any = { tenantId };
-    if (query.propertyType) where.propertyType = query.propertyType;
-    if (query.status) where.status = query.status;
-    if (query.projectId) where.projectId = query.projectId;
-    if (query.search) where.propertyCode = { contains: query.search, mode: 'insensitive' };
-    const [data, total] = await Promise.all([
-      this.prisma.property.findMany({
-        where,
-        skip,
-        take: limit,
-        include: { project: true, _count: { select: { units: true } } },
-        orderBy: query.sortBy ? { [query.sortBy]: query.sortOrder || 'asc' } : { createdAt: 'desc' },
-      }),
-      this.prisma.property.count({ where }),
-    ]);
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    // Map the legacy sortOrder ('asc'|'desc') onto the shared sortDir.
+    const normalized: any = { ...query };
+    if (query.sortOrder) normalized.sortDir = query.sortOrder;
+    const built = buildListQuery(normalized, this.fieldMap, { createdAt: 'desc' });
+    const where: any = { tenantId, ...built.where };
+    return paginate(this.prisma.property, {
+      page: query.page,
+      limit: query.limit,
+      where,
+      include: { project: true, _count: { select: { units: true } } },
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+    });
   }
 
   async findOne(id: string, tenantId: string) {

@@ -41,6 +41,7 @@ import {
 } from "@/hooks/use-commissions";
 import { TIER_LABELS, COMMISSION_TYPE_LABELS, formatCurrency } from "@/lib/agent-meta";
 import { PropertyType } from "@elite-realty/shared-types";
+import { ListPager } from "@/components/ListPager";
 
 const PROPERTY_LABELS: Record<string, string> = {
   all: "All Types",
@@ -62,7 +63,11 @@ const EMPTY_FORM: CommissionRulePayload = {
 
 export default function CommissionsPage() {
   const navigate = useNavigate();
-  const { data, isLoading, isError } = useCommissions({ limit: 100 });
+  const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<string>("createdAt");
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const LIMIT = 20;
+  const { data, isLoading, isError } = useCommissions({ limit: LIMIT, page, sort, order });
   const createCommission = useCreateCommission();
   const updateCommission = useUpdateCommission();
   const deleteCommission = useDeleteCommission();
@@ -145,12 +150,32 @@ export default function CommissionsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Rule Name</TableHead>
-                  <TableHead>Tier</TableHead>
-                  <TableHead>Property Type</TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => { setSort("name"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
+                  >
+                    Rule Name {sort === "name" ? (order === "asc" ? "▲" : "▼") : ""}
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => { setSort("agentTier"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
+                  >
+                    Tier {sort === "agentTier" ? (order === "asc" ? "▲" : "▼") : ""}
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => { setSort("propertyType"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
+                  >
+                    Property Type {sort === "propertyType" ? (order === "asc" ? "▲" : "▼") : ""}
+                  </TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Value</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => { setSort("isActive"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
+                  >
+                    Status {sort === "isActive" ? (order === "asc" ? "▲" : "▼") : ""}
+                  </TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -221,6 +246,7 @@ export default function CommissionsPage() {
           )}
         </CardContent>
       </Card>
+      <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="rules" />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>

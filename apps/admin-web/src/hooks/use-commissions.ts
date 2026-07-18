@@ -120,6 +120,8 @@ export interface CommissionQuery {
   limit?: number;
   search?: string;
   status?: "active" | "inactive";
+  sort?: string;
+  order?: "asc" | "desc";
 }
 
 export interface AgentTransactionQuery {
@@ -149,6 +151,8 @@ export function useCommissions(query: CommissionQuery) {
       if (query.limit) params.set("limit", String(query.limit));
       if (query.search) params.set("search", query.search);
       if (query.status) params.set("status", query.status);
+      if (query.sort) params.set("sort", query.sort);
+      if (query.order) params.set("order", query.order);
       const { data } = await api.get<ApiResponse<CommissionRule[]>>(
         `/commissions?${params}`
       );

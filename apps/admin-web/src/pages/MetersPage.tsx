@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useDebouncedValue } from "@/hooks/use-debounce";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Card,
@@ -45,6 +46,7 @@ import {
 import { useProperties } from "@/hooks/use-properties";
 import { useUnits } from "@/hooks/use-units";
 import { utilityTypeMeta } from "@/lib/utility-meta";
+import { ListPager } from "@/components/ListPager";
 
 const utilityIcons: Record<UtilityType, React.ReactNode> = {
   water: <Droplets className="h-3.5 w-3.5" />,
@@ -80,12 +82,25 @@ export default function MetersPage() {
   const [utilityType, setUtilityType] = useState<string>("all");
   const [propertyId, setPropertyId] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<string>("createdAt");
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const LIMIT = 20;
+  const debouncedSearch = useDebouncedValue(search, 350);
 
   const { data, isLoading, isError, refetch } = useMeters({
     utilityType: utilityType !== "all" ? (utilityType as UtilityType) : undefined,
     propertyId: propertyId !== "all" ? propertyId : undefined,
-    search: search || undefined,
+    search: debouncedSearch || undefined,
+    sort,
+    order,
+    page,
+    limit: LIMIT,
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   const { data: propertiesData } = useProperties({ limit: 200 });
   const properties = propertiesData?.data ?? [];
@@ -125,7 +140,7 @@ export default function MetersPage() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <Select value={utilityType} onValueChange={setUtilityType}>
+            <Select value={utilityType} onValueChange={(v) => { setUtilityType(v); setPage(1); }}>
               <SelectTrigger className="w-full sm:w-44">
                 <SelectValue placeholder="Utility type" />
               </SelectTrigger>
@@ -136,7 +151,7 @@ export default function MetersPage() {
                 <SelectItem value="gas">Gas</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={propertyId} onValueChange={setPropertyId}>
+            <Select value={propertyId} onValueChange={(v) => { setPropertyId(v); setPage(1); }}>
               <SelectTrigger className="w-full sm:w-56">
                 <SelectValue placeholder="Property" />
               </SelectTrigger>
@@ -174,10 +189,20 @@ export default function MetersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Meter #</TableHead>
-                  <TableHead>Type</TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => { setSort("utilityType"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
+                  >
+                    Type {sort === "utilityType" ? (order === "asc" ? "▲" : "▼") : ""}
+                  </TableHead>
                   <TableHead>Unit / Property</TableHead>
                   <TableHead>Tenant</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => { setSort("isActive"); setOrder(order === "asc" ? "desc" : "asc"); setPage(1); }}
+                  >
+                    Status {sort === "isActive" ? (order === "asc" ? "▲" : "▼") : ""}
+                  </TableHead>
                   <TableHead className="text-right">Readings</TableHead>
                 </TableRow>
               </TableHeader>
@@ -216,6 +241,7 @@ export default function MetersPage() {
           )}
         </CardContent>
       </Card>
+      <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="meters" />
     </div>
   );
 }
