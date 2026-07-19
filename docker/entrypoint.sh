@@ -48,7 +48,7 @@ echo "[entrypoint] applying database schema..."
 if [ -d prisma/migrations ] && [ "$(ls -A prisma/migrations 2>/dev/null)" ]; then
   npx prisma migrate deploy
 else
-  npx prisma db push --accept-data-loss
+  npx prisma db push
 fi
 
 echo "[entrypoint] seeding database (skips automatically if already populated)..."

@@ -38,6 +38,10 @@ export interface Property {
 export interface PropertySpecs {
   id?: string;
   propertyId: string;
+  description?: string;
+  yearBuilt?: number;
+  lotSize?: string;
+  totalSquareFeet?: string;
   floorPlanImage?: string;
   ceilingHeight?: string;
   finishType?: string;
@@ -186,8 +190,13 @@ export function usePropertySpecs(id: string) {
   return useQuery({
     queryKey: ["property-specs", id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<PropertySpecs>>(`/properties/${id}/specs`);
-      return data.data;
+      const { data } = await api.get<ApiResponse<Record<string, unknown>>>(`/properties/${id}/specs`);
+      const raw = (data.data ?? {}) as Record<string, unknown>;
+      const specData = (raw.specs ?? {}) as Record<string, unknown>;
+      return {
+        propertyId: raw.propertyId as string,
+        ...specData,
+      } as PropertySpecs;
     },
     enabled: !!id,
   });
@@ -196,8 +205,8 @@ export function usePropertySpecs(id: string) {
 export function useUpdatePropertySpecs() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...specs }: Partial<PropertySpecs> & { id: string }) => {
-      const { data } = await api.put<ApiResponse<PropertySpecs>>(`/properties/${id}/specs`, specs);
+    mutationFn: async ({ id, propertyId, ...rest }: Partial<PropertySpecs> & { id: string }) => {
+      const { data } = await api.put<ApiResponse<PropertySpecs>>(`/properties/${id}/specs`, { specs: rest });
       return data.data;
     },
     onSuccess: (_, variables) => {

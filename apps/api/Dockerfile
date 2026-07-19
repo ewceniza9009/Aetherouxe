@@ -7,5 +7,7 @@ RUN npm ci
 WORKDIR /app/apps/api
 RUN npx prisma generate
 RUN npm run build
+RUN chown -R node:node /app
+USER node
 EXPOSE 4000
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/src/main"]
+CMD ["sh", "-c", "npx prisma db push && node dist/src/main"]

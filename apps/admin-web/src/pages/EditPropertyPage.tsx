@@ -59,21 +59,22 @@ export default function EditPropertyPage() {
   });
 
   useEffect(() => {
-    if (property) {
-      setForm({
-        name: property.name || "",
-        code: property.code || "",
-        address: property.address || "",
-        type: property.type || "",
-        status: property.status || "available",
-        description: property.description || "",
-        yearBuilt: property.yearBuilt ? String(property.yearBuilt) : "",
-        lotSize: property.lotSize || "",
-        totalSquareFeet: property.totalSquareFeet || "",
-        units: String(property.units ?? 0),
-      });
+    if (property || specs) {
+      setForm((prev) => ({
+        ...prev,
+        name: property?.name || "",
+        code: property?.code || "",
+        address: property?.address || "",
+        type: property?.type || "",
+        status: property?.status || "available",
+        description: (specs as any)?.description || property?.description || "",
+        yearBuilt: (specs as any)?.yearBuilt ? String((specs as any).yearBuilt) : property?.yearBuilt ? String(property.yearBuilt) : "",
+        lotSize: (specs as any)?.lotSize || property?.lotSize || "",
+        totalSquareFeet: (specs as any)?.totalSquareFeet || property?.totalSquareFeet || "",
+        units: String(property?.units ?? 0),
+      }));
     }
-  }, [property]);
+  }, [property, specs]);
 
   useEffect(() => {
     if (specs) {
@@ -105,18 +106,11 @@ export default function EditPropertyPage() {
 const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload: Partial<import('@/hooks/use-properties').Property> & { id: string } = {
+      const payload: Record<string, unknown> & { id: string } = {
         id,
-        name: form.name,
-        code: form.code,
-        address: form.address,
-        type: form.type as import('@elite-realty/shared-types').PropertyType,
-        status: form.status as import('@elite-realty/shared-types').PropertyStatus,
-        description: form.description || undefined,
-        yearBuilt: form.yearBuilt ? parseInt(form.yearBuilt) : undefined,
-        lotSize: form.lotSize || undefined,
-        totalSquareFeet: form.totalSquareFeet || undefined,
-        units: parseInt(form.units) || 0,
+        propertyType: form.type || undefined,
+        propertyCode: form.code || undefined,
+        status: form.status || undefined,
       };
       Object.keys(payload).forEach((k) => (payload as any)[k] === undefined && delete (payload as any)[k]);
       await updateProperty.mutateAsync(payload);
@@ -144,6 +138,10 @@ const handleSubmit = async (e: React.FormEvent) => {
         specsPayload.covered = specForm.covered;
         specsPayload.nearbyElevator = specForm.nearbyElevator;
       }
+      if (form.description) specsPayload.description = form.description;
+      if (form.yearBuilt) specsPayload.yearBuilt = parseInt(form.yearBuilt);
+      if (form.lotSize) specsPayload.lotSize = form.lotSize;
+      if (form.totalSquareFeet) specsPayload.totalSquareFeet = form.totalSquareFeet;
       Object.keys(specsPayload).forEach((k) => (specsPayload as any)[k] === undefined && delete (specsPayload as any)[k]);
 
       if (Object.keys(specsPayload).length > 2) {

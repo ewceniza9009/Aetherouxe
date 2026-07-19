@@ -1,13 +1,13 @@
-import { IsString, IsOptional, IsEnum, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsIn, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePropertyDto {
   @ApiProperty() @IsString() @IsUUID() projectId: string;
   @ApiProperty({ enum: ['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'] })
-  @IsEnum(['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'])
+  @IsIn(['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'])
   propertyType: string;
   @ApiPropertyOptional({ enum: ['available', 'reserved', 'sold', 'rented', 'rto_active', 'under_maintenance'] })
-  @IsOptional() @IsEnum(['available', 'reserved', 'sold', 'rented', 'rto_active', 'under_maintenance'])
+  @IsOptional() @IsIn(['available', 'reserved', 'sold', 'rented', 'rto_active', 'under_maintenance'])
   status?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() parentPropertyId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() propertyCode?: string;
@@ -15,10 +15,10 @@ export class CreatePropertyDto {
 
 export class UpdatePropertyDto {
   @ApiPropertyOptional({ enum: ['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'] })
-  @IsOptional() @IsEnum(['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'])
+  @IsOptional() @IsIn(['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'])
   propertyType?: string;
   @ApiPropertyOptional({ enum: ['available', 'reserved', 'sold', 'rented', 'rto_active', 'under_maintenance'] })
-  @IsOptional() @IsEnum(['available', 'reserved', 'sold', 'rented', 'rto_active', 'under_maintenance'])
+  @IsOptional() @IsIn(['available', 'reserved', 'sold', 'rented', 'rto_active', 'under_maintenance'])
   status?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() parentPropertyId?: string;
 }

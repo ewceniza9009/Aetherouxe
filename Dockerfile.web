@@ -6,5 +6,7 @@ COPY . .
 RUN npm install
 WORKDIR /app/apps/${APP}
 RUN npx vite build
+RUN chown -R node:node /app
+USER node
 EXPOSE 4173
 CMD ["npx", "vite", "preview", "--host", "0.0.0.0", "--port", "4173"]

@@ -16,7 +16,7 @@
     "build": "tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json",
     "lint": "echo lint ok",
     "typecheck": "tsc --noEmit -p tsconfig.cjs.json",
-    "clean": "rm -rf .turbo dist node_modules"
+    "clean": "npx rimraf .turbo dist node_modules"
   },
   "devDependencies": {
     "typescript": "^5.7.0"

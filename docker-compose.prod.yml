@@ -16,7 +16,7 @@ services:
       POSTGRES_USER: elite
       POSTGRES_PASSWORD: elite123
       POSTGRES_DB: elite_realty
-    ports: ["15432:5432"]
+    expose: ["5432"]
     volumes: ["postgres-data:/var/lib/postgresql/data"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U elite"]
@@ -30,12 +30,12 @@ services:
       MONGO_INITDB_ROOT_USERNAME: elite
       MONGO_INITDB_ROOT_PASSWORD: elite123
       MONGO_INITDB_DATABASE: elite_realty
-    ports: ["27019:27017"]
+    expose: ["27017"]
     volumes: ["mongo-data:/data/db"]
 
   redis:
     image: redis:7-alpine
-    ports: ["16379:6379"]
+    expose: ["6379"]
 
   minio:
     image: minio/minio:latest
@@ -43,7 +43,7 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     command: server /data --console-address ":9001"
-    ports: ["19000:9000", "19001:9001"]
+    expose: ["9000", "9001"]
     volumes: ["minio-data:/data"]
 
   api:
@@ -56,7 +56,7 @@ services:
       DATABASE_URL: postgresql://elite:elite123@postgres:5432/elite_realty
       MONGODB_URI: mongodb://elite:elite123@mongodb:27017/elite_realty?authSource=admin
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: change-me-in-production
+      JWT_SECRET: "${JWT_SECRET}"
     depends_on:
       postgres:
         condition: service_healthy
