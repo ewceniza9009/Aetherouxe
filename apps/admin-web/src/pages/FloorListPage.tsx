@@ -83,50 +83,48 @@ export default function FloorListPage() {
   const sortedFloors = floors ? [...floors].sort((a, b) => a.sortOrder - b.sortOrder) : [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigate({ to: "/buildings" })}>
+    <div className="space-y-4 flex flex-col h-[calc(100vh-6rem)] min-h-0">
+      <div className="flex items-center gap-4 shrink-0">
+        <Button variant="outline" size="icon" onClick={() => navigate({ to: "/buildings" })} className="bg-background/50 hover:bg-muted shadow-sm">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {building ? `${building.name} - Floors` : "Floors"}
+          <h1 className="text-3xl font-extrabold tracking-tight">
+            {building ? `${building.name} — Floors` : "Floors"}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm font-medium text-muted-foreground mt-1">
             {building?.address ?? "Manage building floors"}
           </p>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Add Floor</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className="shrink-0 border-border/60 shadow-sm overflow-hidden">
+        <div className="bg-muted/10 p-4 border-b border-border/40">
           <div className="flex items-end gap-3">
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="floorNumber">Floor Number</Label>
+            <div className="flex-1 space-y-1">
+              <Label htmlFor="floorNumber" className="text-xs uppercase tracking-wider font-bold text-muted-foreground">Add New Floor</Label>
               <Input
                 id="floorNumber"
                 type="text"
                 placeholder="e.g. 1, Ground, Basement"
                 value={newFloorNumber}
                 onChange={(e) => setNewFloorNumber(e.target.value)}
+                className="bg-background shadow-sm h-10"
               />
             </div>
-            <Button onClick={handleAddFloor} disabled={!newFloorNumber || createFloor.isPending}>
+            <Button onClick={handleAddFloor} disabled={!newFloorNumber || createFloor.isPending} className="h-10 px-6 shadow-sm">
               <Plus className="mr-2 h-4 w-4" />
               {createFloor.isPending ? "Adding..." : "Add Floor"}
             </Button>
           </div>
-        </CardContent>
+        </div>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Floors</CardTitle>
+      <Card className="flex-1 flex flex-col min-h-0 border-border/60 shadow-sm overflow-hidden">
+        <CardHeader className="bg-muted/30 border-b border-border/40 py-3 px-4 shrink-0">
+          <CardTitle className="text-xs uppercase tracking-widest text-muted-foreground">All Floors</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 overflow-auto p-0">
           <GridState
             isLoading={isLoading}
             isError={!!error}
@@ -139,48 +137,53 @@ export default function FloorListPage() {
               </div>
             }
           >
-            <div className="space-y-2">
+            <div className="divide-y divide-border/40">
               {sortedFloors.map((floor, idx) => (
                 <div
                   key={floor.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors"
+                  className="flex items-center justify-between p-4 bg-background hover:bg-muted/30 transition-colors group"
                 >
                   <div className="flex items-center gap-4">
-                    <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
+                    <GripVertical className="h-5 w-5 text-muted-foreground/30 group-hover:text-muted-foreground cursor-grab transition-colors" />
                     <div>
-                      <p className="font-medium">Floor {floor.floorNumber}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="font-bold text-foreground">Floor {floor.floorNumber}</p>
+                      <p className="text-xs font-medium text-muted-foreground mt-0.5">
                         Sort order: {floor.sortOrder} &middot; {floor.unitsCount ?? 0} unit{(floor.unitsCount ?? 0) !== 1 ? "s" : ""}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{floor.unitsCount ?? 0} units</Badge>
+                    <Badge variant="secondary" className="px-2 font-bold bg-muted/50 text-muted-foreground">{floor.unitsCount ?? 0} units</Badge>
+                    <div className="flex items-center bg-muted/50 rounded-md p-0.5 ml-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-sm"
+                        disabled={idx === 0}
+                        onClick={() => handleMoveFloor(floor, "up")}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-sm"
+                        disabled={idx === sortedFloors.length - 1}
+                        onClick={() => handleMoveFloor(floor, "down")}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      disabled={idx === 0}
-                      onClick={() => handleMoveFloor(floor, "up")}
-                    >
-                      <ChevronUp className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={idx === sortedFloors.length - 1}
-                      onClick={() => handleMoveFloor(floor, "down")}
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                      className="h-8 w-8 ml-1 hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
                       onClick={() => {
                         setDeleteTarget(floor);
                         setDeleteDialogOpen(true);
                       }}
                     >
-                      <Trash2 className="h-4 w-4 text-red-500" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>

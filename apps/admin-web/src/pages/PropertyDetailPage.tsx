@@ -93,450 +93,341 @@ export default function PropertyDetailPage() {
           ? "warning"
           : "secondary";
 
+  const primaryImage = property.images?.find((img: any) => img.isPrimary) || property.images?.[0];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigate({ to: "/properties" })}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">
+    <div className="space-y-4 flex flex-col h-full">
+      {/* Compact Premium Hero Section */}
+      <div className="relative rounded-xl overflow-hidden bg-card border border-border/60 shadow-sm shrink-0">
+        {/* Background Image / Pattern */}
+        {primaryImage ? (
+          <>
+            <div 
+              className="absolute inset-0 opacity-[0.03] dark:opacity-20 mix-blend-multiply dark:mix-blend-screen bg-cover bg-center"
+              style={{ backgroundImage: `url(${primaryImage.url})` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-card via-card/95 to-card/80" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-card to-background" />
+        )}
+
+        {/* Content */}
+        <div className="relative p-6 md:p-8 pb-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+          <div className="flex items-start gap-4 w-full">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate({ to: "/properties" })}
+              className="bg-background/50 text-muted-foreground border-border/60 hover:bg-muted hover:text-foreground backdrop-blur-md shrink-0 h-10 w-10 mt-1 rounded-full shadow-sm"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center gap-3">
+                <Badge variant={statusVariant as any} className="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm border-0 h-5">
+                  {property.status.replace(/_/g, " ")}
+                </Badge>
+                <span className="font-mono text-[10px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded border border-border/50 font-medium h-5 flex items-center">
+                  {property.code}
+                </span>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground leading-none">
                 {property.name}
               </h1>
-              <span className="font-mono text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                {property.code}
-              </span>
+              <p className="text-sm text-muted-foreground flex items-center gap-1.5 font-medium">
+                <MapPin className="h-4 w-4 text-primary" /> {property.address}
+              </p>
             </div>
-            <p className="text-muted-foreground flex items-center gap-1">
-              <MapPin className="h-3 w-3" /> {property.address}
-            </p>
+          </div>
+
+          <div className="flex gap-2 shrink-0">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate({ to: `/properties/${id}/edit` })}
+              className="bg-background/80 text-foreground border-border/60 hover:bg-muted h-9"
+            >
+              <Edit className="mr-2 h-4 w-4" /> Edit
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => navigate({ to: `/properties/${id}/units` })}
+              className="shadow-gold font-medium h-9"
+            >
+              <Building2 className="mr-2 h-4 w-4" /> Units
+            </Button>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate({ to: `/properties/${id}/edit` })}
-          >
-            <Edit className="mr-2 h-4 w-4" /> Edit
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate({ to: `/properties/${id}/units` })}
-          >
-            <Building2 className="mr-2 h-4 w-4" /> View Units
-          </Button>
+
+        {/* Thin Premium Stats Bar */}
+        <div className="relative border-t border-border/40 bg-muted/10">
+          <div className="flex flex-wrap divide-x divide-border/40">
+            <div className="px-6 py-4 flex flex-col justify-center gap-1 flex-1 min-w-[120px]">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Type</span>
+              <span className="text-lg font-bold text-foreground capitalize truncate">{property.type.replace(/_/g, " ")}</span>
+            </div>
+            <div className="px-6 py-4 flex flex-col justify-center gap-1 flex-1 min-w-[120px]">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Units</span>
+              <span className="text-lg font-bold text-foreground">{unitsResult?.meta?.total ?? property.units ?? 0}</span>
+            </div>
+            <div className="px-6 py-4 flex flex-col justify-center gap-1 flex-1 min-w-[120px]">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Revenue</span>
+              <span className="text-lg font-bold text-foreground">{property.monthlyRevenue != null ? formatCurrency(Number(property.monthlyRevenue)) : "--"}</span>
+            </div>
+            <div className="px-6 py-4 flex flex-col justify-center gap-1 flex-1 min-w-[120px]">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Year</span>
+              <span className="text-lg font-bold text-foreground">{property.yearBuilt || "--"}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badge variant={statusVariant as any}>
-              {property.status.replace(/_/g, " ")}
-            </Badge>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Type</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold capitalize">
-              {property.type.replace(/_/g, " ")}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Units</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {unitsResult?.meta?.total ?? property.units ?? 0}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {property.monthlyRevenue != null
-                ? formatCurrency(Number(property.monthlyRevenue))
-                : "--"}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs.Root value={tab} onValueChange={setTab} className="space-y-6">
-        <Tabs.List className="flex border-b overflow-x-auto gap-2 pb-1">
+      <Tabs.Root value={tab} onValueChange={setTab} className="flex-1 flex flex-col min-h-0 space-y-4">
+        <Tabs.List className="flex border-b border-border overflow-x-auto gap-8 pb-[1px] shrink-0">
           <Tabs.Trigger
             value="overview"
-            className="px-4 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-colors"
+            className="px-2 py-3 text-sm font-bold tracking-widest border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-all uppercase"
           >
             Overview
           </Tabs.Trigger>
           <Tabs.Trigger
             value="showcase"
-            className="px-4 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-colors"
+            className="px-2 py-3 text-sm font-bold tracking-widest border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-all uppercase"
           >
             Showcase
           </Tabs.Trigger>
         </Tabs.List>
 
-        <Tabs.Content value="overview" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Property Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Property Code
-                    </p>
-                    <p className="font-mono text-sm font-medium">
-                      {property.code}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Property Type
-                    </p>
-                    <p className="font-medium capitalize">
-                      {property.type.replace(/_/g, " ")}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Status</p>
-                    <Badge variant={statusVariant as any}>
-                      {property.status.replace(/_/g, " ")}
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Units</p>
-                    <p className="font-medium">
-                      {unitsResult?.meta?.total ?? property.units ?? 0}
-                    </p>
-                  </div>
-                  {property.yearBuilt && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Year Built
-                      </p>
-                      <p className="font-medium">{property.yearBuilt}</p>
+        <Tabs.Content value="overview" className="flex-1 flex flex-col min-h-0 space-y-4 m-0 data-[state=inactive]:hidden">
+          {/* Ultra Compact Property Profile */}
+          <Card className="overflow-hidden border-border/60 shadow-sm shrink-0">
+            <CardContent className="p-0">
+              <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-border/40">
+                <div className="flex-1 p-5 md:p-6 flex flex-col gap-6">
+                  {property.description && (
+                    <div className="border-b border-border/40 pb-5">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-bold">Description</p>
+                      <p className="text-sm leading-relaxed text-foreground/90">{property.description}</p>
                     </div>
                   )}
-                  {property.lotSize && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Lot Size</p>
-                      <p className="font-medium">{property.lotSize}</p>
+                  
+                  {/* Check if we have any specs to show */}
+                  {(!property.yearBuilt && !property.lotSize && !property.totalSquareFeet && !specs?.floorArea && !specs?.lotArea && specs?.bedrooms == null && specs?.bathrooms == null && !specs?.ceilingHeight && !specs?.finishType && !specs?.flooring && !specs?.appliances && !specs?.ac && !specs?.dimensions && specs?.garden == null && specs?.garage == null && specs?.covered == null && specs?.nearbyElevator == null && !specs?.smartHomeFeatures && !property.description) ? (
+                    <div className="flex flex-col items-center justify-center py-6 text-muted-foreground opacity-70">
+                      <FileText className="h-6 w-6 mb-2" />
+                      <p className="text-sm">No additional property details or specifications.</p>
+                    </div>
+                  ) : (
+                    <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-y-5 gap-x-6">
+                      {property.yearBuilt && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Year Built</p>
+                          <p className="text-sm font-medium">{property.yearBuilt}</p>
+                        </div>
+                      )}
+                      {property.lotSize && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Lot Size</p>
+                          <p className="text-sm font-medium">{property.lotSize}</p>
+                        </div>
+                      )}
+                      {property.totalSquareFeet && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Total Area</p>
+                          <p className="text-sm font-medium">{property.totalSquareFeet}</p>
+                        </div>
+                      )}
+                      {specs?.floorArea && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Floor Area</p>
+                          <p className="text-sm font-medium">{specs.floorArea}</p>
+                        </div>
+                      )}
+                      {specs?.lotArea && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Lot Area (Specs)</p>
+                          <p className="text-sm font-medium">{specs.lotArea}</p>
+                        </div>
+                      )}
+                      {specs?.bedrooms != null && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Bedrooms</p>
+                          <p className="text-sm font-medium">{specs.bedrooms}</p>
+                        </div>
+                      )}
+                      {specs?.bathrooms != null && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Bathrooms</p>
+                          <p className="text-sm font-medium">{specs.bathrooms}</p>
+                        </div>
+                      )}
+                      {specs?.ceilingHeight && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Ceiling Height</p>
+                          <p className="text-sm font-medium">{specs.ceilingHeight}</p>
+                        </div>
+                      )}
+                      {specs?.finishType && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Finish Type</p>
+                          <p className="text-sm font-medium">{specs.finishType}</p>
+                        </div>
+                      )}
+                      {specs?.flooring && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Flooring</p>
+                          <p className="text-sm font-medium">{specs.flooring}</p>
+                        </div>
+                      )}
+                      {specs?.appliances && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Appliances</p>
+                          <p className="text-sm font-medium">{specs.appliances}</p>
+                        </div>
+                      )}
+                      {specs?.ac && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">AC</p>
+                          <p className="text-sm font-medium">{specs.ac}</p>
+                        </div>
+                      )}
+                      {specs?.dimensions && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Dimensions</p>
+                          <p className="text-sm font-medium">{specs.dimensions}</p>
+                        </div>
+                      )}
+                      {specs?.garden != null && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Garden</p>
+                          <p className="text-sm font-medium">{specs.garden ? "Yes" : "No"}</p>
+                        </div>
+                      )}
+                      {specs?.garage != null && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Garage</p>
+                          <p className="text-sm font-medium">{specs.garage ? "Yes" : "No"}</p>
+                        </div>
+                      )}
+                      {specs?.covered != null && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Covered</p>
+                          <p className="text-sm font-medium">{specs.covered ? "Yes" : "No"}</p>
+                        </div>
+                      )}
+                      {specs?.nearbyElevator != null && (
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Elevator Nearby</p>
+                          <p className="text-sm font-medium">{specs.nearbyElevator ? "Yes" : "No"}</p>
+                        </div>
+                      )}
                     </div>
                   )}
-                  {property.totalSquareFeet && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Total Area
-                      </p>
-                      <p className="font-medium">{property.totalSquareFeet}</p>
+                  {specs?.smartHomeFeatures && (
+                    <div className="border-t border-border/40 pt-5 mt-2">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-bold">Smart Home Features</p>
+                      <p className="text-sm leading-relaxed text-foreground/90">{specs.smartHomeFeatures}</p>
                     </div>
                   )}
                 </div>
-                {property.description && (
-                  <>
-                    <Separator />
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Description
-                      </p>
-                      <p className="text-sm">{property.description}</p>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Specifications</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {specs ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    {specs.ceilingHeight && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Ceiling Height
-                        </p>
-                        <p className="font-medium">{specs.ceilingHeight}</p>
-                      </div>
-                    )}
-                    {specs.finishType && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Finish Type
-                        </p>
-                        <p className="font-medium">{specs.finishType}</p>
-                      </div>
-                    )}
-                    {specs.flooring && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Flooring
-                        </p>
-                        <p className="font-medium">{specs.flooring}</p>
-                      </div>
-                    )}
-                    {specs.appliances && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Appliances
-                        </p>
-                        <p className="font-medium">{specs.appliances}</p>
-                      </div>
-                    )}
-                    {specs.ac && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">AC</p>
-                        <p className="font-medium">{specs.ac}</p>
-                      </div>
-                    )}
-                    {specs.lotArea && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Lot Area
-                        </p>
-                        <p className="font-medium">{specs.lotArea}</p>
-                      </div>
-                    )}
-                    {specs.floorArea && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Floor Area
-                        </p>
-                        <p className="font-medium">{specs.floorArea}</p>
-                      </div>
-                    )}
-                    {specs.bedrooms != null && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Bedrooms
-                        </p>
-                        <p className="font-medium">{specs.bedrooms}</p>
-                      </div>
-                    )}
-                    {specs.bathrooms != null && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Bathrooms
-                        </p>
-                        <p className="font-medium">{specs.bathrooms}</p>
-                      </div>
-                    )}
-                    {specs.dimensions && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Dimensions
-                        </p>
-                        <p className="font-medium">{specs.dimensions}</p>
-                      </div>
-                    )}
-                    {specs.garden != null && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Garden</p>
-                        <p className="font-medium">
-                          {specs.garden ? "Yes" : "No"}
-                        </p>
-                      </div>
-                    )}
-                    {specs.garage != null && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Garage</p>
-                        <p className="font-medium">
-                          {specs.garage ? "Yes" : "No"}
-                        </p>
-                      </div>
-                    )}
-                    {specs.covered != null && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Covered</p>
-                        <p className="font-medium">
-                          {specs.covered ? "Yes" : "No"}
-                        </p>
-                      </div>
-                    )}
-                    {specs.nearbyElevator != null && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          Nearby Elevator
-                        </p>
-                        <p className="font-medium">
-                          {specs.nearbyElevator ? "Yes" : "No"}
-                        </p>
-                      </div>
-                    )}
-                    {specs.smartHomeFeatures && (
-                      <div className="col-span-2">
-                        <p className="text-sm text-muted-foreground">
-                          Smart Home Features
-                        </p>
-                        <p className="font-medium">{specs.smartHomeFeatures}</p>
-                      </div>
-                    )}
-                    {!specs.ceilingHeight &&
-                      !specs.finishType &&
-                      !specs.flooring &&
-                      !specs.appliances &&
-                      !specs.ac &&
-                      !specs.lotArea &&
-                      !specs.floorArea &&
-                      specs.bedrooms == null &&
-                      specs.bathrooms == null &&
-                      !specs.dimensions &&
-                      specs.garden == null &&
-                      specs.garage == null &&
-                      specs.covered == null &&
-                      specs.nearbyElevator == null &&
-                      !specs.smartHomeFeatures && (
-                        <p className="text-muted-foreground col-span-2">
-                          No specifications available.
-                        </p>
-                      )}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">
-                    No specifications available.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
+          <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-border/60 shadow-sm">
+            <CardHeader className="bg-muted/30 border-b border-border/40 py-2.5 px-4 shrink-0">
               <div className="flex items-center justify-between">
-                <CardTitle>Units in this Property</CardTitle>
+                <CardTitle className="text-sm font-bold tracking-widest uppercase">Units Overview</CardTitle>
                 <div className="flex gap-2">
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => navigate({ to: `/properties/${id}/units` })}
+                    className="h-7 text-xs px-2"
+                    onClick={() => navigate({ to: `/leases?propertyId=${id}` })}
                   >
-                    <Building2 className="mr-2 h-4 w-4" /> View All
+                    <FileText className="mr-1.5 h-3 w-3" /> Leases
                   </Button>
                   <Button
                     size="sm"
-                    onClick={() =>
-                      navigate({ to: `/properties/${id}/units/new` })
-                    }
+                    variant="outline"
+                    className="h-7 text-xs px-2"
+                    onClick={() => navigate({ to: `/properties/${id}/units` })}
                   >
-                    <Plus className="mr-2 h-4 w-4" /> Add Unit
+                    <Building2 className="mr-1.5 h-3 w-3" /> All Units
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-7 text-xs px-2 shadow-sm"
+                    onClick={() => navigate({ to: `/properties/${id}/units/new` })}
+                  >
+                    <Plus className="mr-1.5 h-3 w-3" /> Add Unit
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0 flex-1 flex flex-col min-h-0">
               {!unitsResult?.data?.length ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Building2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <EmptyState title="No units yet" />
-                  <p className="text-sm">
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto"
-                      onClick={() =>
-                        navigate({ to: `/properties/${id}/units/new` })
-                      }
-                    >
-                      Create the first unit
-                    </Button>
-                  </p>
+                <div className="flex-1 flex flex-col items-center justify-center text-center py-6 text-muted-foreground bg-muted/5">
+                  <Building2 className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                  <p className="text-sm font-medium">No units yet</p>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-xs mt-1"
+                    onClick={() => navigate({ to: `/properties/${id}/units/new` })}
+                  >
+                    Create the first unit
+                  </Button>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                    Showing {unitsResult.data.length} of{" "}
-                    {unitsResult.meta.total} total units
-                  </p>
-                  <div className="rounded-md border scroll-grid">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b bg-muted/50">
-                          <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
-                            Unit
-                          </th>
-                          <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
-                            Type
-                          </th>
-                          <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
-                            Size
-                          </th>
-                          <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
-                            Bed
-                          </th>
-                          <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
-                            Bath
-                          </th>
-                          <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
-                            Status
-                          </th>
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="px-4 py-1.5 bg-muted/5 border-b border-border/40 flex justify-between items-center shrink-0">
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+                      Recent Units
+                    </p>
+                    <p className="text-[10px] text-muted-foreground font-medium">
+                      Showing {unitsResult.data.length} of {unitsResult.meta.total}
+                    </p>
+                  </div>
+                  <div className="flex-1 overflow-auto">
+                    <table className="w-full text-xs">
+                      <thead className="sticky top-0 bg-muted/10 border-b border-border/40 backdrop-blur-sm">
+                        <tr>
+                          <th className="px-4 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wider">Unit</th>
+                          <th className="px-4 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wider">Type</th>
+                          <th className="px-4 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wider">Size</th>
+                          <th className="px-4 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wider">Bed/Bath</th>
+                          <th className="px-4 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-border/20">
                         {unitsResult.data.map((unit) => (
                           <tr
                             key={unit.id}
-                            className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
-                            onClick={() =>
-                              navigate({
-                                to: `/properties/${id}/units/${unit.id}/edit`,
-                              })
-                            }
+                            className="hover:bg-muted/30 transition-colors cursor-pointer group"
+                            onClick={() => navigate({ to: `/properties/${id}/units/${unit.id}/edit` })}
                           >
-                            <td className="px-4 py-2 text-sm font-mono font-medium">
+                            <td className="px-4 py-2 font-mono font-medium text-foreground group-hover:text-primary transition-colors">
                               {unit.unitNumber}
                             </td>
-                            <td className="px-4 py-2 text-sm">
-                              <Badge variant="secondary">
+                            <td className="px-4 py-2">
+                              <span className="text-muted-foreground capitalize font-medium">
                                 {unit.type || unit.unitType || "--"}
-                              </Badge>
+                              </span>
                             </td>
-                            <td className="px-4 py-2 text-sm">
-                              {unit.size
-                                ? `${unit.size} sq ft`
-                                : unit.squareMeters
-                                  ? `${unit.squareMeters} m²`
-                                  : "--"}
+                            <td className="px-4 py-2 text-muted-foreground">
+                              {unit.size ? `${unit.size} sq ft` : unit.squareMeters ? `${unit.squareMeters} m²` : "--"}
                             </td>
-                            <td className="px-4 py-2 text-sm">
-                              {unit.bedrooms ?? "--"}
+                            <td className="px-4 py-2 text-muted-foreground flex items-center gap-1.5">
+                              <span>{unit.bedrooms ?? "-"}</span>
+                              <span className="text-border/40 text-[10px]">|</span>
+                              <span>{unit.bathrooms ?? "-"}</span>
                             </td>
-                            <td className="px-4 py-2 text-sm">
-                              {unit.bathrooms ?? "--"}
-                            </td>
-                            <td className="px-4 py-2 text-sm">
+                            <td className="px-4 py-2">
                               <Badge
-                                variant={
-                                  unit.status === "occupied"
-                                    ? "success"
-                                    : unit.status === "available"
-                                      ? "default"
-                                      : "secondary"
-                                }
+                                variant={unit.status === "occupied" ? "success" : unit.status === "available" ? "default" : "secondary"}
+                                className="shadow-none border-0 text-[10px] px-1.5 py-0 h-4"
                               >
                                 {unit.status ?? "available"}
                               </Badge>
@@ -550,23 +441,6 @@ export default function PropertyDetailPage() {
               )}
             </CardContent>
           </Card>
-
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={() => navigate({ to: `/leases?propertyId=${id}` })}
-            >
-              <FileText className="h-4 w-4" /> View Leases
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={() => navigate({ to: `/properties/${id}/units` })}
-            >
-              <Building2 className="h-4 w-4" /> Manage Units
-            </Button>
-          </div>
         </Tabs.Content>
         <Tabs.Content value="showcase">
           <ShowcaseTab property={property} />

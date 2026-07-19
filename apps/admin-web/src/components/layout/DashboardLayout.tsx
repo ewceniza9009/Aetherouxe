@@ -1,11 +1,13 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useState, useEffect } from "react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import Sidebar from "./Sidebar";
+import { CommandMenu } from "@/components/CommandMenu";
 import NotificationBell from "@/components/NotificationBell";
 import { useAuth } from "@elite-realty/shared-ui/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "@tanstack/react-router";
-import { LogOut } from "lucide-react";
-import { useCompanyMeta } from "@/lib/settings-store";
+import { LogOut, Search } from "lucide-react";
+import { useCompanyMeta, reloadSettings } from "@/lib/settings-store";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -14,19 +16,33 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
   const companyMeta = useCompanyMeta();
+  const [commandOpen, setCommandOpen] = useState(false);
+  
+  useEffect(() => {
+    reloadSettings();
+  }, []);
   
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
       <div className="flex flex-1 flex-col min-h-0">
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card/70 px-6 backdrop-blur-sm">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-primary/20 bg-white shadow-sm">
-              <img src={companyMeta.logoUrl || "/favicon.png"} alt="Logo" className="h-full w-full object-contain p-[3px]" />
+          <div className="flex items-center flex-1">
+            <div className="relative w-full max-w-md hidden md:flex items-center">
+              <Search className="absolute left-3 text-muted-foreground h-4 w-4" />
+              <button
+                onClick={() => setCommandOpen(true)}
+                className="w-full bg-background/50 border border-border rounded-full pl-10 pr-4 py-2 text-sm text-left text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all hover:bg-background/80 flex items-center justify-between"
+              >
+                <span>Search everywhere...</span>
+                <kbd className="hidden sm:inline-flex items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                  <span className="text-xs">⌘</span>K
+                </kbd>
+              </button>
             </div>
-            <span className="font-serif text-lg font-bold gold-text ml-1">{companyMeta.name}</span>
           </div>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <NotificationBell role="admin" />
             
             {user && (
@@ -59,6 +75,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </main>
       </div>
+      <CommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
     </div>
   );
 }

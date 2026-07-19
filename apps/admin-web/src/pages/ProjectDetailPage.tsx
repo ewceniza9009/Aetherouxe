@@ -182,47 +182,105 @@ export default function ProjectDetailPage() {
   const totalPlanned = budgetList.reduce((s, b) => s + (b.totalPlanned || 0), 0);
   const totalActual = budgetList.reduce((s, b) => s + (b.totalActual || 0), 0);
 
-  const tabTrigger = "px-4 py-2 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-colors";
+  const tabTrigger = "px-2 py-3 text-sm font-bold tracking-widest border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-all uppercase whitespace-nowrap";
+
+  const primaryImage = images?.find(img => img.isPrimary) || images?.[0];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigate({ to: "/projects" })}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-11 w-11 rounded-lg border border-border/50 shrink-0">
-              {project.projectLogoUrl && (
-                <AvatarImage src={project.projectLogoUrl} alt={project.name} className="object-cover" />
-              )}
-              <AvatarFallback className="rounded-lg bg-muted/50 text-muted-foreground font-medium">
-                <Building2 className="h-5 w-5 opacity-50" />
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
-                <Badge variant={statusVariant[project.status] ?? "secondary"}>
+    <div className="space-y-4 flex flex-col h-[calc(100vh-6rem)] min-h-0">
+      {/* Compact Premium Hero Section */}
+      <div className="relative rounded-xl overflow-hidden bg-card border border-border/60 shadow-sm shrink-0">
+        {/* Background Image / Pattern */}
+        {primaryImage ? (
+          <>
+            <div 
+              className="absolute inset-0 opacity-[0.03] dark:opacity-20 mix-blend-multiply dark:mix-blend-screen bg-cover bg-center"
+              style={{ backgroundImage: `url(${primaryImage.url})` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-card via-card/95 to-card/80" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-card to-background" />
+        )}
+
+        {/* Content */}
+        <div className="relative p-6 md:p-8 pb-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+          <div className="flex items-start gap-4 w-full">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate({ to: "/projects" })}
+              className="bg-background/50 text-muted-foreground border-border/60 hover:bg-muted hover:text-foreground backdrop-blur-md shrink-0 h-10 w-10 mt-1 rounded-full shadow-sm"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center gap-3">
+                <Badge variant={statusVariant[project.status] ?? "secondary"} className="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm border-0 h-5">
                   {projectStatusLabels[project.status as ProjectStatus] ?? project.status}
                 </Badge>
+                {project.projectLogoUrl && (
+                  <Avatar className="h-5 w-5 rounded shrink-0 ring-1 ring-border/50">
+                    <AvatarImage src={project.projectLogoUrl} alt={project.name} className="object-cover" />
+                  </Avatar>
+                )}
               </div>
-              <p className="text-muted-foreground">{projectTypeLabels[project.projectType] ?? project.projectType}</p>
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground leading-none">
+                {project.name}
+              </h1>
+              <p className="text-sm text-muted-foreground flex items-center gap-1.5 font-medium">
+                <MapPin className="h-4 w-4 text-primary" /> {project.address || "No address provided"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-2 shrink-0">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate({ to: `/projects/${id}/edit` })}
+              className="bg-background/80 text-foreground border-border/60 hover:bg-muted h-9"
+            >
+              <Edit className="mr-2 h-4 w-4" /> Edit
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteProject.isPending}
+              className="h-9 shadow-sm"
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Delete
+            </Button>
+          </div>
+        </div>
+
+        {/* Thin Premium Stats Bar */}
+        <div className="relative border-t border-border/40 bg-muted/10">
+          <div className="flex flex-wrap divide-x divide-border/40">
+            <div className="px-6 py-4 flex flex-col justify-center gap-1 flex-1 min-w-[120px]">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Type</span>
+              <span className="text-lg font-bold text-foreground capitalize truncate">{projectTypeLabels[project.projectType] ?? project.projectType}</span>
+            </div>
+            <div className="px-6 py-4 flex flex-col justify-center gap-1 flex-1 min-w-[120px]">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Completion</span>
+              <span className="text-lg font-bold text-foreground">{completion}%</span>
+            </div>
+            <div className="px-6 py-4 flex flex-col justify-center gap-1 flex-1 min-w-[120px]">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Phases</span>
+              <span className="text-lg font-bold text-foreground">{phaseList.length}</span>
+            </div>
+            <div className="px-6 py-4 flex flex-col justify-center gap-1 flex-1 min-w-[120px]">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Target</span>
+              <span className="text-lg font-bold text-foreground">{fmtDate(project.targetCompletionDate)}</span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => navigate({ to: `/projects/${id}/edit` })}>
-            <Edit className="mr-2 h-4 w-4" /> Edit
-          </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={deleteProject.isPending}>
-            <Trash2 className="mr-2 h-4 w-4" /> Delete
-          </Button>
-        </div>
       </div>
 
-      <Tabs.Root value={tab} onValueChange={setTab} className="space-y-4">
-        <Tabs.List className="flex border-b overflow-x-auto">
+      <Tabs.Root value={tab} onValueChange={setTab} className="flex-1 flex flex-col min-h-0 space-y-4">
+        <Tabs.List className="flex border-b border-border overflow-x-auto gap-8 pb-[1px] shrink-0">
           <Tabs.Trigger value="overview" className={tabTrigger}>Overview</Tabs.Trigger>
           <Tabs.Trigger value="gallery" className={tabTrigger}>Gallery ({images?.length ?? 0})</Tabs.Trigger>
           <Tabs.Trigger value="phases" className={tabTrigger}>Phases ({phaseList.length})</Tabs.Trigger>
@@ -232,65 +290,66 @@ export default function ProjectDetailPage() {
         </Tabs.List>
 
         {/* ── Overview ── */}
-        <Tabs.Content value="overview" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Project Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {project.description && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Description</p>
-                  <p className="mt-1">{project.description}</p>
-                </div>
-              )}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Target Start</p>
-                  <p className="font-medium flex items-center gap-1 mt-1">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    {fmtDate(project.targetStartDate)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Target Completion</p>
-                  <p className="font-medium flex items-center gap-1 mt-1">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    {fmtDate(project.targetCompletionDate)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Address</p>
-                  <p className="font-medium flex items-center gap-1 mt-1">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    {project.address || "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Completion (from phases)</p>
-                  <p className="font-medium mt-1">{completion}%</p>
-                </div>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2.5">
-                <div
-                  className={`h-2.5 rounded-full transition-all ${completion >= 100 ? "bg-green-500" : "bg-primary"}`}
-                  style={{ width: `${completion}%` }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-4 md:grid-cols-4">
+        <Tabs.Content value="overview" className="flex-1 flex flex-col min-h-0 space-y-4 m-0 data-[state=inactive]:hidden overflow-auto">
+          <div className="grid gap-4 md:grid-cols-4 shrink-0">
             <StatCard icon={<DollarSign className="h-5 w-5 text-muted-foreground" />} label="Total Planned" value={totalPlanned ? formatCurrency(totalPlanned) : "—"} />
             <StatCard icon={<TrendingUp className="h-5 w-5 text-muted-foreground" />} label="Total Spent" value={totalActual ? formatCurrency(totalActual) : "—"} />
             <StatCard icon={<Layers className="h-5 w-5 text-muted-foreground" />} label="Phases" value={String(phaseList.length)} />
             <StatCard icon={<Package className="h-5 w-5 text-muted-foreground" />} label="Units" value={String(inventory?.totals.units ?? 0)} />
           </div>
+          
+          <Card className="overflow-hidden border-border/60 shadow-sm shrink-0">
+            <CardContent className="p-0">
+              <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-border/40">
+                <div className="flex-1 p-5 md:p-6 flex flex-col gap-6">
+                  {project.description ? (
+                    <div className="border-b border-border/40 pb-5">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-bold">Description</p>
+                      <p className="text-sm leading-relaxed text-foreground/90">{project.description}</p>
+                    </div>
+                  ) : (
+                    <div className="border-b border-border/40 pb-5">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-bold">Description</p>
+                      <p className="text-sm text-muted-foreground italic">No description provided.</p>
+                    </div>
+                  )}
+                  <div className="flex-1 grid grid-cols-2 gap-y-5 gap-x-6">
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Target Start</p>
+                      <p className="text-sm font-medium flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4 text-muted-foreground/50" />
+                        {fmtDate(project.targetStartDate)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Target Completion</p>
+                      <p className="text-sm font-medium flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4 text-muted-foreground/50" />
+                        {fmtDate(project.targetCompletionDate)}
+                      </p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-bold">Phase Completion Progress</p>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 bg-muted rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full transition-all ${completion >= 100 ? "bg-green-500" : "bg-primary"}`}
+                            style={{ width: `${completion}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold w-10 text-right">{completion}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </Tabs.Content>
 
         {/* ── Gallery ── */}
-        <Tabs.Content value="gallery" className="space-y-4">
-          <div className="flex items-center justify-between">
+        <Tabs.Content value="gallery" className="flex-1 flex flex-col min-h-0 space-y-4 m-0 data-[state=inactive]:hidden overflow-auto pr-2 relative">
+          <div className="sticky top-0 z-10 flex items-center justify-between bg-background/95 backdrop-blur-sm py-2 border-b border-transparent">
             <div>
               <h2 className="text-xl font-bold tracking-tight">Image Gallery</h2>
               <p className="text-muted-foreground text-sm">Manage photos and renderings for this project.</p>
@@ -351,17 +410,17 @@ export default function ProjectDetailPage() {
         </Tabs.Content>
 
         {/* ── Phases (editable) ── */}
-        <Tabs.Content value="phases" className="space-y-4">
+        <Tabs.Content value="phases" className="flex-1 flex flex-col min-h-0 space-y-4 m-0 data-[state=inactive]:hidden">
           <PhasesTab projectId={id} phases={phaseList} />
         </Tabs.Content>
 
         {/* ── Inventory ── */}
-        <Tabs.Content value="inventory" className="space-y-4">
+        <Tabs.Content value="inventory" className="flex-1 flex flex-col min-h-0 space-y-4 m-0 data-[state=inactive]:hidden">
           <InventoryTab projectId={id} />
         </Tabs.Content>
 
         {/* ── Budgets ── */}
-        <Tabs.Content value="budgets" className="space-y-4">
+        <Tabs.Content value="budgets" className="flex-1 flex flex-col min-h-0 space-y-4 m-0 data-[state=inactive]:hidden overflow-auto">
           {budgetList.length === 0 ? (
             <Card>
               <CardContent className="p-0">
@@ -406,7 +465,7 @@ export default function ProjectDetailPage() {
         </Tabs.Content>
 
         {/* ── Timeline ── */}
-        <Tabs.Content value="timeline" className="space-y-4">
+        <Tabs.Content value="timeline" className="flex-1 flex flex-col min-h-0 space-y-4 m-0 data-[state=inactive]:hidden overflow-auto">
           <Card>
             <CardHeader><CardTitle>Project Timeline</CardTitle></CardHeader>
             <CardContent>
@@ -446,12 +505,15 @@ export default function ProjectDetailPage() {
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <Card>
-      <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{label}</CardTitle></CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-2">{icon}<span className="text-2xl font-bold">{value}</span></div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center justify-between p-4 bg-card border border-border/60 rounded-xl shadow-sm shrink-0">
+      <div className="space-y-1">
+        <p className="text-xs uppercase tracking-widest font-bold text-muted-foreground">{label}</p>
+        <div className="text-2xl font-extrabold tracking-tight text-foreground">{value}</div>
+      </div>
+      <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center">
+        {icon}
+      </div>
+    </div>
   );
 }
 
@@ -520,57 +582,69 @@ function PhasesTab({ projectId, phases }: { projectId: string; phases: Phase[] }
   const sorted = [...phases].sort((a, b) => a.order - b.order);
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" /> Add Phase</Button>
+    <div className="space-y-4 relative">
+      <div className="sticky top-0 z-10 flex items-center justify-between shrink-0 bg-background/95 backdrop-blur-sm py-2 border-b border-transparent">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight">Project Phases</h2>
+          <p className="text-muted-foreground text-sm">Manage and track the timeline of construction phases.</p>
+        </div>
+        <Button onClick={openNew} className="shadow-sm"><Plus className="mr-2 h-4 w-4" /> Add Phase</Button>
       </div>
 
       {sorted.length === 0 ? (
-        <Card>
+        <Card className="shrink-0">
           <CardContent className="p-0">
             <EmptyState title="No phases defined yet" />
           </CardContent>
         </Card>
       ) : (
-        sorted.map((phase, i) => (
-          <Card key={phase.id}>
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between mb-3 gap-3">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xs font-mono text-muted-foreground shrink-0">#{i + 1}</span>
-                  <h3 className="font-semibold truncate">{phase.name}</h3>
-                  <Badge variant={statusVariant[phase.status] ?? "secondary"}>{phaseStatusLabels[phase.status]}</Badge>
+        <Card className="flex-1 overflow-hidden border-border/60 shadow-sm min-h-0 flex flex-col">
+          <div className="flex-1 overflow-y-auto divide-y divide-border/40">
+            {sorted.map((phase, i) => (
+              <div key={phase.id} className="p-4 md:p-5 bg-background hover:bg-muted/30 transition-colors">
+                <div className="flex items-start justify-between mb-3 gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xs font-mono text-muted-foreground shrink-0">#{i + 1}</span>
+                    <h3 className="font-bold truncate text-foreground">{phase.name}</h3>
+                    <Badge variant={statusVariant[phase.status] ?? "secondary"} className="px-2 font-bold uppercase tracking-wider text-[10px]">
+                      {phaseStatusLabels[phase.status]}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0 bg-muted/50 p-0.5 rounded-md">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm" disabled={i === 0} onClick={() => move(phase, -1)}><ChevronUp className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm" disabled={i === sorted.length - 1} onClick={() => move(phase, 1)}><ChevronDown className="h-4 w-4" /></Button>
+                    <div className="w-[1px] h-4 bg-border mx-1" />
+                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm" onClick={() => openEdit(phase)}><Edit className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive" onClick={() => remove(phase)}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button variant="ghost" size="icon" disabled={i === 0} onClick={() => move(phase, -1)}><ChevronUp className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" disabled={i === sorted.length - 1} onClick={() => move(phase, 1)}><ChevronDown className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(phase)}><Edit className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => remove(phase)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-medium text-muted-foreground mb-4">
+                  <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> Target: {fmtDate(phase.targetStart)} — {fmtDate(phase.targetEnd)}</span>
+                  {(phase.actualStart || phase.actualEnd) && (
+                    <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> Actual: {fmtDate(phase.actualStart)} — {fmtDate(phase.actualEnd)}</span>
+                  )}
                 </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-muted-foreground mb-3">
-                <span>Target: {fmtDate(phase.targetStart)} — {fmtDate(phase.targetEnd)}</span>
-                {(phase.actualStart || phase.actualEnd) && (
-                  <span>Actual: {fmtDate(phase.actualStart)} — {fmtDate(phase.actualEnd)}</span>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 bg-muted rounded-full h-2">
-                  <div className={`h-2 rounded-full ${phaseBarColor(phase.status)}`} style={{ width: `${phase.progress}%` }} />
+                
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
+                    <div className={`h-full rounded-full transition-all ${phaseBarColor(phase.status)}`} style={{ width: `${phase.progress}%` }} />
+                  </div>
+                  <span className="text-xs font-bold text-foreground w-8 text-right">{phase.progress}%</span>
                 </div>
-                <span className="text-xs text-muted-foreground w-8">{phase.progress}%</span>
-              </div>
-              <div className="mt-3 flex gap-2">
-                {phase.status !== "in_progress" && phase.status !== "completed" && (
-                  <Button variant="outline" size="sm" onClick={() => markStart(phase)}>Mark Started</Button>
-                )}
+                
                 {phase.status !== "completed" && (
-                  <Button variant="outline" size="sm" onClick={() => markComplete(phase)}>Mark Completed</Button>
+                  <div className="mt-4 flex gap-2">
+                    {phase.status !== "in_progress" && (
+                      <Button variant="outline" size="sm" className="h-8 text-xs font-bold bg-background/50 shadow-sm" onClick={() => markStart(phase)}>Mark Started</Button>
+                    )}
+                    <Button variant="outline" size="sm" className="h-8 text-xs font-bold bg-background/50 shadow-sm" onClick={() => markComplete(phase)}>Mark Completed</Button>
+                  </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        ))
+            ))}
+          </div>
+        </Card>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -729,11 +803,15 @@ function InventoryTab({ projectId }: { projectId: string }) {
   const totals = inventory?.totals ?? { buildings: 0, units: 0, byStatus: {} };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
+    <div className="flex flex-col h-full min-h-0 space-y-4 relative">
+      <div className="flex items-center justify-between shrink-0 py-2 border-b border-transparent">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight">Project Inventory</h2>
+          <p className="text-muted-foreground text-sm">Manage buildings, floors, and unit availability.</p>
+        </div>
         <Dialog open={openNewBuilding} onOpenChange={setOpenNewBuilding}>
           <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" /> Add Building</Button>
+            <Button className="shadow-sm"><Plus className="mr-2 h-4 w-4" /> Add Building</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -783,83 +861,102 @@ function InventoryTab({ projectId }: { projectId: string }) {
       </div>
 
       {isEmpty ? (
-        <Card>
+        <Card className="shrink-0">
           <CardContent className="p-0">
             <EmptyState title="No buildings or units in this project yet" />
           </CardContent>
         </Card>
       ) : (
         <>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-4 shrink-0">
             <StatCard icon={<Building2 className="h-5 w-5 text-muted-foreground" />} label="Buildings" value={String(totals.buildings)} />
             <StatCard icon={<Package className="h-5 w-5 text-muted-foreground" />} label="Total Units" value={String(totals.units)} />
             <StatCard icon={<Home className="h-5 w-5 text-muted-foreground" />} label="Available" value={String(totals.byStatus?.available ?? 0)} />
             <StatCard icon={<Home className="h-5 w-5 text-muted-foreground" />} label="Sold / Occupied" value={String(totals.byStatus?.occupied ?? 0)} />
           </div>
 
-      {inventory.buildings.map((b) => (
-        <Card key={b.id}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-muted-foreground" /> {b.name}
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary">{b.unitCount} units</Badge>
-                <Button variant="outline" size="sm" onClick={() => {
-                  setActiveBuildingId(b.id);
-                  setOpenGenerateUnits(true);
-                }}>
-                  <Plus className="h-3 w-3 mr-1" /> Generate Units
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate({ to: `/buildings/${b.id}` })}>Open</Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {b.units.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">No units.</p>
-            ) : (
-              <div className="rounded-md border mini-grid max-h-[360px] overflow-y-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr>
-                      <th className="text-left">Unit</th>
-                      <th className="text-left">Floor</th>
-                      <th className="text-left">Type</th>
-                      <th className="text-left">Status</th>
-                      <th className="text-left">Property (Title)</th>
-                      <th className="text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {b.units.map((u) => (
-                      <tr
-                        key={u.id}
-                        className={u.propertyId ? "cursor-pointer" : ""}
-                        onClick={() => u.propertyId && navigate({ to: `/properties/${u.propertyId}` })}
-                      >
-                        <td className="font-medium">{u.unitNumber}</td>
-                        <td>{u.floorNumber ?? "—"}</td>
-                        <td>{u.unitType.replace(/_/g, " ")}</td>
-                        <td><Badge variant={unitStatusVariant[u.status] ?? "secondary"}>{u.status.replace(/_/g, " ")}</Badge></td>
-                        <td className="text-primary">{u.propertyCode ?? "—"}</td>
-                        <td className="text-right">
-                          {!u.propertyId && (
-                            <Button size="sm" variant="outline" onClick={(e) => handleListAsProperty(e, u, b.name)}>
-                              List as Property
-                            </Button>
-                          )}
-                        </td>
+          <div className="flex-1 overflow-y-auto space-y-4 pb-4 min-h-0">
+            {inventory.buildings.map((b) => (
+              <Card key={b.id} className="border-border/60 shadow-sm shrink-0">
+                <div className="bg-background rounded-xl">
+                  <table className="w-full text-sm border-collapse">
+                    <thead className="sticky top-0 z-20 shadow-sm">
+                      {/* Building Header Row */}
+                      <tr className="border-b border-border/40">
+                        <th colSpan={6} className="p-0 font-normal">
+                          <div className="flex items-center justify-between py-3 px-4 bg-card rounded-t-xl border-t border-border/60 -mt-[1px]">
+                            <div className="flex items-center gap-2 text-base font-extrabold tracking-tight">
+                              <Building2 className="h-4 w-4 text-muted-foreground" /> {b.name}
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <Badge variant="secondary" className="px-2 font-bold bg-muted text-muted-foreground shadow-sm">{b.unitCount} units</Badge>
+                              <Button variant="outline" size="sm" className="h-7 text-xs font-bold shadow-sm bg-background/50 hover:bg-muted hidden sm:flex" onClick={() => {
+                                setActiveBuildingId(b.id);
+                                setOpenGenerateUnits(true);
+                              }}>
+                                <Plus className="h-3 w-3 mr-1" /> Generate
+                              </Button>
+                              <Button variant="outline" size="sm" className="h-7 text-xs font-bold shadow-sm bg-background/50 hover:bg-muted" onClick={() => navigate({ to: `/buildings/${b.id}` })}>Open</Button>
+                            </div>
+                          </div>
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-          ))}
+                      {/* Column Headers Row */}
+                      {b.units.length > 0 && (
+                        <tr className="bg-muted/95 backdrop-blur-sm">
+                          <th className="text-left font-bold text-[10px] uppercase tracking-widest text-muted-foreground px-4 py-3 border-b border-border/40">Unit</th>
+                          <th className="text-left font-bold text-[10px] uppercase tracking-widest text-muted-foreground px-4 py-3 border-b border-border/40">Floor</th>
+                          <th className="text-left font-bold text-[10px] uppercase tracking-widest text-muted-foreground px-4 py-3 border-b border-border/40">Type</th>
+                          <th className="text-left font-bold text-[10px] uppercase tracking-widest text-muted-foreground px-4 py-3 border-b border-border/40">Status</th>
+                          <th className="text-left font-bold text-[10px] uppercase tracking-widest text-muted-foreground px-4 py-3 border-b border-border/40">Property (Title)</th>
+                          <th className="text-right font-bold text-[10px] uppercase tracking-widest text-muted-foreground px-4 py-3 border-b border-border/40">Actions</th>
+                        </tr>
+                      )}
+                    </thead>
+                    {b.units.length === 0 ? (
+                      <tbody>
+                        <tr>
+                          <td colSpan={6} className="py-8 text-center text-sm font-medium text-muted-foreground">
+                            No units generated yet.
+                          </td>
+                        </tr>
+                      </tbody>
+                    ) : (
+                      <tbody className="divide-y divide-border/40">
+                        {b.units.map((u) => (
+                          <tr
+                            key={u.id}
+                            className={`hover:bg-muted/20 transition-colors ${u.propertyId ? "cursor-pointer" : ""}`}
+                            onClick={() => u.propertyId && navigate({ to: `/properties/${u.propertyId}` })}
+                          >
+                            <td className="px-4 py-2 font-bold text-foreground whitespace-nowrap">{u.unitNumber}</td>
+                            <td className="px-4 py-2 text-muted-foreground font-medium whitespace-nowrap">{u.floorNumber ?? "—"}</td>
+                            <td className="px-4 py-2 text-muted-foreground font-medium whitespace-nowrap capitalize">{u.unitType.replace(/_/g, " ")}</td>
+                            <td className="px-4 py-2 whitespace-nowrap"><Badge variant={unitStatusVariant[u.status] ?? "secondary"} className="text-[10px] uppercase tracking-wider font-bold px-2">{u.status.replace(/_/g, " ")}</Badge></td>
+                            <td className="px-4 py-2 text-muted-foreground font-medium truncate max-w-[200px]">{u.propertyCode ?? "—"}</td>
+                            <td className="px-4 py-2 text-right whitespace-nowrap">
+                              {!u.propertyId ? (
+                                <Button size="sm" variant="outline" className="h-6 text-[10px] font-bold px-2 shadow-sm" onClick={(e) => handleListAsProperty(e, u, b.name)}>
+                                  List as Property
+                                </Button>
+                              ) : (
+                                <Button size="sm" variant="ghost" className="h-6 text-[10px] font-bold px-2 text-muted-foreground hover:text-foreground hover:bg-muted/50" onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate({ to: `/properties/${u.propertyId}` });
+                                }}>
+                                  View Property
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    )}
+                  </table>
+                </div>
+              </Card>
+            ))}
+          </div>
         </>
       )}
 

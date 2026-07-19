@@ -63,7 +63,7 @@ import {
 import { useContractors } from "@/hooks/use-contractors";
 
 const priorityMeta: Record<ServicePriority, { label: string; className: string }> = {
-  low: { label: "Low", className: "bg-slate-100 text-slate-700 border-slate-200" },
+  low: { label: "Low", className: "bg-muted text-muted-foreground border-border" },
   medium: { label: "Medium", className: "bg-blue-100 text-blue-700 border-blue-200" },
   high: { label: "High", className: "bg-orange-100 text-orange-700 border-orange-200" },
   emergency: { label: "Emergency", className: "bg-red-100 text-red-700 border-red-200" },

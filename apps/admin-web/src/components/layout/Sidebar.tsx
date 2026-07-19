@@ -201,10 +201,13 @@ function renderItem(
   );
 }
 
+import { useCompanyMeta } from "@/lib/settings-store";
+
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { pathname } = useLocation();
   const { logout } = useAuth();
+  const companyMeta = useCompanyMeta();
 
   // Determine the most specific active path
   const activeItemPath = useMemo(() => {
@@ -266,17 +269,16 @@ export default function Sidebar() {
       >
         {!collapsed && (
           <div className="flex min-w-0 items-center gap-3">
-            <img
-              src="/favicon.png"
-              alt="Logo"
-              className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-primary/40"
-            />
-            <div className="leading-tight">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-primary/40 overflow-hidden">
+              <img
+                src={companyMeta.logoUrl || "/favicon.png"}
+                alt="Logo"
+                className="h-full w-full object-cover scale-[1.35] mix-blend-multiply"
+              />
+            </div>
+            <div className="leading-tight overflow-hidden">
               <span className="block truncate font-serif text-base font-bold gold-text">
-                Aetherouxe
-              </span>
-              <span className="block truncate text-[10px] uppercase tracking-widest text-sidebar-foreground/60">
-                Estates
+                {companyMeta.name}
               </span>
             </div>
           </div>
@@ -286,11 +288,13 @@ export default function Sidebar() {
             onClick={() => setCollapsed(false)}
             className="group relative flex items-center justify-center rounded-lg transition-all"
           >
-            <img
-              src="/favicon.png"
-              alt="Logo"
-              className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-primary/40 transition-all group-hover:ring-primary group-hover:shadow-[0_0_10px_rgba(251,191,36,0.3)] group-hover:brightness-110"
-            />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-primary/40 overflow-hidden transition-all group-hover:ring-primary group-hover:shadow-[0_0_10px_rgba(251,191,36,0.3)] group-hover:brightness-110">
+              <img
+                src={companyMeta.logoUrl || "/favicon.png"}
+                alt="Logo"
+                className="h-full w-full object-cover scale-[1.35] mix-blend-multiply"
+              />
+            </div>
             <div className="absolute left-full ml-4 w-max origin-left scale-95 rounded-md border border-sidebar-border bg-sidebar px-3 py-2 text-xs font-medium text-sidebar-foreground opacity-0 shadow-xl transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 pointer-events-none z-50">
               Expand Menu
             </div>

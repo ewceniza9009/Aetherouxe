@@ -1,5 +1,7 @@
-import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { CreateRentalPaymentSchema, RecordPaymentSchema } from '@elite-realty/shared-types';
 import { RentalPaymentsService } from './rental-payments.service';
 import { CreateRentalPaymentDto, RecordPaymentDto, RentalPaymentQueryDto } from './dto/rental-payments.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -22,10 +24,14 @@ export class RentalPaymentsController {
     return this.service.findByLease(leaseAgreementId);
   }
 
-  @Post() @ApiOperation({ summary: 'Create a rental payment' })
+  @Post() 
+  @ApiOperation({ summary: 'Create a rental payment' })
+  @UsePipes(new ZodValidationPipe(CreateRentalPaymentSchema))
   create(@Body() dto: CreateRentalPaymentDto) { return this.service.create(dto); }
 
-  @Post(':id/record') @ApiOperation({ summary: 'Record a payment against a billing period' })
+  @Post(':id/record') 
+  @ApiOperation({ summary: 'Record a payment against a billing period' })
+  @UsePipes(new ZodValidationPipe(RecordPaymentSchema))
   recordPayment(@Param('id') id: string, @Body() dto: RecordPaymentDto) {
     return this.service.recordPayment(id, dto);
   }

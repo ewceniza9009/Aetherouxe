@@ -67,7 +67,7 @@ const amenityTypeMeta: Record<AmenityType, { label: string; className: string }>
     className: "bg-amber-100 text-amber-700 border-amber-200",
   },
   garden: { label: "Garden", className: "bg-green-100 text-green-700 border-green-200" },
-  other: { label: "Other", className: "bg-slate-100 text-slate-700 border-slate-200" },
+  other: { label: "Other", className: "bg-muted text-muted-foreground border-border" },
 };
 
 const postTypeMeta: Record<string, { label: string; className: string }> = {
@@ -79,13 +79,13 @@ const postTypeMeta: Record<string, { label: string; className: string }> = {
 };
 
 const audienceMeta: Record<string, { label: string; className: string }> = {
-  all: { label: "All", className: "bg-slate-100 text-slate-700 border-slate-200" },
+  all: { label: "All", className: "bg-muted text-muted-foreground border-border" },
   building: { label: "Building", className: "bg-cyan-100 text-cyan-700 border-cyan-200" },
   property: { label: "Property", className: "bg-amber-100 text-amber-700 border-amber-200" },
   unit: { label: "Unit", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
 };
 
-const META_FALLBACK = { label: "Unknown", className: "bg-slate-100 text-slate-700 border-slate-200" };
+const META_FALLBACK = { label: "Unknown", className: "bg-muted text-muted-foreground border-border" };
 
 function money(n: number) {
   return formatCurrency(Number(n ?? 0));

@@ -91,12 +91,16 @@ const loginRoute = createRoute({
   component: LoginPage,
 });
 
+import { useAuth } from "@elite-realty/shared-ui/hooks";
+
 const protectedLayout = createRoute({
   getParentRoute: () => rootRoute,
   id: "protected",
   component: () => {
+    const { isAuthenticated } = useAuth();
     const token = localStorage.getItem("accessToken");
-    if (!token) {
+    
+    if (!token && !isAuthenticated) {
       return <LoginPage />;
     }
     return (

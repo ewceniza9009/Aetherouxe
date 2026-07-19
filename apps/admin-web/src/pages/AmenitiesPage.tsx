@@ -51,7 +51,7 @@ const amenityTypeMeta: Record<
     className: "bg-amber-100 text-amber-700 border-amber-200",
   },
   garden: { label: "Garden", className: "bg-green-100 text-green-700 border-green-200" },
-  other: { label: "Other", className: "bg-slate-100 text-slate-700 border-slate-200" },
+  other: { label: "Other", className: "bg-muted text-muted-foreground border-border" },
 };
 
 function money(n: number) {

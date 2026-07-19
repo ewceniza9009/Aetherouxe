@@ -56,7 +56,7 @@ const priorityMeta: Record<
   ServicePriority,
   { label: string; className: string }
 > = {
-  low: { label: "Low", className: "bg-slate-100 text-slate-700 border-slate-200" },
+  low: { label: "Low", className: "bg-muted text-muted-foreground border-border" },
   medium: {
     label: "Medium",
     className: "bg-blue-100 text-blue-700 border-blue-200",

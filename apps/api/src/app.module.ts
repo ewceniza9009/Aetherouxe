@@ -50,6 +50,7 @@ import { ApInvoicesModule } from './ap-invoices/ap-invoices.module';
 import { GeneralLedgerModule } from './general-ledger/general-ledger.module';
 import { RolesModule } from './roles/roles.module';
 import { LedgerModule } from './ledger/ledger.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -106,6 +107,7 @@ import { LedgerModule } from './ledger/ledger.module';
     GeneralLedgerModule,
     RolesModule,
     LedgerModule,
+    SearchModule,
   ],
   providers: [
     {

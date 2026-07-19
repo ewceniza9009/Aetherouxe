@@ -59,7 +59,7 @@ const docTypeMeta: Record<DocumentType, { label: string; className: string }> = 
   },
   id_proof: {
     label: "ID Proof",
-    className: "bg-slate-100 text-slate-700 border-slate-200",
+    className: "bg-muted text-muted-foreground border-border",
   },
   invoice: {
     label: "Invoice",
@@ -85,7 +85,7 @@ const docTypeMeta: Record<DocumentType, { label: string; className: string }> = 
     label: "Maintenance Record",
     className: "bg-orange-100 text-orange-700 border-orange-200",
   },
-  other: { label: "Other", className: "bg-slate-100 text-slate-700 border-slate-200" },
+  other: { label: "Other", className: "bg-muted text-muted-foreground border-border" },
 };
 
 export default function DocumentsPage() {

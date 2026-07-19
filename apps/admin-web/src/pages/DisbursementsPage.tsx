@@ -86,7 +86,7 @@ export default function DisbursementsPage() {
               </TableHeader>
               <TableBody>
                 {invoices.map((invoice: ApInvoice) => (
-                  <TableRow key={invoice.id} className="border-white/10 hover:bg-white/5 transition-colors">
+                  <TableRow key={invoice.id} className="border-white/10 hover:bg-card/5 transition-colors">
                     <TableCell className="font-medium text-white">
                       <Badge variant="outline" className="border-white/20 text-white/80">
                         {invoice.sourceType.replace('_', ' ')}

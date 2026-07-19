@@ -50,6 +50,11 @@ export function useCompanyMeta() {
 
 let bootstrapPromise: Promise<void> | null = null;
 
+export function reloadSettings(): Promise<void> {
+  bootstrapPromise = null;
+  return bootstrapSettings();
+}
+
 export function bootstrapSettings(): Promise<void> {
   if (bootstrapPromise) return bootstrapPromise;
   bootstrapPromise = (async () => {

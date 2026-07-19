@@ -27,16 +27,20 @@ const queryClient = new QueryClient({
   },
 });
 
+import { ThemeProvider } from "@/components/ThemeProvider";
+
 const rootElement = document.getElementById("root")!;
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider api={api as never} onBootstrapSettings={() => void bootstrapSettings()}>
-          <RouterProvider router={router} />
-        </AuthProvider>
-      </QueryClientProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider api={api as never} onBootstrapSettings={() => void bootstrapSettings()}>
+            <RouterProvider router={router} />
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </StrictMode>
   );
 }

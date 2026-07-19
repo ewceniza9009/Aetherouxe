@@ -167,7 +167,7 @@ export default function ContractorDetailPage() {
   }
 
   return (
-    <div className="space-y-6 flex flex-col ">
+    <div className="space-y-6 flex flex-col flex-1 min-h-0">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" onClick={() => navigate({ to: "/contractors" })}>
           <ArrowLeft className="h-4 w-4" />
@@ -403,8 +403,8 @@ export default function ContractorDetailPage() {
       </div>
 
       {!engagements || engagements.length === 0 ? (
-        <Card className="flex-1 flex flex-col justify-center items-center">
-          <CardContent className="py-12 text-center flex flex-col justify-center items-center">
+        <Card className="flex-1 flex flex-col justify-center items-center overflow-hidden">
+          <CardContent className="flex-1 w-full p-12 text-center flex flex-col justify-center items-center">
             <FileText className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
             <p className="font-medium text-muted-foreground">No engagements</p>
             <p className="text-sm text-muted-foreground mt-1">This contractor has no project engagements yet.</p>

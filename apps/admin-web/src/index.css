@@ -3,7 +3,54 @@
 @tailwind utilities;
 
 @layer base {
-  :root,
+  :root {
+    color-scheme: light;
+    
+    /* Elegant Light Theme */
+    --background: 0 0% 98%;            /* Very light gray/white */
+    --foreground: 222 47% 11%;         /* Dark navy for text */
+
+    --card: 0 0% 100%;                 /* Pure white cards */
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 43 71% 45%;             /* Gold but slightly deeper for contrast on white */
+    --primary-foreground: 0 0% 100%;   /* White text on gold */
+
+    --secondary: 210 40% 96%;          /* Light blue-gray */
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 179 100% 30%;            /* Teal but deeper */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;          /* Red */
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 160 84% 39%;           
+    --warning: 38 92% 50%;           
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 43 71% 45%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar Light */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 43 71% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 43 71% 45%;
+  }
+
   .dark {
     color-scheme: dark;
     
@@ -39,12 +86,10 @@
     --input: 215 25% 20%;
     --ring: 43 71% 54%;
 
-    --radius: 0.75rem;
-
-    /* Sidebar — sovereign blue gradient base */
+    /* Sidebar Dark */
     --sidebar-background: 222 70% 7%;
     --sidebar-foreground: 210 20% 90%;
-    --sidebar-primary: 43 71% 54%;          /* gold active */
+    --sidebar-primary: 43 71% 54%;          
     --sidebar-primary-foreground: 222 64% 9%;
     --sidebar-accent: 215 30% 16%;
     --sidebar-accent-foreground: 210 20% 92%;
@@ -102,18 +147,6 @@
   100% { background-position: -200% 0; }
 }
 
-/* Dark-only app: remap leftover hardcoded light utilities to theme tokens */
-@layer base {
-  .bg-slate-100 { background-color: hsl(var(--muted)); }
-  .text-slate-700 { color: hsl(var(--muted-foreground)); }
-  .border-slate-200 { border-color: hsl(var(--border)); }
-  .bg-gray-50 { background-color: hsl(var(--background)); }
-  .bg-gray-200 { background-color: hsl(var(--muted)); }
-  .border-gray-300 { border-color: hsl(var(--border)); }
-  .bg-white { background-color: hsl(var(--card)); }
-  .bg-white\/60 { background-color: hsl(var(--primary) / 0.3); }
-  .after\:bg-white::after { background-color: hsl(var(--foreground)); }
-}
 
 /* ── Native date / time picker theming ──
     The browser's default calendar/clock indicator renders as a solid black

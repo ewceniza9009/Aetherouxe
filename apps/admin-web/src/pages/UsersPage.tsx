@@ -41,10 +41,10 @@ const USER_TYPE_META: Record<string, { label: string; className: string }> = {
   finance: { label: "Finance", className: "bg-amber-100 text-amber-700 border-amber-200" },
   agent: { label: "Agent", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
   owner: { label: "Owner", className: "bg-cyan-100 text-cyan-700 border-cyan-200" },
-  tenant: { label: "Tenant", className: "bg-slate-100 text-slate-700 border-slate-200" },
+  tenant: { label: "Tenant", className: "bg-muted text-muted-foreground border-border" },
 };
 
-const FALLBACK_META = { label: "Unknown", className: "bg-slate-100 text-slate-700 border-slate-200" };
+const FALLBACK_META = { label: "Unknown", className: "bg-muted text-muted-foreground border-border" };
 
 function userTypeMeta(type: string) {
   return USER_TYPE_META[type] ?? { ...FALLBACK_META, label: type || "Unknown" };
