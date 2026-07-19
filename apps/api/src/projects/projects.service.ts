@@ -31,7 +31,9 @@ export class ProjectsService {
         status: dto.status ?? 'planning',
         totalPhases: dto.totalPhases,
         targetStartDate: dto.targetStartDate ? new Date(dto.targetStartDate) : undefined,
-        targetCompletionDate: dto.targetCompletionDate ? new Date(dto.targetCompletionDate) : undefined,
+        targetCompletionDate: dto.targetCompletionDate
+          ? new Date(dto.targetCompletionDate)
+          : undefined,
         projectLogoUrl: dto.projectLogoUrl,
         address: dto.address,
       },
@@ -54,6 +56,7 @@ export class ProjectsService {
     const project = await this.prisma.project.findUnique({
       where: { id },
       include: {
+        images: { orderBy: { sortOrder: 'asc' } },
         phases: { orderBy: { phaseOrder: 'asc' } },
         buildings: true,
         budgets: { where: { isCurrentVersion: true } },
@@ -70,7 +73,9 @@ export class ProjectsService {
       data: {
         ...dto,
         targetStartDate: dto.targetStartDate ? new Date(dto.targetStartDate) : undefined,
-        targetCompletionDate: dto.targetCompletionDate ? new Date(dto.targetCompletionDate) : undefined,
+        targetCompletionDate: dto.targetCompletionDate
+          ? new Date(dto.targetCompletionDate)
+          : undefined,
       },
       include: { phases: { orderBy: { phaseOrder: 'asc' } } },
     });
@@ -95,7 +100,11 @@ export class ProjectsService {
     const totalActual = healthResults.reduce((s, h) => s + h.totalActual, 0);
     const totalVariance = totalPlanned - totalActual;
     const plannedVsActual = healthResults.flatMap((h) =>
-      h.items.map((i: { category: string; plannedAmount: number; actualAmount: number }) => ({ category: i.category, planned: i.plannedAmount, actual: i.actualAmount })),
+      h.items.map((i: { category: string; plannedAmount: number; actualAmount: number }) => ({
+        category: i.category,
+        planned: i.plannedAmount,
+        actual: i.actualAmount,
+      })),
     );
     const redCount = healthResults.filter((h) => h.overallHealth === 'red').length;
     const yellowCount = healthResults.filter((h) => h.overallHealth === 'yellow').length;
@@ -107,7 +116,8 @@ export class ProjectsService {
       totalPlanned,
       totalActual,
       totalVariance,
-      variancePercentage: totalPlanned > 0 ? Math.round((totalVariance / totalPlanned) * 10000) / 100 : 0,
+      variancePercentage:
+        totalPlanned > 0 ? Math.round((totalVariance / totalPlanned) * 10000) / 100 : 0,
       plannedVsActual,
     };
   }
