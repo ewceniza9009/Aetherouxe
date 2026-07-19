@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
-import type { RawBudget, RawBudgetItem } from "@/types/api";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
+import type { RawBudget, RawBudgetItem } from '@/types/api';
 
 export interface Budget {
   id: string;
@@ -10,7 +10,7 @@ export interface Budget {
   version: number;
   totalPlanned: number;
   totalActual: number;
-  status: "draft" | "approved" | "active" | "closed";
+  status: 'draft' | 'approved' | 'active' | 'closed';
   createdAt: string;
   updatedAt: string;
 }
@@ -18,7 +18,7 @@ export interface Budget {
 export interface BudgetHealth {
   id: string;
   budgetId: string;
-  healthScore: "green" | "yellow" | "red";
+  healthScore: 'green' | 'yellow' | 'red';
   variance: number;
   variancePercentage: number;
   totalPlanned: number;
@@ -35,7 +35,7 @@ export interface LineItem {
   plannedAmount: number;
   actualAmount: number;
   vendor?: string;
-  status: "pending" | "ordered" | "received" | "invoiced" | "paid";
+  status: 'pending' | 'ordered' | 'received' | 'invoiced' | 'paid';
   createdAt: string;
   updatedAt: string;
 }
@@ -45,7 +45,7 @@ export interface BudgetQuery {
   limit?: number;
   projectId?: string;
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
 }
 
 interface PaginatedResult<T> {
@@ -58,24 +58,18 @@ interface PaginatedResult<T> {
 // (name / totalPlanned / totalActual / version).
 function mapBudget(raw: RawBudget): Budget {
   const lineItems: RawBudgetItem[] = Array.isArray(raw?.lineItems) ? raw.lineItems : [];
-  const plannedFromLines = lineItems.reduce(
-    (sum, li) => sum + (Number(li?.plannedAmount) || 0),
-    0
-  );
-  const actualFromLines = lineItems.reduce(
-    (sum, li) => sum + (Number(li?.actualAmount) || 0),
-    0
-  );
+  const plannedFromLines = lineItems.reduce((sum, li) => sum + (Number(li?.plannedAmount) || 0), 0);
+  const actualFromLines = lineItems.reduce((sum, li) => sum + (Number(li?.actualAmount) || 0), 0);
   const totalPlanned = Number(raw?.totalBudgetAmount) || plannedFromLines || 0;
   const totalActual = actualFromLines || 0;
   return {
     id: raw?.id,
     projectId: raw?.projectId,
-    name: raw?.budgetName ?? raw?.name ?? "Untitled Budget",
+    name: raw?.budgetName ?? raw?.name ?? 'Untitled Budget',
     version: raw?.versionNumber ?? raw?.version ?? 1,
     totalPlanned,
     totalActual,
-    status: (raw?.status ?? "draft") as Budget["status"],
+    status: (raw?.status ?? 'draft') as Budget['status'],
     createdAt: raw?.createdAt,
     updatedAt: raw?.updatedAt,
   };
@@ -83,14 +77,14 @@ function mapBudget(raw: RawBudget): Budget {
 
 export function useBudgets(query: BudgetQuery) {
   return useQuery({
-    queryKey: ["budgets", query],
+    queryKey: ['budgets', query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (query.page) params.set("page", String(query.page));
-      if (query.limit) params.set("limit", String(query.limit));
-      if (query.projectId) params.set("projectId", query.projectId);
-      if (query.sort) params.set("sort", String(query.sort));
-      if (query.order) params.set("order", String(query.order));
+      if (query.page) params.set('page', String(query.page));
+      if (query.limit) params.set('limit', String(query.limit));
+      if (query.projectId) params.set('projectId', query.projectId);
+      if (query.sort) params.set('sort', String(query.sort));
+      if (query.order) params.set('order', String(query.order));
       const { data } = await api.get<ApiResponse<any[]>>(`/budgets?${params}`);
       return {
         data: (data.data ?? []).map(mapBudget),
@@ -102,7 +96,7 @@ export function useBudgets(query: BudgetQuery) {
 
 export function useBudget(id: string) {
   return useQuery({
-    queryKey: ["budget", id],
+    queryKey: ['budget', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<any>>(`/budgets/${id}`);
       return mapBudget(data.data);
@@ -113,7 +107,7 @@ export function useBudget(id: string) {
 
 export function useBudgetHealth(id: string) {
   return useQuery({
-    queryKey: ["budget-health", id],
+    queryKey: ['budget-health', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<BudgetHealth>>(`/budgets/${id}/health`);
       return data.data;
@@ -126,11 +120,11 @@ export function useCreateBudget() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<Budget>) => {
-      const { data } = await api.post<ApiResponse<Budget>>("/budgets", payload);
+      const { data } = await api.post<ApiResponse<Budget>>('/budgets', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["budgets"] });
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
     },
   });
 }
@@ -143,8 +137,8 @@ export function useUpdateBudget() {
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["budgets"] });
-      queryClient.invalidateQueries({ queryKey: ["budget", result.id] });
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['budget', result.id] });
     },
   });
 }
@@ -153,11 +147,11 @@ export function useCreateLineItem() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<LineItem>) => {
-      const { data } = await api.post<ApiResponse<LineItem>>("/line-items", payload);
+      const { data } = await api.post<ApiResponse<LineItem>>('/line-items', payload);
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["budget-health", result.budgetId] });
+      queryClient.invalidateQueries({ queryKey: ['budget-health', result.budgetId] });
     },
   });
 }
@@ -170,8 +164,7 @@ export function useUpdateLineItem() {
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["budget-health", result.budgetId] });
+      queryClient.invalidateQueries({ queryKey: ['budget-health', result.budgetId] });
     },
   });
 }
-

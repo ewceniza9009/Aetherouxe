@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api';
+﻿import { useQuery } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
 
 export interface GlEntry {
   id: string;
@@ -51,4 +51,3 @@ export function useChartOfAccounts() {
     },
   });
 }
-

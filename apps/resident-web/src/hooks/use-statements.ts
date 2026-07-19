@@ -1,9 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
-import { useAuth } from "@elite-realty/shared-ui/hooks";
-import type { ApiResponse } from "@elite-realty/shared-types";
+﻿import { useQuery } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import { useAuth } from '@elite-realty/shared-ui/hooks';
+import type { ApiResponse } from '@elite-realty/shared-types';
 
-export type StatementStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
+export type StatementStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
 
 export interface Statement {
   id: string;
@@ -24,13 +24,11 @@ export interface Statement {
 export function useMyStatements() {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ["my-statements", user?.id],
+    queryKey: ['my-statements', user?.id],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (user?.id) params.set("tenantId", user.id);
-      const { data } = await api.get<ApiResponse<Statement[]>>(
-        `/statements?${params.toString()}`
-      );
+      if (user?.id) params.set('tenantId', user.id);
+      const { data } = await api.get<ApiResponse<Statement[]>>(`/statements?${params.toString()}`);
       return (data.data ?? []) as Statement[];
     },
     enabled: !!user?.id,
@@ -38,15 +36,15 @@ export function useMyStatements() {
 }
 
 export const STATEMENT_STATUS_LABELS: Record<StatementStatus, string> = {
-  draft: "Draft",
-  sent: "Sent",
-  paid: "Paid",
-  overdue: "Overdue",
-  cancelled: "Cancelled",
+  draft: 'Draft',
+  sent: 'Sent',
+  paid: 'Paid',
+  overdue: 'Overdue',
+  cancelled: 'Cancelled',
 };
 
 export function formatCurrency(value?: number | null): string {
-  if (value === undefined || value === null) return "—";
+  if (value === undefined || value === null) return '—';
   return `$${value.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -54,13 +52,12 @@ export function formatCurrency(value?: number | null): string {
 }
 
 export function formatDate(value?: string | null): string {
-  if (!value) return "—";
+  if (!value) return '—';
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return value;
   return d.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   });
 }
-

@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
 
 export interface AmortizationRow {
   period: number;
@@ -63,10 +63,10 @@ function mapAmortizationRows(rows: any[]): AmortizationRow[] {
 
 export function useMyMortgageScenarios(leaseAgreementId?: string) {
   return useQuery({
-    queryKey: ["my-mortgage-scenarios", leaseAgreementId],
+    queryKey: ['my-mortgage-scenarios', leaseAgreementId],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (leaseAgreementId) params.set("leaseAgreementId", leaseAgreementId);
+      if (leaseAgreementId) params.set('leaseAgreementId', leaseAgreementId);
       const { data } = await api.get<ApiResponse<any[]>>(`/mortgage/scenarios?${params}`);
       const transformed = (data.data ?? []).map((s: any) => ({
         ...s,
@@ -87,7 +87,7 @@ export function useMyMortgageScenarios(leaseAgreementId?: string) {
 
 export function useMortgageScenario(id: string) {
   return useQuery({
-    queryKey: ["my-mortgage-scenario", id],
+    queryKey: ['my-mortgage-scenario', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<any>>(`/mortgage/scenarios/${id}`);
       const s = data.data;
@@ -111,15 +111,17 @@ export function useGenerateScenario() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: GenerateScenarioInput) => {
-      const { data } = await api.post<ApiResponse<MortgageScenario>>("/mortgage/scenarios/generate", payload);
+      const { data } = await api.post<ApiResponse<MortgageScenario>>(
+        '/mortgage/scenarios/generate',
+        payload,
+      );
       return data.data;
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({
-        queryKey: ["my-mortgage-scenarios", result.leaseAgreementId],
+        queryKey: ['my-mortgage-scenarios', result.leaseAgreementId],
       });
-      queryClient.invalidateQueries({ queryKey: ["my-mortgage-scenario", result.id] });
+      queryClient.invalidateQueries({ queryKey: ['my-mortgage-scenario', result.id] });
     },
   });
 }
-

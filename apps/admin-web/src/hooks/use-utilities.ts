@@ -1,15 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
 
-export type UtilityType = "water" | "electricity" | "gas";
+export type UtilityType = 'water' | 'electricity' | 'gas';
 
-export type UtilityBillStatus =
-  | "pending"
-  | "paid"
-  | "partially_paid"
-  | "waived"
-  | "disputed";
+export type UtilityBillStatus = 'pending' | 'paid' | 'partially_paid' | 'waived' | 'disputed';
 
 export interface UtilityMeterTenant {
   id: string;
@@ -43,7 +38,13 @@ export interface UtilityMeter {
   unit?: UtilityMeterUnit | null;
   property?: UtilityMeterProperty | null;
   tenant?: UtilityMeterTenant | null;
-  resident?: { id: string; firstName?: string | null; lastName?: string | null; email: string; name?: string } | null;
+  resident?: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email: string;
+    name?: string;
+  } | null;
   readingsCount?: number;
   lastReading?: string | null;
 }
@@ -93,7 +94,13 @@ export interface UtilityBill {
   meter?: { id: string; meterNumber: string } | null;
   tenant?: UtilityBillTenant | null;
   unit?: UtilityBillUnit | null;
-  resident?: { id: string; firstName?: string | null; lastName?: string | null; email: string; name?: string } | null;
+  resident?: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email: string;
+    name?: string;
+  } | null;
 }
 
 export interface MeterQuery {
@@ -105,7 +112,7 @@ export interface MeterQuery {
   isActive?: boolean;
   search?: string;
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
 }
 
 export interface ReadingQuery {
@@ -127,7 +134,7 @@ export interface BillQuery {
   from?: string;
   to?: string;
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
 }
 
 interface PaginatedResult<T> {
@@ -138,20 +145,20 @@ interface PaginatedResult<T> {
 function buildParams(query: Record<string, unknown | undefined>): string {
   const params = new URLSearchParams();
   Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
+    if (value !== undefined && value !== null && value !== '') {
       params.set(key, String(value));
     }
   });
   const qs = params.toString();
-  return qs ? `?${qs}` : "";
+  return qs ? `?${qs}` : '';
 }
 
 export function useMeters(query: MeterQuery = {}) {
   return useQuery({
-    queryKey: ["utility-meters", query],
+    queryKey: ['utility-meters', query],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<UtilityMeter[]>>(
-        `/utility-meters${buildParams(query as Record<string, unknown>)}`
+        `/utility-meters${buildParams(query as Record<string, unknown>)}`,
       );
       return { data: data.data, meta: data.meta } as PaginatedResult<UtilityMeter>;
     },
@@ -160,7 +167,7 @@ export function useMeters(query: MeterQuery = {}) {
 
 export function useMeter(id: string) {
   return useQuery({
-    queryKey: ["utility-meter", id],
+    queryKey: ['utility-meter', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<UtilityMeter>>(`/utility-meters/${id}`);
       return data.data;
@@ -171,10 +178,10 @@ export function useMeter(id: string) {
 
 export function useMeterReadings(id: string, query: ReadingQuery = {}) {
   return useQuery({
-    queryKey: ["utility-meter-readings", id, query],
+    queryKey: ['utility-meter-readings', id, query],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<ConsumptionReading[]>>(
-        `/utility-meters/${id}/readings${buildParams(query as Record<string, unknown>)}`
+        `/utility-meters/${id}/readings${buildParams(query as Record<string, unknown>)}`,
       );
       return data.data;
     },
@@ -186,11 +193,11 @@ export function useCreateMeter() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<UtilityMeter>) => {
-      const { data } = await api.post<ApiResponse<UtilityMeter>>("/utility-meters", payload);
+      const { data } = await api.post<ApiResponse<UtilityMeter>>('/utility-meters', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["utility-meters"] });
+      queryClient.invalidateQueries({ queryKey: ['utility-meters'] });
     },
   });
 }
@@ -203,8 +210,8 @@ export function useUpdateMeter() {
       return data.data;
     },
     onSuccess: (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["utility-meters"] });
-      queryClient.invalidateQueries({ queryKey: ["utility-meter", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['utility-meters'] });
+      queryClient.invalidateQueries({ queryKey: ['utility-meter', variables.id] });
       void result;
     },
   });
@@ -218,17 +225,17 @@ export function useDeleteMeter() {
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["utility-meters"] });
+      queryClient.invalidateQueries({ queryKey: ['utility-meters'] });
     },
   });
 }
 
 export function useReadings(query: ReadingQuery = {}) {
   return useQuery({
-    queryKey: ["consumption-readings", query],
+    queryKey: ['consumption-readings', query],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<ConsumptionReading[]>>(
-        `/consumption-readings${buildParams(query as Record<string, unknown>)}`
+        `/consumption-readings${buildParams(query as Record<string, unknown>)}`,
       );
       return { data: data.data, meta: data.meta } as PaginatedResult<ConsumptionReading>;
     },
@@ -240,16 +247,16 @@ export function useCreateReading() {
   return useMutation({
     mutationFn: async (payload: Partial<ConsumptionReading>) => {
       const { data } = await api.post<ApiResponse<ConsumptionReading>>(
-        "/consumption-readings",
-        payload
+        '/consumption-readings',
+        payload,
       );
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["consumption-readings"] });
+      queryClient.invalidateQueries({ queryKey: ['consumption-readings'] });
       if (result?.meterId) {
-        queryClient.invalidateQueries({ queryKey: ["utility-meter-readings", result.meterId] });
-        queryClient.invalidateQueries({ queryKey: ["utility-meter", result.meterId] });
+        queryClient.invalidateQueries({ queryKey: ['utility-meter-readings', result.meterId] });
+        queryClient.invalidateQueries({ queryKey: ['utility-meter', result.meterId] });
       }
     },
   });
@@ -261,15 +268,15 @@ export function useUpdateReading() {
     mutationFn: async ({ id, ...payload }: Partial<ConsumptionReading> & { id: string }) => {
       const { data } = await api.patch<ApiResponse<ConsumptionReading>>(
         `/consumption-readings/${id}`,
-        payload
+        payload,
       );
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["consumption-readings"] });
+      queryClient.invalidateQueries({ queryKey: ['consumption-readings'] });
       if (result?.meterId) {
-        queryClient.invalidateQueries({ queryKey: ["utility-meter-readings", result.meterId] });
-        queryClient.invalidateQueries({ queryKey: ["utility-meter", result.meterId] });
+        queryClient.invalidateQueries({ queryKey: ['utility-meter-readings', result.meterId] });
+        queryClient.invalidateQueries({ queryKey: ['utility-meter', result.meterId] });
       }
     },
   });
@@ -280,14 +287,14 @@ export function useDeleteReading() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { data } = await api.delete<ApiResponse<{ deleted: boolean }>>(
-        `/consumption-readings/${id}`
+        `/consumption-readings/${id}`,
       );
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consumption-readings"] });
-      queryClient.invalidateQueries({ queryKey: ["utility-meter-readings"] });
-      queryClient.invalidateQueries({ queryKey: ["utility-meter"] });
+      queryClient.invalidateQueries({ queryKey: ['consumption-readings'] });
+      queryClient.invalidateQueries({ queryKey: ['utility-meter-readings'] });
+      queryClient.invalidateQueries({ queryKey: ['utility-meter'] });
     },
   });
 }
@@ -297,24 +304,24 @@ export function useBulkReadings() {
   return useMutation({
     mutationFn: async (payload: { readings: Partial<ConsumptionReading>[] }) => {
       const { data } = await api.post<ApiResponse<ConsumptionReading[]>>(
-        "/consumption-readings/bulk",
-        payload
+        '/consumption-readings/bulk',
+        payload,
       );
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consumption-readings"] });
-      queryClient.invalidateQueries({ queryKey: ["utility-meters"] });
+      queryClient.invalidateQueries({ queryKey: ['consumption-readings'] });
+      queryClient.invalidateQueries({ queryKey: ['utility-meters'] });
     },
   });
 }
 
 export function useBills(query: BillQuery = {}) {
   return useQuery({
-    queryKey: ["utility-bills", query],
+    queryKey: ['utility-bills', query],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<UtilityBill[]>>(
-        `/utility-bills${buildParams(query as Record<string, unknown>)}`
+        `/utility-bills${buildParams(query as Record<string, unknown>)}`,
       );
       return { data: data.data, meta: data.meta } as PaginatedResult<UtilityBill>;
     },
@@ -323,7 +330,7 @@ export function useBills(query: BillQuery = {}) {
 
 export function useBill(id: string) {
   return useQuery({
-    queryKey: ["utility-bill", id],
+    queryKey: ['utility-bill', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<UtilityBill>>(`/utility-bills/${id}`);
       return data.data;
@@ -336,11 +343,11 @@ export function useCreateBill() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<UtilityBill>) => {
-      const { data } = await api.post<ApiResponse<UtilityBill>>("/utility-bills", payload);
+      const { data } = await api.post<ApiResponse<UtilityBill>>('/utility-bills', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["utility-bills"] });
+      queryClient.invalidateQueries({ queryKey: ['utility-bills'] });
     },
   });
 }
@@ -353,8 +360,8 @@ export function useUpdateBill() {
       return data.data;
     },
     onSuccess: (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["utility-bills"] });
-      queryClient.invalidateQueries({ queryKey: ["utility-bill", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['utility-bills'] });
+      queryClient.invalidateQueries({ queryKey: ['utility-bill', variables.id] });
       void result;
     },
   });
@@ -371,16 +378,16 @@ export function useGenerateBills() {
         periodEnd: string;
         rate: number;
         dueDate: string;
-      }>
+      }>,
     ) => {
       const { data } = await api.post<ApiResponse<UtilityBill[]>>(
-        "/utility-bills/generate",
-        payload
+        '/utility-bills/generate',
+        payload,
       );
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["utility-bills"] });
+      queryClient.invalidateQueries({ queryKey: ['utility-bills'] });
     },
   });
 }
@@ -397,17 +404,16 @@ export function useMarkBillPaid() {
       paidAmount?: number;
       reference?: string;
     }) => {
-      const { data } = await api.post<ApiResponse<UtilityBill>>(
-        `/utility-bills/${id}/mark-paid`,
-        { paidAmount, reference }
-      );
+      const { data } = await api.post<ApiResponse<UtilityBill>>(`/utility-bills/${id}/mark-paid`, {
+        paidAmount,
+        reference,
+      });
       return data.data;
     },
     onSuccess: (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["utility-bills"] });
-      queryClient.invalidateQueries({ queryKey: ["utility-bill", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['utility-bills'] });
+      queryClient.invalidateQueries({ queryKey: ['utility-bill', variables.id] });
       void result;
     },
   });
 }
-

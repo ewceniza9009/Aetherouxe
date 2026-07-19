@@ -1,33 +1,18 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
 
-export type AmenityType =
-  | "gym"
-  | "pool"
-  | "function_room"
-  | "parking"
-  | "garden"
-  | "other";
+export type AmenityType = 'gym' | 'pool' | 'function_room' | 'parking' | 'garden' | 'other';
 
-export type AmenityBookingStatus =
-  | "pending"
-  | "confirmed"
-  | "cancelled"
-  | "completed";
+export type AmenityBookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
 
-export type PostType =
-  | "announcement"
-  | "event"
-  | "maintenance"
-  | "general"
-  | "emergency";
+export type PostType = 'announcement' | 'event' | 'maintenance' | 'general' | 'emergency';
 
-export type PostAudience = "all" | "building" | "property" | "unit";
+export type PostAudience = 'all' | 'building' | 'property' | 'unit';
 
-export type ModerationStatus = "published" | "hidden" | "archived";
+export type ModerationStatus = 'published' | 'hidden' | 'archived';
 
-export type ReportStatus = "open" | "reviewed" | "dismissed" | "actioned";
+export type ReportStatus = 'open' | 'reviewed' | 'dismissed' | 'actioned';
 
 export interface Amenity {
   id: string;
@@ -37,6 +22,7 @@ export interface Amenity {
   location?: string | null;
   propertyId?: string | null;
   propertyName?: string | null;
+  property?: { name?: string; propertyCode?: string } | null;
   capacity?: number | null;
   hourlyRate?: number | null;
   isActive: boolean;
@@ -72,7 +58,7 @@ export interface CommunityPost {
   isPublished?: boolean;
   moderationStatus: ModerationStatus;
   moderationReason?: string | null;
-  status: "draft" | "published" | "scheduled" | "archived";
+  status: 'draft' | 'published' | 'scheduled' | 'archived';
   commentCount?: number;
   openReportCount?: number;
   createdAt: string;
@@ -112,7 +98,7 @@ export interface AmenityQuery {
   propertyId?: string;
   isActive?: boolean;
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
 }
 
 export interface BookingQuery {
@@ -130,7 +116,7 @@ export interface PostQuery {
   audience?: PostAudience;
   moderationStatus?: ModerationStatus;
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
 }
 
 export interface CommentQuery {
@@ -154,20 +140,20 @@ interface Paginated<T> {
 function buildParams(query: Record<string, unknown | undefined>): string {
   const params = new URLSearchParams();
   Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
+    if (value !== undefined && value !== null && value !== '') {
       params.set(key, String(value));
     }
   });
   const qs = params.toString();
-  return qs ? `?${qs}` : "";
+  return qs ? `?${qs}` : '';
 }
 
 export function useAmenities(query: AmenityQuery = {}) {
   return useQuery({
-    queryKey: ["amenities", query],
+    queryKey: ['amenities', query],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<Amenity[]>>(
-        `/amenities${buildParams(query as Record<string, unknown>)}`
+        `/amenities${buildParams(query as Record<string, unknown>)}`,
       );
       return { data: data.data, meta: data.meta } as Paginated<Amenity>;
     },
@@ -176,7 +162,7 @@ export function useAmenities(query: AmenityQuery = {}) {
 
 export function useAmenity(id: string) {
   return useQuery({
-    queryKey: ["amenity", id],
+    queryKey: ['amenity', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<Amenity>>(`/amenities/${id}`);
       return data.data;
@@ -189,11 +175,11 @@ export function useCreateAmenity() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<Amenity>) => {
-      const { data } = await api.post<ApiResponse<Amenity>>("/amenities", payload);
+      const { data } = await api.post<ApiResponse<Amenity>>('/amenities', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["amenities"] });
+      queryClient.invalidateQueries({ queryKey: ['amenities'] });
     },
   });
 }
@@ -206,8 +192,8 @@ export function useUpdateAmenity() {
       return data.data;
     },
     onSuccess: (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["amenities"] });
-      queryClient.invalidateQueries({ queryKey: ["amenity", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['amenities'] });
+      queryClient.invalidateQueries({ queryKey: ['amenity', variables.id] });
       void result;
     },
   });
@@ -221,23 +207,23 @@ export function useDeleteAmenity() {
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["amenities"] });
+      queryClient.invalidateQueries({ queryKey: ['amenities'] });
     },
   });
 }
 
 export function useBookings(query: BookingQuery = {}) {
   return useQuery({
-    queryKey: ["amenity-bookings", query],
+    queryKey: ['amenity-bookings', query],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<any[]>>(
-        `/amenity-bookings${buildParams(query as Record<string, unknown>)}`
+        `/amenity-bookings${buildParams(query as Record<string, unknown>)}`,
       );
       const mapped = (data.data ?? []).map((b: any) => ({
         id: b.id,
         amenityId: b.amenityId,
         amenityName: b.amenity?.name ?? null,
-        tenantName: b.tenant ? `${b.tenant.firstName ?? ""} ${b.tenant.lastName ?? ""}`.trim() || null : b.tenantName ?? null,
+        tenantName: b.tenantName ?? null,
         tenantId: b.tenantId ?? null,
         unitLabel: b.unit?.unitNumber ?? b.unitLabel ?? null,
         unitId: b.unitId ?? null,
@@ -257,25 +243,22 @@ export function useCreateBooking() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<AmenityBooking>) => {
-      const { data } = await api.post<ApiResponse<AmenityBooking>>(
-        "/amenity-bookings",
-        {
-          amenityId: payload.amenityId,
-          tenantName: payload.tenantName,
-          unitLabel: payload.unitLabel,
-          bookingStart: payload.startDateTime,
-          bookingEnd: payload.endDateTime,
-          totalAmount: payload.amount,
-          notes: payload.notes,
-          status: payload.status,
-        }
-      );
+      const { data } = await api.post<ApiResponse<AmenityBooking>>('/amenity-bookings', {
+        amenityId: payload.amenityId,
+        tenantName: payload.tenantName,
+        unitLabel: payload.unitLabel,
+        bookingStart: payload.startDateTime,
+        bookingEnd: payload.endDateTime,
+        totalAmount: payload.amount,
+        notes: payload.notes,
+        status: payload.status,
+      });
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["amenity-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ['amenity-bookings'] });
       if (result?.amenityId) {
-        queryClient.invalidateQueries({ queryKey: ["amenity", result.amenityId] });
+        queryClient.invalidateQueries({ queryKey: ['amenity', result.amenityId] });
       }
     },
   });
@@ -310,13 +293,13 @@ interface RawCommunityPost {
 }
 
 function mapPost(p: RawCommunityPost): CommunityPost {
-  const moderationStatus = (p.moderationStatus ?? "published") as ModerationStatus;
+  const moderationStatus = (p.moderationStatus ?? 'published') as ModerationStatus;
   return {
     id: p.id,
     title: p.title,
     body: p.body,
-    postType: (p.postType ?? "general") as PostType,
-    audience: (p.audience ?? "all") as PostAudience,
+    postType: (p.postType ?? 'general') as PostType,
+    audience: (p.audience ?? 'all') as PostAudience,
     propertyId: p.propertyId ?? null,
     propertyName: p.property?.name ?? p.property?.propertyCode ?? p.propertyName ?? null,
     scheduledAt: p.scheduledAt ?? null,
@@ -325,13 +308,13 @@ function mapPost(p: RawCommunityPost): CommunityPost {
     moderationStatus,
     moderationReason: p.moderationReason ?? null,
     status:
-      moderationStatus === "archived"
-        ? "archived"
+      moderationStatus === 'archived'
+        ? 'archived'
         : p.scheduledAt && !(p.isPublished ?? p.published)
-          ? "scheduled"
+          ? 'scheduled'
           : (p.isPublished ?? p.published)
-            ? "published"
-            : "draft",
+            ? 'published'
+            : 'draft',
     commentCount: p._count?.comments ?? p.commentCount ?? 0,
     openReportCount: p._count?.reports ?? p.openReportCount ?? 0,
     createdAt: p.createdAt,
@@ -340,10 +323,10 @@ function mapPost(p: RawCommunityPost): CommunityPost {
 
 export function usePosts(query: PostQuery = {}) {
   return useQuery({
-    queryKey: ["community-posts", query],
+    queryKey: ['community-posts', query],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<any[]>>(
-        `/community-posts${buildParams(query as Record<string, unknown>)}`
+        `/community-posts${buildParams(query as Record<string, unknown>)}`,
       );
       return {
         data: (data.data ?? []).map(mapPost),
@@ -357,14 +340,11 @@ export function useCreatePost() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<CommunityPost>) => {
-      const { data } = await api.post<ApiResponse<CommunityPost>>(
-        "/community-posts",
-        payload
-      );
+      const { data } = await api.post<ApiResponse<CommunityPost>>('/community-posts', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+      queryClient.invalidateQueries({ queryKey: ['community-posts'] });
     },
   });
 }
@@ -372,18 +352,15 @@ export function useCreatePost() {
 export function useUpdatePost() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      id,
-      ...payload
-    }: Partial<CommunityPost> & { id: string }) => {
+    mutationFn: async ({ id, ...payload }: Partial<CommunityPost> & { id: string }) => {
       const { data } = await api.patch<ApiResponse<CommunityPost>>(
         `/community-posts/${id}`,
-        payload
+        payload,
       );
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+      queryClient.invalidateQueries({ queryKey: ['community-posts'] });
     },
   });
 }
@@ -393,13 +370,13 @@ export function useDeletePost() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { data } = await api.delete<ApiResponse<{ deleted: boolean }>>(
-        `/community-posts/${id}`
+        `/community-posts/${id}`,
       );
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
-      queryClient.invalidateQueries({ queryKey: ["post-reports"] });
+      queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['post-reports'] });
     },
   });
 }
@@ -418,13 +395,13 @@ export function useModeratePost() {
     }) => {
       const { data } = await api.patch<ApiResponse<CommunityPost>>(
         `/community-posts/${id}/moderate`,
-        { moderationStatus, reason }
+        { moderationStatus, reason },
       );
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
-      queryClient.invalidateQueries({ queryKey: ["moderation-logs"] });
+      queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['moderation-logs'] });
     },
   });
 }
@@ -439,11 +416,9 @@ function mapComment(c: any): PostComment {
     authorId: c.authorId ?? null,
     authorName:
       c.authorName ??
-      (c.author
-        ? `${c.author.firstName ?? ""} ${c.author.lastName ?? ""}`.trim()
-        : null),
+      (c.author ? `${c.author.firstName ?? ''} ${c.author.lastName ?? ''}`.trim() : null),
     body: c.body,
-    moderationStatus: c.moderationStatus ?? "published",
+    moderationStatus: c.moderationStatus ?? 'published',
     openReportCount: c._count?.reports ?? 0,
     createdAt: c.createdAt,
   };
@@ -451,10 +426,10 @@ function mapComment(c: any): PostComment {
 
 export function useComments(query: CommentQuery = {}) {
   return useQuery({
-    queryKey: ["post-comments", query],
+    queryKey: ['post-comments', query],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<any[]>>(
-        `/post-comments${buildParams(query as Record<string, unknown>)}`
+        `/post-comments${buildParams(query as Record<string, unknown>)}`,
       );
       return {
         data: (data.data ?? []).map(mapComment),
@@ -474,15 +449,14 @@ export function useModerateComment() {
       id: string;
       moderationStatus: ModerationStatus;
     }) => {
-      const { data } = await api.patch<ApiResponse<PostComment>>(
-        `/post-comments/${id}/moderate`,
-        { moderationStatus }
-      );
+      const { data } = await api.patch<ApiResponse<PostComment>>(`/post-comments/${id}/moderate`, {
+        moderationStatus,
+      });
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["post-comments"] });
-      queryClient.invalidateQueries({ queryKey: ["moderation-logs"] });
+      queryClient.invalidateQueries({ queryKey: ['post-comments'] });
+      queryClient.invalidateQueries({ queryKey: ['moderation-logs'] });
     },
   });
 }
@@ -491,14 +465,12 @@ export function useDeleteComment() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { data } = await api.delete<ApiResponse<{ deleted: boolean }>>(
-        `/post-comments/${id}`
-      );
+      const { data } = await api.delete<ApiResponse<{ deleted: boolean }>>(`/post-comments/${id}`);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["post-comments"] });
-      queryClient.invalidateQueries({ queryKey: ["post-reports"] });
+      queryClient.invalidateQueries({ queryKey: ['post-comments'] });
+      queryClient.invalidateQueries({ queryKey: ['post-reports'] });
     },
   });
 }
@@ -517,7 +489,7 @@ function mapReport(r: any): PostReport {
     reporterName:
       r.reporterName ??
       (r.reportedBy
-        ? `${r.reportedBy.firstName ?? ""} ${r.reportedBy.lastName ?? ""}`.trim()
+        ? `${r.reportedBy.firstName ?? ''} ${r.reportedBy.lastName ?? ''}`.trim()
         : null),
     status: r.status,
     resolutionNote: r.resolutionNote ?? null,
@@ -528,10 +500,10 @@ function mapReport(r: any): PostReport {
 
 export function useReports(query: ReportQuery = {}) {
   return useQuery({
-    queryKey: ["post-reports", query],
+    queryKey: ['post-reports', query],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<any[]>>(
-        `/post-reports${buildParams(query as Record<string, unknown>)}`
+        `/post-reports${buildParams(query as Record<string, unknown>)}`,
       );
       return {
         data: (data.data ?? []).map(mapReport),
@@ -553,16 +525,15 @@ export function useResolveReport() {
       status: ReportStatus;
       resolutionNote?: string;
     }) => {
-      const { data } = await api.patch<ApiResponse<PostReport>>(
-        `/post-reports/${id}/resolve`,
-        { status, resolutionNote }
-      );
+      const { data } = await api.patch<ApiResponse<PostReport>>(`/post-reports/${id}/resolve`, {
+        status,
+        resolutionNote,
+      });
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["post-reports"] });
-      queryClient.invalidateQueries({ queryKey: ["moderation-logs"] });
+      queryClient.invalidateQueries({ queryKey: ['post-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['moderation-logs'] });
     },
   });
 }
-

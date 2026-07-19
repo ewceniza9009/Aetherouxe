@@ -1,7 +1,10 @@
-import { NotificationBell as SharedNotificationBell, NotificationBellProvider } from "@elite-realty/shared-ui/components/notifications";
-import type { NotificationRole } from "@elite-realty/shared-ui/hooks";
-import api from "@/lib/api";
-import { useAuth } from "@elite-realty/shared-ui/hooks";
+﻿import {
+  NotificationBell as SharedNotificationBell,
+  NotificationBellProvider,
+} from '@elite-realty/shared-ui/components/notifications';
+import type { NotificationRole } from '@elite-realty/shared-ui/hooks';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import { useAuth } from '@elite-realty/shared-ui/hooks';
 
 interface NotificationBellProps {
   role: NotificationRole;

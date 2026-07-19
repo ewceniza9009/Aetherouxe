@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse } from "@elite-realty/shared-types";
+﻿import { useQuery } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse } from '@elite-realty/shared-types';
 
 export interface InventoryUnit {
   id: string;
@@ -32,7 +32,7 @@ export interface ProjectInventory {
 
 export function useProjectInventory(projectId: string) {
   return useQuery({
-    queryKey: ["project-inventory", projectId],
+    queryKey: ['project-inventory', projectId],
     enabled: !!projectId,
     queryFn: async (): Promise<ProjectInventory> => {
       const { data: bResp } = await api.get<ApiResponse<any[]>>(
@@ -85,4 +85,3 @@ export function useProjectInventory(projectId: string) {
     },
   });
 }
-

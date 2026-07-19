@@ -1,30 +1,23 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
 
 export type DocumentOwnerType =
-  | "property"
-  | "unit"
-  | "tenant"
-  | "lease"
-  | "owner"
-  | "rto"
-  | "project"
-  | "vendor";
+  'property' | 'unit' | 'tenant' | 'lease' | 'owner' | 'rto' | 'project' | 'vendor';
 
 export type DocumentType =
-  | "lease_agreement"
-  | "contract"
-  | "id_proof"
-  | "invoice"
-  | "statement"
-  | "permit"
-  | "insurance"
-  | "title_deed"
-  | "maintenance_record"
-  | "other";
+  | 'lease_agreement'
+  | 'contract'
+  | 'id_proof'
+  | 'invoice'
+  | 'statement'
+  | 'permit'
+  | 'insurance'
+  | 'title_deed'
+  | 'maintenance_record'
+  | 'other';
 
-export type SignatureStatus = "pending" | "sent" | "signed" | "declined";
+export type SignatureStatus = 'pending' | 'sent' | 'signed' | 'declined';
 
 export interface DocumentSignature {
   id: string;
@@ -60,7 +53,7 @@ export interface DocumentQuery {
   documentType?: DocumentType;
   isSigned?: boolean;
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
 }
 
 interface Paginated<T> {
@@ -71,20 +64,20 @@ interface Paginated<T> {
 function buildParams(query: Record<string, unknown | undefined>): string {
   const params = new URLSearchParams();
   Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
+    if (value !== undefined && value !== null && value !== '') {
       params.set(key, String(value));
     }
   });
   const qs = params.toString();
-  return qs ? `?${qs}` : "";
+  return qs ? `?${qs}` : '';
 }
 
 export function useDocuments(query: DocumentQuery = {}) {
   return useQuery({
-    queryKey: ["documents", query],
+    queryKey: ['documents', query],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<DocumentVault[]>>(
-        `/documents${buildParams(query as Record<string, unknown>)}`
+        `/documents${buildParams(query as Record<string, unknown>)}`,
       );
       return { data: data.data, meta: data.meta } as Paginated<DocumentVault>;
     },
@@ -93,7 +86,7 @@ export function useDocuments(query: DocumentQuery = {}) {
 
 export function useDocument(id: string) {
   return useQuery({
-    queryKey: ["document", id],
+    queryKey: ['document', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<DocumentVault>>(`/documents/${id}`);
       return data.data;
@@ -106,11 +99,11 @@ export function useUploadDocument() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<DocumentVault>) => {
-      const { data } = await api.post<ApiResponse<DocumentVault>>("/documents", payload);
+      const { data } = await api.post<ApiResponse<DocumentVault>>('/documents', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
     },
   });
 }
@@ -131,13 +124,13 @@ export function useRequestSignature() {
     }) => {
       const { data } = await api.post<ApiResponse<DocumentSignature>>(
         `/documents/${id}/request-signature`,
-        { signerName, signerEmail, signatureUrl }
+        { signerName, signerEmail, signatureUrl },
       );
       return data.data;
     },
     onSuccess: (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      queryClient.invalidateQueries({ queryKey: ["document", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['document', variables.id] });
       void result;
     },
   });
@@ -151,8 +144,8 @@ export function useUpdateDocument() {
       return data.data;
     },
     onSuccess: (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      queryClient.invalidateQueries({ queryKey: ["document", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['document', variables.id] });
     },
   });
 }
@@ -165,7 +158,7 @@ export function useDeleteDocument() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
     },
   });
 }
@@ -176,15 +169,14 @@ export function useMarkSignatureSigned() {
     mutationFn: async (id: string) => {
       const { data } = await api.post<ApiResponse<DocumentVault>>(
         `/documents/${id}/mark-signed`,
-        {}
+        {},
       );
       return data.data;
     },
     onSuccess: (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      queryClient.invalidateQueries({ queryKey: ["document", variables] });
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['document', variables] });
       void result;
     },
   });
 }
-

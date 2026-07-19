@@ -1,32 +1,38 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
-import { useAuth } from "@elite-realty/shared-ui/hooks";
-import api from "@/lib/api";
-import { getErrorMessage } from "@/lib/error";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
-import { AvatarUpload } from "@/components/ui/avatar-upload";
+﻿import { useEffect, useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { useAuth } from '@elite-realty/shared-ui/hooks';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import { getErrorMessage } from '@/lib/error';
+import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { AvatarUpload } from '@/components/ui/avatar-upload';
 
 export default function ProfilePage() {
   const { user, refetchUser } = useAuth();
-  const [firstName, setFirstName] = useState(user?.firstName ?? "");
-  const [lastName, setLastName] = useState(user?.lastName ?? "");
-  const [email, setEmail] = useState(user?.email ?? "");
-  const [phone, setPhone] = useState(user?.phone ?? "");
+  const [firstName, setFirstName] = useState(user?.firstName ?? '');
+  const [lastName, setLastName] = useState(user?.lastName ?? '');
+  const [email, setEmail] = useState(user?.email ?? '');
+  const [phone, setPhone] = useState(user?.phone ?? '');
 
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
 
-  const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setFirstName(user?.firstName ?? "");
-    setLastName(user?.lastName ?? "");
-    setEmail(user?.email ?? "");
-    setPhone(user?.phone ?? "");
+    setFirstName(user?.firstName ?? '');
+    setLastName(user?.lastName ?? '');
+    setEmail(user?.email ?? '');
+    setPhone(user?.phone ?? '');
   }, [user]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -34,11 +40,11 @@ export default function ProfilePage() {
     setSaving(true);
     setMsg(null);
     try {
-      await api.patch("/auth/me", { firstName, lastName, phone, email });
+      await api.patch('/auth/me', { firstName, lastName, phone, email });
       await refetchUser();
-      setMsg({ type: "success", text: "Profile saved successfully" });
+      setMsg({ type: 'success', text: 'Profile saved successfully' });
     } catch (err) {
-      setMsg({ type: "error", text: getErrorMessage(err, "Failed to save profile") });
+      setMsg({ type: 'error', text: getErrorMessage(err, 'Failed to save profile') });
     } finally {
       setSaving(false);
     }
@@ -50,12 +56,12 @@ export default function ProfilePage() {
     setSaving(true);
     setMsg(null);
     try {
-      await api.post("/auth/change-password", { currentPassword, newPassword });
-      setCurrentPassword("");
-      setNewPassword("");
-      setMsg({ type: "success", text: "Password changed successfully" });
+      await api.post('/auth/change-password', { currentPassword, newPassword });
+      setCurrentPassword('');
+      setNewPassword('');
+      setMsg({ type: 'success', text: 'Password changed successfully' });
     } catch (err) {
-      setMsg({ type: "error", text: getErrorMessage(err, "Failed to change password") });
+      setMsg({ type: 'error', text: getErrorMessage(err, 'Failed to change password') });
     } finally {
       setSaving(false);
     }
@@ -65,10 +71,19 @@ export default function ProfilePage() {
     <div className="space-y-6 flex flex-col ">
       <div className="flex items-center gap-6">
         <AvatarUpload
-          userId={user?.id ?? ""}
+          userId={user?.id ?? ''}
           avatarUrl={user?.avatarUrl}
           initials={
-            user ? [user.firstName, user.lastName].filter(Boolean).join(" ").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || user.email.slice(0, 2).toUpperCase() : "—"
+            user
+              ? [user.firstName, user.lastName]
+                  .filter(Boolean)
+                  .join(' ')
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase() || user.email.slice(0, 2).toUpperCase()
+              : '—'
           }
           className="h-20 w-20"
           onSuccess={refetchUser}
@@ -80,12 +95,18 @@ export default function ProfilePage() {
       </div>
 
       {msg && (
-        <div className={`flex items-center gap-3 p-4 rounded-lg border ${
-          msg.type === "success"
-            ? "bg-green-50 border-green-200 text-green-800"
-            : "bg-red-50 border-red-200 text-red-800"
-        }`}>
-          {msg.type === "success" ? <CheckCircle className="h-5 w-5 shrink-0" /> : <AlertCircle className="h-5 w-5 shrink-0" />}
+        <div
+          className={`flex items-center gap-3 p-4 rounded-lg border ${
+            msg.type === 'success'
+              ? 'bg-green-50 border-green-200 text-green-800'
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}
+        >
+          {msg.type === 'success' ? (
+            <CheckCircle className="h-5 w-5 shrink-0" />
+          ) : (
+            <AlertCircle className="h-5 w-5 shrink-0" />
+          )}
           <span>{msg.text}</span>
         </div>
       )}
@@ -100,17 +121,30 @@ export default function ProfilePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>
-                <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last Name</Label>
-                <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                <Input
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
@@ -134,11 +168,21 @@ export default function ProfilePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="currentPassword">Current Password</Label>
-                <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
-                <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
               </div>
             </div>
             <Button type="submit" disabled={saving || !currentPassword || !newPassword}>
@@ -150,6 +194,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-
-

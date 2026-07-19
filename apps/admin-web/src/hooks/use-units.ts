@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
-import type { RawUnit } from "@/types/api";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
+import type { RawUnit } from '@/types/api';
 
 export interface Unit {
   id: string;
@@ -43,17 +43,17 @@ interface PaginatedResult<T> {
 
 export function useUnits(query: UnitQuery) {
   return useQuery({
-    queryKey: ["units", query],
+    queryKey: ['units', query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (query.page) params.set("page", String(query.page));
-      if (query.limit) params.set("limit", String(query.limit));
-      if (query.propertyId) params.set("propertyId", query.propertyId);
-      if (query.type) params.set("type", query.type);
-      if (query.status) params.set("status", query.status);
-      if (query.search) params.set("search", query.search);
-      if (query.sort) params.set("sort", query.sort);
-      if (query.order) params.set("order", query.order);
+      if (query.page) params.set('page', String(query.page));
+      if (query.limit) params.set('limit', String(query.limit));
+      if (query.propertyId) params.set('propertyId', query.propertyId);
+      if (query.type) params.set('type', query.type);
+      if (query.status) params.set('status', query.status);
+      if (query.search) params.set('search', query.search);
+      if (query.sort) params.set('sort', query.sort);
+      if (query.order) params.set('order', query.order);
       const { data } = await api.get<ApiResponse<RawUnit[]>>(`/units?${params}`);
       const transformed = (data.data ?? []).map((u: RawUnit) => ({
         id: u.id,
@@ -66,7 +66,7 @@ export function useUnits(query: UnitQuery) {
         squareMeters: u.squareMeters,
         bedrooms: u.bedrooms,
         bathrooms: u.bathrooms,
-        status: u.status || (u.unitType ? "available" : "unknown"),
+        status: u.status || (u.unitType ? 'available' : 'unknown'),
         unitType: u.unitType,
         features: u.features,
         listPrice: u.listPrice ? Number(u.listPrice) : null,
@@ -83,7 +83,7 @@ export function useUnits(query: UnitQuery) {
 
 export function useUnit(id: string) {
   return useQuery({
-    queryKey: ["unit", id],
+    queryKey: ['unit', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<any>>(`/units/${id}`);
       const u = data.data;
@@ -98,7 +98,7 @@ export function useUnit(id: string) {
         squareMeters: u.squareMeters,
         bedrooms: u.bedrooms,
         bathrooms: u.bathrooms,
-        status: u.status || "available",
+        status: u.status || 'available',
         unitType: u.unitType,
         features: u.features,
         listPrice: u.listPrice ? Number(u.listPrice) : null,
@@ -116,11 +116,11 @@ export function useCreateUnit() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<Unit>) => {
-      const { data } = await api.post<ApiResponse<Unit>>("/units", payload);
+      const { data } = await api.post<ApiResponse<Unit>>('/units', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["units"] });
+      queryClient.invalidateQueries({ queryKey: ['units'] });
     },
   });
 }
@@ -133,8 +133,8 @@ export function useUpdateUnit() {
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["units"] });
-      queryClient.invalidateQueries({ queryKey: ["unit", result.id] });
+      queryClient.invalidateQueries({ queryKey: ['units'] });
+      queryClient.invalidateQueries({ queryKey: ['unit', result.id] });
     },
   });
 }
@@ -146,8 +146,7 @@ export function useDeleteUnit() {
       await api.delete(`/units/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["units"] });
+      queryClient.invalidateQueries({ queryKey: ['units'] });
     },
   });
 }
-

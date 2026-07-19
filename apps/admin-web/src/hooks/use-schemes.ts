@@ -1,16 +1,16 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
 
 export const SCHEME_TYPES = [
-  { value: "standard_rental", label: "Standard Rental", color: "text-blue-400" },
-  { value: "spot_cash", label: "Spot Cash", color: "text-emerald-400" },
-  { value: "installment", label: "Installment", color: "text-amber-400" },
-  { value: "mortgage_assisted", label: "Mortgage Assisted", color: "text-purple-400" },
-  { value: "rent_to_own", label: "Rent-to-Own", color: "text-rose-400" },
+  { value: 'standard_rental', label: 'Standard Rental', color: 'text-blue-400' },
+  { value: 'spot_cash', label: 'Spot Cash', color: 'text-emerald-400' },
+  { value: 'installment', label: 'Installment', color: 'text-amber-400' },
+  { value: 'mortgage_assisted', label: 'Mortgage Assisted', color: 'text-purple-400' },
+  { value: 'rent_to_own', label: 'Rent-to-Own', color: 'text-rose-400' },
 ] as const;
 
-export type SchemeTypeValue = typeof SCHEME_TYPES[number]["value"];
+export type SchemeTypeValue = (typeof SCHEME_TYPES)[number]['value'];
 
 export interface Scheme {
   id: string;
@@ -72,20 +72,20 @@ export interface SchemeQuery {
   page?: number;
   limit?: number;
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
 }
 
 export function useSchemes(query: SchemeQuery = {}) {
   return useQuery({
-    queryKey: ["schemes", query],
+    queryKey: ['schemes', query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (query.type) params.set("type", query.type);
-      if (query.search) params.set("search", query.search);
-      if (query.page) params.set("page", String(query.page));
-      if (query.limit) params.set("limit", String(query.limit));
-      if (query.sort) params.set("sort", query.sort);
-      if (query.order) params.set("order", query.order);
+      if (query.type) params.set('type', query.type);
+      if (query.search) params.set('search', query.search);
+      if (query.page) params.set('page', String(query.page));
+      if (query.limit) params.set('limit', String(query.limit));
+      if (query.sort) params.set('sort', query.sort);
+      if (query.order) params.set('order', query.order);
       const { data } = await api.get<ApiResponse<Scheme[]>>(`/schemes?${params}`);
       return { data: data.data ?? [], meta: data.meta } as {
         data: Scheme[];
@@ -97,7 +97,7 @@ export function useSchemes(query: SchemeQuery = {}) {
 
 export function useScheme(id: string) {
   return useQuery({
-    queryKey: ["scheme", id],
+    queryKey: ['scheme', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<Scheme>>(`/schemes/${id}`);
       return data.data;
@@ -110,10 +110,10 @@ export function useCreateScheme() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<Scheme>) => {
-      const { data } = await api.post<ApiResponse<Scheme>>("/schemes", payload);
+      const { data } = await api.post<ApiResponse<Scheme>>('/schemes', payload);
       return data.data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["schemes"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['schemes'] }),
   });
 }
 
@@ -125,8 +125,8 @@ export function useUpdateScheme() {
       return data.data;
     },
     onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ["schemes"] });
-      qc.invalidateQueries({ queryKey: ["scheme", vars.id] });
+      qc.invalidateQueries({ queryKey: ['schemes'] });
+      qc.invalidateQueries({ queryKey: ['scheme', vars.id] });
     },
   });
 }
@@ -137,7 +137,6 @@ export function useDeleteScheme() {
     mutationFn: async (id: string) => {
       await api.delete(`/schemes/${id}`);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["schemes"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['schemes'] }),
   });
 }
-

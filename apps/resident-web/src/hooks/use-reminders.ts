@@ -1,18 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/api";
-import { useAuth } from "@elite-realty/shared-ui/hooks";
-import type { ApiResponse } from "@elite-realty/shared-types";
+﻿import { useQuery } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import { useAuth } from '@elite-realty/shared-ui/hooks';
+import type { ApiResponse } from '@elite-realty/shared-types';
 
-export type ReminderType =
-  | "rent_due"
-  | "overdue"
-  | "late_fee"
-  | "notice"
-  | "statement";
+export type ReminderType = 'rent_due' | 'overdue' | 'late_fee' | 'notice' | 'statement';
 
-export type ReminderChannel = "email" | "sms" | "push" | "letter";
+export type ReminderChannel = 'email' | 'sms' | 'push' | 'letter';
 
-export type ReminderStatus = "pending" | "sent" | "failed" | "cancelled";
+export type ReminderStatus = 'pending' | 'sent' | 'failed' | 'cancelled';
 
 export interface PaymentReminder {
   id: string;
@@ -31,12 +26,12 @@ export interface PaymentReminder {
 export function useMyReminders() {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ["my-reminders", user?.id],
+    queryKey: ['my-reminders', user?.id],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (user?.id) params.set("tenantId", user.id);
+      if (user?.id) params.set('tenantId', user.id);
       const { data } = await api.get<ApiResponse<PaymentReminder[]>>(
-        `/payment-reminders?${params.toString()}`
+        `/payment-reminders?${params.toString()}`,
       );
       return (data.data ?? []) as PaymentReminder[];
     },
@@ -45,28 +40,27 @@ export function useMyReminders() {
 }
 
 export const REMINDER_TYPE_LABELS: Record<ReminderType, string> = {
-  rent_due: "Rent Due",
-  overdue: "Overdue",
-  late_fee: "Late Fee",
-  notice: "Notice",
-  statement: "Statement",
+  rent_due: 'Rent Due',
+  overdue: 'Overdue',
+  late_fee: 'Late Fee',
+  notice: 'Notice',
+  statement: 'Statement',
 };
 
 export const REMINDER_STATUS_LABELS: Record<ReminderStatus, string> = {
-  pending: "Pending",
-  sent: "Sent",
-  failed: "Failed",
-  cancelled: "Cancelled",
+  pending: 'Pending',
+  sent: 'Sent',
+  failed: 'Failed',
+  cancelled: 'Cancelled',
 };
 
 export function formatDate(value?: string | null): string {
-  if (!value) return "—";
+  if (!value) return '—';
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return value;
   return d.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   });
 }
-

@@ -1,16 +1,16 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import { LeaseType, type ApiResponse, type PaginationMeta } from "@elite-realty/shared-types";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import { LeaseType, type ApiResponse, type PaginationMeta } from '@elite-realty/shared-types';
 
 export type LeaseStatus =
-  | "pending"
-  | "active"
-  | "expiring"
-  | "expired"
-  | "terminated"
-  | "rto_active"
-  | "rto_delinquent"
-  | "rto_converted";
+  | 'pending'
+  | 'active'
+  | 'expiring'
+  | 'expired'
+  | 'terminated'
+  | 'rto_active'
+  | 'rto_delinquent'
+  | 'rto_converted';
 
 export interface Lease {
   id: string;
@@ -33,8 +33,8 @@ export interface Lease {
   updatedAt: string;
 }
 
-export type PaymentMethod = "card" | "ach" | "cash" | "check" | "bank_transfer";
-export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
+export type PaymentMethod = 'card' | 'ach' | 'cash' | 'check' | 'bank_transfer';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 
 export interface RentalPayment {
   id: string;
@@ -56,11 +56,11 @@ interface PaginatedResult<T> {
 
 export function useMyLease() {
   return useQuery({
-    queryKey: ["my-lease"],
+    queryKey: ['my-lease'],
     queryFn: async () => {
       const params = new URLSearchParams();
-      params.set("tenantUserId", "me");
-      params.set("limit", "10");
+      params.set('tenantUserId', 'me');
+      params.set('limit', '10');
       const { data } = await api.get<ApiResponse<Lease[]>>(`/leases?${params}`);
       return data.data[0] ?? null;
     },
@@ -69,10 +69,10 @@ export function useMyLease() {
 
 export function useLeasePayments(leaseId: string) {
   return useQuery({
-    queryKey: ["my-rental-payments", leaseId],
+    queryKey: ['my-rental-payments', leaseId],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (leaseId) params.set("leaseAgreementId", leaseId);
+      if (leaseId) params.set('leaseAgreementId', leaseId);
       const { data } = await api.get<ApiResponse<RentalPayment[]>>(`/rental-payments?${params}`);
       return data.data;
     },
@@ -102,9 +102,8 @@ export function useRecordPayment() {
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["my-rental-payments", result.leaseAgreementId] });
-      queryClient.invalidateQueries({ queryKey: ["my-lease"] });
+      queryClient.invalidateQueries({ queryKey: ['my-rental-payments', result.leaseAgreementId] });
+      queryClient.invalidateQueries({ queryKey: ['my-lease'] });
     },
   });
 }
-

@@ -1,15 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse } from "@elite-realty/shared-types";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse } from '@elite-realty/shared-types';
 
-export type UtilityType = "water" | "electricity" | "gas";
+export type UtilityType = 'water' | 'electricity' | 'gas';
 
-export type UtilityBillStatus =
-  | "pending"
-  | "paid"
-  | "partially_paid"
-  | "waived"
-  | "disputed";
+export type UtilityBillStatus = 'pending' | 'paid' | 'partially_paid' | 'waived' | 'disputed';
 
 export interface UtilityMeterTenant {
   id: string;
@@ -64,15 +59,15 @@ export interface BillQuery {
 
 export function useMyBills(query: BillQuery = {}) {
   return useQuery({
-    queryKey: ["my-utility-bills", query],
+    queryKey: ['my-utility-bills', query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (query.page) params.set("page", String(query.page));
-      if (query.limit) params.set("limit", String(query.limit));
-      if (query.utilityType) params.set("utilityType", query.utilityType);
-      if (query.status) params.set("status", query.status);
+      if (query.page) params.set('page', String(query.page));
+      if (query.limit) params.set('limit', String(query.limit));
+      if (query.utilityType) params.set('utilityType', query.utilityType);
+      if (query.status) params.set('status', query.status);
       const { data } = await api.get<ApiResponse<UtilityBill[]>>(
-        `/utility-bills${params.toString() ? `?${params}` : ""}`
+        `/utility-bills${params.toString() ? `?${params}` : ''}`,
       );
       return data.data;
     },
@@ -81,12 +76,12 @@ export function useMyBills(query: BillQuery = {}) {
 
 export function useMyMeters(query: BillQuery = {}) {
   return useQuery({
-    queryKey: ["my-utility-meters", query],
+    queryKey: ['my-utility-meters', query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (query.utilityType) params.set("utilityType", query.utilityType);
+      if (query.utilityType) params.set('utilityType', query.utilityType);
       const { data } = await api.get<ApiResponse<UtilityMeter[]>>(
-        `/utility-meters${params.toString() ? `?${params}` : ""}`
+        `/utility-meters${params.toString() ? `?${params}` : ''}`,
       );
       return data.data;
     },
@@ -96,16 +91,23 @@ export function useMyMeters(query: BillQuery = {}) {
 export function usePayUtilityBill() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, paidAmount, reference }: { id: string; paidAmount?: number; reference?: string }) => {
-      const { data } = await api.post<ApiResponse<UtilityBill>>(
-        `/utility-bills/${id}/mark-paid`,
-        { paidAmount, reference }
-      );
+    mutationFn: async ({
+      id,
+      paidAmount,
+      reference,
+    }: {
+      id: string;
+      paidAmount?: number;
+      reference?: string;
+    }) => {
+      const { data } = await api.post<ApiResponse<UtilityBill>>(`/utility-bills/${id}/mark-paid`, {
+        paidAmount,
+        reference,
+      });
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-utility-bills"] });
+      queryClient.invalidateQueries({ queryKey: ['my-utility-bills'] });
     },
   });
 }
-

@@ -1,12 +1,12 @@
-import { StrictMode } from "react";
-import ReactDOM from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "@elite-realty/shared-ui/hooks";
-import api from "@/lib/api";
-import { RouterProvider } from "@tanstack/react-router";
-import router from "@/router";
-import { registerServiceWorker } from "@/pwa";
-import "./index.css";
+﻿import { StrictMode } from 'react';
+import ReactDOM from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@elite-realty/shared-ui/hooks';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import { RouterProvider } from '@tanstack/react-router';
+import router from '@/router';
+import { registerServiceWorker } from '@/pwa';
+import './index.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,7 +17,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const rootElement = document.getElementById("root")!;
+const rootElement = document.getElementById('root')!;
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
@@ -27,7 +27,7 @@ if (!rootElement.innerHTML) {
           <RouterProvider router={router} />
         </AuthProvider>
       </QueryClientProvider>
-    </StrictMode>
+    </StrictMode>,
   );
 }
 

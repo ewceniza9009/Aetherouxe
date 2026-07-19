@@ -1,21 +1,21 @@
-import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { useListQuery } from "@/hooks/use-list-query";
-import { GridToolbar, GridState } from "@/components/GridToolbar";
-import { ListPager } from "@/components/ListPager";
-import { Card, CardContent, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
-import { Textarea } from "@elite-realty/shared-ui/components/ui";
+import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useListQuery } from '@/hooks/use-list-query';
+import { GridToolbar, GridState } from '@/components/GridToolbar';
+import { ListPager } from '@/components/ListPager';
+import { Card, CardContent, CardTitle } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { Textarea } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -23,14 +23,9 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui";
-import {
-  Plus,
-  Loader2,
-  Pencil,
-  Trash2,
-} from "lucide-react";
-import { formatCurrency } from "@/lib/agent-meta";
+} from '@elite-realty/shared-ui/components/ui';
+import { Plus, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { formatCurrency } from '@/lib/agent-meta';
 import {
   useAmenities,
   useCreateAmenity,
@@ -38,24 +33,22 @@ import {
   useDeleteAmenity,
   type Amenity,
   type AmenityType,
-} from "@/hooks/use-community";
+} from '@/hooks/use-community';
+import { useProperties } from '@/hooks/use-properties';
 
-  const amenityTypeMeta: Record<
-    AmenityType,
-    { label: string; className: string }
-  > = {
-  gym: { label: "Gym", className: "bg-indigo-100 text-indigo-700 border-indigo-200" },
-  pool: { label: "Pool", className: "bg-cyan-100 text-cyan-700 border-cyan-200" },
+const amenityTypeMeta: Record<AmenityType, { label: string; className: string }> = {
+  gym: { label: 'Gym', className: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+  pool: { label: 'Pool', className: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
   function_room: {
-    label: "Function Room",
-    className: "bg-violet-100 text-violet-700 border-violet-200",
+    label: 'Function Room',
+    className: 'bg-violet-100 text-violet-700 border-violet-200',
   },
   parking: {
-    label: "Parking",
-    className: "bg-amber-100 text-amber-700 border-amber-200",
+    label: 'Parking',
+    className: 'bg-amber-100 text-amber-700 border-amber-200',
   },
-  garden: { label: "Garden", className: "bg-green-100 text-green-700 border-green-200" },
-  other: { label: "Other", className: "bg-muted text-muted-foreground border-border" },
+  garden: { label: 'Garden', className: 'bg-green-100 text-green-700 border-green-200' },
+  other: { label: 'Other', className: 'bg-muted text-muted-foreground border-border' },
 };
 
 function money(n: number) {
@@ -65,15 +58,17 @@ function money(n: number) {
 export default function AmenitiesPage() {
   const navigate = useNavigate();
   const listQuery = useListQuery(10);
-  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
-  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } =
+    listQuery;
+  const [typeFilter, setTypeFilter] = useState<string>('all');
 
   const fullQuery = {
     ...query,
-    type: typeFilter !== "all" ? (typeFilter as AmenityType) : undefined,
+    type: typeFilter !== 'all' ? (typeFilter as AmenityType) : undefined,
   };
 
   const { data, isLoading, isError, refetch } = useAmenities(fullQuery);
+  const { data: propertiesData } = useProperties({ limit: 100 });
   const createAmenity = useCreateAmenity();
   const updateAmenity = useUpdateAmenity();
   const deleteAmenity = useDeleteAmenity();
@@ -91,13 +86,13 @@ export default function AmenitiesPage() {
 
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    name: "",
-    type: "gym" as AmenityType,
-    location: "",
-    propertyId: "",
-    capacity: "",
-    hourlyRate: "",
-    description: "",
+    name: '',
+    type: 'gym' as AmenityType,
+    location: '',
+    propertyId: '',
+    capacity: '',
+    hourlyRate: '',
+    description: '',
   });
 
   const amenities = data?.data ?? [];
@@ -105,13 +100,13 @@ export default function AmenitiesPage() {
 
   const resetForm = () =>
     setForm({
-      name: "",
-      type: "gym",
-      location: "",
-      propertyId: "",
-      capacity: "",
-      hourlyRate: "",
-      description: "",
+      name: '',
+      type: 'gym',
+      location: '',
+      propertyId: '',
+      capacity: '',
+      hourlyRate: '',
+      description: '',
     });
 
   const openEdit = (a: Amenity) => {
@@ -119,11 +114,11 @@ export default function AmenitiesPage() {
     setForm({
       name: a.name,
       type: a.type,
-      location: a.location || "",
-      propertyId: a.propertyId || "",
-      capacity: a.capacity != null ? String(a.capacity) : "",
-      hourlyRate: a.hourlyRate != null ? String(a.hourlyRate) : "",
-      description: a.description || "",
+      location: a.location || '',
+      propertyId: a.propertyId || '',
+      capacity: a.capacity != null ? String(a.capacity) : '',
+      hourlyRate: a.hourlyRate != null ? String(a.hourlyRate) : '',
+      description: a.description || '',
     });
     setOpen(true);
   };
@@ -143,7 +138,7 @@ export default function AmenitiesPage() {
           name: form.name,
           type: form.type,
           location: form.location || undefined,
-          propertyId: form.propertyId || undefined,
+          propertyId: form.propertyId || null,
           capacity: form.capacity ? Number(form.capacity) : undefined,
           hourlyRate: form.hourlyRate ? Number(form.hourlyRate) : undefined,
           description: form.description || undefined,
@@ -185,11 +180,14 @@ export default function AmenitiesPage() {
         search={search}
         onSearchChange={setSearch}
         placeholder="Search amenities…"
-        action={{ label: "New Amenity", onClick: () => setOpen(true) }}
+        action={{ label: 'New Amenity', onClick: () => setOpen(true) }}
         filters={
           <Select
             value={typeFilter}
-            onValueChange={(v) => { setTypeFilter(v); resetPage(); }}
+            onValueChange={(v) => {
+              setTypeFilter(v);
+              resetPage();
+            }}
           >
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Type" />
@@ -218,22 +216,44 @@ export default function AmenitiesPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b bg-muted/50">
-                    <th {...sortHeader("name", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Name{sortIndicator("name")}
+                    <th
+                      {...sortHeader(
+                        'name',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Name{sortIndicator('name')}
                     </th>
-                    <th {...sortHeader("type", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Type{sortIndicator("type")}
+                    <th
+                      {...sortHeader(
+                        'type',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Type{sortIndicator('type')}
                     </th>
-                    <th {...sortHeader("capacity", "px-4 py-3 text-right text-sm font-medium text-muted-foreground")}>
-                      Capacity{sortIndicator("capacity")}
+                    <th
+                      {...sortHeader(
+                        'capacity',
+                        'px-4 py-3 text-right text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Capacity{sortIndicator('capacity')}
                     </th>
-                    <th {...sortHeader("hourlyRate", "px-4 py-3 text-right text-sm font-medium text-muted-foreground")}>
-                      Hourly Rate{sortIndicator("hourlyRate")}
+                    <th
+                      {...sortHeader(
+                        'hourlyRate',
+                        'px-4 py-3 text-right text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Hourly Rate{sortIndicator('hourlyRate')}
                     </th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -245,20 +265,16 @@ export default function AmenitiesPage() {
                     >
                       <td className="px-4 py-3">
                         <div className="font-medium">{a.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {a.location || "—"}
-                        </div>
+                        <div className="text-xs text-muted-foreground">{a.location || '—'}</div>
                       </td>
                       <td className="px-4 py-3">
                         <Badge className={amenityTypeMeta[a.type].className}>
                           {amenityTypeMeta[a.type].label}
                         </Badge>
                       </td>
+                      <td className="px-4 py-3 text-right tabular-nums">{a.capacity ?? '—'}</td>
                       <td className="px-4 py-3 text-right tabular-nums">
-                        {a.capacity ?? "—"}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums">
-                        {a.hourlyRate != null ? money(a.hourlyRate) : "—"}
+                        {a.hourlyRate != null ? money(a.hourlyRate) : '—'}
                       </td>
                       <td className="px-4 py-3">
                         {a.isActive ? (
@@ -310,19 +326,34 @@ export default function AmenitiesPage() {
             <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleteAmenity.isPending}>
-              {deleteAmenity.isPending ? "Deleting..." : "Delete"}
+              {deleteAmenity.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setEditingAmenity(null); resetForm(); } }}>
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (!o) {
+            setEditingAmenity(null);
+            resetForm();
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingAmenity ? "Edit Amenity" : "New Amenity"}</DialogTitle>
-            <DialogDescription>{editingAmenity ? "Update this shared facility." : "Add a shared facility to the portfolio."}</DialogDescription>
+            <DialogTitle>{editingAmenity ? 'Edit Amenity' : 'New Amenity'}</DialogTitle>
+            <DialogDescription>
+              {editingAmenity
+                ? 'Update this shared facility.'
+                : 'Add a shared facility to the portfolio.'}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -387,13 +418,23 @@ export default function AmenitiesPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="propertyId">Property ID (optional)</Label>
-              <Input
-                id="propertyId"
-                value={form.propertyId}
-                onChange={(e) => setForm((f) => ({ ...f, propertyId: e.target.value }))}
-                placeholder="Link to a specific property"
-              />
+              <Label htmlFor="propertyId">Property (optional)</Label>
+              <Select
+                value={form.propertyId || 'none'}
+                onValueChange={(v) => setForm((f) => ({ ...f, propertyId: v === 'none' ? '' : v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a property" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None / Global</SelectItem>
+                  {propertiesData?.data.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} ({p.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
@@ -411,7 +452,7 @@ export default function AmenitiesPage() {
             </Button>
             <Button onClick={handleSave} disabled={saving || !form.name}>
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {editingAmenity ? "Save Changes" : "Create"}
+              {editingAmenity ? 'Save Changes' : 'Create'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -419,5 +460,3 @@ export default function AmenitiesPage() {
     </div>
   );
 }
-
-

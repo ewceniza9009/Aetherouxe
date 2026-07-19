@@ -51,7 +51,10 @@ export class CreateBookingDto {
 }
 
 export class UpdateBookingDto {
-  @ApiPropertyOptional({ enum: BookingStatus }) @IsOptional() @IsEnum(BookingStatus) status?: BookingStatus;
+  @ApiPropertyOptional({ enum: BookingStatus })
+  @IsOptional()
+  @IsEnum(BookingStatus)
+  status?: BookingStatus;
   @ApiPropertyOptional() @IsOptional() @IsDateString() bookingStart?: string;
   @ApiPropertyOptional() @IsOptional() @IsDateString() bookingEnd?: string;
   @ApiPropertyOptional() @IsOptional() @IsNumber() totalAmount?: number;
@@ -61,7 +64,10 @@ export class UpdateBookingDto {
 export class BookingQueryDto extends ListQueryDto {
   @ApiPropertyOptional() @IsOptional() @IsString() amenityId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() tenantId?: string;
-  @ApiPropertyOptional({ enum: BookingStatus }) @IsOptional() @IsEnum(BookingStatus) status?: BookingStatus;
+  @ApiPropertyOptional({ enum: BookingStatus })
+  @IsOptional()
+  @IsEnum(BookingStatus)
+  status?: BookingStatus;
   @ApiPropertyOptional() @IsOptional() @IsDateString() fromDate?: string;
   @ApiPropertyOptional() @IsOptional() @IsDateString() toDate?: string;
 }
@@ -91,11 +97,17 @@ export class UpdatePostDto {
 export class PostQueryDto extends ListQueryDto {
   @ApiPropertyOptional({ enum: PostType }) @IsOptional() @IsEnum(PostType) postType?: PostType;
   @ApiPropertyOptional({ enum: Audience }) @IsOptional() @IsEnum(Audience) audience?: Audience;
-  @ApiPropertyOptional({ enum: ModerationStatus }) @IsOptional() @IsEnum(ModerationStatus) moderationStatus?: ModerationStatus;
+  @ApiPropertyOptional({ enum: ModerationStatus })
+  @IsOptional()
+  @IsEnum(ModerationStatus)
+  moderationStatus?: ModerationStatus;
+  @ApiPropertyOptional() @IsOptional() @IsString() propertyId?: string;
 }
 
 export class ModeratePostDto {
-  @ApiProperty({ enum: ModerationStatus }) @IsEnum(ModerationStatus) moderationStatus: ModerationStatus;
+  @ApiProperty({ enum: ModerationStatus })
+  @IsEnum(ModerationStatus)
+  moderationStatus: ModerationStatus;
   @ApiPropertyOptional() @IsOptional() @IsString() reason?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() moderatedById?: string;
 }
@@ -109,13 +121,18 @@ export class CreateCommentDto {
 }
 
 export class ModerateCommentDto {
-  @ApiProperty({ enum: ModerationStatus }) @IsEnum(ModerationStatus) moderationStatus: ModerationStatus;
+  @ApiProperty({ enum: ModerationStatus })
+  @IsEnum(ModerationStatus)
+  moderationStatus: ModerationStatus;
   @ApiPropertyOptional() @IsOptional() @IsString() moderatedById?: string;
 }
 
 export class CommentQueryDto extends ListQueryDto {
   @ApiPropertyOptional() @IsOptional() @IsString() postId?: string;
-  @ApiPropertyOptional({ enum: ModerationStatus }) @IsOptional() @IsEnum(ModerationStatus) moderationStatus?: ModerationStatus;
+  @ApiPropertyOptional({ enum: ModerationStatus })
+  @IsOptional()
+  @IsEnum(ModerationStatus)
+  moderationStatus?: ModerationStatus;
 }
 
 // ─── Reports ────────────────────────────────
@@ -135,5 +152,8 @@ export class ResolveReportDto {
 }
 
 export class ReportQueryDto extends ListQueryDto {
-  @ApiPropertyOptional({ enum: ReportStatus }) @IsOptional() @IsEnum(ReportStatus) status?: ReportStatus;
+  @ApiPropertyOptional({ enum: ReportStatus })
+  @IsOptional()
+  @IsEnum(ReportStatus)
+  status?: ReportStatus;
 }

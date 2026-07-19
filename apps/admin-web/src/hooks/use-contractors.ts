@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
 
 export interface Contractor {
   id: string;
@@ -22,7 +22,7 @@ export interface Engagement {
   projectName?: string;
   contractAmount: number;
   paidAmount: number;
-  status: "pending" | "active" | "completed" | "terminated";
+  status: 'pending' | 'active' | 'completed' | 'terminated';
   startDate?: string;
   endDate?: string;
   scope?: string;
@@ -58,16 +58,16 @@ interface PaginatedResult<T> {
 
 export function useContractors(query: ContractorQuery) {
   return useQuery({
-    queryKey: ["contractors", query],
+    queryKey: ['contractors', query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (query.page) params.set("page", String(query.page));
-      if (query.limit) params.set("limit", String(query.limit));
-      if (query.search) params.set("search", query.search);
-      if (query.specialization) params.set("specialization", query.specialization);
-      if (query.status) params.set("status", query.status);
-      if (query.sort) params.set("sort", query.sort);
-      if (query.order) params.set("order", query.order);
+      if (query.page) params.set('page', String(query.page));
+      if (query.limit) params.set('limit', String(query.limit));
+      if (query.search) params.set('search', query.search);
+      if (query.specialization) params.set('specialization', query.specialization);
+      if (query.status) params.set('status', query.status);
+      if (query.sort) params.set('sort', query.sort);
+      if (query.order) params.set('order', query.order);
       const { data } = await api.get<ApiResponse<Contractor[]>>(`/contractors?${params}`);
       return { data: data.data, meta: data.meta } as PaginatedResult<Contractor>;
     },
@@ -76,7 +76,7 @@ export function useContractors(query: ContractorQuery) {
 
 export function useContractor(id: string) {
   return useQuery({
-    queryKey: ["contractor", id],
+    queryKey: ['contractor', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<Contractor>>(`/contractors/${id}`);
       return data.data;
@@ -89,11 +89,11 @@ export function useCreateContractor() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<Contractor>) => {
-      const { data } = await api.post<ApiResponse<Contractor>>("/contractors", payload);
+      const { data } = await api.post<ApiResponse<Contractor>>('/contractors', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contractors"] });
+      queryClient.invalidateQueries({ queryKey: ['contractors'] });
     },
   });
 }
@@ -106,8 +106,8 @@ export function useUpdateContractor() {
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["contractors"] });
-      queryClient.invalidateQueries({ queryKey: ["contractor", result.id] });
+      queryClient.invalidateQueries({ queryKey: ['contractors'] });
+      queryClient.invalidateQueries({ queryKey: ['contractor', result.id] });
     },
   });
 }
@@ -119,18 +119,18 @@ export function useDeleteContractor() {
       await api.delete(`/contractors/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contractors"] });
+      queryClient.invalidateQueries({ queryKey: ['contractors'] });
     },
   });
 }
 
 export function useEngagements(query: { contractorId?: string; projectId?: string }) {
   return useQuery({
-    queryKey: ["engagements", query],
+    queryKey: ['engagements', query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (query.contractorId) params.set("contractorId", query.contractorId);
-      if (query.projectId) params.set("projectId", query.projectId);
+      if (query.contractorId) params.set('contractorId', query.contractorId);
+      if (query.projectId) params.set('projectId', query.projectId);
       const { data } = await api.get<ApiResponse<Engagement[]>>(`/engagements?${params}`);
       return data.data;
     },
@@ -141,11 +141,11 @@ export function useCreateEngagement() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<Engagement>) => {
-      const { data } = await api.post<ApiResponse<Engagement>>("/engagements", payload);
+      const { data } = await api.post<ApiResponse<Engagement>>('/engagements', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["engagements"] });
+      queryClient.invalidateQueries({ queryKey: ['engagements'] });
     },
   });
 }
@@ -153,12 +153,12 @@ export function useCreateEngagement() {
 export function useUpdateEngagementStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: Engagement["status"] }) => {
+    mutationFn: async ({ id, status }: { id: string; status: Engagement['status'] }) => {
       const { data } = await api.patch<ApiResponse<Engagement>>(`/engagements/${id}`, { status });
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["engagements"] });
+      queryClient.invalidateQueries({ queryKey: ['engagements'] });
     },
   });
 }
@@ -167,12 +167,11 @@ export function useCreatePayment() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<Payment>) => {
-      const { data } = await api.post<ApiResponse<Payment>>("/payments", payload);
+      const { data } = await api.post<ApiResponse<Payment>>('/payments', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["engagements"] });
+      queryClient.invalidateQueries({ queryKey: ['engagements'] });
     },
   });
 }
-

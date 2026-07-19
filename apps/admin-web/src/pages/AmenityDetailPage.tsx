@@ -1,20 +1,20 @@
-import { useMemo, useState } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
-import { Textarea } from "@elite-realty/shared-ui/components/ui";
+import { useMemo, useState } from 'react';
+import { useParams, useNavigate } from '@tanstack/react-router';
+import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { Textarea } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Table,
   TableBody,
@@ -30,7 +30,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   ArrowLeft,
   AlertCircle,
@@ -42,8 +42,9 @@ import {
   Megaphone,
   Trash2,
   Pencil,
-} from "lucide-react";
-import { formatCurrency } from "@/lib/agent-meta";
+  Building2,
+} from 'lucide-react';
+import { formatCurrency } from '@/lib/agent-meta';
 import {
   useAmenity,
   useBookings,
@@ -58,39 +59,43 @@ import {
   type CommunityPost,
   type PostType,
   type PostAudience,
-} from "@/hooks/use-community";
+} from '@/hooks/use-community';
+import { useProperties } from '@/hooks/use-properties';
 
 const amenityTypeMeta: Record<AmenityType, { label: string; className: string }> = {
-  gym: { label: "Gym", className: "bg-indigo-100 text-indigo-700 border-indigo-200" },
-  pool: { label: "Pool", className: "bg-cyan-100 text-cyan-700 border-cyan-200" },
+  gym: { label: 'Gym', className: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
+  pool: { label: 'Pool', className: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
   function_room: {
-    label: "Function Room",
-    className: "bg-violet-100 text-violet-700 border-violet-200",
+    label: 'Function Room',
+    className: 'bg-violet-100 text-violet-700 border-violet-200',
   },
   parking: {
-    label: "Parking",
-    className: "bg-amber-100 text-amber-700 border-amber-200",
+    label: 'Parking',
+    className: 'bg-amber-100 text-amber-700 border-amber-200',
   },
-  garden: { label: "Garden", className: "bg-green-100 text-green-700 border-green-200" },
-  other: { label: "Other", className: "bg-muted text-muted-foreground border-border" },
+  garden: { label: 'Garden', className: 'bg-green-100 text-green-700 border-green-200' },
+  other: { label: 'Other', className: 'bg-muted text-muted-foreground border-border' },
 };
 
 const postTypeMeta: Record<string, { label: string; className: string }> = {
   announcement: {
-    label: "Announcement",
-    className: "bg-blue-100 text-blue-700 border-blue-200",
+    label: 'Announcement',
+    className: 'bg-blue-100 text-blue-700 border-blue-200',
   },
-  event: { label: "Event", className: "bg-purple-100 text-purple-700 border-purple-200" },
+  event: { label: 'Event', className: 'bg-purple-100 text-purple-700 border-purple-200' },
 };
 
 const audienceMeta: Record<string, { label: string; className: string }> = {
-  all: { label: "All", className: "bg-muted text-muted-foreground border-border" },
-  building: { label: "Building", className: "bg-cyan-100 text-cyan-700 border-cyan-200" },
-  property: { label: "Property", className: "bg-amber-100 text-amber-700 border-amber-200" },
-  unit: { label: "Unit", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  all: { label: 'All', className: 'bg-muted text-muted-foreground border-border' },
+  building: { label: 'Building', className: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
+  property: { label: 'Property', className: 'bg-amber-100 text-amber-700 border-amber-200' },
+  unit: { label: 'Unit', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
 };
 
-const META_FALLBACK = { label: "Unknown", className: "bg-muted text-muted-foreground border-border" };
+const META_FALLBACK = {
+  label: 'Unknown',
+  className: 'bg-muted text-muted-foreground border-border',
+};
 
 function money(n: number) {
   return formatCurrency(Number(n ?? 0));
@@ -119,19 +124,17 @@ function SummaryCard({
 }
 
 export default function AmenityDetailPage() {
-  const { id } = useParams({ from: "/protected/amenities/$id" });
+  const { id } = useParams({ from: '/protected/amenities/$id' });
   const navigate = useNavigate();
   const { data: amenity, isLoading, isError } = useAmenity(id);
+  const { data: propertiesData } = useProperties({ limit: 100 });
   const { data: bookingsData, isLoading: loadingBookings } = useBookings({
     amenityId: id,
     limit: 100,
   });
   const { data: postsData, isLoading: loadingPosts } = usePosts({ limit: 100 });
 
-  const bookings = useMemo(
-    () => (bookingsData?.data ?? []).slice().reverse(),
-    [bookingsData]
-  );
+  const bookings = useMemo(() => (bookingsData?.data ?? []).slice().reverse(), [bookingsData]);
   const posts = postsData?.data ?? [];
 
   const createBooking = useCreateBooking();
@@ -141,37 +144,38 @@ export default function AmenityDetailPage() {
   const updateAmenity = useUpdateAmenity();
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({
-    name: "",
-    type: "gym" as AmenityType,
-    location: "",
-    capacity: "",
-    hourlyRate: "",
-    description: "",
+    name: '',
+    type: 'gym' as AmenityType,
+    location: '',
+    capacity: '',
+    hourlyRate: '',
+    description: '',
+    propertyId: '',
   });
   const [bookingOpen, setBookingOpen] = useState(false);
   const [postOpen, setPostOpen] = useState(false);
 
   const [bookingForm, setBookingForm] = useState({
-    tenantName: "",
-    unitLabel: "",
-    startDateTime: "",
-    endDateTime: "",
-    amount: "",
-    notes: "",
+    tenantName: '',
+    unitLabel: '',
+    startDateTime: '',
+    endDateTime: '',
+    amount: '',
+    notes: '',
   });
   const [postForm, setPostForm] = useState({
-    title: "",
-    body: "",
-    postType: "announcement" as PostType,
-    audience: "all" as PostAudience,
-    propertyId: "",
-    scheduledAt: "",
+    title: '',
+    body: '',
+    postType: 'announcement' as PostType,
+    audience: 'all' as PostAudience,
+    propertyId: '',
+    scheduledAt: '',
   });
 
   if (isError) {
     return (
-    <div className="space-y-6 flex flex-col ">
-        <Button variant="outline" size="icon" onClick={() => navigate({ to: "/amenities" })}>
+      <div className="space-y-6 flex flex-col ">
+        <Button variant="outline" size="icon" onClick={() => navigate({ to: '/amenities' })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
@@ -205,16 +209,16 @@ export default function AmenityDetailPage() {
       endDateTime: bookingForm.endDateTime,
       amount: bookingForm.amount ? Number(bookingForm.amount) : undefined,
       notes: bookingForm.notes || undefined,
-      status: "confirmed",
+      status: 'confirmed',
     });
     setBookingOpen(false);
     setBookingForm({
-      tenantName: "",
-      unitLabel: "",
-      startDateTime: "",
-      endDateTime: "",
-      amount: "",
-      notes: "",
+      tenantName: '',
+      unitLabel: '',
+      startDateTime: '',
+      endDateTime: '',
+      amount: '',
+      notes: '',
     });
   };
 
@@ -224,19 +228,19 @@ export default function AmenityDetailPage() {
       body: postForm.body,
       postType: postForm.postType,
       audience: postForm.audience,
-      propertyId: postForm.propertyId || undefined,
+      propertyId: postForm.propertyId || null,
       scheduledAt: postForm.scheduledAt || undefined,
       published: postForm.scheduledAt ? false : true,
-      status: postForm.scheduledAt ? "scheduled" : "published",
+      status: postForm.scheduledAt ? 'scheduled' : 'published',
     });
     setPostOpen(false);
     setPostForm({
-      title: "",
-      body: "",
-      postType: "announcement",
-      audience: "all",
-      propertyId: "",
-      scheduledAt: "",
+      title: '',
+      body: '',
+      postType: 'announcement',
+      audience: 'all',
+      propertyId: '',
+      scheduledAt: '',
     });
   };
 
@@ -244,7 +248,7 @@ export default function AmenityDetailPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="icon" onClick={() => navigate({ to: "/amenities" })}>
+          <Button variant="outline" size="icon" onClick={() => navigate({ to: '/amenities' })}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -257,13 +261,25 @@ export default function AmenityDetailPage() {
                 <Badge variant="secondary">Inactive</Badge>
               )}
             </div>
-            <p className="text-muted-foreground mt-1">
-              {amenity.location || "No location set"}
-            </p>
+            <p className="text-muted-foreground mt-1">{amenity.location || 'No location set'}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => { setEditForm({ name: amenity.name, type: amenity.type, location: amenity.location || "", capacity: amenity.capacity != null ? String(amenity.capacity) : "", hourlyRate: amenity.hourlyRate != null ? String(amenity.hourlyRate) : "", description: amenity.description || "" }); setEditOpen(true); }}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setEditForm({
+                name: amenity.name,
+                type: amenity.type,
+                location: amenity.location || '',
+                capacity: amenity.capacity != null ? String(amenity.capacity) : '',
+                hourlyRate: amenity.hourlyRate != null ? String(amenity.hourlyRate) : '',
+                description: amenity.description || '',
+                propertyId: amenity.propertyId || '',
+              });
+              setEditOpen(true);
+            }}
+          >
             <Pencil className="mr-2 h-4 w-4" /> Edit
           </Button>
           <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
@@ -272,21 +288,28 @@ export default function AmenityDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
+        <SummaryCard
+          icon={<Building2 className="h-5 w-5" />}
+          label="Property"
+          value={
+            amenity.property?.name || amenity.property?.propertyCode || amenity.propertyName || '—'
+          }
+        />
         <SummaryCard
           icon={<Users className="h-5 w-5" />}
           label="Capacity"
-          value={amenity.capacity != null ? String(amenity.capacity) : "—"}
+          value={amenity.capacity != null ? String(amenity.capacity) : '—'}
         />
         <SummaryCard
           icon={<MapPin className="h-5 w-5" />}
           label="Location"
-          value={amenity.location || "—"}
+          value={amenity.location || '—'}
         />
         <SummaryCard
           icon={<CalendarDays className="h-5 w-5" />}
           label="Hourly Rate"
-          value={amenity.hourlyRate != null ? money(amenity.hourlyRate) : "—"}
+          value={amenity.hourlyRate != null ? money(amenity.hourlyRate) : '—'}
         />
       </div>
 
@@ -317,9 +340,7 @@ export default function AmenityDetailPage() {
                   ))}
                 </div>
               ) : bookings.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  No bookings yet.
-                </p>
+                <p className="py-8 text-center text-sm text-muted-foreground">No bookings yet.</p>
               ) : (
                 <Table>
                   <TableHeader>
@@ -335,10 +356,8 @@ export default function AmenityDetailPage() {
                     {bookings.map((b: AmenityBooking) => (
                       <TableRow key={b.id}>
                         <TableCell>
-                          <div className="font-medium">{b.tenantName || "—"}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {b.unitLabel || "—"}
-                          </div>
+                          <div className="font-medium">{b.tenantName || '—'}</div>
+                          <div className="text-xs text-muted-foreground">{b.unitLabel || '—'}</div>
                         </TableCell>
                         <TableCell className="text-sm">
                           {new Date(b.startDateTime).toLocaleString()}
@@ -347,16 +366,16 @@ export default function AmenityDetailPage() {
                           {new Date(b.endDateTime).toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
-                          {b.amount != null ? money(b.amount) : "—"}
+                          {b.amount != null ? money(b.amount) : '—'}
                         </TableCell>
                         <TableCell>
                           <Badge
                             variant={
-                              b.status === "confirmed"
-                                ? "success"
-                                : b.status === "cancelled"
-                                ? "destructive"
-                                : "secondary"
+                              b.status === 'confirmed'
+                                ? 'success'
+                                : b.status === 'cancelled'
+                                  ? 'destructive'
+                                  : 'secondary'
                             }
                           >
                             {b.status}
@@ -396,9 +415,7 @@ export default function AmenityDetailPage() {
                   ))}
                 </div>
               ) : posts.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  No posts yet.
-                </p>
+                <p className="py-8 text-center text-sm text-muted-foreground">No posts yet.</p>
               ) : (
                 <div className="space-y-3">
                   {posts.map((p: CommunityPost) => (
@@ -416,9 +433,7 @@ export default function AmenityDetailPage() {
                             {(audienceMeta[p.audience] ?? META_FALLBACK).label}
                           </Badge>
                         </div>
-                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                          {p.body}
-                        </p>
+                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.body}</p>
                       </div>
                       {!p.published && <Badge variant="warning">Scheduled</Badge>}
                     </div>
@@ -443,9 +458,7 @@ export default function AmenityDetailPage() {
                 <Input
                   id="tenantName"
                   value={bookingForm.tenantName}
-                  onChange={(e) =>
-                    setBookingForm((f) => ({ ...f, tenantName: e.target.value }))
-                  }
+                  onChange={(e) => setBookingForm((f) => ({ ...f, tenantName: e.target.value }))}
                   placeholder="Tenant name"
                 />
               </div>
@@ -454,9 +467,7 @@ export default function AmenityDetailPage() {
                 <Input
                   id="unitLabel"
                   value={bookingForm.unitLabel}
-                  onChange={(e) =>
-                    setBookingForm((f) => ({ ...f, unitLabel: e.target.value }))
-                  }
+                  onChange={(e) => setBookingForm((f) => ({ ...f, unitLabel: e.target.value }))}
                   placeholder="e.g. Unit 12A"
                 />
               </div>
@@ -468,9 +479,7 @@ export default function AmenityDetailPage() {
                   id="start"
                   type="datetime-local"
                   value={bookingForm.startDateTime}
-                  onChange={(e) =>
-                    setBookingForm((f) => ({ ...f, startDateTime: e.target.value }))
-                  }
+                  onChange={(e) => setBookingForm((f) => ({ ...f, startDateTime: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
@@ -479,9 +488,7 @@ export default function AmenityDetailPage() {
                   id="end"
                   type="datetime-local"
                   value={bookingForm.endDateTime}
-                  onChange={(e) =>
-                    setBookingForm((f) => ({ ...f, endDateTime: e.target.value }))
-                  }
+                  onChange={(e) => setBookingForm((f) => ({ ...f, endDateTime: e.target.value }))}
                 />
               </div>
             </div>
@@ -514,9 +521,7 @@ export default function AmenityDetailPage() {
               onClick={handleCreateBooking}
               disabled={createBooking.isPending || !bookingForm.startDateTime}
             >
-              {createBooking.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
+              {createBooking.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Create
             </Button>
           </DialogFooter>
@@ -532,43 +537,113 @@ export default function AmenityDetailPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="edit-name">Name *</Label>
-              <Input id="edit-name" value={editForm.name} onChange={(e) => setEditForm(f => ({ ...f, name: e.target.value }))} />
+              <Input
+                id="edit-name"
+                value={editForm.name}
+                onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Type *</Label>
-                <Select value={editForm.type} onValueChange={(v) => setEditForm(f => ({ ...f, type: v as AmenityType }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={editForm.type}
+                  onValueChange={(v) => setEditForm((f) => ({ ...f, type: v as AmenityType }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {(Object.keys(amenityTypeMeta) as AmenityType[]).map((t) => (
-                      <SelectItem key={t} value={t}>{amenityTypeMeta[t].label}</SelectItem>
+                      <SelectItem key={t} value={t}>
+                        {amenityTypeMeta[t].label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-location">Location</Label>
-                <Input id="edit-location" value={editForm.location} onChange={(e) => setEditForm(f => ({ ...f, location: e.target.value }))} />
+                <Input
+                  id="edit-location"
+                  value={editForm.location}
+                  onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))}
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-capacity">Capacity</Label>
-                <Input id="edit-capacity" type="number" min="0" value={editForm.capacity} onChange={(e) => setEditForm(f => ({ ...f, capacity: e.target.value }))} />
+                <Input
+                  id="edit-capacity"
+                  type="number"
+                  min="0"
+                  value={editForm.capacity}
+                  onChange={(e) => setEditForm((f) => ({ ...f, capacity: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-hourlyRate">Hourly Rate</Label>
-                <Input id="edit-hourlyRate" type="number" min="0" step="0.01" value={editForm.hourlyRate} onChange={(e) => setEditForm(f => ({ ...f, hourlyRate: e.target.value }))} />
+                <Input
+                  id="edit-hourlyRate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={editForm.hourlyRate}
+                  onChange={(e) => setEditForm((f) => ({ ...f, hourlyRate: e.target.value }))}
+                />
               </div>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="edit-propertyId">Property (optional)</Label>
+              <Select
+                value={editForm.propertyId || 'none'}
+                onValueChange={(v) =>
+                  setEditForm((f) => ({ ...f, propertyId: v === 'none' ? '' : v }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a property" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None / Global</SelectItem>
+                  {propertiesData?.data.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} ({p.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="edit-description">Description</Label>
-              <Textarea id="edit-description" value={editForm.description} onChange={(e) => setEditForm(f => ({ ...f, description: e.target.value }))} />
+              <Textarea
+                id="edit-description"
+                value={editForm.description}
+                onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={async () => { await updateAmenity.mutateAsync({ id: amenity.id, name: editForm.name, type: editForm.type, location: editForm.location || undefined, capacity: editForm.capacity ? Number(editForm.capacity) : undefined, hourlyRate: editForm.hourlyRate ? Number(editForm.hourlyRate) : undefined, description: editForm.description || undefined }); setEditOpen(false); }} disabled={updateAmenity.isPending || !editForm.name}>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                await updateAmenity.mutateAsync({
+                  id: amenity.id,
+                  name: editForm.name,
+                  type: editForm.type,
+                  location: editForm.location || undefined,
+                  capacity: editForm.capacity ? Number(editForm.capacity) : undefined,
+                  hourlyRate: editForm.hourlyRate ? Number(editForm.hourlyRate) : undefined,
+                  description: editForm.description || undefined,
+                  propertyId: editForm.propertyId || null,
+                });
+                setEditOpen(false);
+              }}
+              disabled={updateAmenity.isPending || !editForm.name}
+            >
               {updateAmenity.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Save Changes
             </Button>
@@ -583,9 +658,18 @@ export default function AmenityDetailPage() {
             <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={async () => { await deleteAmenity.mutateAsync(id); navigate({ to: "/amenities" }); }} disabled={deleteAmenity.isPending}>
-              {deleteAmenity.isPending ? "Deleting..." : "Delete"}
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                await deleteAmenity.mutateAsync(id);
+                navigate({ to: '/amenities' });
+              }}
+              disabled={deleteAmenity.isPending}
+            >
+              {deleteAmenity.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -630,9 +714,7 @@ export default function AmenityDetailPage() {
                 <Label>Audience</Label>
                 <Select
                   value={postForm.audience}
-                  onValueChange={(v) =>
-                    setPostForm((f) => ({ ...f, audience: v as PostAudience }))
-                  }
+                  onValueChange={(v) => setPostForm((f) => ({ ...f, audience: v as PostAudience }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -649,15 +731,25 @@ export default function AmenityDetailPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="propertyId">Property ID</Label>
-                <Input
-                  id="propertyId"
-                  value={postForm.propertyId}
-                  onChange={(e) =>
-                    setPostForm((f) => ({ ...f, propertyId: e.target.value }))
+                <Label htmlFor="propertyId">Property (optional)</Label>
+                <Select
+                  value={postForm.propertyId || 'none'}
+                  onValueChange={(v) =>
+                    setPostForm((f) => ({ ...f, propertyId: v === 'none' ? '' : v }))
                   }
-                  placeholder="Optional"
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a property" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None / Global</SelectItem>
+                    {propertiesData?.data.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name} ({p.code})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="scheduledAt">Schedule (optional)</Label>
@@ -665,9 +757,7 @@ export default function AmenityDetailPage() {
                   id="scheduledAt"
                   type="datetime-local"
                   value={postForm.scheduledAt}
-                  onChange={(e) =>
-                    setPostForm((f) => ({ ...f, scheduledAt: e.target.value }))
-                  }
+                  onChange={(e) => setPostForm((f) => ({ ...f, scheduledAt: e.target.value }))}
                 />
               </div>
             </div>
@@ -689,9 +779,7 @@ export default function AmenityDetailPage() {
               onClick={handleCreatePost}
               disabled={createPost.isPending || !postForm.title || !postForm.body}
             >
-              {createPost.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
+              {createPost.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Publish
             </Button>
           </DialogFooter>
@@ -700,6 +788,3 @@ export default function AmenityDetailPage() {
     </div>
   );
 }
-
-
-

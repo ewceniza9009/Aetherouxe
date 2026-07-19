@@ -1,30 +1,15 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
 
 export type ServiceCategory =
-  | "plumbing"
-  | "electrical"
-  | "hvac"
-  | "general"
-  | "pest"
-  | "elevator"
-  | "other";
+  'plumbing' | 'electrical' | 'hvac' | 'general' | 'pest' | 'elevator' | 'other';
 
-export type ServicePriority = "low" | "medium" | "high" | "emergency";
+export type ServicePriority = 'low' | 'medium' | 'high' | 'emergency';
 
-export type ServiceStatus =
-  | "open"
-  | "assigned"
-  | "in_progress"
-  | "completed"
-  | "cancelled";
+export type ServiceStatus = 'open' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
 
-export type WorkOrderStatus =
-  | "scheduled"
-  | "in_progress"
-  | "completed"
-  | "cancelled";
+export type WorkOrderStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
 
 export interface ServiceRequest {
   id: string;
@@ -72,7 +57,7 @@ export interface ServiceRequestQuery {
   category?: ServiceCategory;
   propertyId?: string;
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
 }
 
 export interface WorkOrderQuery {
@@ -89,20 +74,20 @@ interface Paginated<T> {
 function buildParams(query: Record<string, unknown | undefined>): string {
   const params = new URLSearchParams();
   Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
+    if (value !== undefined && value !== null && value !== '') {
       params.set(key, String(value));
     }
   });
   const qs = params.toString();
-  return qs ? `?${qs}` : "";
+  return qs ? `?${qs}` : '';
 }
 
 export function useServiceRequests(query: ServiceRequestQuery = {}) {
   return useQuery({
-    queryKey: ["service-requests", query],
+    queryKey: ['service-requests', query],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<ServiceRequest[]>>(
-        `/service-requests${buildParams(query as Record<string, unknown>)}`
+        `/service-requests${buildParams(query as Record<string, unknown>)}`,
       );
       return { data: data.data, meta: data.meta } as Paginated<ServiceRequest>;
     },
@@ -111,11 +96,9 @@ export function useServiceRequests(query: ServiceRequestQuery = {}) {
 
 export function useServiceRequest(id: string) {
   return useQuery({
-    queryKey: ["service-request", id],
+    queryKey: ['service-request', id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<ServiceRequest>>(
-        `/service-requests/${id}`
-      );
+      const { data } = await api.get<ApiResponse<ServiceRequest>>(`/service-requests/${id}`);
       return data.data;
     },
     enabled: !!id,
@@ -126,14 +109,11 @@ export function useCreateServiceRequest() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<ServiceRequest>) => {
-      const { data } = await api.post<ApiResponse<ServiceRequest>>(
-        "/service-requests",
-        payload
-      );
+      const { data } = await api.post<ApiResponse<ServiceRequest>>('/service-requests', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["service-requests"] });
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] });
     },
   });
 }
@@ -152,13 +132,13 @@ export function useAssignRequest() {
     }) => {
       const { data } = await api.post<ApiResponse<ServiceRequest>>(
         `/service-requests/${id}/assign`,
-        { assignedToId, assignedToType }
+        { assignedToId, assignedToType },
       );
       return data.data;
     },
     onSuccess: (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["service-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["service-request", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['service-request', variables.id] });
       void result;
     },
   });
@@ -167,22 +147,16 @@ export function useAssignRequest() {
 export function useCompleteRequest() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      id,
-      resolutionNotes,
-    }: {
-      id: string;
-      resolutionNotes?: string;
-    }) => {
+    mutationFn: async ({ id, resolutionNotes }: { id: string; resolutionNotes?: string }) => {
       const { data } = await api.post<ApiResponse<ServiceRequest>>(
         `/service-requests/${id}/complete`,
-        { resolutionNotes }
+        { resolutionNotes },
       );
       return data.data;
     },
     onSuccess: (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["service-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["service-request", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['service-request', variables.id] });
       void result;
     },
   });
@@ -192,12 +166,15 @@ export function useUpdateServiceRequest() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...payload }: Partial<ServiceRequest> & { id: string }) => {
-      const { data } = await api.patch<ApiResponse<ServiceRequest>>(`/service-requests/${id}`, payload);
+      const { data } = await api.patch<ApiResponse<ServiceRequest>>(
+        `/service-requests/${id}`,
+        payload,
+      );
       return data.data;
     },
     onSuccess: (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["service-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["service-request", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['service-request', variables.id] });
     },
   });
 }
@@ -210,7 +187,7 @@ export function useDeleteServiceRequest() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["service-requests"] });
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] });
     },
   });
 }
@@ -221,13 +198,13 @@ export function useCancelRequest() {
     mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
       const { data } = await api.post<ApiResponse<ServiceRequest>>(
         `/service-requests/${id}/cancel`,
-        { reason }
+        { reason },
       );
       return data.data;
     },
     onSuccess: (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["service-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["service-request", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['service-request', variables.id] });
       void result;
     },
   });
@@ -235,10 +212,10 @@ export function useCancelRequest() {
 
 export function useWorkOrders(query: WorkOrderQuery = {}) {
   return useQuery({
-    queryKey: ["work-orders", query],
+    queryKey: ['work-orders', query],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<WorkOrder[]>>(
-        `/work-orders${buildParams(query as Record<string, unknown>)}`
+        `/work-orders${buildParams(query as Record<string, unknown>)}`,
       );
       return { data: data.data, meta: data.meta } as Paginated<WorkOrder>;
     },
@@ -249,14 +226,14 @@ export function useCreateWorkOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<WorkOrder>) => {
-      const { data } = await api.post<ApiResponse<WorkOrder>>("/work-orders", payload);
+      const { data } = await api.post<ApiResponse<WorkOrder>>('/work-orders', payload);
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["work-orders"] });
+      queryClient.invalidateQueries({ queryKey: ['work-orders'] });
       if (result?.serviceRequestId) {
         queryClient.invalidateQueries({
-          queryKey: ["service-request", result.serviceRequestId],
+          queryKey: ['service-request', result.serviceRequestId],
         });
       }
     },
@@ -293,5 +270,3 @@ export function useDeleteWorkOrder() {
     },
   });
 }
-
-

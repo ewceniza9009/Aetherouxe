@@ -381,7 +381,20 @@ model Property {
 
   @@map("properties")
 }
+model BuildingImage {
+  id         String   @id @default(uuid())
+  buildingId String
+  url        String
+  alt        String?
+  sortOrder  Int      @default(0)
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
+  building Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  @@index([buildingId])
+  @@map("building_images")
+}
 model Building {
   id           String       @id @default(uuid())
   tenantId     String
@@ -397,6 +410,7 @@ model Building {
   project Project @relation(fields: [projectId], references: [id])
   floors  Floor[]
   units   Unit[]
+  images  BuildingImage[]
 
   // List performance: filter/sort fields used by the buildings list endpoint.
   @@index([tenantId, projectId])
@@ -1165,7 +1179,20 @@ enum Audience {
   property
   unit
 }
+model AmenityImage {
+  id         String   @id @default(uuid())
+  amenityId  String
+  url        String
+  alt        String?
+  sortOrder  Int      @default(0)
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
+  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@index([amenityId])
+  @@map("amenity_images")
+}
 model Amenity {
   id          String           @id @default(cuid())
   name        String
@@ -1178,6 +1205,7 @@ model Amenity {
   propertyId  String?
   createdAt   DateTime         @default(now())
   bookings    AmenityBooking[]
+  images      AmenityImage[]
   property    Property?        @relation(fields: [propertyId], references: [id])
 
   @@map("amenities")

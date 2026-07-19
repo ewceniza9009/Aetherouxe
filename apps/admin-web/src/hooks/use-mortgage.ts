@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
 
 export interface AmortizationRow {
   period: number;
@@ -65,12 +65,12 @@ function mapAmortizationRows(rows: any[]): AmortizationRow[] {
 
 export function useMortgageScenarios(query: MortgageScenarioQuery) {
   return useQuery({
-    queryKey: ["mortgage-scenarios", query],
+    queryKey: ['mortgage-scenarios', query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (query.page) params.set("page", String(query.page));
-      if (query.limit) params.set("limit", String(query.limit));
-      if (query.leaseAgreementId) params.set("leaseAgreementId", query.leaseAgreementId);
+      if (query.page) params.set('page', String(query.page));
+      if (query.limit) params.set('limit', String(query.limit));
+      if (query.leaseAgreementId) params.set('leaseAgreementId', query.leaseAgreementId);
       const { data } = await api.get<ApiResponse<any[]>>(`/mortgage/scenarios?${params}`);
       const transformed = (data.data ?? []).map((s: any) => ({
         id: s.id,
@@ -97,7 +97,7 @@ export function useMortgageScenarios(query: MortgageScenarioQuery) {
 
 export function useMortgageScenario(id: string) {
   return useQuery({
-    queryKey: ["mortgage-scenario", id],
+    queryKey: ['mortgage-scenario', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<any>>(`/mortgage/scenarios/${id}`);
       const s = data.data;
@@ -127,13 +127,17 @@ export function useGenerateScenario() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: GenerateScenarioInput) => {
-      const { data } = await api.post<ApiResponse<MortgageScenario>>("/mortgage/scenarios/generate", payload);
+      const { data } = await api.post<ApiResponse<MortgageScenario>>(
+        '/mortgage/scenarios/generate',
+        payload,
+      );
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["mortgage-scenarios", { leaseAgreementId: result.leaseAgreementId }] });
-      queryClient.invalidateQueries({ queryKey: ["mortgage-scenario", result.id] });
+      queryClient.invalidateQueries({
+        queryKey: ['mortgage-scenarios', { leaseAgreementId: result.leaseAgreementId }],
+      });
+      queryClient.invalidateQueries({ queryKey: ['mortgage-scenario', result.id] });
     },
   });
 }
-

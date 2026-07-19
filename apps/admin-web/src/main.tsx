@@ -1,22 +1,22 @@
-import { StrictMode } from "react";
-import ReactDOM from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "@elite-realty/shared-ui/hooks";
-import { RouterProvider } from "@tanstack/react-router";
-import router from "@/router";
-import { bootstrapSettings } from "@/lib/settings-store";
-import api from "@/lib/api";
-import "./pages/PropertiesPage";
-import "./pages/LeasesPage";
-import "./pages/RtoContractsPage";
-import "./pages/AnalyticsPage";
-import "./pages/DashboardPage";
-import "./pages/SettingsPage";
-import "./hooks/use-properties";
-import "./hooks/use-leases";
-import "./hooks/use-rto";
-import "./hooks/use-reports";
-import "./index.css";
+﻿import { StrictMode } from 'react';
+import ReactDOM from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@elite-realty/shared-ui/hooks';
+import { RouterProvider } from '@tanstack/react-router';
+import router from '@/router';
+import { bootstrapSettings } from '@/lib/settings-store';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import './pages/PropertiesPage';
+import './pages/LeasesPage';
+import './pages/RtoContractsPage';
+import './pages/AnalyticsPage';
+import './pages/DashboardPage';
+import './pages/SettingsPage';
+import './hooks/use-properties';
+import './hooks/use-leases';
+import './hooks/use-rto';
+import './hooks/use-reports';
+import './index.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,9 +27,9 @@ const queryClient = new QueryClient({
   },
 });
 
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeProvider } from '@/components/ThemeProvider';
 
-const rootElement = document.getElementById("root")!;
+const rootElement = document.getElementById('root')!;
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
@@ -41,6 +41,6 @@ if (!rootElement.innerHTML) {
           </AuthProvider>
         </QueryClientProvider>
       </ThemeProvider>
-    </StrictMode>
+    </StrictMode>,
   );
 }

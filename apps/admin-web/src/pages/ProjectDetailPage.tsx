@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import api from '@/lib/api';
+import { api } from '@elite-realty/shared-ui/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
 import { Button } from '@elite-realty/shared-ui/components/ui';
 import { Badge } from '@elite-realty/shared-ui/components/ui';
@@ -335,7 +335,7 @@ export default function ProjectDetailPage() {
           </Tabs.Trigger>
         </Tabs.List>
 
-        {/* ── Overview ── */}
+        {/* â”€â”€ Overview â”€â”€ */}
         <Tabs.Content
           value="overview"
           className="flex-1 flex flex-col min-h-0 space-y-4 m-0 data-[state=inactive]:hidden overflow-auto"
@@ -426,7 +426,7 @@ export default function ProjectDetailPage() {
           </Card>
         </Tabs.Content>
 
-        {/* ── Gallery ── */}
+        {/* â”€â”€ Gallery â”€â”€ */}
         <Tabs.Content
           value="gallery"
           className="flex-1 flex flex-col min-h-0 space-y-4 m-0 data-[state=inactive]:hidden overflow-auto pr-2 relative"
@@ -510,7 +510,7 @@ export default function ProjectDetailPage() {
           )}
         </Tabs.Content>
 
-        {/* ── Phases (editable) ── */}
+        {/* â”€â”€ Phases (editable) â”€â”€ */}
         <Tabs.Content
           value="phases"
           className="flex-1 flex flex-col min-h-0 space-y-4 m-0 data-[state=inactive]:hidden"
@@ -518,7 +518,7 @@ export default function ProjectDetailPage() {
           <PhasesTab projectId={id} phases={phaseList} />
         </Tabs.Content>
 
-        {/* ── Inventory ── */}
+        {/* â”€â”€ Inventory â”€â”€ */}
         <Tabs.Content
           value="inventory"
           className="flex-1 flex flex-col min-h-0 space-y-4 m-0 data-[state=inactive]:hidden"
@@ -526,7 +526,7 @@ export default function ProjectDetailPage() {
           <InventoryTab projectId={id} />
         </Tabs.Content>
 
-        {/* ── Budgets ── */}
+        {/* â”€â”€ Budgets â”€â”€ */}
         <Tabs.Content
           value="budgets"
           className="flex-1 flex flex-col min-h-0 space-y-4 m-0 data-[state=inactive]:hidden overflow-auto"
@@ -601,7 +601,7 @@ export default function ProjectDetailPage() {
           )}
         </Tabs.Content>
 
-        {/* ── Timeline ── */}
+        {/* â”€â”€ Timeline â”€â”€ */}
         <Tabs.Content
           value="timeline"
           className="flex-1 flex flex-col min-h-0 space-y-4 m-0 data-[state=inactive]:hidden overflow-auto"
@@ -669,7 +669,7 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
-/* ─────────────── Phases tab (full CRUD + reorder) ─────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Phases tab (full CRUD + reorder) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 interface PhaseForm {
   name: string;
@@ -939,7 +939,7 @@ function PhasesTab({ projectId, phases }: { projectId: string; phases: Phase[] }
   );
 }
 
-/* ─────────────── Inventory tab (Project → Buildings → Units → Property) ─────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Inventory tab (Project â†’ Buildings â†’ Units â†’ Property) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 const unitStatusVariant: Record<
   string,

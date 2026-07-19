@@ -1,9 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
 
-export type ProjectType = "high_rise" | "mid_rise" | "village" | "township" | "commercial_complex";
-export type ProjectStatus = "planning" | "pre_selling" | "construction" | "fit_out" | "completed" | "turnover";
+export type ProjectType = 'high_rise' | 'mid_rise' | 'village' | 'township' | 'commercial_complex';
+export type ProjectStatus =
+  'planning' | 'pre_selling' | 'construction' | 'fit_out' | 'completed' | 'turnover';
 
 export interface ProjectImage {
   id: string;
@@ -33,27 +34,27 @@ export interface Project {
 }
 
 export const projectTypeLabels: Record<ProjectType, string> = {
-  high_rise: "High Rise",
-  mid_rise: "Mid Rise",
-  village: "Village",
-  township: "Township",
-  commercial_complex: "Commercial Complex",
+  high_rise: 'High Rise',
+  mid_rise: 'Mid Rise',
+  village: 'Village',
+  township: 'Township',
+  commercial_complex: 'Commercial Complex',
 };
 
 export const projectStatusLabels: Record<ProjectStatus, string> = {
-  planning: "Planning",
-  pre_selling: "Pre-Selling",
-  construction: "Construction",
-  fit_out: "Fit-Out",
-  completed: "Completed",
-  turnover: "Turnover",
+  planning: 'Planning',
+  pre_selling: 'Pre-Selling',
+  construction: 'Construction',
+  fit_out: 'Fit-Out',
+  completed: 'Completed',
+  turnover: 'Turnover',
 };
 
 export interface ProjectQuery {
   page?: number;
   limit?: number;
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
   search?: string;
   status?: ProjectStatus;
   projectType?: ProjectType;
@@ -66,16 +67,16 @@ interface PaginatedResult<T> {
 
 export function useProjects(query: ProjectQuery) {
   return useQuery({
-    queryKey: ["projects", query],
+    queryKey: ['projects', query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (query.page) params.set("page", String(query.page));
-      if (query.limit) params.set("limit", String(query.limit));
-      if (query.sort) params.set("sort", query.sort);
-      if (query.order) params.set("order", query.order);
-      if (query.search) params.set("search", query.search);
-      if (query.status) params.set("status", query.status);
-      if (query.projectType) params.set("projectType", query.projectType);
+      if (query.page) params.set('page', String(query.page));
+      if (query.limit) params.set('limit', String(query.limit));
+      if (query.sort) params.set('sort', query.sort);
+      if (query.order) params.set('order', query.order);
+      if (query.search) params.set('search', query.search);
+      if (query.status) params.set('status', query.status);
+      if (query.projectType) params.set('projectType', query.projectType);
       const { data } = await api.get<ApiResponse<Project[]>>(`/projects?${params}`);
       return { data: data.data, meta: data.meta } as PaginatedResult<Project>;
     },
@@ -84,7 +85,7 @@ export function useProjects(query: ProjectQuery) {
 
 export function useProject(id: string) {
   return useQuery({
-    queryKey: ["project", id],
+    queryKey: ['project', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<Project>>(`/projects/${id}`);
       return data.data;
@@ -97,11 +98,11 @@ export function useCreateProject() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<Project>) => {
-      const { data } = await api.post<ApiResponse<Project>>("/projects", payload);
+      const { data } = await api.post<ApiResponse<Project>>('/projects', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
 }
@@ -114,8 +115,8 @@ export function useUpdateProject() {
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
-      queryClient.invalidateQueries({ queryKey: ["project", result.id] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project', result.id] });
     },
   });
 }
@@ -127,14 +128,14 @@ export function useDeleteProject() {
       await api.delete(`/projects/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
 }
 
 export function useProjectTimeline(id: string) {
   return useQuery({
-    queryKey: ["project-timeline", id],
+    queryKey: ['project-timeline', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<any>>(`/projects/${id}/timeline`);
       const payload = data.data;
@@ -147,7 +148,13 @@ export function useProjectTimeline(id: string) {
         status: p.status,
         progress:
           p.progress ??
-          (p.status === "completed" ? 100 : p.status === "in_progress" ? 50 : p.status === "delayed" ? 50 : 0),
+          (p.status === 'completed'
+            ? 100
+            : p.status === 'in_progress'
+              ? 50
+              : p.status === 'delayed'
+                ? 50
+                : 0),
       })) as ProjectTimelineEntry[];
     },
     enabled: !!id,
@@ -165,7 +172,7 @@ export interface ProjectTimelineEntry {
 
 export function useProjectImages(projectId: string) {
   return useQuery({
-    queryKey: ["project-images", projectId],
+    queryKey: ['project-images', projectId],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<ProjectImage[]>>(`/images/project/${projectId}`);
       return data.data;
@@ -189,21 +196,20 @@ export function useUploadProjectImage() {
       isPrimary?: boolean;
     }) => {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append('file', file);
       const params = new URLSearchParams();
-      if (alt) params.append("alt", alt);
-      if (isPrimary) params.append("isPrimary", "true");
-      
+      if (alt) params.append('alt', alt);
+      if (isPrimary) params.append('isPrimary', 'true');
+
       const { data } = await api.post<ApiResponse<ProjectImage>>(
         `/images/project/${projectId}?${params.toString()}`,
-        formData
+        formData,
       );
       return data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["project-images", variables.projectId] });
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ['project-images', variables.projectId] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
 }
-

@@ -1,15 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import { AgentTier, PropertyType } from "@elite-realty/shared-types";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import { AgentTier, PropertyType } from '@elite-realty/shared-types';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
 
 export type CommissionRuleType =
-  | "flat_amount"
-  | "percentage_of_sale"
-  | "percentage_of_rent"
-  | "tiered";
-export type CommissionRuleScope = "all" | AgentTier;
-export type CommissionRulePropertyScope = "all" | PropertyType;
+  'flat_amount' | 'percentage_of_sale' | 'percentage_of_rent' | 'tiered';
+export type CommissionRuleScope = 'all' | AgentTier;
+export type CommissionRulePropertyScope = 'all' | PropertyType;
 
 export interface CommissionRule {
   id: string;
@@ -18,7 +15,7 @@ export interface CommissionRule {
   propertyType: CommissionRulePropertyScope;
   type: CommissionRuleType;
   value: number | Array<{ upto: number | null; rate: number }>;
-  status: "active" | "inactive";
+  status: 'active' | 'inactive';
   createdAt: string;
   updatedAt?: string;
 }
@@ -29,23 +26,13 @@ export interface CommissionRulePayload {
   propertyType: CommissionRulePropertyScope;
   type: CommissionRuleType;
   value: number | Array<{ upto: number | null; rate: number }>;
-  status?: "active" | "inactive";
+  status?: 'active' | 'inactive';
 }
 
-export type AgentTransactionType =
-  | "sale"
-  | "rental_lease"
-  | "rto_contract"
-  | "lease_renewal";
+export type AgentTransactionType = 'sale' | 'rental_lease' | 'rto_contract' | 'lease_renewal';
 
 export type AgentTransactionStatus =
-  | "pending"
-  | "approved"
-  | "paid"
-  | "partially_paid"
-  | "fully_paid"
-  | "rejected"
-  | "cancelled";
+  'pending' | 'approved' | 'paid' | 'partially_paid' | 'fully_paid' | 'rejected' | 'cancelled';
 
 export interface AgentTransaction {
   id: string;
@@ -69,12 +56,7 @@ export interface AgentTransaction {
   notes?: string;
 }
 
-export type CommissionReleaseType =
-  | "partial"
-  | "full"
-  | "advance"
-  | "bonus"
-  | "adjustment";
+export type CommissionReleaseType = 'partial' | 'full' | 'advance' | 'bonus' | 'adjustment';
 
 export interface CommissionRelease {
   id: string;
@@ -119,9 +101,9 @@ export interface CommissionQuery {
   page?: number;
   limit?: number;
   search?: string;
-  status?: "active" | "inactive";
+  status?: 'active' | 'inactive';
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
 }
 
 export interface AgentTransactionQuery {
@@ -144,18 +126,16 @@ interface PaginatedResult<T> {
 
 export function useCommissions(query: CommissionQuery) {
   return useQuery({
-    queryKey: ["commissions", query],
+    queryKey: ['commissions', query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (query.page) params.set("page", String(query.page));
-      if (query.limit) params.set("limit", String(query.limit));
-      if (query.search) params.set("search", query.search);
-      if (query.status) params.set("status", query.status);
-      if (query.sort) params.set("sort", query.sort);
-      if (query.order) params.set("order", query.order);
-      const { data } = await api.get<ApiResponse<CommissionRule[]>>(
-        `/commissions?${params}`
-      );
+      if (query.page) params.set('page', String(query.page));
+      if (query.limit) params.set('limit', String(query.limit));
+      if (query.search) params.set('search', query.search);
+      if (query.status) params.set('status', query.status);
+      if (query.sort) params.set('sort', query.sort);
+      if (query.order) params.set('order', query.order);
+      const { data } = await api.get<ApiResponse<CommissionRule[]>>(`/commissions?${params}`);
       return { data: data.data, meta: data.meta } as PaginatedResult<CommissionRule>;
     },
   });
@@ -163,7 +143,7 @@ export function useCommissions(query: CommissionQuery) {
 
 export function useCommission(id: string) {
   return useQuery({
-    queryKey: ["commission", id],
+    queryKey: ['commission', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<CommissionRule>>(`/commissions/${id}`);
       return data.data;
@@ -176,11 +156,11 @@ export function useCreateCommission() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CommissionRulePayload) => {
-      const { data } = await api.post<ApiResponse<CommissionRule>>("/commissions", payload);
+      const { data } = await api.post<ApiResponse<CommissionRule>>('/commissions', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["commissions"] });
+      queryClient.invalidateQueries({ queryKey: ['commissions'] });
     },
   });
 }
@@ -189,15 +169,12 @@ export function useUpdateCommission() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...payload }: CommissionRulePayload & { id: string }) => {
-      const { data } = await api.patch<ApiResponse<CommissionRule>>(
-        `/commissions/${id}`,
-        payload
-      );
+      const { data } = await api.patch<ApiResponse<CommissionRule>>(`/commissions/${id}`, payload);
       return data.data;
     },
     onSuccess: (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["commissions"] });
-      queryClient.invalidateQueries({ queryKey: ["commission", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['commissions'] });
+      queryClient.invalidateQueries({ queryKey: ['commission', variables.id] });
     },
   });
 }
@@ -209,23 +186,23 @@ export function useDeleteCommission() {
       await api.delete(`/commissions/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["commissions"] });
+      queryClient.invalidateQueries({ queryKey: ['commissions'] });
     },
   });
 }
 
 export function useAgentTransactions(query: AgentTransactionQuery) {
   return useQuery({
-    queryKey: ["agent-transactions", query],
+    queryKey: ['agent-transactions', query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (query.page) params.set("page", String(query.page));
-      if (query.limit) params.set("limit", String(query.limit));
-      if (query.agentId) params.set("agentId", query.agentId);
-      if (query.status) params.set("status", query.status);
-      if (query.type) params.set("type", query.type);
+      if (query.page) params.set('page', String(query.page));
+      if (query.limit) params.set('limit', String(query.limit));
+      if (query.agentId) params.set('agentId', query.agentId);
+      if (query.status) params.set('status', query.status);
+      if (query.type) params.set('type', query.type);
       const { data } = await api.get<ApiResponse<AgentTransaction[]>>(
-        `/agent-transactions?${params}`
+        `/agent-transactions?${params}`,
       );
       return { data: data.data, meta: data.meta } as PaginatedResult<AgentTransaction>;
     },
@@ -234,11 +211,9 @@ export function useAgentTransactions(query: AgentTransactionQuery) {
 
 export function useAgentTransaction(id: string) {
   return useQuery({
-    queryKey: ["agent-transaction", id],
+    queryKey: ['agent-transaction', id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<AgentTransaction>>(
-        `/agent-transactions/${id}`
-      );
+      const { data } = await api.get<ApiResponse<AgentTransaction>>(`/agent-transactions/${id}`);
       return data.data;
     },
     enabled: !!id,
@@ -266,19 +241,19 @@ export function useCreateTransaction() {
   return useMutation({
     mutationFn: async (payload: AgentTransactionPayload) => {
       const { data } = await api.post<ApiResponse<AgentTransaction>>(
-        "/agent-transactions",
-        payload
+        '/agent-transactions',
+        payload,
       );
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["agent-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ['agent-transactions'] });
       if (result.agentId) {
         queryClient.invalidateQueries({
-          queryKey: ["agent-transactions", { agentId: result.agentId }],
+          queryKey: ['agent-transactions', { agentId: result.agentId }],
         });
-        queryClient.invalidateQueries({ queryKey: ["agent", result.agentId] });
-        queryClient.invalidateQueries({ queryKey: ["agent-performance", result.agentId] });
+        queryClient.invalidateQueries({ queryKey: ['agent', result.agentId] });
+        queryClient.invalidateQueries({ queryKey: ['agent-performance', result.agentId] });
       }
     },
   });
@@ -289,17 +264,17 @@ export function useApproveTransaction() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { data } = await api.post<ApiResponse<AgentTransaction>>(
-        `/agent-transactions/${id}/approve`
+        `/agent-transactions/${id}/approve`,
       );
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["agent-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ['agent-transactions'] });
       if (result.agentId) {
         queryClient.invalidateQueries({
-          queryKey: ["agent-transactions", { agentId: result.agentId }],
+          queryKey: ['agent-transactions', { agentId: result.agentId }],
         });
-        queryClient.invalidateQueries({ queryKey: ["agent", result.agentId] });
+        queryClient.invalidateQueries({ queryKey: ['agent', result.agentId] });
       }
     },
   });
@@ -307,13 +282,13 @@ export function useApproveTransaction() {
 
 export function useCommissionReleases(query: CommissionReleaseQuery) {
   return useQuery({
-    queryKey: ["commission-releases", query],
+    queryKey: ['commission-releases', query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (query.agentId) params.set("agentId", query.agentId);
-      if (query.type) params.set("type", query.type);
+      if (query.agentId) params.set('agentId', query.agentId);
+      if (query.type) params.set('type', query.type);
       const { data } = await api.get<ApiResponse<CommissionRelease[]>>(
-        `/commission-releases?${params}`
+        `/commission-releases?${params}`,
       );
       return data.data;
     },
@@ -334,19 +309,19 @@ export function useCreateRelease() {
   return useMutation({
     mutationFn: async (payload: CommissionReleasePayload) => {
       const { data } = await api.post<ApiResponse<CommissionRelease>>(
-        "/commission-releases",
-        payload
+        '/commission-releases',
+        payload,
       );
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["commission-releases"] });
+      queryClient.invalidateQueries({ queryKey: ['commission-releases'] });
       if (result.agentId) {
         queryClient.invalidateQueries({
-          queryKey: ["commission-releases", { agentId: result.agentId }],
+          queryKey: ['commission-releases', { agentId: result.agentId }],
         });
-        queryClient.invalidateQueries({ queryKey: ["agent", result.agentId] });
-        queryClient.invalidateQueries({ queryKey: ["agent-performance", result.agentId] });
+        queryClient.invalidateQueries({ queryKey: ['agent', result.agentId] });
+        queryClient.invalidateQueries({ queryKey: ['agent-performance', result.agentId] });
       }
     },
   });
@@ -354,7 +329,7 @@ export function useCreateRelease() {
 
 export interface PayCommissionPayload {
   amount: number;
-  releaseType?: "full_payout" | "partial_payout" | "advance" | "adjustment" | "clawback";
+  releaseType?: 'full_payout' | 'partial_payout' | 'advance' | 'adjustment' | 'clawback';
   paymentDate?: string;
   paymentMethod?: string;
   paymentReference?: string;
@@ -371,29 +346,27 @@ export function usePayCommission() {
     }: PayCommissionPayload & { agentTransactionId: string }) => {
       const { data } = await api.post<ApiResponse<unknown>>(
         `/commission-releases/pay/${agentTransactionId}`,
-        payload
+        payload,
       );
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["agent-transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["commission-releases"] });
-      queryClient.invalidateQueries({ queryKey: ["commission-aging"] });
-      queryClient.invalidateQueries({ queryKey: ["agent"] });
-      queryClient.invalidateQueries({ queryKey: ["agent-performance"] });
+      queryClient.invalidateQueries({ queryKey: ['agent-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['commission-releases'] });
+      queryClient.invalidateQueries({ queryKey: ['commission-aging'] });
+      queryClient.invalidateQueries({ queryKey: ['agent'] });
+      queryClient.invalidateQueries({ queryKey: ['agent-performance'] });
     },
   });
 }
 
 export function useCommissionAging() {
   return useQuery({
-    queryKey: ["commission-aging"],
+    queryKey: ['commission-aging'],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<CommissionAgingReport>>(
-        `/commission-aging/report`
-      );
+      const { data } =
+        await api.get<ApiResponse<CommissionAgingReport>>(`/commission-aging/report`);
       return data.data;
     },
   });
 }
-

@@ -26,6 +26,11 @@
       "import": "./dist/hooks/index.js",
       "require": "./dist/hooks/index.js"
     },
+    "./lib/api": {
+      "types": "./dist/lib/api.d.ts",
+      "import": "./dist/lib/api.js",
+      "require": "./dist/lib/api.js"
+    },
     "./pages": {
       "types": "./dist/pages/index.d.ts",
       "import": "./dist/pages/index.js",
@@ -39,6 +44,7 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
+    "axios": "^1.18.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "@radix-ui/react-dialog": "^1.1.0",

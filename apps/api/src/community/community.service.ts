@@ -18,11 +18,7 @@ import {
   ResolveReportDto,
   ReportQueryDto,
 } from './dto/community.dto';
-import {
-  ModerationStatus,
-  ModerationTargetType,
-  ModerationAction,
-} from '@prisma/client';
+import { ModerationStatus, ModerationTargetType, ModerationAction } from '@prisma/client';
 import { buildListQuery, FieldMap } from '../common/list-query.builder';
 import { paginate } from '../common/dto/list-query.dto';
 
@@ -54,6 +50,7 @@ export class CommunityService {
       { field: 'postType', type: 'enum' },
       { field: 'audience', type: 'enum' },
       { field: 'moderationStatus', type: 'enum' },
+      { field: 'propertyId', type: 'eq' },
     ],
     search: ['title', 'body'],
     sortable: ['createdAt', 'updatedAt', 'publishedAt', 'postType', 'moderationStatus'],
@@ -68,9 +65,7 @@ export class CommunityService {
   };
 
   private readonly reportFieldMap: FieldMap = {
-    filters: [
-      { field: 'status', type: 'enum' },
-    ],
+    filters: [{ field: 'status', type: 'enum' }],
     sortable: ['createdAt', 'updatedAt', 'resolvedAt'],
   };
 
@@ -104,7 +99,7 @@ export class CommunityService {
   async findOneAmenity(id: string) {
     const amenity = await this.prisma.amenity.findUnique({
       where: { id },
-      include: { bookings: true, property: true },
+      include: { bookings: true, property: true, images: { orderBy: { sortOrder: 'asc' } } },
     });
     if (!amenity) throw new NotFoundException('Amenity not found');
     return amenity;
@@ -409,9 +404,7 @@ export class CommunityService {
     await this.logModeration(
       report.commentId ? ModerationTargetType.comment : ModerationTargetType.post,
       report.commentId ?? report.postId ?? id,
-      dto.status === 'dismissed'
-        ? ModerationAction.dismiss_report
-        : ModerationAction.action_report,
+      dto.status === 'dismissed' ? ModerationAction.dismiss_report : ModerationAction.action_report,
       dto.resolutionNote,
       dto.resolvedById,
     );
@@ -429,10 +422,7 @@ export class CommunityService {
     });
   }
 
-  private statusToAction(
-    next: ModerationStatus,
-    prev?: ModerationStatus,
-  ): ModerationAction {
+  private statusToAction(next: ModerationStatus, prev?: ModerationStatus): ModerationAction {
     if (next === ModerationStatus.hidden) return ModerationAction.hide;
     if (next === ModerationStatus.archived) return ModerationAction.archive;
     if (prev && prev !== ModerationStatus.published) return ModerationAction.restore;

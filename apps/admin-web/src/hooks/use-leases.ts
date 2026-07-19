@@ -1,17 +1,17 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import { LeaseType, type ApiResponse, type PaginationMeta } from "@elite-realty/shared-types";
-import type { RawLease, RawMortgage, RawRTO } from "@/types/api";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import { LeaseType, type ApiResponse, type PaginationMeta } from '@elite-realty/shared-types';
+import type { RawLease, RawMortgage, RawRTO } from '@/types/api';
 
 export type LeaseStatus =
-  | "pending"
-  | "active"
-  | "expiring"
-  | "expired"
-  | "terminated"
-  | "rto_active"
-  | "rto_delinquent"
-  | "rto_converted";
+  | 'pending'
+  | 'active'
+  | 'expiring'
+  | 'expired'
+  | 'terminated'
+  | 'rto_active'
+  | 'rto_delinquent'
+  | 'rto_converted';
 
 export interface Lease {
   id: string;
@@ -74,8 +74,8 @@ interface RawLeaseForTenant {
   createdAt?: string;
 }
 
-export type PaymentMethod = "card" | "ach" | "cash" | "check" | "bank_transfer";
-export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
+export type PaymentMethod = 'card' | 'ach' | 'cash' | 'check' | 'bank_transfer';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 
 export interface RentalPayment {
   id: string;
@@ -111,7 +111,7 @@ export interface LeaseQuery {
   page?: number;
   limit?: number;
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
   search?: string;
   type?: LeaseType;
   status?: LeaseStatus;
@@ -127,12 +127,14 @@ export function transformLease(l: RawLeaseApi): Lease {
   return {
     id: l.id,
     leaseNumber: l.leaseNumber,
-    tenantName: l.tenant ? `${l.tenant.firstName ?? ""} ${l.tenant.lastName ?? ""}`.trim() || "Unknown" : "Unknown",
-    tenantEmail: l.tenant?.email ?? "",
+    tenantName: l.tenant
+      ? `${l.tenant.firstName ?? ''} ${l.tenant.lastName ?? ''}`.trim() || 'Unknown'
+      : 'Unknown',
+    tenantEmail: l.tenant?.email ?? '',
     tenantUserId: l.tenantUserId ?? undefined,
     propertyId: l.propertyId,
-    propertyName: l.property?.name ?? l.property?.propertyCode ?? "",
-    unitLabel: l.unitLabel ?? l.unit?.unitNumber ?? "",
+    propertyName: l.property?.name ?? l.property?.propertyCode ?? '',
+    unitLabel: l.unitLabel ?? l.unit?.unitNumber ?? '',
     leaseType: l.leaseType,
     startDate: l.startDate,
     endDate: l.endDate,
@@ -140,7 +142,7 @@ export function transformLease(l: RawLeaseApi): Lease {
     securityDeposit: l.securityDepositAmount ? Number(l.securityDepositAmount) : undefined,
     penaltyPercent: l.latePaymentPenaltyPercent ? Number(l.latePaymentPenaltyPercent) : undefined,
     graceDays: l.gracePeriodDays,
-    status: (l.status as LeaseStatus) ?? (l.isActive ? "active" : "expired"),
+    status: (l.status as LeaseStatus) ?? (l.isActive ? 'active' : 'expired'),
     createdAt: l.createdAt,
     updatedAt: l.updatedAt,
   };
@@ -148,17 +150,17 @@ export function transformLease(l: RawLeaseApi): Lease {
 
 export function useLeases(query: LeaseQuery) {
   return useQuery({
-    queryKey: ["leases", query],
+    queryKey: ['leases', query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (query.page) params.set("page", String(query.page));
-      if (query.limit) params.set("limit", String(query.limit));
-      if (query.sort) params.set("sort", query.sort);
-      if (query.order) params.set("order", query.order);
-      if (query.search) params.set("search", query.search);
-      if (query.type) params.set("type", query.type);
-      if (query.status) params.set("status", query.status);
-      if (query.unitId) params.set("unitId", query.unitId);
+      if (query.page) params.set('page', String(query.page));
+      if (query.limit) params.set('limit', String(query.limit));
+      if (query.sort) params.set('sort', query.sort);
+      if (query.order) params.set('order', query.order);
+      if (query.search) params.set('search', query.search);
+      if (query.type) params.set('type', query.type);
+      if (query.status) params.set('status', query.status);
+      if (query.unitId) params.set('unitId', query.unitId);
       const { data } = await api.get<ApiResponse<RawLeaseApi[]>>(`/leases?${params}`);
       const transformed = data.data.map(transformLease);
       return { data: transformed, meta: data.meta } as PaginatedResult<Lease>;
@@ -177,22 +179,28 @@ export interface TenantLease {
   isActive: boolean;
   monthlyRentAmount: number;
   property: { id: string; propertyCode?: string; name?: string; propertyType?: string } | null;
-  mortgageScenarios?: { id: string; loanAmount: number; monthlyAmortization: number; loanTermMonths: number; interestRatePercent: number }[];
+  mortgageScenarios?: {
+    id: string;
+    loanAmount: number;
+    monthlyAmortization: number;
+    loanTermMonths: number;
+    interestRatePercent: number;
+  }[];
   rtoContract?: { id: string; accumulatedEquity: number; totalContractValue: number } | null;
   createdAt: string;
 }
 
 export function useTenantLeases(tenantUserId?: string) {
   return useQuery({
-    queryKey: ["tenant-leases", tenantUserId],
+    queryKey: ['tenant-leases', tenantUserId],
     enabled: !!tenantUserId,
     queryFn: async () => {
-      const params = new URLSearchParams({ limit: "50" });
-      if (tenantUserId) params.set("tenantUserId", tenantUserId);
+      const params = new URLSearchParams({ limit: '50' });
+      if (tenantUserId) params.set('tenantUserId', tenantUserId);
       const { data } = await api.get<ApiResponse<RawLeaseForTenant[]>>(`/leases?${params}`);
       const leases: TenantLease[] = (data.data ?? []).map((l) => ({
         id: l.id,
-        unitLabel: l.unitLabel ?? l.unit?.unitNumber ?? "—",
+        unitLabel: l.unitLabel ?? l.unit?.unitNumber ?? '—',
         unitId: l.unitId,
         leaseType: l.leaseType,
         schemeType: l.schemeType ?? null,
@@ -201,7 +209,12 @@ export function useTenantLeases(tenantUserId?: string) {
         isActive: l.isActive,
         monthlyRentAmount: Number(l.monthlyRentAmount ?? 0),
         property: l.property
-          ? { id: l.property.id, propertyCode: l.property.propertyCode, name: l.property.name, propertyType: l.property.propertyType }
+          ? {
+              id: l.property.id,
+              propertyCode: l.property.propertyCode,
+              name: l.property.name,
+              propertyType: l.property.propertyType,
+            }
           : null,
         mortgageScenarios: (l.mortgageScenarios ?? []).map((m) => ({
           id: m.id,
@@ -211,9 +224,13 @@ export function useTenantLeases(tenantUserId?: string) {
           interestRatePercent: Number(m.interestRate ?? 0),
         })),
         rtoContract: l.rtoContract
-          ? { id: l.rtoContract.id, accumulatedEquity: Number(l.rtoContract.startingEquity ?? 0), totalContractValue: Number(l.rtoContract.totalContractPrice ?? 0) }
+          ? {
+              id: l.rtoContract.id,
+              accumulatedEquity: Number(l.rtoContract.startingEquity ?? 0),
+              totalContractValue: Number(l.rtoContract.totalContractPrice ?? 0),
+            }
           : null,
-        createdAt: l.createdAt ?? "",
+        createdAt: l.createdAt ?? '',
       }));
       return leases;
     },
@@ -222,7 +239,7 @@ export function useTenantLeases(tenantUserId?: string) {
 
 export function useLease(id: string) {
   return useQuery({
-    queryKey: ["lease", id],
+    queryKey: ['lease', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<RawLeaseApi>>(`/leases/${id}`);
       return transformLease(data.data);
@@ -239,8 +256,10 @@ export function toCreateLeasePayload(lease: Partial<Lease>): Record<string, unkn
     startDate: lease.startDate,
     endDate: lease.endDate,
     monthlyRentAmount: Number(lease.monthlyRent),
-    securityDepositAmount: lease.securityDeposit != null ? String(lease.securityDeposit) : undefined,
-    latePaymentPenaltyPercent: lease.penaltyPercent != null ? String(lease.penaltyPercent) : undefined,
+    securityDepositAmount:
+      lease.securityDeposit != null ? String(lease.securityDeposit) : undefined,
+    latePaymentPenaltyPercent:
+      lease.penaltyPercent != null ? String(lease.penaltyPercent) : undefined,
     gracePeriodDays: lease.graceDays,
   };
 }
@@ -249,11 +268,11 @@ export function useCreateLease() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<Lease>) => {
-      const { data } = await api.post<ApiResponse<Lease>>("/leases", toCreateLeasePayload(payload));
+      const { data } = await api.post<ApiResponse<Lease>>('/leases', toCreateLeasePayload(payload));
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leases"] });
+      queryClient.invalidateQueries({ queryKey: ['leases'] });
     },
   });
 }
@@ -262,12 +281,15 @@ export function useUpdateLease() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...payload }: Partial<Lease> & { id: string }) => {
-      const { data } = await api.patch<ApiResponse<Lease>>(`/leases/${id}`, toCreateLeasePayload(payload));
+      const { data } = await api.patch<ApiResponse<Lease>>(
+        `/leases/${id}`,
+        toCreateLeasePayload(payload),
+      );
       return data.data;
     },
     onSuccess: (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["leases"] });
-      queryClient.invalidateQueries({ queryKey: ["lease", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['leases'] });
+      queryClient.invalidateQueries({ queryKey: ['lease', variables.id] });
       void result;
     },
   });
@@ -281,18 +303,18 @@ export function useTerminateLease() {
       return data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["leases"] });
-      queryClient.invalidateQueries({ queryKey: ["lease", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['leases'] });
+      queryClient.invalidateQueries({ queryKey: ['lease', variables.id] });
     },
   });
 }
 
 export function useLeasePayments(leaseId: string) {
   return useQuery({
-    queryKey: ["rental-payments", leaseId],
+    queryKey: ['rental-payments', leaseId],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (leaseId) params.set("leaseAgreementId", leaseId);
+      if (leaseId) params.set('leaseAgreementId', leaseId);
       const { data } = await api.get<ApiResponse<RawRentalPayment[]>>(`/rental-payments?${params}`);
       return (data.data ?? []).map((p) => ({
         id: p.id,
@@ -300,9 +322,16 @@ export function useLeasePayments(leaseId: string) {
         amount: Number(p.amountDue),
         amountDue: Number(p.amountDue),
         amountPaid: Number(p.amountPaid ?? 0),
-        method: p.paymentMethod || "card",
+        method: p.paymentMethod || 'card',
         status: p.status,
-        period: p.period ?? (p.billingPeriodStart ? new Date(p.billingPeriodStart).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : null),
+        period:
+          p.period ??
+          (p.billingPeriodStart
+            ? new Date(p.billingPeriodStart).toLocaleDateString(undefined, {
+                month: 'short',
+                year: 'numeric',
+              })
+            : null),
         dueDate: p.dueDate,
         paidDate: p.paymentDate,
         createdAt: p.createdAt,
@@ -317,11 +346,11 @@ export function useCreateRentalPayment() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<RentalPayment>) => {
-      const { data } = await api.post<ApiResponse<RentalPayment>>("/rental-payments", payload);
+      const { data } = await api.post<ApiResponse<RentalPayment>>('/rental-payments', payload);
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["rental-payments", result.leaseAgreementId] });
+      queryClient.invalidateQueries({ queryKey: ['rental-payments', result.leaseAgreementId] });
     },
   });
 }
@@ -348,8 +377,7 @@ export function useRecordPayment() {
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["rental-payments", result.leaseAgreementId] });
+      queryClient.invalidateQueries({ queryKey: ['rental-payments', result.leaseAgreementId] });
     },
   });
 }
-

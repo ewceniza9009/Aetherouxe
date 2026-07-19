@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
-import type { RawBuilding } from "@/types/api";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
+import type { RawBuilding } from '@/types/api';
 
 export interface Building {
   id: string;
@@ -20,7 +20,7 @@ export interface BuildingQuery {
   page?: number;
   limit?: number;
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
   search?: string;
   projectId?: string;
 }
@@ -31,16 +31,17 @@ interface PaginatedResult<T> {
 }
 
 export function transformBuilding(b: RawBuilding): Building {
-  const unitsCount = b._count?.units ?? b.unitCount ?? (Array.isArray(b.units) ? b.units.length : 0);
+  const unitsCount =
+    b._count?.units ?? b.unitCount ?? (Array.isArray(b.units) ? b.units.length : 0);
   return {
     id: b.id,
     name: b.name,
-    type: b.buildingType || b.type || "",
+    type: b.buildingType || b.type || '',
     floorCount: b.floorCount ?? 0,
     units: unitsCount,
-    projectId: b.projectId ?? "",
+    projectId: b.projectId ?? '',
     projectName: b.project?.name || b.projectName,
-    address: b.address ?? "",
+    address: b.address ?? '',
     createdAt: b.createdAt,
     updatedAt: b.updatedAt,
   };
@@ -48,15 +49,15 @@ export function transformBuilding(b: RawBuilding): Building {
 
 export function useBuildings(query: BuildingQuery) {
   return useQuery({
-    queryKey: ["buildings", query],
+    queryKey: ['buildings', query],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (query.page) params.set("page", String(query.page));
-      if (query.limit) params.set("limit", String(query.limit));
-      if (query.sort) params.set("sort", query.sort);
-      if (query.order) params.set("order", query.order);
-      if (query.search) params.set("search", query.search);
-      if (query.projectId) params.set("projectId", query.projectId);
+      if (query.page) params.set('page', String(query.page));
+      if (query.limit) params.set('limit', String(query.limit));
+      if (query.sort) params.set('sort', query.sort);
+      if (query.order) params.set('order', query.order);
+      if (query.search) params.set('search', query.search);
+      if (query.projectId) params.set('projectId', query.projectId);
       const { data } = await api.get<ApiResponse<RawBuilding[]>>(`/buildings?${params}`);
       const transformed = (data.data ?? []).map(transformBuilding);
       return { data: transformed, meta: data.meta } as PaginatedResult<Building>;
@@ -66,7 +67,7 @@ export function useBuildings(query: BuildingQuery) {
 
 export function useBuilding(id: string) {
   return useQuery({
-    queryKey: ["building", id],
+    queryKey: ['building', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<RawBuilding>>(`/buildings/${id}`);
       return transformBuilding(data.data);
@@ -79,11 +80,11 @@ export function useCreateBuilding() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<Building>) => {
-      const { data } = await api.post<ApiResponse<Building>>("/buildings", payload);
+      const { data } = await api.post<ApiResponse<Building>>('/buildings', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["buildings"] });
+      queryClient.invalidateQueries({ queryKey: ['buildings'] });
     },
   });
 }
@@ -96,8 +97,8 @@ export function useUpdateBuilding() {
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["buildings"] });
-      queryClient.invalidateQueries({ queryKey: ["building", result.id] });
+      queryClient.invalidateQueries({ queryKey: ['buildings'] });
+      queryClient.invalidateQueries({ queryKey: ['building', result.id] });
     },
   });
 }
@@ -109,8 +110,7 @@ export function useDeleteBuilding() {
       await api.delete(`/buildings/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["buildings"] });
+      queryClient.invalidateQueries({ queryKey: ['buildings'] });
     },
   });
 }
-

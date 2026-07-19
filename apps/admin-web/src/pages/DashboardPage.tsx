@@ -1,34 +1,50 @@
-import { EmptyState } from "@/components/ui/empty-state";
-import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
+﻿import { EmptyState } from '@/components/ui/empty-state';
+import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
 import {
-  Building2, Users, FileText, DollarSign, TrendingUp, Activity,
-  Plus, ArrowRight, Hammer, CheckCircle2, Clock, AlertTriangle,
-  Layers, KeyRound, UserCheck, ShieldCheck, BadgeDollarSign,
-  Wallet, FolderOpen, BellRing, Droplets, Wrench,
-} from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
-import { useProperties } from "@/hooks/use-properties";
-import { useProjects } from "@/hooks/use-projects";
-import { useLeases } from "@/hooks/use-leases";
-import { useRtoContracts } from "@/hooks/use-rto";
-import { useAgents } from "@/hooks/use-agents";
-import { useCommissionAging } from "@/hooks/use-commissions";
-import { useArAging, useCollectionCases } from "@/hooks/use-collections";
-import { useBills } from "@/hooks/use-utilities";
-import { useServiceRequests } from "@/hooks/use-service-requests";
-import { useDocuments } from "@/hooks/use-documents";
-import { usePortfolioKpis, useRevenueTrend } from "@/hooks/use-reports";
-import type { PortfolioKpis } from "@/hooks/use-reports";
-import { formatCurrency } from "@/lib/agent-meta";
-import api from "@/lib/api";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-} from "recharts";
+  Building2,
+  Users,
+  FileText,
+  DollarSign,
+  TrendingUp,
+  Activity,
+  Plus,
+  ArrowRight,
+  Hammer,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  Layers,
+  KeyRound,
+  UserCheck,
+  ShieldCheck,
+  BadgeDollarSign,
+  Wallet,
+  FolderOpen,
+  BellRing,
+  Droplets,
+  Wrench,
+} from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { useProperties } from '@/hooks/use-properties';
+import { useProjects } from '@/hooks/use-projects';
+import { useLeases } from '@/hooks/use-leases';
+import { useRtoContracts } from '@/hooks/use-rto';
+import { useAgents } from '@/hooks/use-agents';
+import { useCommissionAging } from '@/hooks/use-commissions';
+import { useArAging, useCollectionCases } from '@/hooks/use-collections';
+import { useBills } from '@/hooks/use-utilities';
+import { useServiceRequests } from '@/hooks/use-service-requests';
+import { useDocuments } from '@/hooks/use-documents';
+import { usePortfolioKpis, useRevenueTrend } from '@/hooks/use-reports';
+import type { PortfolioKpis } from '@/hooks/use-reports';
+import { formatCurrency } from '@/lib/agent-meta';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -36,23 +52,58 @@ export default function DashboardPage() {
   const k = (kpis ?? {}) as PortfolioKpis;
   const { data: revenueTrend } = useRevenueTrend(6);
 
-  const money = (n: number) =>
-    formatCurrency(Number(n ?? 0));
+  const money = (n: number) => formatCurrency(Number(n ?? 0));
 
   const stats = [
-    { title: "Total Properties", value: (k.totalProperties ?? 0).toLocaleString(), icon: Building2, accent: "text-primary", sub: "Across portfolio" },
-    { title: "Occupied Units", value: `${(k.occupiedUnits ?? 0)}/${(k.totalUnits ?? 0)}`, icon: Users, accent: "text-cyan-400", sub: `${k.occupancyRate ?? 0}% occupancy` },
-    { title: "Active Leases", value: (k.activeLeases ?? 0).toLocaleString(), icon: FileText, accent: "text-success", sub: "Currently generating revenue" },
-    { title: "Monthly Revenue", value: money(k.monthlyRecurringRevenue ?? 0), icon: DollarSign, accent: "text-warning", sub: "Recurring MRR" },
-    { title: "Total Receivable", value: money(k.totalReceivable ?? 0), icon: TrendingUp, accent: "text-destructive", sub: "Outstanding AR" },
-    { title: "Open Requests", value: (k.openServiceRequests ?? 0).toLocaleString(), icon: Activity, accent: "text-primary", sub: "Awaiting action" },
+    {
+      title: 'Total Properties',
+      value: (k.totalProperties ?? 0).toLocaleString(),
+      icon: Building2,
+      accent: 'text-primary',
+      sub: 'Across portfolio',
+    },
+    {
+      title: 'Occupied Units',
+      value: `${k.occupiedUnits ?? 0}/${k.totalUnits ?? 0}`,
+      icon: Users,
+      accent: 'text-cyan-400',
+      sub: `${k.occupancyRate ?? 0}% occupancy`,
+    },
+    {
+      title: 'Active Leases',
+      value: (k.activeLeases ?? 0).toLocaleString(),
+      icon: FileText,
+      accent: 'text-success',
+      sub: 'Currently generating revenue',
+    },
+    {
+      title: 'Monthly Revenue',
+      value: money(k.monthlyRecurringRevenue ?? 0),
+      icon: DollarSign,
+      accent: 'text-warning',
+      sub: 'Recurring MRR',
+    },
+    {
+      title: 'Total Receivable',
+      value: money(k.totalReceivable ?? 0),
+      icon: TrendingUp,
+      accent: 'text-destructive',
+      sub: 'Outstanding AR',
+    },
+    {
+      title: 'Open Requests',
+      value: (k.openServiceRequests ?? 0).toLocaleString(),
+      icon: Activity,
+      accent: 'text-primary',
+      sub: 'Awaiting action',
+    },
   ];
 
   const { data: recentProperties, isLoading: loadingRecent } = useProperties({
     page: 1,
     limit: 5,
-    sort: "createdAt",
-    order: "desc",
+    sort: 'createdAt',
+    order: 'desc',
   });
 
   const { data: projectsData, isLoading: loadingProjects } = useProjects({
@@ -62,12 +113,12 @@ export default function DashboardPage() {
 
   const projects = projectsData?.data ?? [];
   const totalProjects = projectsData?.meta?.total ?? 0;
-  const activeProjects = projects.filter((p) =>
-    p.status === "pre_selling" || p.status === "construction" || p.status === "fit_out"
+  const activeProjects = projects.filter(
+    (p) => p.status === 'pre_selling' || p.status === 'construction' || p.status === 'fit_out',
   ).length;
-  const planningProjects = projects.filter((p) => p.status === "planning").length;
-  const turnoverProjects = projects.filter((p) => p.status === "turnover").length;
-  const completedProjects = projects.filter((p) => p.status === "completed").length;
+  const planningProjects = projects.filter((p) => p.status === 'planning').length;
+  const turnoverProjects = projects.filter((p) => p.status === 'turnover').length;
+  const completedProjects = projects.filter((p) => p.status === 'completed').length;
 
   const greenBudgets = 0;
   const yellowBudgets = 0;
@@ -76,20 +127,20 @@ export default function DashboardPage() {
   const { data: activeLeasesData, isLoading: loadingLeases } = useLeases({
     page: 1,
     limit: 100,
-    status: "active",
+    status: 'active',
   });
   const activeLeases = activeLeasesData?.data ?? [];
   const activeLeaseCount = activeLeasesData?.meta?.total ?? activeLeases.length;
   const monthlyRentalIncome = activeLeases.reduce((sum, l) => sum + (l.monthlyRent ?? 0), 0);
 
   const { data: overdueData, isLoading: loadingOverdue } = useQuery({
-    queryKey: ["overdue-payments"],
+    queryKey: ['overdue-payments'],
     queryFn: async () => {
       const params = new URLSearchParams();
-      params.set("status", "pending");
-      params.set("limit", "1");
+      params.set('status', 'pending');
+      params.set('limit', '1');
       const { data } = await api.get<ApiResponse<unknown[]> & { meta: PaginationMeta }>(
-        `/rental-payments?${params}`
+        `/rental-payments?${params}`,
       );
       return data.meta?.total ?? 0;
     },
@@ -99,25 +150,25 @@ export default function DashboardPage() {
   const { data: activeRtoData, isLoading: loadingActiveRto } = useRtoContracts({
     page: 1,
     limit: 100,
-    status: "active",
+    status: 'active',
   });
   const { data: defaultedRtoData, isLoading: loadingDefaultedRto } = useRtoContracts({
     page: 1,
     limit: 100,
-    status: "defaulted",
+    status: 'defaulted',
   });
   const activeRtoContracts = activeRtoData?.data ?? [];
   const activeRtoCount = activeRtoData?.meta?.total ?? activeRtoContracts.length;
   const totalEquityAccumulated = activeRtoContracts.reduce(
     (sum, c) => sum + Number(c.accumulatedEquity ?? 0),
-    0
+    0,
   );
   const defaultedRtoCount = defaultedRtoData?.meta?.total ?? (defaultedRtoData?.data ?? []).length;
 
   const { data: agentsData, isLoading: loadingAgents } = useAgents({ limit: 200 });
   const agents = agentsData?.data ?? [];
   const totalAgents = agentsData?.meta?.total ?? agents.length;
-  const compliantAgents = agents.filter((a) => a.licenseStatus === "compliant").length;
+  const compliantAgents = agents.filter((a) => a.licenseStatus === 'compliant').length;
   const internalAgents = agents.filter((a) => a.isInternal).length;
 
   const { data: agingReport, isLoading: loadingAging } = useCommissionAging();
@@ -127,7 +178,7 @@ export default function DashboardPage() {
   const totalReceivable = arReport?.totalReceivable ?? 0;
   const { data: collectionCases, isLoading: loadingCases } = useCollectionCases();
   const openCasesCount = (collectionCases?.data ?? []).filter(
-    (c) => c.status === "open" || c.status === "in_progress" || c.status === "escalated"
+    (c) => c.status === 'open' || c.status === 'in_progress' || c.status === 'escalated',
   ).length;
 
   const { data: utilityBillsData, isLoading: loadingUtilityBills } = useBills({
@@ -136,20 +187,19 @@ export default function DashboardPage() {
   });
   const utilityBills = utilityBillsData?.data ?? [];
   const unpaidUtilityBills = utilityBills.filter(
-    (b) => b.status === "pending" || b.status === "partially_paid" || b.status === "disputed"
+    (b) => b.status === 'pending' || b.status === 'partially_paid' || b.status === 'disputed',
   ).length;
   const unpaidUtilityAmount = utilityBills
-    .filter((b) => b.status !== "paid" && b.status !== "waived")
+    .filter((b) => b.status !== 'paid' && b.status !== 'waived')
     .reduce((sum, b) => sum + (b.amountDue ?? 0), 0);
 
   const { data: openRequestsData, isLoading: loadingRequests } = useServiceRequests({
     page: 1,
     limit: 100,
-    status: "open",
+    status: 'open',
   });
   const openRequests = openRequestsData?.data ?? [];
-  const openRequestCount =
-    openRequestsData?.meta?.total ?? openRequests.length;
+  const openRequestCount = openRequestsData?.meta?.total ?? openRequests.length;
 
   const { data: documentsData, isLoading: loadingDocuments } = useDocuments({
     page: 1,
@@ -165,7 +215,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">Welcome back. Here is your portfolio overview.</p>
         </div>
-        <Button onClick={() => navigate({ to: "/properties/new" })}>
+        <Button onClick={() => navigate({ to: '/properties/new' })}>
           <Plus className="mr-2 h-4 w-4" /> Add Property
         </Button>
       </div>
@@ -207,7 +257,9 @@ export default function DashboardPage() {
         </Card>
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-success">Monthly Rental Income</CardTitle>
+            <CardTitle className="text-sm font-medium text-success">
+              Monthly Rental Income
+            </CardTitle>
             <DollarSign className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
@@ -215,10 +267,10 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-28" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-success">
-                  {money(monthlyRentalIncome)}
-                </div>
-                <p className="text-xs text-muted-foreground">Across {activeLeaseCount} active leases</p>
+                <div className="text-3xl font-bold text-success">{money(monthlyRentalIncome)}</div>
+                <p className="text-xs text-muted-foreground">
+                  Across {activeLeaseCount} active leases
+                </p>
               </>
             )}
           </CardContent>
@@ -260,7 +312,9 @@ export default function DashboardPage() {
         </Card>
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-success">Total Equity Accumulated</CardTitle>
+            <CardTitle className="text-sm font-medium text-success">
+              Total Equity Accumulated
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
@@ -271,7 +325,9 @@ export default function DashboardPage() {
                 <div className="text-3xl font-bold text-success">
                   {money(totalEquityAccumulated)}
                 </div>
-                <p className="text-xs text-muted-foreground">Across {activeRtoCount} active contracts</p>
+                <p className="text-xs text-muted-foreground">
+                  Across {activeRtoCount} active contracts
+                </p>
               </>
             )}
           </CardContent>
@@ -382,13 +438,36 @@ export default function DashboardPage() {
               {revenueTrend && revenueTrend.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={revenueTrend} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-                     <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
-                     <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} width={56} tickFormatter={(v) => `₱${(Number(v) / 1000).toFixed(0)}k`} />
-<Tooltip
-                        contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 13 }}
-                        formatter={(v: any) => [formatCurrency(Number(v)), "Revenue"]}
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 12 }}
+                      stroke="hsl(var(--muted-foreground))"
+                      tickLine={false}
+                      axisLine={false}
                     />
-                    <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      stroke="hsl(var(--muted-foreground))"
+                      tickLine={false}
+                      axisLine={false}
+                      width={56}
+                      tickFormatter={(v) => `â‚±${(Number(v) / 1000).toFixed(0)}k`}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        fontSize: 13,
+                      }}
+                      formatter={(v: any) => [formatCurrency(Number(v)), 'Revenue']}
+                    />
+                    <Bar
+                      dataKey="revenue"
+                      fill="hsl(var(--primary))"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={48}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -403,7 +482,7 @@ export default function DashboardPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Recent Properties</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/properties" })}>
+              <Button variant="ghost" size="sm" onClick={() => navigate({ to: '/properties' })}>
                 View All <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
             </div>
@@ -432,7 +511,7 @@ export default function DashboardPage() {
                         <p className="text-xs text-muted-foreground truncate">{prop.address}</p>
                       </div>
                       <span className="text-xs text-muted-foreground shrink-0">
-                        {prop.type.replace(/_/g, " ")}
+                        {prop.type.replace(/_/g, ' ')}
                       </span>
                     </div>
                   ))
@@ -489,9 +568,7 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-28" />
             ) : (
               <>
-                <div className="text-3xl font-bold gold-text">
-                  {money(unpaidCommissions)}
-                </div>
+                <div className="text-3xl font-bold gold-text">{money(unpaidCommissions)}</div>
                 <p className="text-xs text-muted-foreground">Outstanding aging total</p>
               </>
             )}
@@ -510,9 +587,7 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-28" />
             ) : (
               <>
-                <div className="text-3xl font-bold gold-text">
-                  {money(totalReceivable)}
-                </div>
+                <div className="text-3xl font-bold gold-text">{money(totalReceivable)}</div>
                 <p className="text-xs text-muted-foreground">Outstanding AR across tenants</p>
               </>
             )}
@@ -520,7 +595,9 @@ export default function DashboardPage() {
         </Card>
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-destructive">Open Collection Cases</CardTitle>
+            <CardTitle className="text-sm font-medium text-destructive">
+              Open Collection Cases
+            </CardTitle>
             <FolderOpen className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
@@ -540,10 +617,10 @@ export default function DashboardPage() {
             <BellRing className="h-4 w-4 text-cyan-400" />
           </CardHeader>
           <CardContent className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate({ to: "/collections" })}>
+            <Button variant="outline" size="sm" onClick={() => navigate({ to: '/collections' })}>
               Collections
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate({ to: "/statements" })}>
+            <Button variant="outline" size="sm" onClick={() => navigate({ to: '/statements' })}>
               Statements
             </Button>
           </CardContent>
@@ -605,5 +682,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-

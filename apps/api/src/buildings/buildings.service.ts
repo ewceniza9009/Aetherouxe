@@ -1,6 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateBuildingDto, UpdateBuildingDto, BuildingQueryDto, CreateFloorDto, UpdateFloorDto } from './dto/buildings.dto';
+import {
+  CreateBuildingDto,
+  UpdateBuildingDto,
+  BuildingQueryDto,
+  CreateFloorDto,
+  UpdateFloorDto,
+} from './dto/buildings.dto';
 import { buildListQuery, FieldMap } from '../common/list-query.builder';
 import { paginate } from '../common/dto/list-query.dto';
 
@@ -46,7 +52,11 @@ export class BuildingsService {
   async findOne(id: string, tenantId: string) {
     const building = await this.prisma.building.findUnique({
       where: { id, tenantId },
-      include: { floors: { orderBy: { sortOrder: 'asc' } }, units: { include: { floor: true, property: true } } },
+      include: {
+        floors: { orderBy: { sortOrder: 'asc' } },
+        units: { include: { floor: true, property: true } },
+        images: { orderBy: { sortOrder: 'asc' } },
+      },
     });
     if (!building) throw new NotFoundException('Building not found');
     return building;
@@ -54,7 +64,11 @@ export class BuildingsService {
 
   async update(id: string, dto: UpdateBuildingDto, tenantId: string) {
     await this.findOne(id, tenantId);
-    return this.prisma.building.update({ where: { id, tenantId }, data: dto as any, include: { floors: true } });
+    return this.prisma.building.update({
+      where: { id, tenantId },
+      data: dto as any,
+      include: { floors: true },
+    });
   }
 
   async remove(id: string, tenantId: string) {

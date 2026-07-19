@@ -1,17 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse, PaginationMeta } from "@elite-realty/shared-types";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
 
-export type PnlStatus = "draft" | "generated" | "sent" | "paid" | "archived";
+export type PnlStatus = 'draft' | 'generated' | 'sent' | 'paid' | 'archived';
 
 export type PnlLineItemType =
-  | "rental_income"
-  | "maintenance"
-  | "utilities"
-  | "management_fee"
-  | "tax"
-  | "insurance"
-  | "other";
+  'rental_income' | 'maintenance' | 'utilities' | 'management_fee' | 'tax' | 'insurance' | 'other';
 
 export interface PnlLineItem {
   id?: string;
@@ -53,7 +47,7 @@ export interface PnlQuery {
   propertyId?: string;
   status?: PnlStatus;
   sort?: string;
-  order?: "asc" | "desc";
+  order?: 'asc' | 'desc';
 }
 
 interface Paginated<T> {
@@ -64,20 +58,20 @@ interface Paginated<T> {
 function buildParams(query: Record<string, unknown | undefined>): string {
   const params = new URLSearchParams();
   Object.entries(query).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
+    if (value !== undefined && value !== null && value !== '') {
       params.set(key, String(value));
     }
   });
   const qs = params.toString();
-  return qs ? `?${qs}` : "";
+  return qs ? `?${qs}` : '';
 }
 
 export function usePnlStatements(query: PnlQuery = {}) {
   return useQuery({
-    queryKey: ["owner-pnl", query],
+    queryKey: ['owner-pnl', query],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<OwnerPnlStatement[]>>(
-        `/owner-pnl${buildParams(query as Record<string, unknown>)}`
+        `/owner-pnl${buildParams(query as Record<string, unknown>)}`,
       );
       return { data: data.data, meta: data.meta } as Paginated<OwnerPnlStatement>;
     },
@@ -86,11 +80,9 @@ export function usePnlStatements(query: PnlQuery = {}) {
 
 export function usePnlStatement(id: string) {
   return useQuery({
-    queryKey: ["owner-pnl-statement", id],
+    queryKey: ['owner-pnl-statement', id],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<OwnerPnlStatement>>(
-        `/owner-pnl/${id}`
-      );
+      const { data } = await api.get<ApiResponse<OwnerPnlStatement>>(`/owner-pnl/${id}`);
       return data.data;
     },
     enabled: !!id,
@@ -108,13 +100,13 @@ export function useGeneratePnl() {
       managementFeeRate?: number;
     }) => {
       const { data } = await api.post<ApiResponse<OwnerPnlStatement>>(
-        "/owner-pnl/generate",
-        payload
+        '/owner-pnl/generate',
+        payload,
       );
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["owner-pnl"] });
+      queryClient.invalidateQueries({ queryKey: ['owner-pnl'] });
     },
   });
 }
@@ -123,15 +115,11 @@ export function useCreatePnl() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Partial<OwnerPnlStatement>) => {
-      const { data } = await api.post<ApiResponse<OwnerPnlStatement>>(
-        "/owner-pnl",
-        payload
-      );
+      const { data } = await api.post<ApiResponse<OwnerPnlStatement>>('/owner-pnl', payload);
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["owner-pnl"] });
+      queryClient.invalidateQueries({ queryKey: ['owner-pnl'] });
     },
   });
 }
-

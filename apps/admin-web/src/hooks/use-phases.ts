@@ -1,15 +1,15 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse } from "@elite-realty/shared-types";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse } from '@elite-realty/shared-types';
 
-export type PhaseStatus = "planning" | "in_progress" | "completed" | "delayed" | "on_hold";
+export type PhaseStatus = 'planning' | 'in_progress' | 'completed' | 'delayed' | 'on_hold';
 
 export const phaseStatusLabels: Record<PhaseStatus, string> = {
-  planning: "Planning",
-  in_progress: "In Progress",
-  completed: "Completed",
-  delayed: "Delayed",
-  on_hold: "On Hold",
+  planning: 'Planning',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+  delayed: 'Delayed',
+  on_hold: 'On Hold',
 };
 
 export interface Phase {
@@ -39,11 +39,16 @@ export interface PhaseInput {
 
 function progressFor(status: string): number {
   switch (status) {
-    case "completed": return 100;
-    case "in_progress": return 50;
-    case "delayed": return 40;
-    case "on_hold": return 25;
-    default: return 0;
+    case 'completed':
+      return 100;
+    case 'in_progress':
+      return 50;
+    case 'delayed':
+      return 40;
+    case 'on_hold':
+      return 25;
+    default:
+      return 0;
   }
 }
 
@@ -70,14 +75,14 @@ function mapPhase(p: RawPhaseApi): Phase {
   return {
     id: p.id,
     projectId: p.projectId,
-    name: p.phaseName ?? p.name ?? "",
-    status: (p.status ?? "pending") as Phase["status"],
+    name: p.phaseName ?? p.name ?? '',
+    status: (p.status ?? 'pending') as Phase['status'],
     targetStart: p.targetStart ?? undefined,
     targetEnd: p.targetEnd ?? undefined,
     actualStart: p.actualStart ?? undefined,
     actualEnd: p.actualEnd ?? undefined,
     order: p.phaseOrder ?? p.order ?? 0,
-    progress: p.progress ?? progressFor(p.status ?? "pending"),
+    progress: p.progress ?? progressFor(p.status ?? 'pending'),
     createdAt: p.createdAt,
   };
 }
@@ -97,7 +102,7 @@ function toApiPayload(input: PhaseInput): Record<string, unknown> {
 
 export function usePhases(projectId: string) {
   return useQuery({
-    queryKey: ["phases", projectId],
+    queryKey: ['phases', projectId],
     queryFn: async () => {
       const params = new URLSearchParams({ projectId });
       const { data } = await api.get<ApiResponse<any[]>>(`/phases?${params}`);
@@ -109,7 +114,7 @@ export function usePhases(projectId: string) {
 
 export function usePhase(id: string) {
   return useQuery({
-    queryKey: ["phase", id],
+    queryKey: ['phase', id],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<any>>(`/phases/${id}`);
       return mapPhase(data.data);
@@ -122,11 +127,11 @@ export function useCreatePhase() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: PhaseInput) => {
-      const { data } = await api.post<ApiResponse<any>>("/phases", toApiPayload(input));
+      const { data } = await api.post<ApiResponse<any>>('/phases', toApiPayload(input));
       return mapPhase(data.data);
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["phases", result.projectId] });
+      queryClient.invalidateQueries({ queryKey: ['phases', result.projectId] });
     },
   });
 }
@@ -139,8 +144,8 @@ export function useUpdatePhase() {
       return mapPhase(data.data);
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["phases", result.projectId] });
-      queryClient.invalidateQueries({ queryKey: ["phase", result.id] });
+      queryClient.invalidateQueries({ queryKey: ['phases', result.projectId] });
+      queryClient.invalidateQueries({ queryKey: ['phase', result.id] });
     },
   });
 }
@@ -153,8 +158,7 @@ export function useDeletePhase() {
       return projectId;
     },
     onSuccess: (projectId) => {
-      queryClient.invalidateQueries({ queryKey: ["phases", projectId] });
+      queryClient.invalidateQueries({ queryKey: ['phases', projectId] });
     },
   });
 }
-

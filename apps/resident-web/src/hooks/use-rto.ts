@@ -1,18 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { ApiResponse } from "@elite-realty/shared-types";
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import type { ApiResponse } from '@elite-realty/shared-types';
 
-export type RtoStatus =
-  | "active"
-  | "grace_period"
-  | "defaulted"
-  | "exercised"
-  | "completed";
+export type RtoStatus = 'active' | 'grace_period' | 'defaulted' | 'exercised' | 'completed';
 
-export type RtoLedgerType =
-  | "payment_credit"
-  | "forfeiture"
-  | "option_fee_credit";
+export type RtoLedgerType = 'payment_credit' | 'forfeiture' | 'option_fee_credit';
 
 export interface RtoLedgerEntry {
   id: string;
@@ -72,16 +64,16 @@ export interface RtoContract {
 
 export function useMyRto() {
   return useQuery({
-    queryKey: ["my-rto"],
+    queryKey: ['my-rto'],
     queryFn: async () => {
       const params = new URLSearchParams();
-      params.set("status", "active");
-      params.set("limit", "1");
+      params.set('status', 'active');
+      params.set('limit', '1');
       const { data } = await api.get<ApiResponse<RtoContract[]>>(`/rto-contracts?${params}`);
       const first = data.data?.[0];
       if (!first) return null;
       const { data: detail } = await api.get<ApiResponse<RtoContract>>(
-        `/rto-contracts/${first.id}`
+        `/rto-contracts/${first.id}`,
       );
       return detail.data ?? null;
     },
@@ -90,10 +82,10 @@ export function useMyRto() {
 
 export function useRtoLedger(contractId: string) {
   return useQuery({
-    queryKey: ["my-rto-ledger", contractId],
+    queryKey: ['my-rto-ledger', contractId],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<RtoLedgerEntry[]>>(
-        `/rto-contracts/${contractId}/ledger`
+        `/rto-contracts/${contractId}/ledger`,
       );
       return data.data;
     },
@@ -105,16 +97,14 @@ export function useExerciseOption() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, userId }: { id: string; userId: string }) => {
-      const { data } = await api.post<ApiResponse<RtoContract>>(
-        `/rto-contracts/${id}/exercise`,
-        { userId }
-      );
+      const { data } = await api.post<ApiResponse<RtoContract>>(`/rto-contracts/${id}/exercise`, {
+        userId,
+      });
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["my-rto"] });
-      queryClient.invalidateQueries({ queryKey: ["my-rto-ledger", result.id] });
+      queryClient.invalidateQueries({ queryKey: ['my-rto'] });
+      queryClient.invalidateQueries({ queryKey: ['my-rto-ledger', result.id] });
     },
   });
 }
-
