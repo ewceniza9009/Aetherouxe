@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Elite Realty - NestJS Backend API",
   "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "prisma": {
     "seed": "ts-node --transpile-only -P prisma/tsconfig.seed.json prisma/seed.ts"
   },

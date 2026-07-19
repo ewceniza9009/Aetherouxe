@@ -3,16 +3,10 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "sideEffects": [
-    "**/*.ts",
-    "**/*.tsx",
-    "./src/pages/PropertiesPage.tsx",
-    "./src/pages/LeasesPage.tsx",
-    "./src/pages/RtoContractsPage.tsx",
-    "./src/hooks/use-properties.ts",
-    "./src/hooks/use-leases.ts",
-    "./src/hooks/use-rto.ts"
-  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "sideEffects": false,
   "scripts": {
     "dev": "vite --port 5173",
     "build": "tsc && vite build",

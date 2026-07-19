@@ -5,6 +5,8 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: '0 6 * * 1' # every Monday 6am — npm audit + build
 
 env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -39,6 +41,10 @@ jobs:
 
       - name: Lint
         run: npx turbo lint
+
+      - name: npm audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
 
   test-api:
     name: API Tests
