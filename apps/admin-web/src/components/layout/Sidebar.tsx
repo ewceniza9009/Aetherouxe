@@ -1,5 +1,5 @@
-import { type ReactNode, useEffect, useState, useMemo } from "react";
-import { Link, useLocation } from "@tanstack/react-router";
+import { type ReactNode, useEffect, useState, useMemo } from 'react';
+import { Link, useLocation } from '@tanstack/react-router';
 import {
   LayoutDashboard,
   Building2,
@@ -36,7 +36,6 @@ import {
   Coins,
   Landmark,
   Gauge,
-  Scale,
   CalendarClock,
   Hourglass,
   Folders,
@@ -44,17 +43,19 @@ import {
   Zap,
   LineChart,
   HardHat,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { useAuth } from "@elite-realty/shared-ui/hooks";
+  Key,
+  Scale,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { useAuth } from '@elite-realty/shared-ui/hooks';
 
 interface NavItem {
   label: string;
   icon: ReactNode;
   path: string;
   /** "setup" = master/configuration data (roots); "txn" = operational records (leaves) */
-  kind: "setup" | "txn";
+  kind: 'setup' | 'txn';
 }
 
 interface NavGroup {
@@ -65,84 +66,128 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    label: "Overview",
+    label: 'Overview',
     icon: <Home size={16} />,
     items: [
-      { label: "Dashboard", icon: <LayoutDashboard size={18} />, path: "/dashboard", kind: "setup" },
+      {
+        label: 'Dashboard',
+        icon: <LayoutDashboard size={18} />,
+        path: '/dashboard',
+        kind: 'setup',
+      },
     ],
   },
   {
-    label: "Property",
+    label: 'Property',
     icon: <Building2 size={16} />,
     items: [
-      { label: "Projects", icon: <Hammer size={18} />, path: "/projects", kind: "setup" },
-      { label: "Buildings", icon: <Building2 size={18} />, path: "/buildings", kind: "setup" },
-      { label: "Properties", icon: <MapPin size={18} />, path: "/properties", kind: "setup" },
-      { label: "Amenities", icon: <Coffee size={18} />, path: "/amenities", kind: "setup" },
-      { label: "Tenants", icon: <Users size={18} />, path: "/tenants", kind: "txn" },
-      { label: "Leases", icon: <FileText size={18} />, path: "/leases", kind: "txn" },
-      { label: "Rent-to-Own", icon: <KeyRound size={18} />, path: "/rto", kind: "txn" },
-      { label: "Title Transfers", icon: <ScrollText size={18} />, path: "/title-transfers", kind: "txn" },
+      { label: 'Projects', icon: <Hammer size={18} />, path: '/projects', kind: 'setup' },
+      { label: 'Buildings', icon: <Building2 size={18} />, path: '/buildings', kind: 'setup' },
+      { label: 'Properties', icon: <MapPin size={18} />, path: '/properties', kind: 'setup' },
+      { label: 'Amenities', icon: <Coffee size={18} />, path: '/amenities', kind: 'setup' },
+      { label: 'Tenants', icon: <Users size={18} />, path: '/tenants', kind: 'txn' },
+      { label: 'Leases', icon: <FileText size={18} />, path: '/leases', kind: 'txn' },
+      { label: 'Rent-to-Own', icon: <KeyRound size={18} />, path: '/rto', kind: 'txn' },
+      {
+        label: 'Title Transfers',
+        icon: <ScrollText size={18} />,
+        path: '/title-transfers',
+        kind: 'txn',
+      },
     ],
   },
   {
-    label: "Sales",
+    label: 'Sales',
     icon: <Briefcase size={16} />,
     items: [
-      { label: "Agents", icon: <UserCheck size={18} />, path: "/agents", kind: "setup" },
-      { label: "Schemes", icon: <ClipboardList size={18} />, path: "/schemes", kind: "setup" },
-      { label: "Sales & Schemes", icon: <BadgeDollarSign size={18} />, path: "/sales", kind: "txn" },
-      { label: "Commissions", icon: <Coins size={18} />, path: "/commissions", kind: "txn" },
+      { label: 'Sales', icon: <Briefcase size={18} />, path: '/sales', kind: 'txn' },
+      { label: 'Reservations', icon: <Key size={18} />, path: '/reservations', kind: 'txn' },
+      { label: 'Schemes', icon: <KeyRound size={18} />, path: '/schemes', kind: 'setup' },
+      { label: 'Commissions', icon: <Wallet size={18} />, path: '/commissions', kind: 'txn' },
+      { label: 'Agents', icon: <UserCheck size={18} />, path: '/agents', kind: 'setup' },
     ],
   },
   {
-    label: "Finance",
+    label: 'Finance',
     icon: <Wallet size={16} />,
     items: [
-      { label: "Finance", icon: <Landmark size={18} />, path: "/finance", kind: "setup" },
-      { label: "General Ledger", icon: <PieChart size={18} />, path: "/finance/ledger", kind: "setup" },
-      { label: "Disbursements (AP)", icon: <Wallet size={18} />, path: "/finance/disbursements", kind: "txn" },
-      { label: "Meters & Billing", icon: <Gauge size={18} />, path: "/meters", kind: "setup" },
-      { label: "Collections", icon: <BellRing size={18} />, path: "/collections", kind: "txn" },
-      { label: "Collection Cases", icon: <Scale size={18} />, path: "/collections/cases", kind: "txn" },
-      { label: "AR Aging", icon: <CalendarClock size={18} />, path: "/collections/ar-aging", kind: "txn" },
-      { label: "Commission Aging", icon: <Hourglass size={18} />, path: "/finance/commission-aging", kind: "txn" },
-      { label: "Statements", icon: <Inbox size={18} />, path: "/statements", kind: "txn" },
-      { label: "Owner P&L", icon: <PieChart size={18} />, path: "/owner-pnl", kind: "txn" },
+      { label: 'Finance', icon: <Landmark size={18} />, path: '/finance', kind: 'setup' },
+      {
+        label: 'General Ledger',
+        icon: <PieChart size={18} />,
+        path: '/finance/ledger',
+        kind: 'setup',
+      },
+      {
+        label: 'Disbursements (AP)',
+        icon: <Wallet size={18} />,
+        path: '/finance/disbursements',
+        kind: 'txn',
+      },
+      { label: 'Meters & Billing', icon: <Gauge size={18} />, path: '/meters', kind: 'setup' },
+      { label: 'Collections', icon: <BellRing size={18} />, path: '/collections', kind: 'txn' },
+      {
+        label: 'Collection Cases',
+        icon: <Scale size={18} />,
+        path: '/collections/cases',
+        kind: 'txn',
+      },
+      {
+        label: 'AR Aging',
+        icon: <CalendarClock size={18} />,
+        path: '/collections/ar-aging',
+        kind: 'txn',
+      },
+      {
+        label: 'Commission Aging',
+        icon: <Hourglass size={18} />,
+        path: '/finance/commission-aging',
+        kind: 'txn',
+      },
+      { label: 'Statements', icon: <Inbox size={18} />, path: '/statements', kind: 'txn' },
+      { label: 'Owner P&L', icon: <PieChart size={18} />, path: '/owner-pnl', kind: 'txn' },
     ],
   },
   {
-    label: "Operations",
+    label: 'Operations',
     icon: <Activity size={16} />,
     items: [
-      { label: "Documents", icon: <Folders size={18} />, path: "/documents", kind: "setup" },
-      { label: "Contractors", icon: <HardHat size={18} />, path: "/contractors", kind: "setup" },
-      { label: "Community", icon: <Megaphone size={18} />, path: "/community-posts", kind: "txn" },
-      { label: "Service Requests", icon: <Wrench size={18} />, path: "/service-requests", kind: "txn" },
-      { label: "Payment Reminders", icon: <AlarmClock size={18} />, path: "/payment-reminders", kind: "txn" },
-      { label: "Readings", icon: <Zap size={18} />, path: "/readings", kind: "txn" },
+      { label: 'Documents', icon: <Folders size={18} />, path: '/documents', kind: 'setup' },
+      { label: 'Contractors', icon: <HardHat size={18} />, path: '/contractors', kind: 'setup' },
+      { label: 'Community', icon: <Megaphone size={18} />, path: '/community-posts', kind: 'txn' },
+      {
+        label: 'Service Requests',
+        icon: <Wrench size={18} />,
+        path: '/service-requests',
+        kind: 'txn',
+      },
+      {
+        label: 'Payment Reminders',
+        icon: <AlarmClock size={18} />,
+        path: '/payment-reminders',
+        kind: 'txn',
+      },
+      { label: 'Readings', icon: <Zap size={18} />, path: '/readings', kind: 'txn' },
     ],
   },
   {
-    label: "Reports",
+    label: 'Reports',
     icon: <BarChart3 size={16} />,
-    items: [
-      { label: "Analytics", icon: <LineChart size={18} />, path: "/analytics", kind: "txn" },
-    ],
+    items: [{ label: 'Analytics', icon: <LineChart size={18} />, path: '/analytics', kind: 'txn' }],
   },
   {
-    label: "Admin",
+    label: 'Admin',
     icon: <ShieldCheck size={16} />,
     items: [
-      { label: "Users", icon: <UserCog size={18} />, path: "/users", kind: "setup" },
-      { label: "Settings", icon: <Settings size={18} />, path: "/settings", kind: "setup" },
-      { label: "Roles", icon: <ShieldCheck size={18} />, path: "/settings/roles", kind: "setup" },
-      { label: "Profile", icon: <IdCard size={18} />, path: "/profile", kind: "txn" },
+      { label: 'Users', icon: <UserCog size={18} />, path: '/users', kind: 'setup' },
+      { label: 'Settings', icon: <Settings size={18} />, path: '/settings', kind: 'setup' },
+      { label: 'Roles', icon: <ShieldCheck size={18} />, path: '/settings/roles', kind: 'setup' },
+      { label: 'Profile', icon: <IdCard size={18} />, path: '/profile', kind: 'txn' },
     ],
   },
 ];
 
-const STORAGE_KEY = "sidebar:openGroups";
+const STORAGE_KEY = 'sidebar:openGroups';
 
 function loadOpenState(): Record<string, boolean> {
   try {
@@ -154,16 +199,12 @@ function loadOpenState(): Record<string, boolean> {
   return {};
 }
 
-const kindDot: Record<NavItem["kind"], string> = {
-  setup: "bg-amber-400/80 shadow-[0_0_6px_rgba(251,191,36,0.5)]",
-  txn: "bg-cyan-400/70 shadow-[0_0_6px_rgba(34,211,238,0.45)]",
+const kindDot: Record<NavItem['kind'], string> = {
+  setup: 'bg-amber-400/80 shadow-[0_0_6px_rgba(251,191,36,0.5)]',
+  txn: 'bg-cyan-400/70 shadow-[0_0_6px_rgba(34,211,238,0.45)]',
 };
 
-function renderItem(
-  item: NavItem,
-  collapsed: boolean,
-  isActivePath: (path: string) => boolean,
-) {
+function renderItem(item: NavItem, collapsed: boolean, isActivePath: (path: string) => boolean) {
   const active = isActivePath(item.path);
   return (
     <Link
@@ -171,11 +212,12 @@ function renderItem(
       to={item.path}
       title={collapsed ? item.label : undefined}
       className={cn(
-        "group relative flex items-center rounded-lg text-sm font-medium transition-all duration-200",
-        collapsed ? "justify-center p-2.5 mx-1 mb-1 hover:bg-sidebar-accent/50" : "gap-3 px-3 py-2",
-        active && collapsed ? "bg-sidebar-primary/20 text-sidebar-primary shadow-sm" : "",
-        active && !collapsed ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm" : "",
-        !active && "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        'group relative flex items-center rounded-lg text-sm font-medium transition-all duration-200',
+        collapsed ? 'justify-center p-2.5 mx-1 mb-1 hover:bg-sidebar-accent/50' : 'gap-3 px-3 py-2',
+        active && collapsed ? 'bg-sidebar-primary/20 text-sidebar-primary shadow-sm' : '',
+        active && !collapsed ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm' : '',
+        !active &&
+          'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
       )}
     >
       {active && !collapsed && (
@@ -183,16 +225,18 @@ function renderItem(
       )}
       <span
         className={cn(
-          "relative flex",
-          active && !collapsed ? "text-sidebar-primary-foreground" : "",
-          active && collapsed ? "text-sidebar-primary drop-shadow-md" : "",
+          'relative flex',
+          active && !collapsed ? 'text-sidebar-primary-foreground' : '',
+          active && collapsed ? 'text-sidebar-primary drop-shadow-md' : '',
         )}
       >
         {item.icon}
         <span
           className={cn(
-            "absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full",
-            active && !collapsed ? "bg-sidebar-primary-foreground/70 shadow-none" : kindDot[item.kind],
+            'absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full',
+            active && !collapsed
+              ? 'bg-sidebar-primary-foreground/70 shadow-none'
+              : kindDot[item.kind],
           )}
         />
       </span>
@@ -201,7 +245,7 @@ function renderItem(
   );
 }
 
-import { useCompanyMeta } from "@/lib/settings-store";
+import { useCompanyMeta } from '@/lib/settings-store';
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
@@ -211,17 +255,16 @@ export default function Sidebar() {
 
   // Determine the most specific active path
   const activeItemPath = useMemo(() => {
-    const allPaths = navGroups.flatMap(g => g.items.map(i => i.path));
+    const allPaths = navGroups.flatMap((g) => g.items.map((i) => i.path));
     // Find the longest path that matches the current pathname
     return allPaths
-      .filter(p => pathname === p || pathname.startsWith(p + "/"))
+      .filter((p) => pathname === p || pathname.startsWith(p + '/'))
       .sort((a, b) => b.length - a.length)[0];
   }, [pathname]);
 
   const isActivePath = (path: string) => path === activeItemPath;
 
-  const groupHasActive = (group: NavGroup) =>
-    group.items.some((i) => isActivePath(i.path));
+  const groupHasActive = (group: NavGroup) => group.items.some((i) => isActivePath(i.path));
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const stored = loadOpenState();
@@ -256,22 +299,22 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300",
-        collapsed ? "w-16" : "w-64",
+        'flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300',
+        collapsed ? 'w-16' : 'w-64',
       )}
     >
       {/* Logo + brand */}
       <div
         className={cn(
-          "flex h-16 items-center border-b border-sidebar-border",
-          collapsed ? "justify-center px-2" : "justify-between px-4",
+          'flex h-16 items-center border-b border-sidebar-border',
+          collapsed ? 'justify-center px-2' : 'justify-between px-4',
         )}
       >
         {!collapsed && (
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-primary/40 overflow-hidden">
               <img
-                src={companyMeta.logoUrl || "/favicon.png"}
+                src={companyMeta.logoUrl || '/favicon.png'}
                 alt="Logo"
                 className="h-full w-full object-cover scale-[1.35] mix-blend-multiply"
               />
@@ -290,7 +333,7 @@ export default function Sidebar() {
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-primary/40 overflow-hidden transition-all group-hover:ring-primary group-hover:shadow-[0_0_10px_rgba(251,191,36,0.3)] group-hover:brightness-110">
               <img
-                src={companyMeta.logoUrl || "/favicon.png"}
+                src={companyMeta.logoUrl || '/favicon.png'}
                 alt="Logo"
                 className="h-full w-full object-cover scale-[1.35] mix-blend-multiply"
               />
@@ -331,8 +374,8 @@ export default function Sidebar() {
       {/* Navigation */}
       <nav
         className={cn(
-          "flex-1 overflow-y-auto px-2",
-          collapsed ? "py-4 space-y-2" : "pb-4 space-y-1.5",
+          'flex-1 overflow-y-auto px-2',
+          collapsed ? 'py-4 space-y-2' : 'pb-4 space-y-1.5',
         )}
       >
         {navGroups.map((group) => {
@@ -347,18 +390,18 @@ export default function Sidebar() {
                   onClick={() => toggleGroup(group.label)}
                   title={collapsed ? group.label : undefined}
                   className={cn(
-                    "group/head flex w-full items-center justify-between rounded-lg px-3 py-2 text-[10px] font-semibold uppercase tracking-widest transition-colors",
+                    'group/head flex w-full items-center justify-between rounded-lg px-3 py-2 text-[10px] font-semibold uppercase tracking-widest transition-colors',
                     hasActive
-                      ? "text-primary"
-                      : "text-sidebar-foreground/40 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground/70",
+                      ? 'text-primary'
+                      : 'text-sidebar-foreground/40 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground/70',
                   )}
                 >
                   <span className="flex items-center gap-2">
                     <span
                       className={cn(
                         hasActive
-                          ? "text-primary drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]"
-                          : "text-sidebar-foreground/40 group-hover/head:text-sidebar-foreground/70",
+                          ? 'text-primary drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                          : 'text-sidebar-foreground/40 group-hover/head:text-sidebar-foreground/70',
                       )}
                     >
                       {group.icon}
@@ -368,8 +411,8 @@ export default function Sidebar() {
                   <ChevronDown
                     size={14}
                     className={cn(
-                      "transition-transform duration-200",
-                      open ? "rotate-0" : "-rotate-90",
+                      'transition-transform duration-200',
+                      open ? 'rotate-0' : '-rotate-90',
                     )}
                   />
                 </button>
@@ -381,39 +424,34 @@ export default function Sidebar() {
 
               <div
                 className={cn(
-                  "grid transition-all duration-300 ease-in-out",
-                  open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+                  'grid transition-all duration-300 ease-in-out',
+                  open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
                 )}
               >
-                  <div className="overflow-hidden">
-                   <div className={cn("space-y-0.5", !collapsed && "pl-1")}>
-                     {group.items
-                       .filter((i) => i.kind === "setup" || collapsed)
-                       .map((item) => renderItem(item, collapsed, isActivePath))}
-                     {!collapsed &&
-                       group.items.some((i) => i.kind === "txn") && (
-                         <>
-                           {group.items.some((i) => i.kind === "setup") && (
-                             <div className="px-3 pt-3 pb-1 text-[9px] font-semibold uppercase tracking-widest text-sidebar-foreground/30">
-                               Transactions
-                             </div>
-                           )}
-                           {group.items
-                             .filter((i) => i.kind === "txn")
-                             .map((item) => renderItem(item, collapsed, isActivePath))}
-                         </>
-                       )}
-                   </div>
-                 </div>
+                <div className="overflow-hidden">
+                  <div className={cn('space-y-0.5', !collapsed && 'pl-1')}>
+                    {group.items
+                      .filter((i) => i.kind === 'setup' || collapsed)
+                      .map((item) => renderItem(item, collapsed, isActivePath))}
+                    {!collapsed && group.items.some((i) => i.kind === 'txn') && (
+                      <>
+                        {group.items.some((i) => i.kind === 'setup') && (
+                          <div className="px-3 pt-3 pb-1 text-[9px] font-semibold uppercase tracking-widest text-sidebar-foreground/30">
+                            Transactions
+                          </div>
+                        )}
+                        {group.items
+                          .filter((i) => i.kind === 'txn')
+                          .map((item) => renderItem(item, collapsed, isActivePath))}
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           );
         })}
       </nav>
-
-
     </aside>
   );
 }
-
-

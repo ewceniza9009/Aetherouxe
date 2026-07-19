@@ -234,6 +234,13 @@ export class ImagesService {
 
     if (!image) throw new NotFoundException('Image not found');
 
+    try {
+      const key = this.extractKey(image.url);
+      if (key) await this.s3.delete(key);
+    } catch (err: any) {
+      this.logger.error(`Failed to delete S3 object for image ${id}: ${err.message}`);
+    }
+
     if ('propertyId' in image) {
       await this.prisma.propertyImage.delete({ where: { id } });
     } else if ('unitId' in image) {
@@ -246,5 +253,12 @@ export class ImagesService {
 
     this.logger.log(`Image deleted: ${id}`);
     return { success: true };
+  }
+
+  private extractKey(url?: string): string | null {
+    if (!url) return null;
+    const marker = '/elite-realty/';
+    const idx = url.indexOf(marker);
+    return idx >= 0 ? url.slice(idx + marker.length) : null;
   }
 }

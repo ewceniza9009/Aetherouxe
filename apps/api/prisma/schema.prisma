@@ -61,6 +61,14 @@ enum UnitStatus {
   under_maintenance
   rented
   rto_active
+  sold
+}
+
+enum ReservationStatus {
+  reserved
+  converted
+  expired
+  cancelled
 }
 
 enum ProjectType {
@@ -240,6 +248,7 @@ model Tenant {
   serviceRequests  ServiceRequest[]
   notifications    Notification[]
   titleTransfers   TitleTransfer[]
+  reservations      Reservation[]
 
   chartOfAccounts   ChartOfAccount[]
   journalEntries    JournalEntry[]
@@ -463,6 +472,7 @@ model Unit {
   bookings        AmenityBooking[]
   images          UnitImage[]
   titleTransfers  TitleTransfer[]
+  reservations    Reservation[]
 
   // List performance: filter/sort fields used by the units list endpoint.
   @@index([propertyId])
@@ -473,6 +483,36 @@ model Unit {
   @@index([createdAt])
 
   @@map("units")
+}
+
+model Reservation {
+  id                  String           @id @default(uuid())
+  unitId              String
+  schemeId            String
+  tenantId            String // tenant/owner who owns the property the unit belongs to
+  prospectName        String
+  prospectContact     String?
+  optionFeeAmount     Decimal?         @db.Decimal(14, 2)
+  holdingFeeCollected Boolean          @default(false)
+  holdDays            Int              @default(30)
+  holdExpiry          DateTime
+  status              ReservationStatus @default(reserved)
+  convertedLeaseId    String?
+  notes               String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  unit    Unit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  scheme  Scheme  @relation(fields: [schemeId], references: [id], onDelete: Restrict)
+  tenant  Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lease   LeaseAgreement? @relation(fields: [convertedLeaseId], references: [id], onDelete: SetNull)
+
+  @@index([unitId])
+  @@index([schemeId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([holdExpiry])
+  @@map("reservations")
 }
 
 model PropertyImage {
@@ -702,6 +742,7 @@ model LeaseAgreement {
   pnlStatements     OwnerPnlStatement[]
   documents         DocumentVault[]
   titleTransfers    TitleTransfer[]
+  reservations      Reservation[]
 
   // List performance: filter/sort fields used by the leases list endpoint.
   @@index([leaseType])
@@ -1744,6 +1785,7 @@ model Scheme {
   companyCommissionPercentage Decimal? @db.Decimal(8, 4)
 
   leases LeaseAgreement[]
+  reservations Reservation[]
 
   @@map("schemes")
 }
@@ -1965,4 +2007,18 @@ model ApDisbursement {
   invoice ApInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@map("ap_disbursements")
+}
+
+// ─────────────────────────────────────────────
+// CENTRALIZED CODE/SEQUENCE GENERATION
+// Single source of truth for incremental, collision-free
+// business codes (invoices, leases, reservations, etc.).
+// ─────────────────────────────────────────────
+model SequenceCounter {
+  key       String   @id // e.g. "ar_invoice", "lease", "reservation"
+  value     Int      @default(0)
+  prefix    String?  // e.g. "INV", "LSE", "RES"
+  updatedAt DateTime @updatedAt
+
+  @@map("sequence_counters")
 }

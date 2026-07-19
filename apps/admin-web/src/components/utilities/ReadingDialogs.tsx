@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -7,26 +7,26 @@ import {
   DialogTitle,
   DialogDescription,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Plus, Loader2, Trash2 } from "lucide-react";
+} from '@elite-realty/shared-ui/components/ui';
+import { Plus, Loader2, Trash2 } from 'lucide-react';
 import {
   useCreateReading,
   useUpdateReading,
   useBulkReadings,
   type UtilityMeter,
   type ConsumptionReading,
-} from "@/hooks/use-utilities";
+} from '@/hooks/use-utilities';
 
 export function AddReadingDialog({
   meters,
@@ -39,18 +39,18 @@ export function AddReadingDialog({
 }) {
   const createReading = useCreateReading();
   const [open, setOpen] = useState(false);
-  const [meterId, setMeterId] = useState(defaultMeterId ?? "");
-  const [readingDate, setReadingDate] = useState("");
-  const [value, setValue] = useState("");
-  const [reader, setReader] = useState("");
-  const [note, setNote] = useState("");
+  const [meterId, setMeterId] = useState(defaultMeterId ?? '');
+  const [readingDate, setReadingDate] = useState('');
+  const [value, setValue] = useState('');
+  const [reader, setReader] = useState('');
+  const [note, setNote] = useState('');
 
   const reset = () => {
-    setMeterId(defaultMeterId ?? "");
-    setReadingDate("");
-    setValue("");
-    setReader("");
-    setNote("");
+    setMeterId(defaultMeterId ?? '');
+    setReadingDate('');
+    setValue('');
+    setReader('');
+    setNote('');
   };
 
   const submit = async () => {
@@ -65,10 +65,16 @@ export function AddReadingDialog({
     reset();
   };
 
-  const canSubmit = meterId && readingDate && value !== "";
+  const canSubmit = meterId && readingDate && value !== '';
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) reset();
+      }}
+    >
       <Button onClick={() => setOpen(true)}>
         <Plus className="mr-2 h-4 w-4" /> Add Reading
       </Button>
@@ -97,7 +103,12 @@ export function AddReadingDialog({
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="date">Reading Date</Label>
-              <Input id="date" type="date" value={readingDate} onChange={(e) => setReadingDate(e.target.value)} />
+              <Input
+                id="date"
+                type="date"
+                value={readingDate}
+                onChange={(e) => setReadingDate(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="value">Value</Label>
@@ -113,19 +124,39 @@ export function AddReadingDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="reader">Reader (optional)</Label>
-            <Input id="reader" value={reader} onChange={(e) => setReader(e.target.value)} placeholder="Meter reader name" />
+            <Input
+              id="reader"
+              value={reader}
+              onChange={(e) => setReader(e.target.value)}
+              placeholder="Meter reader name"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="note">Note (optional)</Label>
-            <Textarea id="note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Remarks" />
+            <Textarea
+              id="note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Remarks"
+            />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => { setOpen(false); reset(); }}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setOpen(false);
+              reset();
+            }}
+          >
             Cancel
           </Button>
           <Button onClick={submit} disabled={!canSubmit || createReading.isPending}>
-            {createReading.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+            {createReading.isPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="mr-2 h-4 w-4" />
+            )}
             Save Reading
           </Button>
         </DialogFooter>
@@ -150,22 +181,22 @@ export function BulkReadingsDialog({
   const bulk = useBulkReadings();
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<BulkReadingRow[]>([
-    { meterId: meters[0]?.id ?? "", readingDate: "", value: "" },
+    { meterId: meters[0]?.id ?? '', readingDate: '', value: '' },
   ]);
 
-  const reset = () => setRows([{ meterId: meters[0]?.id ?? "", readingDate: "", value: "" }]);
+  const reset = () => setRows([{ meterId: meters[0]?.id ?? '', readingDate: '', value: '' }]);
 
   const setRow = (idx: number, patch: Partial<BulkReadingRow>) =>
     setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
 
   const addRow = () =>
-    setRows((prev) => [...prev, { meterId: meters[0]?.id ?? "", readingDate: "", value: "" }]);
+    setRows((prev) => [...prev, { meterId: meters[0]?.id ?? '', readingDate: '', value: '' }]);
 
   const removeRow = (idx: number) => setRows((prev) => prev.filter((_, i) => i !== idx));
 
   const submit = async () => {
     const readings = rows
-      .filter((r) => r.meterId && r.readingDate && r.value !== "")
+      .filter((r) => r.meterId && r.readingDate && r.value !== '')
       .map((r) => ({
         meterId: r.meterId,
         readingDate: r.readingDate,
@@ -177,10 +208,16 @@ export function BulkReadingsDialog({
     reset();
   };
 
-  const canSubmit = rows.some((r) => r.meterId && r.readingDate && r.value !== "");
+  const canSubmit = rows.some((r) => r.meterId && r.readingDate && r.value !== '');
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) reset();
+      }}
+    >
       <Button variant="outline" onClick={() => setOpen(true)}>
         <Plus className="mr-2 h-4 w-4" /> Bulk Add
       </Button>
@@ -212,7 +249,11 @@ export function BulkReadingsDialog({
                     ))}
                   </SelectContent>
                 </Select>
-                <Input type="date" value={row.readingDate} onChange={(e) => setRow(idx, { readingDate: e.target.value })} />
+                <Input
+                  type="date"
+                  value={row.readingDate}
+                  onChange={(e) => setRow(idx, { readingDate: e.target.value })}
+                />
                 <Input
                   type="number"
                   step="0.01"
@@ -236,12 +277,22 @@ export function BulkReadingsDialog({
           </Button>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => { setOpen(false); reset(); }}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setOpen(false);
+              reset();
+            }}
+          >
             Cancel
           </Button>
           <Button onClick={submit} disabled={!canSubmit || bulk.isPending}>
-            {bulk.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-            Save {rows.filter((r) => r.meterId && r.readingDate && r.value !== "").length} Readings
+            {bulk.isPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="mr-2 h-4 w-4" />
+            )}
+            Save {rows.filter((r) => r.meterId && r.readingDate && r.value !== '').length} Readings
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -259,11 +310,11 @@ export function EditReadingDialog({
   const updateReading = useUpdateReading();
   const [open, setOpen] = useState(false);
   const [readingDate, setReadingDate] = useState(
-    reading.readingDate ? new Date(reading.readingDate).toISOString().split("T")[0] : ""
+    reading.readingDate ? new Date(reading.readingDate).toISOString().split('T')[0] : '',
   );
-  const [value, setValue] = useState(String(reading.value ?? ""));
-  const [reader, setReader] = useState(reading.reader ?? "");
-  const [note, setNote] = useState(reading.note ?? "");
+  const [value, setValue] = useState(String(reading.value ?? ''));
+  const [reader, setReader] = useState(reading.reader ?? '');
+  const [note, setNote] = useState(reading.note ?? '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -281,9 +332,7 @@ export function EditReadingDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Reading</DialogTitle>

@@ -4,74 +4,75 @@ import {
   createRootRoute,
   redirect,
   Outlet,
-} from "@tanstack/react-router";
-import { LoginPage } from "@elite-realty/shared-ui/pages";
-import DashboardPage from "./pages/DashboardPage";
-import PropertiesPage from "./pages/PropertiesPage";
-import PropertyDetailPage from "./pages/PropertyDetailPage";
-import NewPropertyPage from "./pages/NewPropertyPage";
-import EditPropertyPage from "./pages/EditPropertyPage";
-import UnitListPage from "./pages/UnitListPage";
-import NewUnitPage from "./pages/NewUnitPage";
-import EditUnitPage from "./pages/EditUnitPage";
-import BuildingsPage from "./pages/BuildingsPage";
-import NewBuildingPage from "./pages/NewBuildingPage";
-import EditBuildingPage from "./pages/EditBuildingPage";
-import FloorListPage from "./pages/FloorListPage";
-import TenantsPage from "./pages/TenantsPage";
-import TenantDetailPage from "./pages/TenantDetailPage";
-import LeasesPage from "./pages/LeasesPage";
-import LeaseDetailPage from "./pages/LeaseDetailPage";
-import NewLeasePage from "./pages/NewLeasePage";
-import EditLeasePage from "./pages/EditLeasePage";
-import MortgageScenarioPage from "./pages/MortgageScenarioPage";
-import RtoContractsPage from "./pages/RtoContractsPage";
-import RtoContractDetailPage from "./pages/RtoContractDetailPage";
-import ProjectsPage from "./pages/ProjectsPage";
-import NewProjectPage from "./pages/NewProjectPage";
-import ProjectDetailPage from "./pages/ProjectDetailPage";
-import EditProjectPage from "./pages/EditProjectPage";
-import BudgetDetailPage from "./pages/BudgetDetailPage";
-import ContractorsPage from "./pages/ContractorsPage";
-import ContractorDetailPage from "./pages/ContractorDetailPage";
-import AgentsPage from "./pages/AgentsPage";
-import AgentDetailPage from "./pages/AgentDetailPage";
-import NewAgentPage from "./pages/NewAgentPage";
-import EditAgentPage from "./pages/EditAgentPage";
-import CommissionsPage from "./pages/CommissionsPage";
-import CommissionAgingPage from "./pages/CommissionAgingPage";
-import FinancePage from "./pages/FinancePage";
-import GeneralLedgerPage from "./pages/GeneralLedgerPage";
-import DisbursementsPage from "./pages/DisbursementsPage";
-import SettingsPage from "./pages/SettingsPage";
-import { RolesSettingsPage } from "./pages/RolesSettingsPage";
-import ProfilePage from "./pages/ProfilePage";
-import CollectionsPage from "./pages/CollectionsPage";
-import ArAgingPage from "./pages/ArAgingPage";
-import StatementsPage from "./pages/StatementsPage";
-import CollectionCasesPage from "./pages/CollectionCasesPage";
-import CollectionCaseDetailPage from "./pages/CollectionCaseDetailPage";
-import PaymentRemindersPage from "./pages/PaymentRemindersPage";
-import MetersPage from "./pages/MetersPage";
-import SalesPage from "./pages/SalesPage";
-import SchemesPage from "./pages/SchemesPage";
-import SchemeDetailPage from "./pages/SchemeDetailPage";
-import TitleTransfersPage from "./pages/TitleTransfersPage";
-import MeterDetailPage from "./pages/MeterDetailPage";
-import ReadingsPage from "./pages/ReadingsPage";
-import UtilityBillsPage from "./pages/UtilityBillsPage";
-import AmenitiesPage from "./pages/AmenitiesPage";
-import AmenityDetailPage from "./pages/AmenityDetailPage";
-import CommunityPostsPage from "./pages/CommunityPostsPage";
-import ServiceRequestsPage from "./pages/ServiceRequestsPage";
-import ServiceRequestDetailPage from "./pages/ServiceRequestDetailPage";
-import DocumentsPage from "./pages/DocumentsPage";
-import DocumentDetailPage from "./pages/DocumentDetailPage";
-import OwnerPnlPage from "./pages/OwnerPnlPage";
-import UsersPage from "./pages/UsersPage";
-import PnlDetailPage from "./pages/PnlDetailPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import DashboardLayout from "./components/layout/DashboardLayout";
+} from '@tanstack/react-router';
+import { LoginPage } from '@elite-realty/shared-ui/pages';
+import DashboardPage from './pages/DashboardPage';
+import PropertiesPage from './pages/PropertiesPage';
+import PropertyDetailPage from './pages/PropertyDetailPage';
+import NewPropertyPage from './pages/NewPropertyPage';
+import EditPropertyPage from './pages/EditPropertyPage';
+import UnitListPage from './pages/UnitListPage';
+import NewUnitPage from './pages/NewUnitPage';
+import EditUnitPage from './pages/EditUnitPage';
+import BuildingsPage from './pages/BuildingsPage';
+import NewBuildingPage from './pages/NewBuildingPage';
+import EditBuildingPage from './pages/EditBuildingPage';
+import FloorListPage from './pages/FloorListPage';
+import TenantsPage from './pages/TenantsPage';
+import TenantDetailPage from './pages/TenantDetailPage';
+import LeasesPage from './pages/LeasesPage';
+import LeaseDetailPage from './pages/LeaseDetailPage';
+import NewLeasePage from './pages/NewLeasePage';
+import EditLeasePage from './pages/EditLeasePage';
+import MortgageScenarioPage from './pages/MortgageScenarioPage';
+import RtoContractsPage from './pages/RtoContractsPage';
+import RtoContractDetailPage from './pages/RtoContractDetailPage';
+import ProjectsPage from './pages/ProjectsPage';
+import NewProjectPage from './pages/NewProjectPage';
+import ProjectDetailPage from './pages/ProjectDetailPage';
+import EditProjectPage from './pages/EditProjectPage';
+import BudgetDetailPage from './pages/BudgetDetailPage';
+import ContractorsPage from './pages/ContractorsPage';
+import ContractorDetailPage from './pages/ContractorDetailPage';
+import AgentsPage from './pages/AgentsPage';
+import AgentDetailPage from './pages/AgentDetailPage';
+import NewAgentPage from './pages/NewAgentPage';
+import EditAgentPage from './pages/EditAgentPage';
+import CommissionsPage from './pages/CommissionsPage';
+import CommissionAgingPage from './pages/CommissionAgingPage';
+import FinancePage from './pages/FinancePage';
+import GeneralLedgerPage from './pages/GeneralLedgerPage';
+import DisbursementsPage from './pages/DisbursementsPage';
+import SettingsPage from './pages/SettingsPage';
+import { RolesSettingsPage } from './pages/RolesSettingsPage';
+import ProfilePage from './pages/ProfilePage';
+import CollectionsPage from './pages/CollectionsPage';
+import ArAgingPage from './pages/ArAgingPage';
+import StatementsPage from './pages/StatementsPage';
+import CollectionCasesPage from './pages/CollectionCasesPage';
+import CollectionCaseDetailPage from './pages/CollectionCaseDetailPage';
+import PaymentRemindersPage from './pages/PaymentRemindersPage';
+import MetersPage from './pages/MetersPage';
+import SalesPage from './pages/SalesPage';
+import SchemesPage from './pages/SchemesPage';
+import SchemeDetailPage from './pages/SchemeDetailPage';
+import TitleTransfersPage from './pages/TitleTransfersPage';
+import MeterDetailPage from './pages/MeterDetailPage';
+import ReadingsPage from './pages/ReadingsPage';
+import UtilityBillsPage from './pages/UtilityBillsPage';
+import AmenitiesPage from './pages/AmenitiesPage';
+import AmenityDetailPage from './pages/AmenityDetailPage';
+import CommunityPostsPage from './pages/CommunityPostsPage';
+import ServiceRequestsPage from './pages/ServiceRequestsPage';
+import ServiceRequestDetailPage from './pages/ServiceRequestDetailPage';
+import DocumentsPage from './pages/DocumentsPage';
+import DocumentDetailPage from './pages/DocumentDetailPage';
+import OwnerPnlPage from './pages/OwnerPnlPage';
+import UsersPage from './pages/UsersPage';
+import PnlDetailPage from './pages/PnlDetailPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import DashboardLayout from './components/layout/DashboardLayout';
+import ReservationsPage from './pages/ReservationsPage';
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -79,27 +80,27 @@ const rootRoute = createRootRoute({
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/",
+  path: '/',
   beforeLoad: () => {
-    throw redirect({ to: "/dashboard" });
+    throw redirect({ to: '/dashboard' });
   },
 });
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/login",
+  path: '/login',
   component: LoginPage,
 });
 
-import { useAuth } from "@elite-realty/shared-ui/hooks";
+import { useAuth } from '@elite-realty/shared-ui/hooks';
 
 const protectedLayout = createRoute({
   getParentRoute: () => rootRoute,
-  id: "protected",
+  id: 'protected',
   component: () => {
     const { isAuthenticated } = useAuth();
-    const token = localStorage.getItem("accessToken");
-    
+    const token = localStorage.getItem('accessToken');
+
     if (!token && !isAuthenticated) {
       return <LoginPage />;
     }
@@ -113,391 +114,397 @@ const protectedLayout = createRoute({
 
 const dashboardRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/dashboard",
+  path: '/dashboard',
   component: DashboardPage,
 });
 
 const propertiesRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/properties",
+  path: '/properties',
   component: PropertiesPage,
 });
 
 const propertyDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/properties/$id",
+  path: '/properties/$id',
   component: PropertyDetailPage,
 });
 
 const newPropertyRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/properties/new",
+  path: '/properties/new',
   component: NewPropertyPage,
 });
 
 const editPropertyRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/properties/$propertyId/edit",
+  path: '/properties/$propertyId/edit',
   component: EditPropertyPage,
 });
 
 const unitListRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/properties/$propertyId/units",
+  path: '/properties/$propertyId/units',
   component: UnitListPage,
 });
 
 const newUnitRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/properties/$propertyId/units/new",
+  path: '/properties/$propertyId/units/new',
   component: NewUnitPage,
 });
 
 const editUnitRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/properties/$propertyId/units/$unitId/edit",
+  path: '/properties/$propertyId/units/$unitId/edit',
   component: EditUnitPage,
 });
 
 const buildingsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/buildings",
+  path: '/buildings',
   component: BuildingsPage,
 });
 
 const newBuildingRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/buildings/new",
+  path: '/buildings/new',
   component: NewBuildingPage,
 });
 
 const editBuildingRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/buildings/$buildingId/edit",
+  path: '/buildings/$buildingId/edit',
   component: EditBuildingPage,
 });
 
 const floorListRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/buildings/$buildingId/floors",
+  path: '/buildings/$buildingId/floors',
   component: FloorListPage,
 });
 
 const tenantsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/tenants",
+  path: '/tenants',
   component: TenantsPage,
 });
 
 const tenantDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/tenants/$id",
+  path: '/tenants/$id',
   component: TenantDetailPage,
 });
 
 const leasesRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/leases",
+  path: '/leases',
   component: LeasesPage,
 });
 
 const newLeaseRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/leases/new",
+  path: '/leases/new',
   component: NewLeasePage,
 });
 
 const editLeaseRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/leases/$id/edit",
+  path: '/leases/$id/edit',
   component: EditLeasePage,
 });
 
 const leaseDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/leases/$id",
+  path: '/leases/$id',
   component: LeaseDetailPage,
 });
 
 const leaseMortgageRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/leases/$leaseId/mortgage/$scenarioId",
+  path: '/leases/$leaseId/mortgage/$scenarioId',
   component: MortgageScenarioPage,
 });
 
 const rtoContractsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/rto",
+  path: '/rto',
   component: RtoContractsPage,
 });
 
 const rtoContractDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/rto/$id",
+  path: '/rto/$id',
   component: RtoContractDetailPage,
 });
 
 const projectsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/projects",
+  path: '/projects',
   component: ProjectsPage,
 });
 
 const newProjectRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/projects/new",
+  path: '/projects/new',
   component: NewProjectPage,
 });
 
 const projectDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/projects/$id",
+  path: '/projects/$id',
   component: ProjectDetailPage,
 });
 
 const editProjectRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/projects/$projectId/edit",
+  path: '/projects/$projectId/edit',
   component: EditProjectPage,
 });
 
 const budgetDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/projects/$projectId/budgets/$budgetId",
+  path: '/projects/$projectId/budgets/$budgetId',
   component: BudgetDetailPage,
 });
 
 const contractorsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/contractors",
+  path: '/contractors',
   component: ContractorsPage,
 });
 
 const contractorDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/contractors/$id",
+  path: '/contractors/$id',
   component: ContractorDetailPage,
 });
 
 const agentsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/agents",
+  path: '/agents',
   component: AgentsPage,
 });
 
 const newAgentRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/agents/new",
+  path: '/agents/new',
   component: NewAgentPage,
 });
 
 const editAgentRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/agents/$id/edit",
+  path: '/agents/$id/edit',
   component: EditAgentPage,
 });
 
 const agentDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/agents/$id",
+  path: '/agents/$id',
   component: AgentDetailPage,
 });
 
 const commissionsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/commissions",
+  path: '/commissions',
   component: CommissionsPage,
 });
 
 const commissionAgingRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/finance/commission-aging",
+  path: '/finance/commission-aging',
   component: CommissionAgingPage,
 });
 
 const financeRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/finance",
+  path: '/finance',
   component: FinancePage,
 });
 
 const generalLedgerRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/finance/ledger",
+  path: '/finance/ledger',
   component: GeneralLedgerPage,
 });
 
 const disbursementsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/finance/disbursements",
+  path: '/finance/disbursements',
   component: DisbursementsPage,
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/settings",
+  path: '/settings',
   component: SettingsPage,
 });
 
 const rolesSettingsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/settings/roles",
+  path: '/settings/roles',
   component: RolesSettingsPage,
 });
 
 const profileRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/profile",
+  path: '/profile',
   component: ProfilePage,
 });
 
 const collectionsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/collections",
+  path: '/collections',
   component: CollectionsPage,
 });
 
 const arAgingRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/collections/ar-aging",
+  path: '/collections/ar-aging',
   component: ArAgingPage,
 });
 
 const statementsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/statements",
+  path: '/statements',
   component: StatementsPage,
 });
 
 const collectionCasesRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/collections/cases",
+  path: '/collections/cases',
   component: CollectionCasesPage,
 });
 
 const collectionCaseDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/collections/cases/$id",
+  path: '/collections/cases/$id',
   component: CollectionCaseDetailPage,
 });
 
 const paymentRemindersRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/payment-reminders",
+  path: '/payment-reminders',
   component: PaymentRemindersPage,
 });
 
 const metersRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/meters",
+  path: '/meters',
   component: MetersPage,
 });
 
 const meterDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/meters/$id",
+  path: '/meters/$id',
   component: MeterDetailPage,
 });
 
 const readingsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/readings",
+  path: '/readings',
   component: ReadingsPage,
 });
 
 const utilityBillsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/utility-bills",
+  path: '/utility-bills',
   component: UtilityBillsPage,
 });
 
 const salesRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/sales",
+  path: '/sales',
   component: SalesPage,
+});
+
+const reservationsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: '/reservations',
+  component: ReservationsPage,
 });
 
 const amenitiesRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/amenities",
+  path: '/amenities',
   component: AmenitiesPage,
 });
 
 const amenityDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/amenities/$id",
+  path: '/amenities/$id',
   component: AmenityDetailPage,
 });
 
 const communityPostsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/community-posts",
+  path: '/community-posts',
   component: CommunityPostsPage,
 });
 
 const serviceRequestsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/service-requests",
+  path: '/service-requests',
   component: ServiceRequestsPage,
 });
 
 const serviceRequestDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/service-requests/$id",
+  path: '/service-requests/$id',
   component: ServiceRequestDetailPage,
 });
 
 const documentsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/documents",
+  path: '/documents',
   component: DocumentsPage,
 });
 
 const documentDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/documents/$id",
+  path: '/documents/$id',
   component: DocumentDetailPage,
 });
 
 const ownerPnlRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/owner-pnl",
+  path: '/owner-pnl',
   component: OwnerPnlPage,
 });
 
 const pnlDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/owner-pnl/$id",
+  path: '/owner-pnl/$id',
   component: PnlDetailPage,
 });
 
 const analyticsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/analytics",
+  path: '/analytics',
   component: AnalyticsPage,
 });
 
 const usersRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/users",
+  path: '/users',
   component: UsersPage,
 });
 
 const schemesRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/schemes",
+  path: '/schemes',
   component: SchemesPage,
 });
 
 const schemeDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/schemes/$id",
+  path: '/schemes/$id',
   component: SchemeDetailPage,
 });
 
 const titleTransfersRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/title-transfers",
+  path: '/title-transfers',
   component: TitleTransfersPage,
 });
 
@@ -570,15 +577,16 @@ const routeTree = rootRoute.addChildren([
     schemesRoute,
     schemeDetailRoute,
     titleTransfersRoute,
+    reservationsRoute,
   ]),
 ]);
 
 const router = createRouter({
   routeTree,
-  defaultPreload: "intent",
+  defaultPreload: 'intent',
 });
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
   }

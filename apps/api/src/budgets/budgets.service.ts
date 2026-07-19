@@ -1,7 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import Redis from 'ioredis';
-import { CreateBudgetDto, UpdateBudgetDto, CreateLineItemDto, UpdateLineItemDto, BudgetQueryDto } from './dto/budgets.dto';
+import {
+  CreateBudgetDto,
+  UpdateBudgetDto,
+  CreateLineItemDto,
+  UpdateLineItemDto,
+  BudgetQueryDto,
+} from './dto/budgets.dto';
 
 @Injectable()
 export class BudgetsService {
@@ -45,7 +51,13 @@ export class BudgetsService {
     if (query.projectId) where.projectId = query.projectId;
     if (query.phaseId) where.phaseId = query.phaseId;
     const [data, total] = await Promise.all([
-      this.prisma.budget.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { lineItems: true } }),
+      this.prisma.budget.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: { lineItems: true },
+      }),
       this.prisma.budget.count({ where }),
     ]);
     return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
@@ -135,6 +147,19 @@ export class BudgetsService {
     });
   }
 
+  async removeLineItem(lineItemId: string) {
+    const item = await this.prisma.budgetLineItem.findUnique({ where: { id: lineItemId } });
+    if (!item) throw new NotFoundException('Line item not found');
+    await this.prisma.budgetLineItem.delete({ where: { id: lineItemId } });
+    return { deleted: true };
+  }
+
+  async updateLineItemById(lineItemId: string, dto: UpdateLineItemDto) {
+    const item = await this.prisma.budgetLineItem.findUnique({ where: { id: lineItemId } });
+    if (!item) throw new NotFoundException('Line item not found');
+    return this.updateLineItem(item.budgetId, lineItemId, dto);
+  }
+
   async calculateBudgetHealth(budgetId: string) {
     const cacheKey = `budget:health:${budgetId}`;
     const redis = this.getRedis();
@@ -219,7 +244,8 @@ export class BudgetsService {
       totalPlanned,
       totalActual,
       totalVariance,
-      totalVariancePercent: totalPlanned > 0 ? Math.round(((totalVariance / totalPlanned) * 100) * 100) / 100 : 0,
+      totalVariancePercent:
+        totalPlanned > 0 ? Math.round((totalVariance / totalPlanned) * 100 * 100) / 100 : 0,
       overallHealth,
       items,
     };

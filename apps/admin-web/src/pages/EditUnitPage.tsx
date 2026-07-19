@@ -1,20 +1,34 @@
-import { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
-import { Textarea } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
-import { Separator } from "@elite-realty/shared-ui/components/ui";
+import { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from '@tanstack/react-router';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { Textarea } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
+import { Separator } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@elite-realty/shared-ui/components/ui';
 import {
   ArrowLeft,
   Save,
@@ -32,28 +46,42 @@ import {
   CheckCircle2,
   XCircle,
   Home,
-} from "lucide-react";
-import { useUnit, useUpdateUnit, useDeleteUnit } from "@/hooks/use-units";
-import { useProperty } from "@/hooks/use-properties";
-import { useLeases, type Lease } from "@/hooks/use-leases";
-import { formatCurrency } from "@/lib/agent-meta";
+  Star,
+  Loader2,
+  AlertCircle,
+  Key,
+} from 'lucide-react';
+import {
+  useUnit,
+  useUpdateUnit,
+  useDeleteUnit,
+  useReservationsByUnit,
+  useCreateReservation,
+} from '@/hooks/use-units';
+import { useProperty } from '@/hooks/use-properties';
+import { useLeases, type Lease } from '@/hooks/use-leases';
+import { useSchemes, type Scheme } from '@/hooks/use-schemes';
+import { formatCurrency } from '@/lib/agent-meta';
 
-const UNIT_TYPES = [
-  "studio", "one_br", "two_br", "three_br", "penthouse", "commercial", "parking",
-];
+const UNIT_TYPES = ['studio', 'one_br', 'two_br', 'three_br', 'penthouse', 'commercial', 'parking'];
 
-const STATUS_MAP: Record<string, { label: string; variant: "success" | "warning" | "secondary" | "destructive" }> = {
-  available: { label: "Available", variant: "success" },
-  occupied: { label: "Occupied", variant: "warning" },
-  reserved: { label: "Reserved", variant: "secondary" },
-  under_maintenance: { label: "Maintenance", variant: "destructive" },
-  rented: { label: "Rented", variant: "warning" },
-  sold: { label: "Sold", variant: "secondary" },
-  rto_active: { label: "RTO Active", variant: "warning" },
+const STATUS_MAP: Record<
+  string,
+  { label: string; variant: 'success' | 'warning' | 'secondary' | 'destructive' }
+> = {
+  available: { label: 'Available', variant: 'success' },
+  occupied: { label: 'Occupied', variant: 'warning' },
+  reserved: { label: 'Reserved', variant: 'secondary' },
+  under_maintenance: { label: 'Maintenance', variant: 'destructive' },
+  rented: { label: 'Rented', variant: 'warning' },
+  sold: { label: 'Sold', variant: 'secondary' },
+  rto_active: { label: 'RTO Active', variant: 'warning' },
 };
 
 export default function EditUnitPage() {
-  const { propertyId, unitId } = useParams({ from: "/protected/properties/$propertyId/units/$unitId/edit" });
+  const { propertyId, unitId } = useParams({
+    from: '/protected/properties/$propertyId/units/$unitId/edit',
+  });
   const navigate = useNavigate();
   const { data: unit, isLoading } = useUnit(unitId);
   const { data: property } = useProperty(propertyId);
@@ -62,34 +90,54 @@ export default function EditUnitPage() {
   const deleteUnit = useDeleteUnit();
 
   const unitLeases = useMemo(() => (leasesResult?.data ?? []) as Lease[], [leasesResult]);
-  const activeLease = unitLeases.find((l) => l.status === "active");
+  const activeLease = unitLeases.find((l) => l.status === 'active');
 
   const [form, setForm] = useState({
-    unitNumber: "",
-    type: "",
-    size: "",
-    bedrooms: "",
-    bathrooms: "",
-    status: "available",
-    features: "",
-    listPrice: "",
-    lotValue: "",
-    buildingValue: "",
+    unitNumber: '',
+    type: '',
+    size: '',
+    bedrooms: '',
+    bathrooms: '',
+    status: 'available',
+    features: '',
+    listPrice: '',
+    lotValue: '',
+    buildingValue: '',
   });
+
+  // ── Reservation state ──
+  const [reserveDialogOpen, setReserveDialogOpen] = useState(false);
+  const [reserveError, setReserveError] = useState('');
+  const [reserveForm, setReserveForm] = useState({
+    prospectName: '',
+    prospectContact: '',
+    schemeId: '',
+    holdDays: 30,
+    collectFeeNow: true,
+  });
+
+  // ── Hooks ──
+  const { data: schemesResult } = useSchemes({ type: undefined });
+  const schemes = (schemesResult?.data ?? []) as Scheme[];
+  const { data: reservationsResult } = useReservationsByUnit(unitId);
+  const activeReservation = reservationsResult?.find(
+    (r: { status: string }) => r.status === 'reserved',
+  );
+  const createReservation = useCreateReservation();
 
   useEffect(() => {
     if (unit) {
       setForm({
-        unitNumber: unit.unitNumber || "",
-        type: unit.type || "",
-        size: unit.size ? String(unit.size) : "",
-        bedrooms: unit.bedrooms != null ? String(unit.bedrooms) : "",
-        bathrooms: unit.bathrooms != null ? String(unit.bathrooms) : "",
-        status: unit.status || "available",
-        features: unit.features?.join(", ") || "",
-        listPrice: unit.listPrice != null ? String(unit.listPrice) : "",
-        lotValue: unit.lotValue != null ? String(unit.lotValue) : "",
-        buildingValue: unit.buildingValue != null ? String(unit.buildingValue) : "",
+        unitNumber: unit.unitNumber || '',
+        type: unit.type || '',
+        size: unit.size ? String(unit.size) : '',
+        bedrooms: unit.bedrooms != null ? String(unit.bedrooms) : '',
+        bathrooms: unit.bathrooms != null ? String(unit.bathrooms) : '',
+        status: unit.status || 'available',
+        features: unit.features?.join(', ') || '',
+        listPrice: unit.listPrice != null ? String(unit.listPrice) : '',
+        lotValue: unit.lotValue != null ? String(unit.lotValue) : '',
+        buildingValue: unit.buildingValue != null ? String(unit.buildingValue) : '',
       });
     }
   }, [unit]);
@@ -104,29 +152,66 @@ export default function EditUnitPage() {
         size: form.size ? parseFloat(form.size) : undefined,
         bedrooms: form.bedrooms ? parseInt(form.bedrooms) : undefined,
         bathrooms: form.bathrooms ? parseInt(form.bathrooms) : undefined,
-        features: form.features ? form.features.split(",").map((f) => f.trim()).filter(Boolean) : undefined,
+        features: form.features
+          ? form.features
+              .split(',')
+              .map((f) => f.trim())
+              .filter(Boolean)
+          : undefined,
         listPrice: form.listPrice ? parseFloat(form.listPrice) : undefined,
         lotValue: form.lotValue ? parseFloat(form.lotValue) : undefined,
         buildingValue: form.buildingValue ? parseFloat(form.buildingValue) : undefined,
       };
       Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
-      await updateUnit.mutateAsync({ id: unitId, ...payload } as Partial<import("@/hooks/use-units").Unit> & { id: string });
+      await updateUnit.mutateAsync({ id: unitId, ...payload } as Partial<
+        import('@/hooks/use-units').Unit
+      > & { id: string });
       navigate({ to: `/properties/${propertyId}/units` });
     } catch (err) {
-      console.error("Failed to update unit", err);
+      console.error('Failed to update unit', err);
     }
   };
 
   const handleDelete = async () => {
-    if (confirm("Delete this unit? This cannot be undone.")) {
+    if (confirm('Delete this unit? This cannot be undone.')) {
       await deleteUnit.mutateAsync(unitId);
       navigate({ to: `/properties/${propertyId}/units` });
     }
   };
 
+  const handleReserveSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setReserveError('');
+    if (!unit) return;
+    createReservation
+      .mutateAsync({
+        unitId: unit.id,
+        schemeId: reserveForm.schemeId,
+        prospectName: reserveForm.prospectName,
+        prospectContact: reserveForm.prospectContact,
+        holdDays: reserveForm.holdDays,
+        collectFeeNow: reserveForm.collectFeeNow,
+      })
+      .then(() => {
+        setReserveDialogOpen(false);
+        setReserveForm({
+          prospectName: '',
+          prospectContact: '',
+          schemeId: '',
+          holdDays: 30,
+          collectFeeNow: true,
+        });
+      })
+      .catch((err: any) => {
+        setReserveError(
+          err?.response?.data?.message || err?.message || 'Failed to create reservation',
+        );
+      });
+  };
+
   if (isLoading) {
     return (
-    <div className="space-y-6 flex flex-col ">
+      <div className="space-y-6 flex flex-col ">
         <div className="flex items-center gap-4">
           <Skeleton className="h-10 w-10 rounded-md" />
           <Skeleton className="h-8 w-64" />
@@ -139,7 +224,11 @@ export default function EditUnitPage() {
   if (!unit) {
     return (
       <div className="space-y-6">
-        <Button variant="outline" size="icon" onClick={() => navigate({ to: `/properties/${propertyId}/units` })}>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => navigate({ to: `/properties/${propertyId}/units` })}
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
@@ -153,37 +242,62 @@ export default function EditUnitPage() {
     );
   }
 
-  const statusMeta = STATUS_MAP[form.status] ?? { label: form.status, variant: "secondary" as const };
+  const statusMeta = STATUS_MAP[form.status] ?? {
+    label: form.status,
+    variant: 'secondary' as const,
+  };
 
   return (
     <div className="space-y-6">
       {/* ── Header: back + title + actions ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate({ to: `/properties/${propertyId}/units` })}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => navigate({ to: `/properties/${propertyId}/units` })}
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight">
-                Unit {unit.unitNumber}
-              </h1>
+              <h1 className="text-2xl font-bold tracking-tight">Unit {unit.unitNumber}</h1>
               <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">
               {property ? (
                 <span className="flex items-center gap-1.5">
                   <Building2 className="h-3.5 w-3.5" />
-                  <Button variant="link" className="p-0 h-auto text-sm text-muted-foreground" onClick={() => navigate({ to: `/properties/${propertyId}` })}>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-sm text-muted-foreground"
+                    onClick={() => navigate({ to: `/properties/${propertyId}` })}
+                  >
                     {property.name ?? property.code}
                   </Button>
                 </span>
-              ) : "Edit unit details"}
+              ) : (
+                'Edit unit details'
+              )}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleteUnit.isPending}>
+          {unit.status === 'available' && !activeReservation && (
+            <Button
+              onClick={() => setReserveDialogOpen(true)}
+              disabled={createReservation.isPending}
+            >
+              <Key className="mr-1.5 h-3.5 w-3.5" />
+              Reserve
+            </Button>
+          )}
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDelete}
+            disabled={deleteUnit.isPending}
+          >
             <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete
           </Button>
         </div>
@@ -195,22 +309,78 @@ export default function EditUnitPage() {
           <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-base">Unit Details</CardTitle>
-              <CardDescription>Update the physical and classification details of this unit.</CardDescription>
+              <CardDescription>
+                Update the physical and classification details of this unit.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
+              {/* Reserve action banner when available and no active reservation */}
+              {unit.status === 'available' && !activeReservation && (
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Star className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="font-medium text-primary">Unit Available for Reservation</p>
+                      <p className="text-sm text-muted-foreground">
+                        Create a reservation hold with a prospect and scheme.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => setReserveDialogOpen(true)}
+                    disabled={createReservation.isPending}
+                  >
+                    <Key className="mr-2 h-4 w-4" />
+                    {createReservation.isPending ? 'Reserving...' : 'Reserve Unit'}
+                  </Button>
+                </div>
+              )}
+
+              {/* Active reservation banner */}
+              {activeReservation && (
+                <div className="rounded-lg border border-warning/20 bg-warning/5 p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Key className="h-5 w-5 text-warning" />
+                    <div>
+                      <p className="font-medium text-warning">Reservation Active</p>
+                      <p className="text-sm text-muted-foreground">
+                        Prospect: {activeReservation.prospectName} · Scheme:{' '}
+                        {activeReservation.scheme?.code ?? activeReservation.schemeId}· Expires:{' '}
+                        {new Date(activeReservation.holdExpiry).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-warning/20 text-warning">
+                    Reserved
+                  </span>
+                </div>
+              )}
+
               {/* Row 1: Number + Type */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Unit Number *</Label>
-                  <Input value={form.unitNumber} onChange={(e) => setForm((p) => ({ ...p, unitNumber: e.target.value }))} required />
+                  <Input
+                    value={form.unitNumber}
+                    onChange={(e) => setForm((p) => ({ ...p, unitNumber: e.target.value }))}
+                    required
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Type *</Label>
-                  <Select value={form.type} onValueChange={(v) => setForm((p) => ({ ...p, type: v }))} required>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={form.type}
+                    onValueChange={(v) => setForm((p) => ({ ...p, type: v }))}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {UNIT_TYPES.map((t) => (
-                        <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>
+                        <SelectItem key={t} value={t}>
+                          {t.replace(/_/g, ' ')}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -220,24 +390,52 @@ export default function EditUnitPage() {
               {/* Row 2: Size + Beds + Baths */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs flex items-center gap-1.5"><Maximize className="h-3 w-3" /> Size (sqm)</Label>
-                  <Input type="number" min="0" step="0.01" value={form.size} onChange={(e) => setForm((p) => ({ ...p, size: e.target.value }))} />
+                  <Label className="text-xs flex items-center gap-1.5">
+                    <Maximize className="h-3 w-3" /> Size (sqm)
+                  </Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.size}
+                    onChange={(e) => setForm((p) => ({ ...p, size: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs flex items-center gap-1.5"><Bed className="h-3 w-3" /> Bedrooms</Label>
-                  <Input type="number" min="0" value={form.bedrooms} onChange={(e) => setForm((p) => ({ ...p, bedrooms: e.target.value }))} />
+                  <Label className="text-xs flex items-center gap-1.5">
+                    <Bed className="h-3 w-3" /> Bedrooms
+                  </Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={form.bedrooms}
+                    onChange={(e) => setForm((p) => ({ ...p, bedrooms: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs flex items-center gap-1.5"><Bath className="h-3 w-3" /> Bathrooms</Label>
-                  <Input type="number" min="0" step="0.5" value={form.bathrooms} onChange={(e) => setForm((p) => ({ ...p, bathrooms: e.target.value }))} />
+                  <Label className="text-xs flex items-center gap-1.5">
+                    <Bath className="h-3 w-3" /> Bathrooms
+                  </Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={form.bathrooms}
+                    onChange={(e) => setForm((p) => ({ ...p, bathrooms: e.target.value }))}
+                  />
                 </div>
               </div>
 
               {/* Row 3: Status */}
               <div className="space-y-1.5">
                 <Label className="text-xs">Status</Label>
-                <Select value={form.status} onValueChange={(v) => setForm((p) => ({ ...p, status: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={form.status}
+                  onValueChange={(v) => setForm((p) => ({ ...p, status: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="available">Available</SelectItem>
                     <SelectItem value="occupied">Occupied</SelectItem>
@@ -264,15 +462,36 @@ export default function EditUnitPage() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs">List Price</Label>
-                  <Input type="number" min="0" step="0.01" value={form.listPrice} onChange={(e) => setForm((p) => ({ ...p, listPrice: e.target.value }))} placeholder="Total selling price" />
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.listPrice}
+                    onChange={(e) => setForm((p) => ({ ...p, listPrice: e.target.value }))}
+                    placeholder="Total selling price"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Lot Value</Label>
-                  <Input type="number" min="0" step="0.01" value={form.lotValue} onChange={(e) => setForm((p) => ({ ...p, lotValue: e.target.value }))} placeholder="Land share" />
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.lotValue}
+                    onChange={(e) => setForm((p) => ({ ...p, lotValue: e.target.value }))}
+                    placeholder="Land share"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Building Value</Label>
-                  <Input type="number" min="0" step="0.01" value={form.buildingValue} onChange={(e) => setForm((p) => ({ ...p, buildingValue: e.target.value }))} placeholder="Improvement value" />
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.buildingValue}
+                    onChange={(e) => setForm((p) => ({ ...p, buildingValue: e.target.value }))}
+                    placeholder="Improvement value"
+                  />
                 </div>
               </div>
 
@@ -280,19 +499,25 @@ export default function EditUnitPage() {
               {property?.code && (
                 <div className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2">
                   <span className="text-xs text-muted-foreground">Code:</span>
-                  <span className="font-mono text-sm font-medium">{property.code}-{form.unitNumber || "XXX"}</span>
+                  <span className="font-mono text-sm font-medium">
+                    {property.code}-{form.unitNumber || 'XXX'}
+                  </span>
                 </div>
               )}
 
               <Separator />
 
               <div className="flex justify-end gap-3">
-                <Button variant="outline" type="button" onClick={() => navigate({ to: `/properties/${propertyId}/units` })}>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => navigate({ to: `/properties/${propertyId}/units` })}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={updateUnit.isPending}>
                   <Save className="mr-1.5 h-4 w-4" />
-                  {updateUnit.isPending ? "Saving..." : "Save Changes"}
+                  {updateUnit.isPending ? 'Saving...' : 'Save Changes'}
                 </Button>
               </div>
             </CardContent>
@@ -326,7 +551,9 @@ export default function EditUnitPage() {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Created</span>
-                <span className="tabular-nums">{new Date(unit.createdAt).toLocaleDateString()}</span>
+                <span className="tabular-nums">
+                  {new Date(unit.createdAt).toLocaleDateString()}
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -344,7 +571,9 @@ export default function EditUnitPage() {
               {unitLeases.length === 0 ? (
                 <div className="py-8 text-center">
                   <Home className="mx-auto h-6 w-6 text-muted-foreground/50" />
-                  <p className="mt-2 text-xs text-muted-foreground">No lease history for this unit.</p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    No lease history for this unit.
+                  </p>
                 </div>
               ) : (
                 <div className="divide-y">
@@ -356,18 +585,20 @@ export default function EditUnitPage() {
                           onClick={() => navigate({ to: `/leases/${l.id}` })}
                         >
                           <User className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="font-semibold text-sm">
-                            {l.tenantName ?? "—"}
-                          </span>
+                          <span className="font-semibold text-sm">{l.tenantName ?? '—'}</span>
                         </button>
-                        <Badge variant={l.status === "active" ? "success" : "secondary"} className="text-[10px]">
-                          {l.status === "active" ? "Active" : "Closed"}
+                        <Badge
+                          variant={l.status === 'active' ? 'success' : 'secondary'}
+                          className="text-[10px]"
+                        >
+                          {l.status === 'active' ? 'Active' : 'Closed'}
                         </Badge>
                       </div>
                       <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {new Date(l.startDate).toLocaleDateString()} — {new Date(l.endDate).toLocaleDateString()}
+                          {new Date(l.startDate).toLocaleDateString()} —{' '}
+                          {new Date(l.endDate).toLocaleDateString()}
                         </span>
                         {l.monthlyRent > 0 && (
                           <span className="flex items-center gap-1">
@@ -378,23 +609,32 @@ export default function EditUnitPage() {
                       {(l as any).schemeType && (
                         <div className="mt-1">
                           <Badge variant="outline" className="text-[10px]">
-                            {(l as any).schemeType.replace(/_/g, " ")}
+                            {(l as any).schemeType.replace(/_/g, ' ')}
                           </Badge>
                         </div>
                       )}
                       <div className="mt-1 flex items-center gap-2">
-                        {(l as any).mortgageScenarios && (l as any).mortgageScenarios.length > 0 && (
-                          <button
-                            className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
-                            onClick={(e) => { e.stopPropagation(); navigate({ to: `/leases/${l.id}/mortgage/${(l as any).mortgageScenarios[0].id}` }); }}
-                          >
-                            Amortization <ArrowRight className="h-2.5 w-2.5" />
-                          </button>
-                        )}
+                        {(l as any).mortgageScenarios &&
+                          (l as any).mortgageScenarios.length > 0 && (
+                            <button
+                              className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate({
+                                  to: `/leases/${l.id}/mortgage/${(l as any).mortgageScenarios[0].id}`,
+                                });
+                              }}
+                            >
+                              Amortization <ArrowRight className="h-2.5 w-2.5" />
+                            </button>
+                          )}
                         {(l as any).rtoContract && (
                           <button
                             className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
-                            onClick={(e) => { e.stopPropagation(); navigate({ to: `/rto/${(l as any).rtoContract.id}` }); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate({ to: `/rto/${(l as any).rtoContract.id}` });
+                            }}
                           >
                             RTO Contract <ArrowRight className="h-2.5 w-2.5" />
                           </button>
@@ -408,8 +648,117 @@ export default function EditUnitPage() {
           </Card>
         </div>
       </div>
+
+      {/* ── Reserve Unit Dialog ── */}
+      <Dialog open={reserveDialogOpen} onOpenChange={setReserveDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reserve Unit</DialogTitle>
+            <DialogDescription>
+              Create a reservation hold for this unit with a prospect.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleReserveSubmit} className="space-y-4">
+            {reserveError && (
+              <div className="rounded-md bg-red-50 p-3 text-sm text-red-600" role="alert">
+                <AlertCircle className="mr-1.5 h-4 w-4 inline" />
+                {reserveError}
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <Label className="text-xs">Prospect Name *</Label>
+              <Input
+                value={reserveForm.prospectName}
+                onChange={(e) => setReserveForm((p) => ({ ...p, prospectName: e.target.value }))}
+                required
+                placeholder="Juan Dela Cruz"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Prospect Contact</Label>
+              <Input
+                value={reserveForm.prospectContact}
+                onChange={(e) => setReserveForm((p) => ({ ...p, prospectContact: e.target.value }))}
+                placeholder="09xx-xxx-xxxx or email@example.com"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Scheme *</Label>
+              <Select
+                value={reserveForm.schemeId}
+                onValueChange={(v) => setReserveForm((p) => ({ ...p, schemeId: v }))}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a scheme" />
+                </SelectTrigger>
+                <SelectContent>
+                  {schemes.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.code} — {s.name ?? s.schemeType.replace(/_/g, ' ')}
+                      {s.optionFeePercent ? ` (Option Fee: ${s.optionFeePercent}%)` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Selected scheme determines the option fee percentage and hold terms.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Hold Duration (days)</Label>
+              <Input
+                type="number"
+                min="1"
+                max="365"
+                value={reserveForm.holdDays}
+                onChange={(e) =>
+                  setReserveForm((p) => ({ ...p, holdDays: parseInt(e.target.value) || 30 }))
+                }
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                type="checkbox"
+                id="collectFeeNow"
+                checked={reserveForm.collectFeeNow}
+                onChange={(e) => setReserveForm((p) => ({ ...p, collectFeeNow: e.target.checked }))}
+              />
+              <Label htmlFor="collectFeeNow" className="text-xs cursor-pointer">
+                Collect option/reservation fee now (creates AR invoice)
+              </Label>
+            </div>
+            <DialogFooter className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setReserveDialogOpen(false)}
+                disabled={createReservation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  createReservation.isPending || !reserveForm.prospectName || !reserveForm.schemeId
+                }
+              >
+                {createReservation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Reserving...
+                  </>
+                ) : (
+                  <>
+                    <Key className="mr-2 h-4 w-4" />
+                    Reserve Unit
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
-

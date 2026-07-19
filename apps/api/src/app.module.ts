@@ -46,6 +46,8 @@ import { SalesModule } from './sales/sales.module';
 import { SchemesModule } from './schemes/schemes.module';
 import { TitlesModule } from './titles/titles.module';
 import { ImagesModule } from './images/images.module';
+import { ReservationsModule } from './reservations/reservations.module';
+import { CodeSequenceModule } from './code-sequence/code-sequence.module';
 import { ApInvoicesModule } from './ap-invoices/ap-invoices.module';
 import { GeneralLedgerModule } from './general-ledger/general-ledger.module';
 import { RolesModule } from './roles/roles.module';
@@ -96,6 +98,8 @@ import { SearchModule } from './search/search.module';
     SchemesModule,
     TitlesModule,
     ImagesModule,
+    ReservationsModule,
+    CodeSequenceModule,
     ...(process.env.MONGODB_URI ? [MongodbModule] : []),
     ThrottlerModule.forRoot([
       {

@@ -149,6 +149,15 @@ export class DocumentsService {
     return this.updateSignature(sigId, { status: 'signed' });
   }
 
+  async markDocumentSigned(documentVaultId: string) {
+    const sigs = await this.prisma.documentSignature.findMany({
+      where: { documentVaultId },
+      orderBy: { requestedAt: 'desc' },
+    });
+    if (sigs.length === 0) throw new NotFoundException('No signatures found for this document');
+    return this.updateSignature(sigs[0].id, { status: 'signed' });
+  }
+
   async removeSignature(sigId: string) {
     await this.findOneSignature(sigId);
     await this.prisma.documentSignature.delete({ where: { id: sigId } });

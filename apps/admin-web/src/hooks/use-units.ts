@@ -150,3 +150,35 @@ export function useDeleteUnit() {
     },
   });
 }
+
+export function useReservationsByUnit(unitId: string) {
+  return useQuery({
+    queryKey: ['reservations', 'unit', unitId],
+    queryFn: async () => {
+      const { data } = await api.get(`/reservations/unit/${unitId}`);
+      return data.data ?? [];
+    },
+    enabled: !!unitId,
+  });
+}
+
+export function useCreateReservation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      unitId: string;
+      schemeId: string;
+      prospectName: string;
+      prospectContact?: string;
+      holdDays?: number;
+      collectFeeNow?: boolean;
+    }) => {
+      const { data } = await api.post('/reservations', payload);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['units'] });
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+    },
+  });
+}

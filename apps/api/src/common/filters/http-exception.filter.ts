@@ -1,10 +1,4 @@
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 
 interface ErrorBody {
@@ -29,7 +23,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
         messages = [res];
       } else if (typeof res === 'object') {
         const body = res as ErrorBody;
-        messages = Array.isArray(body.message) ? body.message : [body.message || body.error || 'Unknown error'];
+        messages = Array.isArray(body.message)
+          ? body.message
+          : [body.message || body.error || 'Unknown error'];
       }
     }
 
@@ -38,5 +34,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message: messages.join(', '),
       timestamp: new Date().toISOString(),
     });
+    if (status >= 500 || !(exception instanceof HttpException)) {
+      console.error('[http-exception]', (exception as any)?.message, (exception as any)?.stack);
+    }
   }
 }
