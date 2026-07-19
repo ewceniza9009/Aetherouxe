@@ -68,7 +68,7 @@ services:
     image: elite-realty:latest
     container_name: elite-app
     ports:
-      - '8080:80'
+      - '7077:80'
     depends_on:
       postgres:
         condition: service_healthy
@@ -84,16 +84,17 @@ services:
       REDIS_URL: 'redis://redis:6379'
       JWT_SECRET: '${JWT_SECRET:-dev-secret-change-me}'
       JWT_REFRESH_SECRET: '${JWT_REFRESH_SECRET:-dev-refresh-secret-change-me}'
-      JWT_ACCESS_TOKEN_EXPIRES_IN: '15m'
+      JWT_ACCESS_EXPIRES: '60m'
       JWT_REFRESH_TOKEN_EXPIRES_IN: '7d'
       S3_ENDPOINT: 'http://minio:9000'
+      S3_PUBLIC_URL: 'http://localhost:9000'
       S3_REGION: 'us-east-1'
       S3_ACCESS_KEY: '${MINIO_ROOT_USER:-minioadmin}'
       S3_SECRET_KEY: '${MINIO_ROOT_PASSWORD:-minioadmin}'
       S3_BUCKET: 'elite-realty'
       DEFAULT_TENANT_DOMAIN: 'localhost'
       PORT: '4000'
-      ALLOWED_ORIGINS: 'http://admin.localhost:8080,http://owner.localhost:8080,http://resident.localhost:8080,http://api.localhost:8080,http://localhost:8080,http://admin.localhost,http://owner.localhost,http://resident.localhost,http://api.localhost,http://localhost:3000'
+      ALLOWED_ORIGINS: 'http://admin.localhost:7077,http://owner.localhost:7077,http://resident.localhost:7077,http://api.localhost:7077,http://localhost:7077,http://admin.localhost,http://owner.localhost,http://resident.localhost,http://api.localhost,http://localhost:3000'
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost/health']
       interval: 30s

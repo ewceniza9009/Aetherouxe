@@ -1,21 +1,27 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { useListQuery } from "@/hooks/use-list-query";
-import { GridToolbar, GridState } from "@/components/GridToolbar";
-import { ListPager } from "@/components/ListPager";
-import { Card, CardContent } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { useState, useMemo } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useListQuery } from '@/hooks/use-list-query';
+import { GridToolbar, GridState } from '@/components/GridToolbar';
+import { ListPager } from '@/components/ListPager';
+import { Card, CardContent } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Avatar } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
-import { Plus, MapPin, Building2, Eye, Pencil, Trash2 } from "lucide-react";
-import { useProjects, useDeleteProject, projectTypeLabels, projectStatusLabels } from "@/hooks/use-projects";
-import type { Project, ProjectType, ProjectStatus } from "@/hooks/use-projects";
+} from '@elite-realty/shared-ui/components/ui';
+import { Plus, MapPin, Building2, Eye, Pencil, Trash2 } from 'lucide-react';
+import {
+  useProjects,
+  useDeleteProject,
+  projectTypeLabels,
+  projectStatusLabels,
+} from '@/hooks/use-projects';
+import type { Project, ProjectType, ProjectStatus } from '@/hooks/use-projects';
 import {
   Dialog,
   DialogContent,
@@ -23,15 +29,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 
-const statusVariant: Record<ProjectStatus, "default" | "secondary" | "success" | "destructive" | "warning"> = {
-  planning: "secondary",
-  pre_selling: "warning",
-  construction: "default",
-  fit_out: "default",
-  completed: "success",
-  turnover: "success",
+const statusVariant: Record<
+  ProjectStatus,
+  'default' | 'secondary' | 'success' | 'destructive' | 'warning'
+> = {
+  planning: 'secondary',
+  pre_selling: 'warning',
+  construction: 'default',
+  fit_out: 'default',
+  completed: 'success',
+  turnover: 'success',
 };
 
 const projectTypeOptions = Object.keys(projectTypeLabels) as ProjectType[];
@@ -40,15 +49,19 @@ const projectStatusOptions = Object.keys(projectStatusLabels) as ProjectStatus[]
 export default function ProjectsPage() {
   const navigate = useNavigate();
   const listQuery = useListQuery(10);
-  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } =
+    listQuery;
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
 
-  const fullQuery = useMemo(() => ({
-    ...query,
-    status: statusFilter !== "all" ? (statusFilter as ProjectStatus) : undefined,
-    projectType: typeFilter !== "all" ? (typeFilter as ProjectType) : undefined,
-  }), [query, statusFilter, typeFilter]);
+  const fullQuery = useMemo(
+    () => ({
+      ...query,
+      status: statusFilter !== 'all' ? (statusFilter as ProjectStatus) : undefined,
+      projectType: typeFilter !== 'all' ? (typeFilter as ProjectType) : undefined,
+    }),
+    [query, statusFilter, typeFilter],
+  );
 
   const { data, isLoading, isError, refetch } = useProjects(fullQuery);
   const deleteProject = useDeleteProject();
@@ -88,7 +101,7 @@ export default function ProjectsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Development Projects</h1>
           <p className="text-muted-foreground">Track construction and development progress</p>
         </div>
-        <Button onClick={() => navigate({ to: "/projects/new" })}>
+        <Button onClick={() => navigate({ to: '/projects/new' })}>
           <Plus className="mr-2 h-4 w-4" /> New Project
         </Button>
       </div>
@@ -99,25 +112,41 @@ export default function ProjectsPage() {
         placeholder="Search projects…"
         filters={
           <>
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); resetPage(); }}>
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => {
+                setStatusFilter(v);
+                resetPage();
+              }}
+            >
               <SelectTrigger className="w-full sm:w-[160px]">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 {projectStatusOptions.map((s) => (
-                  <SelectItem key={s} value={s}>{projectStatusLabels[s]}</SelectItem>
+                  <SelectItem key={s} value={s}>
+                    {projectStatusLabels[s]}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); resetPage(); }}>
+            <Select
+              value={typeFilter}
+              onValueChange={(v) => {
+                setTypeFilter(v);
+                resetPage();
+              }}
+            >
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 {projectTypeOptions.map((t) => (
-                  <SelectItem key={t} value={t}>{projectTypeLabels[t]}</SelectItem>
+                  <SelectItem key={t} value={t}>
+                    {projectTypeLabels[t]}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -137,18 +166,39 @@ export default function ProjectsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b bg-muted/50">
-                    <th {...sortHeader("name", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Name{sortIndicator("name")}
+                    <th
+                      {...sortHeader(
+                        'name',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Name{sortIndicator('name')}
                     </th>
-                    <th {...sortHeader("projectType", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Type{sortIndicator("projectType")}
+                    <th
+                      {...sortHeader(
+                        'projectType',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Type{sortIndicator('projectType')}
                     </th>
-                    <th {...sortHeader("status", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Status{sortIndicator("status")}
+                    <th
+                      {...sortHeader(
+                        'status',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Status{sortIndicator('status')}
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Phases</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Target Completion</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      Phases
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      Target Completion
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -160,35 +210,50 @@ export default function ProjectsPage() {
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-                            <Building2 className="h-4 w-4 text-primary" />
-                          </div>
+                          <Avatar
+                            src={(() => {
+                              const imgs = p.images ?? [];
+                              const primary = imgs.find((i) => i.isPrimary);
+                              return (primary ?? imgs[0])?.url;
+                            })()}
+                            alt={p.name}
+                            fallback={<Building2 className="h-4 w-4 text-primary" />}
+                          />
                           <div>
                             <div className="font-medium">{p.name}</div>
                             <div className="text-xs text-muted-foreground flex items-center gap-1">
-                              <MapPin className="h-3 w-3" /> {p.address || "No address provided"}
+                              <MapPin className="h-3 w-3" /> {p.address || 'No address provided'}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-sm text-muted-foreground">{projectTypeLabels[p.projectType]}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {projectTypeLabels[p.projectType]}
+                        </span>
                       </td>
                       <td className="px-4 py-3">
                         <Badge variant={statusVariant[p.status]}>
-                          {p.status.replace(/_/g, " ")}
+                          {p.status.replace(/_/g, ' ')}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">{p.totalPhases ?? 0}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {p.totalPhases ?? 0}
+                      </td>
                       <td className="px-4 py-3 text-sm">
-                        {p.targetCompletionDate ? new Date(p.targetCompletionDate).toLocaleDateString() : "—"}
+                        {p.targetCompletionDate
+                          ? new Date(p.targetCompletionDate).toLocaleDateString()
+                          : '—'}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={(e) => { e.stopPropagation(); navigate({ to: `/projects/${p.id}/edit` }); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate({ to: `/projects/${p.id}/edit` });
+                            }}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -221,9 +286,11 @@ export default function ProjectsPage() {
             <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleteProject.isPending}>
-              {deleteProject.isPending ? "Deleting..." : "Delete"}
+              {deleteProject.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -231,5 +298,3 @@ export default function ProjectsPage() {
     </div>
   );
 }
-
-

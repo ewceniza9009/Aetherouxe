@@ -107,6 +107,45 @@ export class ImagesService {
     return image;
   }
 
+  async uploadBuildingImage(buildingId: string, file: UploadFile, alt?: string, isPrimary = false) {
+    const building = await this.prisma.building.findUnique({ where: { id: buildingId } });
+    if (!building) throw new NotFoundException('Building not found');
+
+    const { url } = await this.s3.upload(file, `buildings/${buildingId}`);
+
+    if (isPrimary) {
+      await this.prisma.buildingImage.updateMany({
+        where: { buildingId, isPrimary: true },
+        data: { isPrimary: false },
+      });
+    }
+
+    const maxSort = await this.prisma.buildingImage.aggregate({
+      where: { buildingId },
+      _max: { sortOrder: true },
+    });
+
+    const image = await this.prisma.buildingImage.create({
+      data: {
+        buildingId,
+        url,
+        alt: alt || file.originalname,
+        isPrimary,
+        sortOrder: (maxSort._max.sortOrder ?? -1) + 1,
+      },
+    });
+
+    this.logger.log(`Building image uploaded: ${image.id} for building ${buildingId}`);
+    return image;
+  }
+
+  async getBuildingImages(buildingId: string) {
+    return this.prisma.buildingImage.findMany({
+      where: { buildingId },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
   async uploadUserAvatar(userId: string, file: UploadFile) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
@@ -144,9 +183,11 @@ export class ImagesService {
   }
 
   async updateImage(id: string, data: { alt?: string; sortOrder?: number; isPrimary?: boolean }) {
-    const image = await this.prisma.propertyImage.findUnique({ where: { id } })
-      || await this.prisma.unitImage.findUnique({ where: { id } })
-      || await this.prisma.projectImage.findUnique({ where: { id } });
+    const image =
+      (await this.prisma.propertyImage.findUnique({ where: { id } })) ||
+      (await this.prisma.unitImage.findUnique({ where: { id } })) ||
+      (await this.prisma.projectImage.findUnique({ where: { id } })) ||
+      (await this.prisma.buildingImage.findUnique({ where: { id } }));
 
     if (!image) throw new NotFoundException('Image not found');
 
@@ -166,6 +207,11 @@ export class ImagesService {
           where: { projectId: image.projectId, isPrimary: true },
           data: { isPrimary: false },
         });
+      } else if ('buildingId' in image) {
+        await this.prisma.buildingImage.updateMany({
+          where: { buildingId: image.buildingId, isPrimary: true },
+          data: { isPrimary: false },
+        });
       }
     }
 
@@ -173,14 +219,18 @@ export class ImagesService {
       return this.prisma.propertyImage.update({ where: { id }, data });
     } else if ('unitId' in image) {
       return this.prisma.unitImage.update({ where: { id }, data });
+    } else if ('buildingId' in image) {
+      return this.prisma.buildingImage.update({ where: { id }, data });
     }
     return this.prisma.projectImage.update({ where: { id }, data });
   }
 
   async deleteImage(id: string) {
-    const image = await this.prisma.propertyImage.findUnique({ where: { id } })
-      || await this.prisma.unitImage.findUnique({ where: { id } })
-      || await this.prisma.projectImage.findUnique({ where: { id } });
+    const image =
+      (await this.prisma.propertyImage.findUnique({ where: { id } })) ||
+      (await this.prisma.unitImage.findUnique({ where: { id } })) ||
+      (await this.prisma.projectImage.findUnique({ where: { id } })) ||
+      (await this.prisma.buildingImage.findUnique({ where: { id } }));
 
     if (!image) throw new NotFoundException('Image not found');
 
@@ -190,6 +240,8 @@ export class ImagesService {
       await this.prisma.unitImage.delete({ where: { id } });
     } else if ('projectId' in image) {
       await this.prisma.projectImage.delete({ where: { id } });
+    } else if ('buildingId' in image) {
+      await this.prisma.buildingImage.delete({ where: { id } });
     }
 
     this.logger.log(`Image deleted: ${id}`);

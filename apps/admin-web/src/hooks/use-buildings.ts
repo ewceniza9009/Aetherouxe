@@ -1,7 +1,7 @@
 ﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@elite-realty/shared-ui/lib/api';
 import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
-import type { RawBuilding } from '@/types/api';
+import type { RawBuilding, RawBuildingImage } from '@/types/api';
 
 export interface Building {
   id: string;
@@ -12,6 +12,7 @@ export interface Building {
   projectId: string;
   projectName?: string;
   address: string;
+  images?: RawBuildingImage[];
   createdAt: string;
   updatedAt: string;
 }
@@ -42,6 +43,7 @@ export function transformBuilding(b: RawBuilding): Building {
     projectId: b.projectId ?? '',
     projectName: b.project?.name || b.projectName,
     address: b.address ?? '',
+    images: b.images ?? [],
     createdAt: b.createdAt,
     updatedAt: b.updatedAt,
   };

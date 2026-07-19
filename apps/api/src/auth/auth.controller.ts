@@ -9,7 +9,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('Auth')
-@Controller({ path: 'auth', version: '1' })
+@Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -69,6 +69,10 @@ export class AuthController {
     @Request() req: ExpressRequest & { user: { sub: string; id: string } },
     @Body() dto: ChangePasswordDto,
   ) {
-    return this.authService.changePassword(req.user.sub || req.user.id, dto.currentPassword, dto.newPassword);
+    return this.authService.changePassword(
+      req.user.sub || req.user.id,
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 }

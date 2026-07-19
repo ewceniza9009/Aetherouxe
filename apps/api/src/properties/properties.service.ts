@@ -75,7 +75,11 @@ export class PropertiesService {
       page: query.page,
       limit: query.limit,
       where,
-      include: { project: true, _count: { select: { units: true } } },
+      include: {
+        project: true,
+        _count: { select: { units: true } },
+        images: { orderBy: { sortOrder: 'asc' } },
+      },
       orderBy: built.orderBy,
       allowedSortFields: this.fieldMap.sortable,
     });
@@ -84,11 +88,11 @@ export class PropertiesService {
   async findOne(id: string, tenantId: string) {
     const property = await this.prisma.property.findUnique({
       where: { id, tenantId },
-      include: { 
-        project: true, 
-        units: { include: { building: true, floor: true } }, 
+      include: {
+        project: true,
+        units: { include: { building: true, floor: true } },
         childProperties: true,
-        images: { orderBy: { sortOrder: 'asc' } }
+        images: { orderBy: { sortOrder: 'asc' } },
       },
     });
     if (!property) throw new NotFoundException('Property not found');
@@ -102,7 +106,10 @@ export class PropertiesService {
 
   async remove(id: string, tenantId: string) {
     await this.findOne(id, tenantId);
-    await this.prisma.property.update({ where: { id, tenantId }, data: { status: 'under_maintenance' } });
+    await this.prisma.property.update({
+      where: { id, tenantId },
+      data: { status: 'under_maintenance' },
+    });
     return { deleted: true };
   }
 

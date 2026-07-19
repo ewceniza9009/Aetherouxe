@@ -9,6 +9,7 @@ import { Badge } from '@elite-realty/shared-ui/components/ui';
 import { Skeleton } from '@elite-realty/shared-ui/components/ui';
 import { Input } from '@elite-realty/shared-ui/components/ui';
 import { Label } from '@elite-realty/shared-ui/components/ui';
+import { Avatar as GalleryAvatar } from '@elite-realty/shared-ui/components/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Dialog,
@@ -215,7 +216,7 @@ export default function ProjectDetailPage() {
 
         {/* Content */}
         <div className="relative p-6 md:p-8 pb-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-          <div className="flex items-start gap-4 w-full">
+          <div className="flex items-center gap-4 w-full">
             <Button
               variant="outline"
               size="icon"
@@ -224,6 +225,14 @@ export default function ProjectDetailPage() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
+
+            <GalleryAvatar
+              src={primaryImage?.url}
+              alt={project.name}
+              fallback={<Building2 className="h-7 w-7" />}
+              rounded="lg"
+              className="h-14 w-14 ring-2 ring-border/60 shadow-elevate"
+            />
 
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-3">

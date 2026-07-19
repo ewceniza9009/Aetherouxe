@@ -1,18 +1,19 @@
-import { useState, useMemo, useCallback } from "react";
-import { useListQuery } from "@/hooks/use-list-query";
-import { GridToolbar, GridState } from "@/components/GridToolbar";
-import { ListPager } from "@/components/ListPager";
-import { useNavigate } from "@tanstack/react-router";
-import { Card, CardContent } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { useState, useMemo, useCallback } from 'react';
+import { useListQuery } from '@/hooks/use-list-query';
+import { GridToolbar, GridState } from '@/components/GridToolbar';
+import { ListPager } from '@/components/ListPager';
+import { useNavigate } from '@tanstack/react-router';
+import { Card, CardContent } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Avatar } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -20,30 +21,25 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@elite-realty/shared-ui/components/ui";
-import {
-  Plus,
-  Eye,
-  Trash2,
-  Layers,
-  Building as BuildingIcon,
-} from "lucide-react";
-import { useBuildings, useDeleteBuilding, type Building } from "@/hooks/use-buildings";
+} from '@elite-realty/shared-ui/components/ui';
+import { Plus, Eye, Trash2, Layers, Building as BuildingIcon } from 'lucide-react';
+import { useBuildings, useDeleteBuilding, type Building } from '@/hooks/use-buildings';
 
 export default function BuildingsPage() {
   const navigate = useNavigate();
   const listQuery = useListQuery(10);
-  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
-  const [projectFilter, setProjectFilter] = useState("all");
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } =
+    listQuery;
+  const [projectFilter, setProjectFilter] = useState('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Building | null>(null);
 
   const fullQuery = useMemo(
     () => ({
       ...query,
-      projectId: projectFilter !== "all" ? projectFilter : undefined,
+      projectId: projectFilter !== 'all' ? projectFilter : undefined,
     }),
-    [query, projectFilter]
+    [query, projectFilter],
   );
 
   const { data, isLoading, isError, refetch } = useBuildings(fullQuery);
@@ -66,7 +62,7 @@ export default function BuildingsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Buildings</h1>
           <p className="text-muted-foreground">Manage building records</p>
         </div>
-        <Button onClick={() => navigate({ to: "/buildings/new" })}>
+        <Button onClick={() => navigate({ to: '/buildings/new' })}>
           <Plus className="mr-2 h-4 w-4" /> New Building
         </Button>
       </div>
@@ -76,7 +72,13 @@ export default function BuildingsPage() {
         onSearchChange={setSearch}
         placeholder="Search buildings…"
         filters={
-          <Select value={projectFilter} onValueChange={(v) => { setProjectFilter(v); resetPage(); }}>
+          <Select
+            value={projectFilter}
+            onValueChange={(v) => {
+              setProjectFilter(v);
+              resetPage();
+            }}
+          >
             <SelectTrigger className="w-36">
               <SelectValue placeholder="Project" />
             </SelectTrigger>
@@ -99,18 +101,39 @@ export default function BuildingsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b bg-muted/50">
-                    <th {...sortHeader("name", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Name{sortIndicator("name")}
+                    <th
+                      {...sortHeader(
+                        'name',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Name{sortIndicator('name')}
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Type</th>
-                    <th {...sortHeader("floorCount", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Floors{sortIndicator("floorCount")}
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      Type
                     </th>
-                    <th {...sortHeader("unitCount", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Units{sortIndicator("unitCount")}
+                    <th
+                      {...sortHeader(
+                        'floorCount',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Floors{sortIndicator('floorCount')}
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Project</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
+                    <th
+                      {...sortHeader(
+                        'unitCount',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Units{sortIndicator('unitCount')}
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      Project
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -122,14 +145,20 @@ export default function BuildingsPage() {
                     >
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-                            <BuildingIcon className="h-4 w-4 text-primary" />
-                          </div>
+                          <Avatar
+                            src={(() => {
+                              const imgs = b.images ?? [];
+                              const primary = imgs.find((i) => i.isPrimary);
+                              return (primary ?? imgs[0])?.url;
+                            })()}
+                            alt={b.name}
+                            fallback={<BuildingIcon className="h-4 w-4 text-primary" />}
+                          />
                           <span className="font-medium">{b.name}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <Badge variant="secondary">{b.type.replace(/_/g, " ")}</Badge>
+                        <Badge variant="secondary">{b.type.replace(/_/g, ' ')}</Badge>
                       </td>
                       <td className="px-4 py-3 text-sm">{b.floorCount}</td>
                       <td className="px-4 py-3 text-sm">{b.units}</td>
@@ -193,9 +222,15 @@ export default function BuildingsPage() {
             <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleteBuilding.isPending}>
-              {deleteBuilding.isPending ? "Deleting..." : "Delete"}
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteBuilding.isPending}
+            >
+              {deleteBuilding.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -203,5 +238,3 @@ export default function BuildingsPage() {
     </div>
   );
 }
-
-

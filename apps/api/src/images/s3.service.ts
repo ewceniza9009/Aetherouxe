@@ -64,10 +64,12 @@ export class S3Service implements OnModuleInit {
           },
         ],
       };
-      await this.s3.send(new PutBucketPolicyCommand({
-        Bucket: this.bucket,
-        Policy: JSON.stringify(policy),
-      }));
+      await this.s3.send(
+        new PutBucketPolicyCommand({
+          Bucket: this.bucket,
+          Policy: JSON.stringify(policy),
+        }),
+      );
       this.logger.log(`S3 bucket '${this.bucket}' policy set to public-read.`);
     } catch (err: any) {
       this.logger.error(`Failed to set bucket policy: ${err.message}`);
@@ -88,15 +90,17 @@ export class S3Service implements OnModuleInit {
       }),
     );
 
-    const url = `${this.config.get('S3_ENDPOINT', 'http://localhost:9000')}/${this.bucket}/${key}`;
+    const publicBase: string =
+      this.config.get<string>('S3_PUBLIC_URL') ||
+      this.config.get<string>('S3_ENDPOINT') ||
+      'http://localhost:9000';
+    const url = `${publicBase}/${this.bucket}/${key}`;
     this.logger.log(`Uploaded: ${key}`);
     return { key, url };
   }
 
   async delete(key: string): Promise<void> {
-    await this.s3.send(
-      new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
-    );
+    await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
     this.logger.log(`Deleted: ${key}`);
   }
 

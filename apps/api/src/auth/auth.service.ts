@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -158,7 +154,10 @@ export class AuthService {
     return user;
   }
 
-  async updateMe(userId: string, data: { firstName?: string; lastName?: string; phone?: string; email?: string }) {
+  async updateMe(
+    userId: string,
+    data: { firstName?: string; lastName?: string; phone?: string; email?: string },
+  ) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UnauthorizedException('User not found');
 
@@ -192,7 +191,14 @@ export class AuthService {
     return updated;
   }
 
-  private generateTokens(userPayload: { id: string; email: string; userType: any; tenantId: string; tokenVersion: number; avatarUrl?: string | null }) {
+  private generateTokens(userPayload: {
+    id: string;
+    email: string;
+    userType: any;
+    tenantId: string;
+    tokenVersion: number;
+    avatarUrl?: string | null;
+  }) {
     const payload = {
       sub: userPayload.id,
       email: userPayload.email,
@@ -202,7 +208,9 @@ export class AuthService {
     };
 
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken: this.jwtService.sign(payload, {
+        expiresIn: process.env.JWT_ACCESS_EXPIRES || '60m',
+      }),
       refreshToken: this.jwtService.sign(payload, {
         secret: process.env.JWT_REFRESH_SECRET || 'refresh-secret-key',
         expiresIn: '7d',

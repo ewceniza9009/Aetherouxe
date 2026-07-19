@@ -24,6 +24,7 @@ import {
 } from '@elite-realty/shared-ui/components/ui';
 import { ArrowLeft, Save, Upload, ZoomIn, Trash2, Building2 } from 'lucide-react';
 import { useBuilding, useUpdateBuilding } from '@/hooks/use-buildings';
+import { useProjects } from '@/hooks/use-projects';
 import { api } from '@elite-realty/shared-ui/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -35,6 +36,8 @@ export default function EditBuildingPage() {
   const navigate = useNavigate();
   const { data: building, isLoading } = useBuilding(buildingId);
   const updateBuilding = useUpdateBuilding();
+  const { data: projectsData } = useProjects({ limit: 1000 });
+  const projects = projectsData?.data ?? [];
 
   const [form, setForm] = useState({
     name: '',
@@ -48,7 +51,7 @@ export default function EditBuildingPage() {
     if (building) {
       setForm({
         name: building.name || '',
-        type: building.type || '',
+        type: (building as any).buildingType ?? building.type ?? '',
         floorCount: String(building.floorCount ?? 0),
         address: building.address || '',
         projectId: building.projectId || '',
@@ -144,7 +147,6 @@ export default function EditBuildingPage() {
                     <Select
                       value={form.type}
                       onValueChange={(v) => setForm((p) => ({ ...p, type: v }))}
-                      required
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -179,14 +181,21 @@ export default function EditBuildingPage() {
                 <div className="space-y-2">
                   <Label>Project (optional)</Label>
                   <Select
-                    value={form.projectId}
-                    onValueChange={(v) => setForm((p) => ({ ...p, projectId: v }))}
+                    value={form.projectId || 'none'}
+                    onValueChange={(v) =>
+                      setForm((p) => ({ ...p, projectId: v === 'none' ? '' : v }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">None</SelectItem>
+                      {projects.map((p: any) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -211,12 +220,19 @@ export default function EditBuildingPage() {
 
 function ShowcaseTab({ building }: { building: any }) {
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setError(null);
+    if (file.size > 200 * 1024 * 1024) {
+      setError('Image is too large. Maximum size is 200 MB.');
+      e.target.value = '';
+      return;
+    }
     try {
       setUploading(true);
       const formData = new FormData();
@@ -226,11 +242,12 @@ function ShowcaseTab({ building }: { building: any }) {
       if (isPrimary) params.append('isPrimary', 'true');
       await api.post(`/images/building/${building.id}?${params.toString()}`, formData);
       queryClient.invalidateQueries({ queryKey: ['building', building.id] });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to upload image.');
+      setError(err?.response?.data?.message || 'Failed to upload image. Please try again.');
     } finally {
       setUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -239,9 +256,9 @@ function ShowcaseTab({ building }: { building: any }) {
     try {
       await api.delete(`/images/${imageId}`);
       queryClient.invalidateQueries({ queryKey: ['building', building.id] });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to delete image.');
+      setError(err?.response?.data?.message || 'Failed to delete image. Please try again.');
     }
   };
 
@@ -266,6 +283,11 @@ function ShowcaseTab({ building }: { building: any }) {
           onChange={handleUpload}
         />
       </div>
+      {error && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       {!building.images || building.images.length === 0 ? (
         <Card className="flex-1 flex flex-col min-h-0 border-0 shadow-none bg-transparent">

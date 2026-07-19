@@ -1,18 +1,19 @@
-import { useState, useMemo, useCallback } from "react";
-import { useListQuery } from "@/hooks/use-list-query";
-import { GridToolbar, GridState } from "@/components/GridToolbar";
-import { ListPager } from "@/components/ListPager";
-import { useNavigate } from "@tanstack/react-router";
-import { Card, CardContent } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
+import { useState, useMemo, useCallback } from 'react';
+import { useListQuery } from '@/hooks/use-list-query';
+import { GridToolbar, GridState } from '@/components/GridToolbar';
+import { ListPager } from '@/components/ListPager';
+import { useNavigate } from '@tanstack/react-router';
+import { Card, CardContent } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Avatar } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -20,35 +21,31 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@elite-realty/shared-ui/components/ui";
-import {
-  Plus,
-  Eye,
-  Trash2,
-  Building2,
-} from "lucide-react";
-import { useProperties, useDeleteProperty, type Property } from "@/hooks/use-properties";
-import { useProjects } from "@/hooks/use-projects";
-import { PropertyType, PropertyStatus } from "@elite-realty/shared-types";
+} from '@elite-realty/shared-ui/components/ui';
+import { Plus, Eye, Trash2, Building2 } from 'lucide-react';
+import { useProperties, useDeleteProperty, type Property } from '@/hooks/use-properties';
+import { useProjects } from '@/hooks/use-projects';
+import { PropertyType, PropertyStatus } from '@elite-realty/shared-types';
 
 export default function PropertiesPage() {
   const navigate = useNavigate();
   const listQuery = useListQuery(10);
-  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [projectFilter, setProjectFilter] = useState<string>("all");
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } =
+    listQuery;
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [projectFilter, setProjectFilter] = useState<string>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Property | null>(null);
 
   const fullQuery = useMemo(
     () => ({
       ...query,
-      type: typeFilter !== "all" ? (typeFilter as PropertyType) : undefined,
-      status: statusFilter !== "all" ? (statusFilter as PropertyStatus) : undefined,
-      projectId: projectFilter !== "all" ? projectFilter : undefined,
+      type: typeFilter !== 'all' ? (typeFilter as PropertyType) : undefined,
+      status: statusFilter !== 'all' ? (statusFilter as PropertyStatus) : undefined,
+      projectId: projectFilter !== 'all' ? projectFilter : undefined,
     }),
-    [query, typeFilter, statusFilter, projectFilter]
+    [query, typeFilter, statusFilter, projectFilter],
   );
 
   const { data, isLoading, isError, refetch } = useProperties(fullQuery);
@@ -73,7 +70,7 @@ export default function PropertiesPage() {
           <h1 className="text-3xl font-bold tracking-tight">Properties</h1>
           <p className="text-muted-foreground">Manage your property portfolio</p>
         </div>
-        <Button onClick={() => navigate({ to: "/properties/new" })}>
+        <Button onClick={() => navigate({ to: '/properties/new' })}>
           <Plus className="mr-2 h-4 w-4" /> New Property
         </Button>
       </div>
@@ -84,7 +81,13 @@ export default function PropertiesPage() {
         placeholder="Search properties…"
         filters={
           <>
-            <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); resetPage(); }}>
+            <Select
+              value={typeFilter}
+              onValueChange={(v) => {
+                setTypeFilter(v);
+                resetPage();
+              }}
+            >
               <SelectTrigger className="w-36">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
@@ -92,12 +95,18 @@ export default function PropertiesPage() {
                 <SelectItem value="all">All Types</SelectItem>
                 {Object.values(PropertyType).map((t) => (
                   <SelectItem key={t} value={t}>
-                    {t.replace(/_/g, " ")}
+                    {t.replace(/_/g, ' ')}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); resetPage(); }}>
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => {
+                setStatusFilter(v);
+                resetPage();
+              }}
+            >
               <SelectTrigger className="w-36">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -105,12 +114,18 @@ export default function PropertiesPage() {
                 <SelectItem value="all">All Status</SelectItem>
                 {Object.values(PropertyStatus).map((s) => (
                   <SelectItem key={s} value={s}>
-                    {s.replace(/_/g, " ")}
+                    {s.replace(/_/g, ' ')}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={projectFilter} onValueChange={(v) => { setProjectFilter(v); resetPage(); }}>
+            <Select
+              value={projectFilter}
+              onValueChange={(v) => {
+                setProjectFilter(v);
+                resetPage();
+              }}
+            >
               <SelectTrigger className="w-44">
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
@@ -139,19 +154,42 @@ export default function PropertiesPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b bg-muted/50">
-                    <th {...sortHeader("propertyCode", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Property Code{sortIndicator("propertyCode")}
+                    <th
+                      {...sortHeader(
+                        'propertyCode',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Property Code{sortIndicator('propertyCode')}
                     </th>
-                    <th {...sortHeader("propertyType", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Type{sortIndicator("propertyType")}
+                    <th
+                      {...sortHeader(
+                        'propertyType',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Type{sortIndicator('propertyType')}
                     </th>
-                    <th {...sortHeader("status", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Status{sortIndicator("status")}
+                    <th
+                      {...sortHeader(
+                        'status',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Status{sortIndicator('status')}
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Building</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Project</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Units</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      Building
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      Project
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      Units
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -163,26 +201,34 @@ export default function PropertiesPage() {
                     >
                       <td className="px-4 py-3 text-sm">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-                            <Building2 className="h-4 w-4 text-primary" />
-                          </div>
+                          <Avatar
+                            src={(() => {
+                              const imgs = p.images ?? [];
+                              const primary = imgs.find((i) => i.isPrimary);
+                              return (primary ?? imgs[0])?.url;
+                            })()}
+                            alt={p.name}
+                            fallback={<Building2 className="h-4 w-4 text-primary" />}
+                          />
                           <span className="font-mono text-xs font-medium">{p.code}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <Badge variant="secondary">{p.type.replace(/_/g, " ")}</Badge>
+                        <Badge variant="secondary">{p.type.replace(/_/g, ' ')}</Badge>
                       </td>
                       <td className="px-4 py-3">
                         {(() => {
                           const variant =
-                            p.status === "rented"
-                              ? "success"
-                              : p.status === "available"
-                                ? "default"
-                                : p.status === "under_maintenance"
-                                  ? "warning"
-                                  : "secondary";
-                          return <Badge variant={variant as any}>{p.status.replace(/_/g, " ")}</Badge>;
+                            p.status === 'rented'
+                              ? 'success'
+                              : p.status === 'available'
+                                ? 'default'
+                                : p.status === 'under_maintenance'
+                                  ? 'warning'
+                                  : 'secondary';
+                          return (
+                            <Badge variant={variant as any}>{p.status.replace(/_/g, ' ')}</Badge>
+                          );
                         })()}
                       </td>
                       <td className="px-4 py-3 text-sm font-medium">{p.name}</td>
@@ -242,8 +288,12 @@ export default function PropertiesPage() {
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleteProperty.isPending}>
-              {deleteProperty.isPending ? "Deleting..." : "Delete"}
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteProperty.isPending}
+            >
+              {deleteProperty.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -251,5 +301,3 @@ export default function PropertiesPage() {
     </div>
   );
 }
-
-

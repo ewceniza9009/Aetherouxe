@@ -56,40 +56,126 @@ faker.seed(20260615);
 const pick = <T>(arr: T[]): T => faker.helpers.arrayElement(arr);
 const pickN = <T>(arr: T[], n: number): T[] => faker.helpers.arrayElements(arr, n);
 const chance = (p: number) => faker.number.float({ min: 0, max: 1 }) < p;
-const money = (min: number, max: number) => Math.round(faker.number.float({ min, max }) / 100) * 100;
+const money = (min: number, max: number) =>
+  Math.round(faker.number.float({ min, max }) / 100) * 100;
 const pct = (base: number, percent: number) => Math.round((base * percent) / 100);
-const phPhone = () => `+63 ${faker.string.numeric(3)} ${faker.string.numeric(3)} ${faker.string.numeric(4)}`;
+const phPhone = () =>
+  `+63 ${faker.string.numeric(3)} ${faker.string.numeric(3)} ${faker.string.numeric(4)}`;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 const FILIPINO_FIRST = [
-  'Juan', 'Maria', 'Jose', 'Ana', 'Antonio', 'Luisa', 'Carlos', 'Isabel', 'Miguel', 'Carmen',
-  'Ramon', 'Teresa', 'Manuel', 'Sofia', 'Pedro', 'Elena', 'Ricardo', 'Gloria', 'Eduardo', 'Luzviminda',
-  'Felipe', 'Corazon', 'Emilio', 'Lourdes', 'Danny', 'Angela', 'Bienvenido', 'Marlene', 'Noli', 'Perlita',
-  'Ronaldo', 'Imelda', 'Andres', 'Josephine', 'Paolo', 'Katrina', 'Gabriel', 'Beatriz',
+  'Juan',
+  'Maria',
+  'Jose',
+  'Ana',
+  'Antonio',
+  'Luisa',
+  'Carlos',
+  'Isabel',
+  'Miguel',
+  'Carmen',
+  'Ramon',
+  'Teresa',
+  'Manuel',
+  'Sofia',
+  'Pedro',
+  'Elena',
+  'Ricardo',
+  'Gloria',
+  'Eduardo',
+  'Luzviminda',
+  'Felipe',
+  'Corazon',
+  'Emilio',
+  'Lourdes',
+  'Danny',
+  'Angela',
+  'Bienvenido',
+  'Marlene',
+  'Noli',
+  'Perlita',
+  'Ronaldo',
+  'Imelda',
+  'Andres',
+  'Josephine',
+  'Paolo',
+  'Katrina',
+  'Gabriel',
+  'Beatriz',
 ];
 const FILIPINO_LAST = [
-  'Santos', 'Reyes', 'Cruz', 'Bautista', 'Gonzales', 'Mendoza', 'Garcia', 'Tolentino', 'Aquino', 'Villanueva',
-  'Navarro', 'Dela Cruz', 'Magsaysay', 'Lopez', 'Fernandez', 'Ramirez', 'Torres', 'Rivera', 'Santiago', 'Dizon',
-  'Sarmiento', 'Villamor', 'Alcantara', 'Castillo', 'David', 'Guzman', 'Jimenez', 'Mercado', 'Palma', 'Quiros',
+  'Santos',
+  'Reyes',
+  'Cruz',
+  'Bautista',
+  'Gonzales',
+  'Mendoza',
+  'Garcia',
+  'Tolentino',
+  'Aquino',
+  'Villanueva',
+  'Navarro',
+  'Dela Cruz',
+  'Magsaysay',
+  'Lopez',
+  'Fernandez',
+  'Ramirez',
+  'Torres',
+  'Rivera',
+  'Santiago',
+  'Dizon',
+  'Sarmiento',
+  'Villamor',
+  'Alcantara',
+  'Castillo',
+  'David',
+  'Guzman',
+  'Jimenez',
+  'Mercado',
+  'Palma',
+  'Quiros',
 ];
 
 const name = () => `${pick(FILIPINO_FIRST)} ${pick(FILIPINO_LAST)}`;
 const person = () => {
   const first = pick(FILIPINO_FIRST);
   const last = pick(FILIPINO_LAST);
-  return { first, last, email: `${first}.${last}.${faker.string.alphanumeric(4)}`.toLowerCase() + '@elite-realty.com' };
+  return {
+    first,
+    last,
+    email: `${first}.${last}.${faker.string.alphanumeric(4)}`.toLowerCase() + '@elite-realty.com',
+  };
 };
 
 const DEVELOPERS = [
-  'Ayala Land Premier', 'Alveo Land', 'Avida Land', 'DMCI Homes', 'Megaworld Corporation',
-  'SM Development Corporation', 'Robinsons Land', 'Vista Land & Lifescapes', 'Filinvest Land',
-  'Shang Properties', 'Century Properties', 'Rockwell Land',
+  'Ayala Land Premier',
+  'Alveo Land',
+  'Avida Land',
+  'DMCI Homes',
+  'Megaworld Corporation',
+  'SM Development Corporation',
+  'Robinsons Land',
+  'Vista Land & Lifescapes',
+  'Filinvest Land',
+  'Shang Properties',
+  'Century Properties',
+  'Rockwell Land',
 ];
 
 const PROJECTS = [
   { name: 'Horizon Ayala Towers', code: 'HAT', type: ProjectType.high_rise, city: 'Makati City' },
-  { name: 'Avida Village Nuvali', code: 'AVV', type: ProjectType.village, city: 'Sta. Rosa Laguna' },
-  { name: 'The Arca South Residences', code: 'ARC', type: ProjectType.commercial_complex, city: 'Taguig City' },
+  {
+    name: 'Avida Village Nuvali',
+    code: 'AVV',
+    type: ProjectType.village,
+    city: 'Sta. Rosa Laguna',
+  },
+  {
+    name: 'The Arca South Residences',
+    code: 'ARC',
+    type: ProjectType.commercial_complex,
+    city: 'Taguig City',
+  },
   { name: 'Vertis North Residences', code: 'VNN', type: ProjectType.mid_rise, city: 'Quezon City' },
 ];
 
@@ -101,8 +187,30 @@ const BUILDINGS = [
   { name: 'The Rise', code: 'TR', type: BuildingType.mid_rise },
 ];
 
-const STREETS = ['Ayala Avenue', 'EDSA', 'C5 Road', 'Commonwealth Avenue', 'Taft Avenue', 'Roxas Boulevard', 'McKinley Parkway', '32nd Street BGC', 'Alabang-Zapote Road'];
-const CITIES = ['Makati City', 'Taguig City', 'Quezon City', 'Mandaluyong City', 'Pasig City', 'Muntinlupa City', 'Parañaque City', 'Las Piñas City', 'Sta. Rosa Laguna', 'Cebu City', 'Davao City'];
+const STREETS = [
+  'Ayala Avenue',
+  'EDSA',
+  'C5 Road',
+  'Commonwealth Avenue',
+  'Taft Avenue',
+  'Roxas Boulevard',
+  'McKinley Parkway',
+  '32nd Street BGC',
+  'Alabang-Zapote Road',
+];
+const CITIES = [
+  'Makati City',
+  'Taguig City',
+  'Quezon City',
+  'Mandaluyong City',
+  'Pasig City',
+  'Muntinlupa City',
+  'Parañaque City',
+  'Las Piñas City',
+  'Sta. Rosa Laguna',
+  'Cebu City',
+  'Davao City',
+];
 
 /* ------------------------------------------------------------------ *
  * Mortgage amortization builder (mirrors fixed MortgageService)
@@ -111,7 +219,9 @@ const CITIES = ['Makati City', 'Taguig City', 'Quezon City', 'Mandaluyong City',
 function buildAmortization(loanAmount: number, annualRatePct: number, n: number) {
   const i = annualRatePct / 100 / 12;
   const roundedPayment =
-    i === 0 ? round2(loanAmount / n) : round2((loanAmount * i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1));
+    i === 0
+      ? round2(loanAmount / n)
+      : round2((loanAmount * i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1));
   const rows: any[] = [];
   let beginning = loanAmount;
   let cumInterest = 0;
@@ -150,22 +260,56 @@ function buildAmortization(loanAmount: number, annualRatePct: number, n: number)
 
 async function cleanup() {
   const order = [
-    'notification', 'collectionActivity', 'collectionCase', 'collectionCaseNote',
-    'statementOfAccount', 'paymentReminder',
-    'arArrangementInstallment', 'arPayment', 'arPaymentArrangement', 'arInvoice', 'arCollectionAction',
+    'notification',
+    'collectionActivity',
+    'collectionCase',
+    'collectionCaseNote',
+    'statementOfAccount',
+    'paymentReminder',
+    'arArrangementInstallment',
+    'arPayment',
+    'arPaymentArrangement',
+    'arInvoice',
+    'arCollectionAction',
     'titleTransfer',
-    'rtoEquityLedger', 'rtoPaymentAllocation', 'rtoContract',
-    'mortgageAmortizationSchedule', 'mortgageScenario',
-    'rentalPayment', 'leaseAgreement', 'scheme',
-    'consumptionReading', 'utilityBill', 'utilityMeter', 'utilityRate',
-    'agentCommissionRelease', 'agentTransaction', 'agentLicenseRenewal', 'agentCommission',
+    'rtoEquityLedger',
+    'rtoPaymentAllocation',
+    'rtoContract',
+    'mortgageAmortizationSchedule',
+    'mortgageScenario',
+    'rentalPayment',
+    'leaseAgreement',
+    'scheme',
+    'consumptionReading',
+    'utilityBill',
+    'utilityMeter',
+    'utilityRate',
+    'agentCommissionRelease',
+    'agentTransaction',
+    'agentLicenseRenewal',
+    'agentCommission',
     'realEstateAgent',
-    'contractorPayment', 'contractorEngagement', 'budgetLineItem', 'budget', 'phase', 'contractor',
-    'documentSignature', 'documentVault',
-    'communityPost', 'amenityBooking', 'amenity', 'maintenanceWorkOrder', 'serviceRequest',
+    'contractorPayment',
+    'contractorEngagement',
+    'budgetLineItem',
+    'budget',
+    'phase',
+    'contractor',
+    'documentSignature',
+    'documentVault',
+    'communityPost',
+    'amenityBooking',
+    'amenity',
+    'maintenanceWorkOrder',
+    'serviceRequest',
     'ownerPnlStatement',
-    'propertyImage', 'unitImage',
-    'unit', 'floor', 'building', 'property', 'project',
+    'propertyImage',
+    'unitImage',
+    'unit',
+    'floor',
+    'building',
+    'property',
+    'project',
     'user',
   ] as const;
   for (const m of order) {
@@ -181,7 +325,9 @@ async function cleanup() {
 async function main() {
   const existingUsers = await prisma.user.count();
   if (existingUsers > 0 && process.env.FORCE_RESEED !== '1') {
-    console.log('Database already seeded (users exist) — skipping seed. Set FORCE_RESEED=1 to override.\n');
+    console.log(
+      'Database already seeded (users exist) — skipping seed. Set FORCE_RESEED=1 to override.\n',
+    );
     return;
   }
 
@@ -272,26 +418,55 @@ async function main() {
         accountCode: acc.accountCode,
         name: acc.name,
         type: acc.type,
-      }
+      },
     });
   }
 
   // Financial Mappings
-  const cashAcc = await prisma.chartOfAccount.findFirst({ where: { tenantId: tenant.id, accountCode: '1000' } });
-  const arAcc = await prisma.chartOfAccount.findFirst({ where: { tenantId: tenant.id, accountCode: '1200' } });
-  const apAcc = await prisma.chartOfAccount.findFirst({ where: { tenantId: tenant.id, accountCode: '2000' } });
-  const rentAcc = await prisma.chartOfAccount.findFirst({ where: { tenantId: tenant.id, accountCode: '4000' } });
-  const salesAcc = await prisma.chartOfAccount.findFirst({ where: { tenantId: tenant.id, accountCode: '4100' } });
-  const maintAcc = await prisma.chartOfAccount.findFirst({ where: { tenantId: tenant.id, accountCode: '5000' } });
-  const commAcc = await prisma.chartOfAccount.findFirst({ where: { tenantId: tenant.id, accountCode: '5100' } });
+  const cashAcc = await prisma.chartOfAccount.findFirst({
+    where: { tenantId: tenant.id, accountCode: '1000' },
+  });
+  const arAcc = await prisma.chartOfAccount.findFirst({
+    where: { tenantId: tenant.id, accountCode: '1200' },
+  });
+  const apAcc = await prisma.chartOfAccount.findFirst({
+    where: { tenantId: tenant.id, accountCode: '2000' },
+  });
+  const rentAcc = await prisma.chartOfAccount.findFirst({
+    where: { tenantId: tenant.id, accountCode: '4000' },
+  });
+  const salesAcc = await prisma.chartOfAccount.findFirst({
+    where: { tenantId: tenant.id, accountCode: '4100' },
+  });
+  const maintAcc = await prisma.chartOfAccount.findFirst({
+    where: { tenantId: tenant.id, accountCode: '5000' },
+  });
+  const commAcc = await prisma.chartOfAccount.findFirst({
+    where: { tenantId: tenant.id, accountCode: '5100' },
+  });
 
   if (cashAcc && arAcc && apAcc && rentAcc && salesAcc && maintAcc && commAcc) {
     await prisma.financialMapping.deleteMany({ where: { tenantId: tenant.id } });
     await prisma.financialMapping.createMany({
       data: [
-        { tenantId: tenant.id, transactionType: 'WORK_ORDER_COMPLETED', debitAccountId: maintAcc.id, creditAccountId: apAcc.id },
-        { tenantId: tenant.id, transactionType: 'COMMISSION_APPROVED', debitAccountId: commAcc.id, creditAccountId: apAcc.id },
-        { tenantId: tenant.id, transactionType: 'SALE_CONTRACT_SIGNED', debitAccountId: arAcc.id, creditAccountId: salesAcc.id },
+        {
+          tenantId: tenant.id,
+          transactionType: 'WORK_ORDER_COMPLETED',
+          debitAccountId: maintAcc.id,
+          creditAccountId: apAcc.id,
+        },
+        {
+          tenantId: tenant.id,
+          transactionType: 'COMMISSION_APPROVED',
+          debitAccountId: commAcc.id,
+          creditAccountId: apAcc.id,
+        },
+        {
+          tenantId: tenant.id,
+          transactionType: 'SALE_CONTRACT_SIGNED',
+          debitAccountId: arAcc.id,
+          creditAccountId: salesAcc.id,
+        },
       ],
     });
   }
@@ -324,7 +499,13 @@ async function main() {
 
   // Agents + real estate agent profiles
   const agents: { user: any; agent: any }[] = [];
-  const agentTiers = [AgentTier.team_lead, AgentTier.senior, AgentTier.senior, AgentTier.junior, AgentTier.external_broker];
+  const agentTiers = [
+    AgentTier.team_lead,
+    AgentTier.senior,
+    AgentTier.senior,
+    AgentTier.junior,
+    AgentTier.external_broker,
+  ];
   for (let i = 0; i < 5; i++) {
     const p = person();
     const user = await prisma.user.create({
@@ -347,12 +528,17 @@ async function main() {
         commissionRateDefault: Number(faker.helpers.arrayElement([3, 3.5, 4, 5]).toFixed(2)),
         tier: agentTiers[i]!,
         isInternal: i !== 4,
-        managerId: i === 0 ? null : agents[0]?.agent.id ?? null,
+        managerId: i === 0 ? null : (agents[0]?.agent.id ?? null),
       },
     });
     // license renewals
     const exp = faker.date.soon({ days: 400 });
-    const status = exp < new Date() ? 'expired' : exp < faker.date.soon({ days: 60 }) ? 'expiring_soon' : 'compliant';
+    const status =
+      exp < new Date()
+        ? 'expired'
+        : exp < faker.date.soon({ days: 60 })
+          ? 'expiring_soon'
+          : 'compliant';
     await prisma.agentLicenseRenewal.create({
       data: {
         tenantId: tenant.id,
@@ -403,20 +589,47 @@ async function main() {
     });
     residents.push(user);
   }
-  console.log(`Users: 1 super_admin, 1 PM, 1 finance, ${agents.length} agents, ${owners.length} owners, ${residents.length} residents`);
+  console.log(
+    `Users: 1 super_admin, 1 PM, 1 finance, ${agents.length} agents, ${owners.length} owners, ${residents.length} residents`,
+  );
 
   /* ── Utility Rates (water + electricity) ── */
   await prisma.utilityRate.createMany({
     data: [
-      { tenantId: tenant.id, meterType: UtilityType.water, ratePerUnit: 28.5, baseCharge: 50, effectiveFrom: faker.date.past({ years: 2 }) },
-      { tenantId: tenant.id, meterType: UtilityType.electricity, ratePerUnit: 11.0, baseCharge: 70, effectiveFrom: faker.date.past({ years: 2 }) },
-      { tenantId: tenant.id, meterType: UtilityType.water, ratePerUnit: 31.0, baseCharge: 55, effectiveFrom: faker.date.future({ years: 1 }) },
+      {
+        tenantId: tenant.id,
+        meterType: UtilityType.water,
+        ratePerUnit: 28.5,
+        baseCharge: 50,
+        effectiveFrom: faker.date.past({ years: 2 }),
+      },
+      {
+        tenantId: tenant.id,
+        meterType: UtilityType.electricity,
+        ratePerUnit: 11.0,
+        baseCharge: 70,
+        effectiveFrom: faker.date.past({ years: 2 }),
+      },
+      {
+        tenantId: tenant.id,
+        meterType: UtilityType.water,
+        ratePerUnit: 31.0,
+        baseCharge: 55,
+        effectiveFrom: faker.date.future({ years: 1 }),
+      },
     ],
   });
 
   /* ── Projects, Phases, Budgets, Contractors ── */
   const contractors: any[] = [];
-  const CONTRACTOR_NAMES = ['Megabuild Construction', 'Prime Structures Inc.', 'Cebu Engineering Works', 'Luzon MEP Services', 'Golden Ratio Interiors', 'Verde Landscaping'];
+  const CONTRACTOR_NAMES = [
+    'Megabuild Construction',
+    'Prime Structures Inc.',
+    'Cebu Engineering Works',
+    'Luzon MEP Services',
+    'Golden Ratio Interiors',
+    'Verde Landscaping',
+  ];
   for (const cname of CONTRACTOR_NAMES) {
     contractors.push(
       await prisma.contractor.create({
@@ -428,7 +641,13 @@ async function main() {
           phone: phPhone(),
           licenseNumber: `PCAB-${faker.string.numeric(6)}`,
           taxId: `${faker.string.numeric(3)}-${faker.string.numeric(3)}-${faker.string.numeric(3)}`,
-          specialization: pick(['General Contracting', 'MEPF', 'Fit-out', 'Landscaping', 'Structural']),
+          specialization: pick([
+            'General Contracting',
+            'MEPF',
+            'Fit-out',
+            'Landscaping',
+            'Structural',
+          ]),
           isActive: true,
         },
       }),
@@ -437,12 +656,17 @@ async function main() {
 
   const projects: any[] = [];
   for (const proj of PROJECTS) {
-    const status = pick([ProjectStatus.pre_selling, ProjectStatus.construction, ProjectStatus.fit_out, ProjectStatus.planning]);
+    const status = pick([
+      ProjectStatus.pre_selling,
+      ProjectStatus.construction,
+      ProjectStatus.fit_out,
+      ProjectStatus.planning,
+    ]);
     const project = await prisma.project.create({
       data: {
         tenantId: tenant.id,
         name: proj.name,
-        description: `${proj.name} — a premium ${proj.type.replace('_', ' ')} development in ${proj.city}.`,
+        description: `An address of distinction, ${proj.name} is a ${proj.type.replace('_', ' ')} development poised in the heart of ${proj.city}. Crafted for those who expect more, it pairs considered architecture with resort-grade amenities and the quiet confidence of a premier Philippine address — a landmark investment in modern living.`,
         projectType: proj.type,
         status,
         totalPhases: faker.number.int({ min: 2, max: 4 }),
@@ -482,9 +706,16 @@ async function main() {
     });
 
     const categories: BudgetCategory[] = [
-      BudgetCategory.land_acquisition, BudgetCategory.construction, BudgetCategory.permits,
-      BudgetCategory.architectural_design, BudgetCategory.engineering, BudgetCategory.interior_fit_out,
-      BudgetCategory.landscaping, BudgetCategory.marketing, BudgetCategory.contingency, BudgetCategory.misc,
+      BudgetCategory.land_acquisition,
+      BudgetCategory.construction,
+      BudgetCategory.permits,
+      BudgetCategory.architectural_design,
+      BudgetCategory.engineering,
+      BudgetCategory.interior_fit_out,
+      BudgetCategory.landscaping,
+      BudgetCategory.marketing,
+      BudgetCategory.contingency,
+      BudgetCategory.misc,
     ];
     const chosen = pickN(categories, faker.number.int({ min: 6, max: 9 }));
     for (const cat of chosen) {
@@ -512,7 +743,11 @@ async function main() {
           endDate: faker.date.future({ years: 1 }),
           contractDocumentUrl: 'https://cdn.elite-realty.example/contract.pdf',
           terms: 'Net 30',
-          status: pick([ContractorEngagementStatus.active, ContractorEngagementStatus.completed, ContractorEngagementStatus.pending]),
+          status: pick([
+            ContractorEngagementStatus.active,
+            ContractorEngagementStatus.completed,
+            ContractorEngagementStatus.pending,
+          ]),
         },
       });
       const payCount = faker.number.int({ min: 1, max: 4 });
@@ -544,60 +779,121 @@ async function main() {
 
   const schemeDefs = [
     {
-      code: 'SCH-STD-RENTAL', name: 'Standard Residential Lease', schemeType: SchemeType.standard_rental,
-      projectId: null, remarks: '12-month lease, 2-month deposit, 5%/day late penalty after 3-day grace.',
-      securityDepositPercent: '200', penaltyPercent: '5', graceDays: 3,
-      agentCommissionPercentage: '1', companyCommissionPercentage: '0.5',
+      code: 'SCH-STD-RENTAL',
+      name: 'Standard Residential Lease',
+      schemeType: SchemeType.standard_rental,
+      projectId: null,
+      remarks: '12-month lease, 2-month deposit, 5%/day late penalty after 3-day grace.',
+      securityDepositPercent: '200',
+      penaltyPercent: '5',
+      graceDays: 3,
+      agentCommissionPercentage: '1',
+      companyCommissionPercentage: '0.5',
     },
     {
-      code: 'SCH-CORP-RENTAL', name: 'Corporate Long-Term Lease', schemeType: SchemeType.standard_rental,
-      projectId: horizon?.id ?? null, remarks: '3-year corporate lease with 3-month deposit and 5-day grace.',
-      securityDepositPercent: '300', penaltyPercent: '3', graceDays: 5,
-      agentCommissionPercentage: '1.5', companyCommissionPercentage: '0.5',
+      code: 'SCH-CORP-RENTAL',
+      name: 'Corporate Long-Term Lease',
+      schemeType: SchemeType.standard_rental,
+      projectId: horizon?.id ?? null,
+      remarks: '3-year corporate lease with 3-month deposit and 5-day grace.',
+      securityDepositPercent: '300',
+      penaltyPercent: '3',
+      graceDays: 5,
+      agentCommissionPercentage: '1.5',
+      companyCommissionPercentage: '0.5',
     },
     {
-      code: 'SCH-SPOT-CASH', name: 'Spot Cash 10% Discount', schemeType: SchemeType.spot_cash,
-      projectId: null, remarks: 'Full payment within 30 days for 10% off the selling price.',
-      discountPercent: '10', agentCommissionPercentage: '4', companyCommissionPercentage: '2',
+      code: 'SCH-SPOT-CASH',
+      name: 'Spot Cash 10% Discount',
+      schemeType: SchemeType.spot_cash,
+      projectId: null,
+      remarks: 'Full payment within 30 days for 10% off the selling price.',
+      discountPercent: '10',
+      agentCommissionPercentage: '4',
+      companyCommissionPercentage: '2',
     },
     {
-      code: 'SCH-INHOUSE-24', name: 'In-House 24-Month Installment', schemeType: SchemeType.installment,
-      projectId: avida?.id ?? null, remarks: '20% DP over 24 months, 80% balance on turnover.',
-      dpNumberOfPayments: 24, dpNumberOfDaysFromDp: 30, eqPaymentPercentage: '20',
-      eqMonthlyAmortPercentage: '20', eqNumberOfPayments: 24, eqDownpaymentPercentage: '0',
-      blPaymentPercentage: '80', blMiscPercentage: '8.5', blNumberOfPayments: 1,
-      agentCommissionPercentage: '4', companyCommissionPercentage: '2',
+      code: 'SCH-INHOUSE-24',
+      name: 'In-House 24-Month Installment',
+      schemeType: SchemeType.installment,
+      projectId: avida?.id ?? null,
+      remarks: '20% DP over 24 months, 80% balance on turnover.',
+      dpNumberOfPayments: 24,
+      dpNumberOfDaysFromDp: 30,
+      eqPaymentPercentage: '20',
+      eqMonthlyAmortPercentage: '20',
+      eqNumberOfPayments: 24,
+      eqDownpaymentPercentage: '0',
+      blPaymentPercentage: '80',
+      blMiscPercentage: '8.5',
+      blNumberOfPayments: 1,
+      agentCommissionPercentage: '4',
+      companyCommissionPercentage: '2',
     },
     {
-      code: 'SCH-INHOUSE-60', name: 'In-House 60-Month Deferred', schemeType: SchemeType.installment,
-      projectId: arca?.id ?? null, remarks: '10% DP, 90% spread over 60 months, no balloon.',
-      dpNumberOfPayments: 12, dpNumberOfDaysFromDp: 30, eqPaymentPercentage: '10',
-      eqMonthlyAmortPercentage: '90', eqNumberOfPayments: 60, eqDownpaymentPercentage: '10',
-      blPaymentPercentage: '0', blMiscPercentage: '8.5', blNumberOfPayments: 1,
-      discountPercent: '0', agentCommissionPercentage: '3.5', companyCommissionPercentage: '2',
+      code: 'SCH-INHOUSE-60',
+      name: 'In-House 60-Month Deferred',
+      schemeType: SchemeType.installment,
+      projectId: arca?.id ?? null,
+      remarks: '10% DP, 90% spread over 60 months, no balloon.',
+      dpNumberOfPayments: 12,
+      dpNumberOfDaysFromDp: 30,
+      eqPaymentPercentage: '10',
+      eqMonthlyAmortPercentage: '90',
+      eqNumberOfPayments: 60,
+      eqDownpaymentPercentage: '10',
+      blPaymentPercentage: '0',
+      blMiscPercentage: '8.5',
+      blNumberOfPayments: 1,
+      discountPercent: '0',
+      agentCommissionPercentage: '3.5',
+      companyCommissionPercentage: '2',
     },
     {
-      code: 'SCH-MORTGAGE-BDO', name: 'Bank Mortgage Assisted (BDO)', schemeType: SchemeType.mortgage_assisted,
-      projectId: vertis?.id ?? null, remarks: '20% DP in-house over 12 months; 80% via bank at 7% for 20 years.',
-      dpNumberOfPayments: 12, dpNumberOfDaysFromDp: 30,
-      mortgageDownPaymentPercent: '20', interestRatePercent: '7', loanTermMonths: 240,
-      blPaymentPercentage: '80', blMiscPercentage: '8.5',
-      agentCommissionPercentage: '3.5', companyCommissionPercentage: '2',
+      code: 'SCH-MORTGAGE-BDO',
+      name: 'Bank Mortgage Assisted (BDO)',
+      schemeType: SchemeType.mortgage_assisted,
+      projectId: vertis?.id ?? null,
+      remarks: '20% DP in-house over 12 months; 80% via bank at 7% for 20 years.',
+      dpNumberOfPayments: 12,
+      dpNumberOfDaysFromDp: 30,
+      mortgageDownPaymentPercent: '20',
+      interestRatePercent: '7',
+      loanTermMonths: 240,
+      blPaymentPercentage: '80',
+      blMiscPercentage: '8.5',
+      agentCommissionPercentage: '3.5',
+      companyCommissionPercentage: '2',
     },
     {
-      code: 'SCH-MORTGAGE-PAGIBIG', name: 'Pag-IBIG Housing Loan', schemeType: SchemeType.mortgage_assisted,
-      projectId: null, remarks: '10% DP; 90% via Pag-IBIG at 6.25% for 30 years.',
-      dpNumberOfPayments: 6, dpNumberOfDaysFromDp: 30,
-      mortgageDownPaymentPercent: '10', interestRatePercent: '6.25', loanTermMonths: 360,
-      blPaymentPercentage: '90', blMiscPercentage: '8.5',
-      agentCommissionPercentage: '3', companyCommissionPercentage: '1.5',
+      code: 'SCH-MORTGAGE-PAGIBIG',
+      name: 'Pag-IBIG Housing Loan',
+      schemeType: SchemeType.mortgage_assisted,
+      projectId: null,
+      remarks: '10% DP; 90% via Pag-IBIG at 6.25% for 30 years.',
+      dpNumberOfPayments: 6,
+      dpNumberOfDaysFromDp: 30,
+      mortgageDownPaymentPercent: '10',
+      interestRatePercent: '6.25',
+      loanTermMonths: 360,
+      blPaymentPercentage: '90',
+      blMiscPercentage: '8.5',
+      agentCommissionPercentage: '3',
+      companyCommissionPercentage: '1.5',
     },
     {
-      code: 'SCH-RTO-5YR', name: 'Rent-to-Own 5-Year Path', schemeType: SchemeType.rent_to_own,
-      projectId: avida?.id ?? null, remarks: 'Option fee 2%; 30% of rent accrues as equity; purchase option matures in 5 years.',
-      optionFeePercent: '2', equityAccumulationPercent: '30', targetPurchaseYears: 5,
-      penaltyPercent: '5', graceDays: 5,
-      agentCommissionPercentage: '3', companyCommissionPercentage: '1.5',
+      code: 'SCH-RTO-5YR',
+      name: 'Rent-to-Own 5-Year Path',
+      schemeType: SchemeType.rent_to_own,
+      projectId: avida?.id ?? null,
+      remarks: 'Option fee 2%; 30% of rent accrues as equity; purchase option matures in 5 years.',
+      optionFeePercent: '2',
+      equityAccumulationPercent: '30',
+      targetPurchaseYears: 5,
+      penaltyPercent: '5',
+      graceDays: 5,
+      agentCommissionPercentage: '3',
+      companyCommissionPercentage: '1.5',
     },
   ];
 
@@ -612,10 +908,22 @@ async function main() {
   console.log(`Schemes: ${schemes.length}`);
 
   /* ── Properties, Buildings, Floors, Units ── */
-  const propertyTypeOptions = [PropertyType.condo_unit, PropertyType.house_and_lot, PropertyType.townhouse, PropertyType.commercial_space, PropertyType.parking_slot];
+  const propertyTypeOptions = [
+    PropertyType.condo_unit,
+    PropertyType.house_and_lot,
+    PropertyType.townhouse,
+    PropertyType.commercial_space,
+    PropertyType.parking_slot,
+  ];
   // Unit types that make sense for each property type
   const unitTypesByProperty: Record<PropertyType, UnitType[]> = {
-    [PropertyType.condo_unit]: [UnitType.studio, UnitType.one_br, UnitType.two_br, UnitType.three_br, UnitType.penthouse],
+    [PropertyType.condo_unit]: [
+      UnitType.studio,
+      UnitType.one_br,
+      UnitType.two_br,
+      UnitType.three_br,
+      UnitType.penthouse,
+    ],
     [PropertyType.house_and_lot]: [UnitType.two_br, UnitType.three_br],
     [PropertyType.townhouse]: [UnitType.two_br, UnitType.three_br],
     [PropertyType.commercial_space]: [UnitType.commercial],
@@ -633,7 +941,7 @@ async function main() {
       data: {
         tenantId: tenant.id,
         projectId: project.id,
-        name: `${project.name} — ${bldg.name}`,
+        name: `${project.name} · ${bldg.name}`,
         buildingType: bldg.type,
         floorCount: faker.number.int({ min: 6, max: 40 }),
         unitCount: faker.number.int({ min: 20, max: 120 }),
@@ -679,12 +987,18 @@ async function main() {
       ]);
       const unitStatusFor = (s: PropertyStatus): UnitStatus => {
         switch (s) {
-          case PropertyStatus.sold: return UnitStatus.occupied;
-          case PropertyStatus.rented: return UnitStatus.rented;
-          case PropertyStatus.rto_active: return UnitStatus.rto_active;
-          case PropertyStatus.reserved: return UnitStatus.reserved;
-          case PropertyStatus.under_maintenance: return UnitStatus.under_maintenance;
-          default: return UnitStatus.available;
+          case PropertyStatus.sold:
+            return UnitStatus.occupied;
+          case PropertyStatus.rented:
+            return UnitStatus.rented;
+          case PropertyStatus.rto_active:
+            return UnitStatus.rto_active;
+          case PropertyStatus.reserved:
+            return UnitStatus.reserved;
+          case PropertyStatus.under_maintenance:
+            return UnitStatus.under_maintenance;
+          default:
+            return UnitStatus.available;
         }
       };
 
@@ -702,7 +1016,10 @@ async function main() {
       // Build the unit list for this property: the titled primary unit, plus an
       // optional bundled parking slot for residential titles (~15%).
       const unitPlans: UnitType[] = [primaryUnitType];
-      const canBundleParking = ptype === PropertyType.condo_unit || ptype === PropertyType.house_and_lot || ptype === PropertyType.townhouse;
+      const canBundleParking =
+        ptype === PropertyType.condo_unit ||
+        ptype === PropertyType.house_and_lot ||
+        ptype === PropertyType.townhouse;
       if (canBundleParking && chance(0.15)) {
         unitPlans.push(UnitType.parking);
       }
@@ -719,21 +1036,28 @@ async function main() {
               : ut === UnitType.two_br
                 ? 2
                 : 3;
-        const bathrooms = ut === UnitType.parking ? 0 : ut === UnitType.studio || ut === UnitType.commercial ? 1 : 2;
+        const bathrooms =
+          ut === UnitType.parking
+            ? 0
+            : ut === UnitType.studio || ut === UnitType.commercial
+              ? 1
+              : 2;
         const isSmall = ut === UnitType.parking || ut === UnitType.studio;
         const unit = await prisma.unit.create({
           data: {
             propertyId: property.id,
             buildingId: building.id,
             floorId: floor.id,
-            unitNumber: ut === UnitType.parking
-              ? `P-${unitNo}`
-              : `${floor.floorNumber}${pick(['A', 'B', 'C', 'D'])}`,
+            unitNumber:
+              ut === UnitType.parking
+                ? `P-${unitNo}`
+                : `${floor.floorNumber}${pick(['A', 'B', 'C', 'D'])}`,
             unitType: ut,
             status: unitStatusFor(propStatus),
-            squareMeters: ut === UnitType.parking
-              ? faker.number.int({ min: 12, max: 25 })
-              : faker.number.int({ min: isSmall ? 24 : 45, max: 220 }),
+            squareMeters:
+              ut === UnitType.parking
+                ? faker.number.int({ min: 12, max: 25 })
+                : faker.number.int({ min: isSmall ? 24 : 45, max: 220 }),
             bedrooms,
             bathrooms,
             hasBalcony: ut === UnitType.parking ? false : chance(0.5),
@@ -749,7 +1073,12 @@ async function main() {
       }
 
       // Lease/RTO targets are the titled property + its primary unit
-      if (primaryUnit && (propStatus === PropertyStatus.rented || propStatus === PropertyStatus.rto_active || chance(0.35))) {
+      if (
+        primaryUnit &&
+        (propStatus === PropertyStatus.rented ||
+          propStatus === PropertyStatus.rto_active ||
+          chance(0.35))
+      ) {
         leaseTargets.push({ property, unit: primaryUnit });
       }
     }
@@ -766,7 +1095,12 @@ async function main() {
 
   for (const target of leaseTargets) {
     const resident = pick(residents);
-    const leaseType = pick([LeaseType.standard_rental, LeaseType.standard_rental, LeaseType.corporate_lease, LeaseType.rent_to_own]);
+    const leaseType = pick([
+      LeaseType.standard_rental,
+      LeaseType.standard_rental,
+      LeaseType.corporate_lease,
+      LeaseType.rent_to_own,
+    ]);
     const monthlyRent = money(15000, 120000);
     const startDate = faker.date.past({ years: 1 });
     const endDate = new Date(startDate);
@@ -848,7 +1182,9 @@ async function main() {
 
       // Seed equity ledger + allocations from existing rental payments
       let running = 0;
-      const payments = await prisma.rentalPayment.findMany({ where: { leaseAgreementId: lease.id, status: 'paid' } });
+      const payments = await prisma.rentalPayment.findMany({
+        where: { leaseAgreementId: lease.id, status: 'paid' },
+      });
       for (const pay of payments) {
         running = round2(running + equityPortion);
         const ledger = await prisma.rtoEquityLedger.create({
@@ -872,7 +1208,10 @@ async function main() {
         });
         void ledger;
       }
-      await prisma.rtoContract.update({ where: { id: rto.id }, data: { accumulatedEquity: running } });
+      await prisma.rtoContract.update({
+        where: { id: rto.id },
+        data: { accumulatedEquity: running },
+      });
     }
 
     // Mortgage scenarios for a subset of leases (resident explores options)
@@ -950,7 +1289,13 @@ async function main() {
         const base = meterType === UtilityType.water ? 50 : 70;
         // reading
         await prisma.consumptionReading.create({
-          data: { meterId: meter.id, readingDate: periodEnd, value: current, reader: chance(0.5) ? 'meter_reader' : null, note: null },
+          data: {
+            meterId: meter.id,
+            readingDate: periodEnd,
+            value: current,
+            reader: chance(0.5) ? 'meter_reader' : null,
+            note: null,
+          },
         });
         const amountDue = round2(consumption * rate + base);
         const paid = chance(0.7);
@@ -987,12 +1332,22 @@ async function main() {
       const amount = money(2000, 40000);
       const due = faker.date.recent({ days: 45 });
       const paid = chance(0.6);
-      const status: InvoiceStatus = paid ? InvoiceStatus.paid : due < new Date() ? InvoiceStatus.overdue : InvoiceStatus.pending;
+      const status: InvoiceStatus = paid
+        ? InvoiceStatus.paid
+        : due < new Date()
+          ? InvoiceStatus.overdue
+          : InvoiceStatus.pending;
       const inv = await prisma.arInvoice.create({
         data: {
           tenantId: tenant.id,
           userId: resident.id,
-          invoiceType: pick([InvoiceType.rental, InvoiceType.utility_water, InvoiceType.utility_electricity, InvoiceType.association_dues, InvoiceType.late_fee]),
+          invoiceType: pick([
+            InvoiceType.rental,
+            InvoiceType.utility_water,
+            InvoiceType.utility_electricity,
+            InvoiceType.association_dues,
+            InvoiceType.late_fee,
+          ]),
           invoiceNumber: `AR-${faker.string.alphanumeric(8).toUpperCase()}`,
           amount,
           dueDate: due,
@@ -1047,10 +1402,52 @@ async function main() {
 
   /* ── Agent Commissions, Transactions, Releases ── */
   const commissionRules = [
-    await prisma.agentCommission.create({ data: { tenantId: tenant.id, name: 'Default Residential', agentTier: null, propertyType: null, commissionType: CommissionType.percentage_of_sale, commissionValue: '3', isActive: true } }),
-    await prisma.agentCommission.create({ data: { tenantId: tenant.id, name: 'Luxury High-Rise Bonus', agentTier: AgentTier.team_lead, propertyType: PropertyType.condo_unit, commissionType: CommissionType.percentage_of_sale, commissionValue: '5', isActive: true } }),
-    await prisma.agentCommission.create({ data: { tenantId: tenant.id, name: 'Rental Lease Commission', propertyType: null, commissionType: CommissionType.percentage_of_rent, commissionValue: '1', isActive: true } }),
-    await prisma.agentCommission.create({ data: { tenantId: tenant.id, name: 'Tiered Sales', propertyType: PropertyType.house_and_lot, commissionType: CommissionType.tiered, commissionValue: JSON.stringify([{ upto: 5000000, rate: 3 }, { upto: 10000000, rate: 4 }, { upto: null, rate: 5 }]), isActive: true } }),
+    await prisma.agentCommission.create({
+      data: {
+        tenantId: tenant.id,
+        name: 'Default Residential',
+        agentTier: null,
+        propertyType: null,
+        commissionType: CommissionType.percentage_of_sale,
+        commissionValue: '3',
+        isActive: true,
+      },
+    }),
+    await prisma.agentCommission.create({
+      data: {
+        tenantId: tenant.id,
+        name: 'Luxury High-Rise Bonus',
+        agentTier: AgentTier.team_lead,
+        propertyType: PropertyType.condo_unit,
+        commissionType: CommissionType.percentage_of_sale,
+        commissionValue: '5',
+        isActive: true,
+      },
+    }),
+    await prisma.agentCommission.create({
+      data: {
+        tenantId: tenant.id,
+        name: 'Rental Lease Commission',
+        propertyType: null,
+        commissionType: CommissionType.percentage_of_rent,
+        commissionValue: '1',
+        isActive: true,
+      },
+    }),
+    await prisma.agentCommission.create({
+      data: {
+        tenantId: tenant.id,
+        name: 'Tiered Sales',
+        propertyType: PropertyType.house_and_lot,
+        commissionType: CommissionType.tiered,
+        commissionValue: JSON.stringify([
+          { upto: 5000000, rate: 3 },
+          { upto: 10000000, rate: 4 },
+          { upto: null, rate: 5 },
+        ]),
+        isActive: true,
+      },
+    }),
   ];
 
   const properties = await prisma.property.findMany({ take: 12 });
@@ -1078,8 +1475,28 @@ async function main() {
     'https://images.unsplash.com/photo-1600573472592-401b489a3cdc?w=600',
     'https://images.unsplash.com/photo-1616137466211-f73a09e5f6e9?w=600',
   ];
-  const PROP_ALTS = ['Building exterior', 'Lobby entrance', 'Facade view', 'Tower overview', 'Aerial view', 'Pool area', 'Garden view', 'Parking area', 'Rooftop view', 'Neighborhood'];
-  const UNIT_ALTS = ['Living room', 'Kitchen', 'Bedroom', 'Bathroom', 'Balcony view', 'Dining area', 'Study room', 'Unit interior'];
+  const PROP_ALTS = [
+    'Building exterior',
+    'Lobby entrance',
+    'Facade view',
+    'Tower overview',
+    'Aerial view',
+    'Pool area',
+    'Garden view',
+    'Parking area',
+    'Rooftop view',
+    'Neighborhood',
+  ];
+  const UNIT_ALTS = [
+    'Living room',
+    'Kitchen',
+    'Bedroom',
+    'Bathroom',
+    'Balcony view',
+    'Dining area',
+    'Study room',
+    'Unit interior',
+  ];
 
   let imgCount = 0;
   for (const prop of pickN(properties, Math.min(8, properties.length))) {
@@ -1120,14 +1537,23 @@ async function main() {
     const txns = faker.number.int({ min: 3, max: 6 });
     for (let t = 0; t < txns; t++) {
       const property = pick(properties);
-      const txType = pick([TransactionType.sale, TransactionType.rental_lease, TransactionType.rto_contract, TransactionType.lease_renewal]);
-      const txAmount = txType === TransactionType.rental_lease ? money(15000, 120000) : money(3_000_000, 20_000_000);
+      const txType = pick([
+        TransactionType.sale,
+        TransactionType.rental_lease,
+        TransactionType.rto_contract,
+        TransactionType.lease_renewal,
+      ]);
+      const txAmount =
+        txType === TransactionType.rental_lease
+          ? money(15000, 120000)
+          : money(3_000_000, 20_000_000);
       const rule = commissionRules[t % commissionRules.length]!;
-      const calc = rule.commissionType === CommissionType.tiered
-        ? round2(txAmount * 0.04)
-        : rule.commissionType === CommissionType.percentage_of_rent
-          ? round2((txAmount * Number(rule.commissionValue)) / 100)
-          : round2((txAmount * Number(rule.commissionValue)) / 100);
+      const calc =
+        rule.commissionType === CommissionType.tiered
+          ? round2(txAmount * 0.04)
+          : rule.commissionType === CommissionType.percentage_of_rent
+            ? round2((txAmount * Number(rule.commissionValue)) / 100)
+            : round2((txAmount * Number(rule.commissionValue)) / 100);
       const tx = await prisma.agentTransaction.create({
         data: {
           agentId: agent.agent.id,
@@ -1137,7 +1563,12 @@ async function main() {
           commissionRuleId: rule.id,
           calculatedCommission: calc,
           finalCommission: calc,
-          status: pick([CommissionStatus.approved, CommissionStatus.pending, CommissionStatus.partially_paid, CommissionStatus.fully_paid]),
+          status: pick([
+            CommissionStatus.approved,
+            CommissionStatus.pending,
+            CommissionStatus.partially_paid,
+            CommissionStatus.fully_paid,
+          ]),
           transactionDate: faker.date.past({ years: 1 }),
         },
       });
@@ -1188,9 +1619,14 @@ async function main() {
 
   /* ── Community Posts ── */
   const POST_TITLES = [
-    'Water Interruption Notice — Scheduled Maintenance', 'Annual Townhall Meeting', 'New Gym Equipment Arrived',
-    'Fire Drill on Saturday 9AM', 'Holiday Lighting Ceremony', 'Pool Closure for Cleaning',
-    'Garbage Collection Schedule Update', 'Welcome New Residents!',
+    'Water Interruption Notice — Scheduled Maintenance',
+    'Annual Townhall Meeting',
+    'New Gym Equipment Arrived',
+    'Fire Drill on Saturday 9AM',
+    'Holiday Lighting Ceremony',
+    'Pool Closure for Cleaning',
+    'Garbage Collection Schedule Update',
+    'Welcome New Residents!',
   ];
   for (const title of POST_TITLES) {
     await prisma.communityPost.create({
@@ -1245,11 +1681,17 @@ async function main() {
           amenityId: amenity.id,
           tenantId: tenant.id,
           unitId: lease.unitId ?? undefined,
-          tenantName: `${resident.firstName ?? ''} ${resident.lastName ?? ''}`.trim() || resident.email,
+          tenantName:
+            `${resident.firstName ?? ''} ${resident.lastName ?? ''}`.trim() || resident.email,
           unitLabel: lease.unitLabel ?? undefined,
           bookingStart: start,
           bookingEnd: end,
-          status: pick([BookingStatus.confirmed, BookingStatus.completed, BookingStatus.pending, BookingStatus.cancelled]),
+          status: pick([
+            BookingStatus.confirmed,
+            BookingStatus.completed,
+            BookingStatus.pending,
+            BookingStatus.cancelled,
+          ]),
           totalAmount: amenity.hourlyRate ?? null,
           notes: chance(0.5) ? faker.lorem.sentence() : null,
         },
@@ -1259,7 +1701,14 @@ async function main() {
   console.log('Community posts, amenities & bookings created');
 
   /* ── Service Requests + Work Orders ── */
-  const serviceCats = [ServiceCategory.plumbing, ServiceCategory.electrical, ServiceCategory.hvac, ServiceCategory.general, ServiceCategory.pest, ServiceCategory.elevator];
+  const serviceCats = [
+    ServiceCategory.plumbing,
+    ServiceCategory.electrical,
+    ServiceCategory.hvac,
+    ServiceCategory.general,
+    ServiceCategory.pest,
+    ServiceCategory.elevator,
+  ];
   const woStatusByRequest: Record<string, string> = {
     open: 'scheduled',
     assigned: 'scheduled',
@@ -1270,7 +1719,13 @@ async function main() {
   for (let s = 0; s < 18; s++) {
     const resident = pick(residents);
     const unit = pick(allUnits);
-    const status = pick([ServiceStatus.open, ServiceStatus.assigned, ServiceStatus.in_progress, ServiceStatus.completed, ServiceStatus.cancelled]);
+    const status = pick([
+      ServiceStatus.open,
+      ServiceStatus.assigned,
+      ServiceStatus.in_progress,
+      ServiceStatus.completed,
+      ServiceStatus.cancelled,
+    ]);
     const req = await prisma.serviceRequest.create({
       data: {
         tenantId: tenant.id,
@@ -1283,7 +1738,7 @@ async function main() {
         requestedAt: faker.date.past({ years: 1 }),
         scheduledAt: chance(0.5) ? faker.date.soon({ days: 14 }) : null,
         completedAt: status === ServiceStatus.completed ? faker.date.recent({ days: 30 }) : null,
-        ...(chance(0.6) 
+        ...(chance(0.6)
           ? chance(0.5)
             ? { assignedToId: pick(agents).user.id, assignedToType: 'agent' }
             : { assignedToId: pick(contractors).id, assignedToType: 'contractor' }
@@ -1301,7 +1756,8 @@ async function main() {
           vendorId: pick(contractors).id,
           scheduledDate: chance(0.7) ? faker.date.soon({ days: 21 }) : null,
           estimatedCost: est,
-          actualCost: woStatus === 'completed' ? Math.round(est * (0.8 + Math.random() * 0.4)) : null,
+          actualCost:
+            woStatus === 'completed' ? Math.round(est * (0.8 + Math.random() * 0.4)) : null,
           status: woStatus as any,
           completedDate: woStatus === 'completed' ? faker.date.recent({ days: 20 }) : null,
           notes: chance(0.5) ? faker.lorem.sentence() : null,
@@ -1321,7 +1777,12 @@ async function main() {
         ownerType: DocOwnerType.owner,
         ownerId: owner.id,
         documentType: pick([DocumentType.title_deed, DocumentType.insurance, DocumentType.permit]),
-        title: pick(['Deed of Absolute Sale', 'Property Insurance', 'Building Permit', 'Tax Declaration']),
+        title: pick([
+          'Deed of Absolute Sale',
+          'Property Insurance',
+          'Building Permit',
+          'Tax Declaration',
+        ]),
         fileUrl: `https://cdn.elite-realty.example/${faker.string.alphanumeric(8)}.pdf`,
         fileName: `${faker.string.alphanumeric(8)}.pdf`,
         mimeType: 'application/pdf',
@@ -1341,8 +1802,17 @@ async function main() {
       data: {
         ownerType: DocOwnerType.tenant,
         ownerId: resident.id,
-        documentType: pick([DocumentType.lease_agreement, DocumentType.id_proof, DocumentType.insurance]),
-        title: pick(['Signed Lease Agreement', 'Government ID', 'Renter Insurance', 'Move-in Inspection']),
+        documentType: pick([
+          DocumentType.lease_agreement,
+          DocumentType.id_proof,
+          DocumentType.insurance,
+        ]),
+        title: pick([
+          'Signed Lease Agreement',
+          'Government ID',
+          'Renter Insurance',
+          'Move-in Inspection',
+        ]),
         fileUrl: `https://cdn.elite-realty.example/${faker.string.alphanumeric(8)}.pdf`,
         fileName: `${faker.string.alphanumeric(8)}.pdf`,
         mimeType: 'application/pdf',
@@ -1415,8 +1885,16 @@ async function main() {
         tenantId: tenant.id,
         leaseId: lease?.id ?? null,
         totalOutstanding,
-        priority: pick([CollectionCasePriority.medium, CollectionCasePriority.high, CollectionCasePriority.critical]),
-        status: pick([CollectionCaseStatus.open, CollectionCaseStatus.in_progress, CollectionCaseStatus.escalated]),
+        priority: pick([
+          CollectionCasePriority.medium,
+          CollectionCasePriority.high,
+          CollectionCasePriority.critical,
+        ]),
+        status: pick([
+          CollectionCaseStatus.open,
+          CollectionCaseStatus.in_progress,
+          CollectionCaseStatus.escalated,
+        ]),
         assignedToId: pick(agents).user.id,
         nextActionDate: faker.date.soon({ days: 10 }),
       },
@@ -1426,7 +1904,12 @@ async function main() {
       await prisma.collectionActivity.create({
         data: {
           collectionCaseId: c.id,
-          activityType: pick([CollectionActivityType.call, CollectionActivityType.email, CollectionActivityType.letter, CollectionActivityType.visit]),
+          activityType: pick([
+            CollectionActivityType.call,
+            CollectionActivityType.email,
+            CollectionActivityType.letter,
+            CollectionActivityType.visit,
+          ]),
           performedById: admin.id,
           notes: faker.lorem.sentence(),
           outcome: pick(['no_answer', 'promised_payment', 'disputed', 'left_voicemail']),
@@ -1437,15 +1920,49 @@ async function main() {
   }
 
   /* ── Notifications ── */
-  const notify = async (role: NotificationRole, userId: string | null, type: NotificationType, title: string, message: string) => {
+  const notify = async (
+    role: NotificationRole,
+    userId: string | null,
+    type: NotificationType,
+    title: string,
+    message: string,
+  ) => {
     await prisma.notification.create({
-      data: { role, userId, tenantId: tenant.id, ownerId: userId, type, title, message, refId: null, isRead: chance(0.4) },
+      data: {
+        role,
+        userId,
+        tenantId: tenant.id,
+        ownerId: userId,
+        type,
+        title,
+        message,
+        refId: null,
+        isRead: chance(0.4),
+      },
     });
   };
-  await notify(NotificationRole.admin, admin.id, NotificationType.system, 'Monthly AR Aging Report Ready', 'The AR aging report for this month is now available.');
-  await notify(NotificationRole.owner, owners[0]?.id ?? null, NotificationType.announcement, 'Quarterly P&L Issued', 'Your quarterly profit & loss statement has been issued.');
+  await notify(
+    NotificationRole.admin,
+    admin.id,
+    NotificationType.system,
+    'Monthly AR Aging Report Ready',
+    'The AR aging report for this month is now available.',
+  );
+  await notify(
+    NotificationRole.owner,
+    owners[0]?.id ?? null,
+    NotificationType.announcement,
+    'Quarterly P&L Issued',
+    'Your quarterly profit & loss statement has been issued.',
+  );
   for (const r of pickN(residents, 6)) {
-    await notify(NotificationRole.resident, r.id, NotificationType.rent_due, 'Rent Due Soon', 'Your monthly rent will be due in 5 days.');
+    await notify(
+      NotificationRole.resident,
+      r.id,
+      NotificationType.rent_due,
+      'Rent Due Soon',
+      'Your monthly rent will be due in 5 days.',
+    );
   }
   console.log('Documents, statements, reminders, collections & notifications created');
 

@@ -7,7 +7,7 @@
 # ---- Stage 1: Build all applications ----
 # Debian (glibc) base so the Prisma engine (generated here) matches the
 # runtime base below and loads correctly at runtime.
-FROM node:20-bookworm-slim AS builder
+FROM node:22-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -31,14 +31,18 @@ COPY . .
 # Generate the Prisma client (required for the API + seed to compile)
 RUN npx prisma generate --schema apps/api/prisma/schema.prisma
 
-# Build shared workspace packages first (compiled JS + d.ts consumed by API/web)
+# Build workspace packages first (compiled JS + d.ts consumed by API/web)
 RUN npm run build --workspace @elite-realty/shared-types
+RUN npm run build --workspace @elite-realty/shared-ui
 
-# Build all applications
-RUN npm run build --workspaces --if-present
+# Build applications in dependency order
+RUN npm run build --workspace @elite-realty/api
+RUN npm run build --workspace @elite-realty/admin-web
+RUN npm run build --workspace @elite-realty/owner-web
+RUN npm run build --workspace @elite-realty/resident-web
 
 # ---- Stage 2: Runtime with Nginx + API + Supervisord ----
-FROM node:20-bookworm-slim AS runner
+FROM node:22-bookworm-slim AS runner
 
 # Install nginx, supervisor, curl, and OpenSSL (required by the Prisma engine)
 RUN apt-get update \

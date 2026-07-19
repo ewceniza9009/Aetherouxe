@@ -92,8 +92,19 @@ export interface RawBuilding {
   status?: string;
   _count?: { units?: number };
   units?: Array<unknown> | { length?: number };
+  images?: RawBuildingImage[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RawBuildingImage {
+  id: string;
+  url: string;
+  alt?: string | null;
+  isPrimary?: boolean;
+  sortOrder?: number;
+  buildingId?: string;
+  createdAt?: string;
 }
 
 export interface RawFloor {
@@ -171,7 +182,12 @@ export interface RawMortgage {
   monthlyAmortization?: number | string | null;
   status?: string;
   createdAt: string;
-  amortizationSchedule?: Array<{ month: number; principal: number; interest: number; balance: number }>;
+  amortizationSchedule?: Array<{
+    month: number;
+    principal: number;
+    interest: number;
+    balance: number;
+  }>;
 }
 
 export interface RawRTO {

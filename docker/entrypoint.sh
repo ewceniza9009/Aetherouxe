@@ -45,11 +45,7 @@ let tries = 0;
 cd /app/api
 
 echo "[entrypoint] applying database schema..."
-if [ -d prisma/migrations ] && [ "$(ls -A prisma/migrations 2>/dev/null)" ]; then
-  npx prisma migrate deploy
-else
-  npx prisma db push
-fi
+npx prisma db push || npx prisma db push --accept-data-loss
 
 echo "[entrypoint] seeding database (skips automatically if already populated)..."
 npx prisma db seed || echo "[entrypoint] seed step finished with warnings"

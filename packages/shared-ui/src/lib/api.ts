@@ -31,13 +31,15 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem('refreshToken');
-        const resp = await axios.post('/api/v1/auth/refresh', { refreshToken });
-        const inner: { accessToken: string } =
-          resp.data && (resp.data as { data?: unknown }).data
-            ? (resp.data as { data: { accessToken: string } }).data
-            : (resp.data as { accessToken: string });
-        localStorage.setItem('accessToken', inner.accessToken);
-        originalRequest.headers.Authorization = `Bearer ${inner.accessToken}`;
+        if (!refreshToken) throw new Error('No refresh token');
+        const resp = await axios.post('/api/auth/refresh', { refreshToken });
+        const body = resp.data?.data ?? resp.data;
+        const accessToken: string | undefined = body?.accessToken;
+        const newRefreshToken: string | undefined = body?.refreshToken;
+        if (!accessToken) throw new Error('No access token in refresh response');
+        localStorage.setItem('accessToken', accessToken);
+        if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch {
         localStorage.removeItem('accessToken');

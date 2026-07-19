@@ -43,7 +43,12 @@ export class BuildingsService {
       page: query.page,
       limit: query.limit,
       where,
-      include: { floors: true, project: true, _count: { select: { units: true } } },
+      include: {
+        floors: true,
+        project: true,
+        _count: { select: { units: true } },
+        images: { orderBy: { sortOrder: 'asc' } },
+      },
       orderBy: built.orderBy,
       allowedSortFields: this.fieldMap.sortable,
     });

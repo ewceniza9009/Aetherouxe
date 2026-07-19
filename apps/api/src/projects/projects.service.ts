@@ -48,6 +48,7 @@ export class ProjectsService {
       limit: query.limit,
       where: built.where,
       orderBy: built.orderBy,
+      include: { images: { orderBy: { sortOrder: 'asc' } } },
       allowedSortFields: this.fieldMap.sortable,
     });
   }
