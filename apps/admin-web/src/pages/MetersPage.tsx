@@ -34,10 +34,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Droplets, Flame, Loader2, Zap } from "lucide-react";
+import { Plus, Droplets, Flame, Loader2, Zap, Pencil, Trash2 } from "lucide-react";
 import {
   useMeters,
   useCreateMeter,
+  useDeleteMeter,
   type UtilityType,
   type UtilityMeter,
 } from "@/hooks/use-utilities";
@@ -92,11 +93,21 @@ export default function MetersPage() {
   );
 
   const { data, isLoading, isError, refetch } = useMeters(fullQuery);
+  const deleteMeter = useDeleteMeter();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<UtilityMeter | null>(null);
 
   const { data: propertiesData } = useProperties({ limit: 200 });
   const properties = propertiesData?.data ?? [];
 
   const meters = data?.data ?? [];
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteMeter.mutateAsync(deleteTarget.id);
+    setDeleteDialogOpen(false);
+    setDeleteTarget(null);
+  };
 
   return (
     <div className="space-y-6 flex flex-col ">
@@ -163,6 +174,7 @@ export default function MetersPage() {
                     Status{sortIndicator("isActive")}
                   </TableHead>
                   <TableHead className="text-right">Readings</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -193,6 +205,31 @@ export default function MetersPage() {
                     <TableCell className="text-right tabular-nums">
                       {m.readingsCount ?? "—"}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate({ to: `/meters/${m.id}` });
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget(m);
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -202,6 +239,21 @@ export default function MetersPage() {
           </GridState>
         </CardContent>
       </Card>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Meter</DialogTitle>
+            <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteMeter.isPending}>
+              {deleteMeter.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -13,6 +13,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
   DialogTrigger,
 } from "@elite-realty/shared-ui/components/ui";
 import {
@@ -42,12 +44,14 @@ import {
   KeyRound,
   FileBadge,
   ShieldAlert,
+  Trash2,
 } from "lucide-react";
 import {
   useAgent,
   useAgentPerformance,
   useAgentLicenseRenewals,
   useCreateLicenseRenewal,
+  useDeleteAgent,
   type LicenseStatus,
 } from "@/hooks/use-agents";
 import {
@@ -77,6 +81,8 @@ export default function AgentDetailPage() {
   const { id } = useParams({ from: "/protected/agents/$id" });
   const navigate = useNavigate();
   const { data: agent, isLoading, isError } = useAgent(id);
+  const deleteAgent = useDeleteAgent();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { data: performance } = useAgentPerformance(id);
   const { data: transactions } = useAgentTransactions({ agentId: id, limit: 100 });
   const { data: releases } = useCommissionReleases({ agentId: id });
@@ -250,6 +256,9 @@ export default function AgentDetailPage() {
           </div>
           <Button variant="outline" onClick={() => navigate({ to: `/agents/${agent.id}/edit` })}>
             Edit
+          </Button>
+          <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+            <Trash2 className="mr-2 h-4 w-4" /> Delete
           </Button>
         </div>
       </div>
@@ -745,6 +754,21 @@ export default function AgentDetailPage() {
               </div>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Agent</DialogTitle>
+            <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={async () => { await deleteAgent.mutateAsync(id); navigate({ to: "/agents" }); }} disabled={deleteAgent.isPending}>
+              {deleteAgent.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

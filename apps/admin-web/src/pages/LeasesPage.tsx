@@ -13,10 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@elite-realty/shared-ui/components/ui";
-import { Plus, FileText } from "lucide-react";
+import { Plus, FileText, Pencil, Trash2 } from "lucide-react";
 import { LeaseType } from "@elite-realty/shared-types";
 import {
   useLeases,
+  useTerminateLease,
   type Lease,
   type LeaseStatus,
 } from "@/hooks/use-leases";
@@ -61,6 +62,7 @@ export default function LeasesPage() {
   );
 
   const { data, isLoading, isError, refetch } = useLeases(fullQuery);
+  const terminateLease = useTerminateLease();
 
   const leases = data?.data ?? [];
   const meta = data?.meta;
@@ -175,16 +177,31 @@ export default function LeasesPage() {
                         <Badge variant={statusVariant[l.status]}>{statusLabel[l.status]}</Badge>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate({ to: `/leases/${l.id}` });
-                          }}
-                        >
-                          View
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate({ to: `/leases/${l.id}/edit` });
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (window.confirm("Terminate this lease? This cannot be undone.")) {
+                                await terminateLease.mutateAsync({ id: l.id });
+                                refetch();
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}

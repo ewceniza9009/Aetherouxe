@@ -178,17 +178,28 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigate({ to: `/properties/${id}` })}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Edit Property</h1>
-          <p className="text-muted-foreground">{property.name}</p>
+      <div className="sticky top-0 z-10 bg-background flex items-center justify-between gap-4 py-3 border-b mb-2">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" type="button" onClick={() => navigate({ to: `/properties/${id}` })}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Edit Property</h1>
+            <p className="text-muted-foreground">{property.name}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" type="button" onClick={() => navigate({ to: `/properties/${id}` })}>
+            Cancel
+          </Button>
+          <Button type="submit" form="property-form" disabled={updateProperty.isPending}>
+            <Save className="mr-2 h-4 w-4" />
+            {updateProperty.isPending ? "Saving..." : "Save Changes"}
+          </Button>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form id="property-form" onSubmit={handleSubmit}>
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>

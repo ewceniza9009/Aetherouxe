@@ -55,6 +55,7 @@ import {
   useAssignRequest,
   useCompleteRequest,
   useCancelRequest,
+  useDeleteServiceRequest,
   type ServiceCategory,
   type ServicePriority,
   type WorkOrder,
@@ -109,6 +110,7 @@ export default function ServiceRequestDetailPage() {
   const assign = useAssignRequest();
   const complete = useCompleteRequest();
   const cancel = useCancelRequest();
+  const deleteRequest = useDeleteServiceRequest();
   const createWorkOrder = useCreateWorkOrder();
   const updateWorkOrder = useUpdateWorkOrder();
   const deleteWorkOrder = useDeleteWorkOrder();
@@ -116,6 +118,7 @@ export default function ServiceRequestDetailPage() {
   const { data: contractorsData } = useContractors({ limit: 100 });
   const contractors = contractorsData?.data || [];
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -253,19 +256,24 @@ export default function ServiceRequestDetailPage() {
             </p>
           </div>
         </div>
-        {!terminal && (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setAssignOpen(true)}>
-              <UserCheck className="mr-2 h-4 w-4" /> Assign
-            </Button>
-            <Button variant="outline" onClick={() => setCompleteOpen(true)}>
-              <CheckCircle2 className="mr-2 h-4 w-4" /> Complete
-            </Button>
-            <Button variant="destructive" onClick={() => setCancelOpen(true)}>
-              <XCircle className="mr-2 h-4 w-4" /> Cancel
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)} disabled={deleteRequest.isPending}>
+            <Trash2 className="mr-2 h-4 w-4" /> Delete
+          </Button>
+          {!terminal && (
+            <>
+              <Button variant="outline" onClick={() => setAssignOpen(true)}>
+                <UserCheck className="mr-2 h-4 w-4" /> Assign
+              </Button>
+              <Button variant="outline" onClick={() => setCompleteOpen(true)}>
+                <CheckCircle2 className="mr-2 h-4 w-4" /> Complete
+              </Button>
+              <Button variant="destructive" onClick={() => setCancelOpen(true)}>
+                <XCircle className="mr-2 h-4 w-4" /> Cancel
+              </Button>
+            </>
+          )}
+        </div>
       </div>
         {/* Summary Cards */}
         <div className="grid gap-4 md:grid-cols-4">
@@ -669,6 +677,21 @@ export default function ServiceRequestDetailPage() {
             <Button onClick={handleSubmitWo} disabled={createWorkOrder.isPending || updateWorkOrder.isPending}>
               {(createWorkOrder.isPending || updateWorkOrder.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {woEditingId ? "Save Changes" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Service Request</DialogTitle>
+            <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={async () => { await deleteRequest.mutateAsync(id); navigate({ to: "/service-requests" }); }} disabled={deleteRequest.isPending}>
+              {deleteRequest.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

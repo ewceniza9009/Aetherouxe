@@ -13,9 +13,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@elite-realty/shared-ui/components/ui";
-import { Plus, MapPin, Building2, Eye } from "lucide-react";
+import { Plus, MapPin, Building2, Eye, Pencil, Trash2 } from "lucide-react";
 import { useProjects, useDeleteProject, projectTypeLabels, projectStatusLabels } from "@/hooks/use-projects";
 import type { Project, ProjectType, ProjectStatus } from "@/hooks/use-projects";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@elite-realty/shared-ui/components/ui";
 
 const statusVariant: Record<ProjectStatus, "default" | "secondary" | "success" | "destructive" | "warning"> = {
   planning: "secondary",
@@ -44,9 +52,18 @@ export default function ProjectsPage() {
 
   const { data, isLoading, isError, refetch } = useProjects(fullQuery);
   const deleteProject = useDeleteProject();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
 
   const projects = data?.data ?? [];
   const meta = data?.meta;
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteProject.mutateAsync(deleteTarget.id);
+    setDeleteDialogOpen(false);
+    setDeleteTarget(null);
+  };
 
   if (isError) {
     return (
@@ -171,9 +188,20 @@ export default function ProjectsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={(e) => { e.stopPropagation(); navigate({ to: `/projects/${p.id}` }); }}
+                            onClick={(e) => { e.stopPropagation(); navigate({ to: `/projects/${p.id}/edit` }); }}
                           >
-                            <Eye className="h-4 w-4" />
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteTarget(p);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
                       </td>
@@ -186,6 +214,20 @@ export default function ProjectsPage() {
           </GridState>
         </CardContent>
       </Card>
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Project</DialogTitle>
+            <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteProject.isPending}>
+              {deleteProject.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

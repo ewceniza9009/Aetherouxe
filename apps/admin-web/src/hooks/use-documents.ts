@@ -143,6 +143,33 @@ export function useRequestSignature() {
   });
 }
 
+export function useUpdateDocument() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: Partial<DocumentVault> & { id: string }) => {
+      const { data } = await api.patch<ApiResponse<DocumentVault>>(`/documents/${id}`, payload);
+      return data.data;
+    },
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["document", variables.id] });
+    },
+  });
+}
+
+export function useDeleteDocument() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/documents/${id}`);
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+    },
+  });
+}
+
 export function useMarkSignatureSigned() {
   const queryClient = useQueryClient();
   return useMutation({

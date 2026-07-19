@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsEnum, IsUUID, IsDateString, IsNumber } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ListQueryDto } from '../../common/dto/list-query.dto';
 
 export type StatementStatus = 'draft' | 'sent' | 'disputed';
 
@@ -33,9 +34,7 @@ export class UpdateStatementDto {
   @ApiPropertyOptional() @IsOptional() @IsString() pdfUrl?: string;
 }
 
-export class StatementQueryDto {
-  @ApiPropertyOptional() @IsOptional() page?: number;
-  @ApiPropertyOptional() @IsOptional() limit?: number;
+export class StatementQueryDto extends ListQueryDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @IsUUID() tenantId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @IsUUID() ownerId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @IsUUID() propertyId?: string;

@@ -23,8 +23,8 @@ import {
   ZoomIn,
 } from "lucide-react";
 import * as Tabs from "@radix-ui/react-tabs";
-import { Dialog, DialogContent, DialogTrigger } from "@elite-realty/shared-ui/components/ui";
-import { useProperty, usePropertySpecs } from "@/hooks/use-properties";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@elite-realty/shared-ui/components/ui";
+import { useProperty, usePropertySpecs, useDeleteProperty } from "@/hooks/use-properties";
 import { useUnits } from "@/hooks/use-units";
 import { formatCurrency } from "@/lib/agent-meta";
 import api from "@/lib/api";
@@ -32,11 +32,18 @@ import api from "@/lib/api";
 export default function PropertyDetailPage() {
   const { id } = useParams({ from: "/protected/properties/$id" });
   const navigate = useNavigate();
+  const deleteProperty = useDeleteProperty();
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [tab, setTab] = React.useState("overview");
 
   const { data: property, isLoading, error } = useProperty(id);
   const { data: specs } = usePropertySpecs(id);
   const { data: unitsResult } = useUnits({ propertyId: id, limit: 5 });
+
+  const description = specs?.description || property?.description;
+  const yearBuilt = specs?.yearBuilt || property?.yearBuilt;
+  const lotSize = specs?.lotSize || property?.lotSize;
+  const totalSquareFeet = specs?.totalSquareFeet || property?.totalSquareFeet;
 
   if (error) {
     return (
@@ -153,6 +160,14 @@ export default function PropertyDetailPage() {
             </Button>
             <Button
               size="sm"
+              variant="destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+              className="h-9"
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Delete
+            </Button>
+            <Button
+              size="sm"
               onClick={() => navigate({ to: `/properties/${id}/units` })}
               className="shadow-gold font-medium h-9"
             >
@@ -178,7 +193,7 @@ export default function PropertyDetailPage() {
             </div>
             <div className="px-6 py-4 flex flex-col justify-center gap-1 flex-1 min-w-[120px]">
               <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Year</span>
-              <span className="text-lg font-bold text-foreground">{property.yearBuilt || "--"}</span>
+              <span className="text-lg font-bold text-foreground">{yearBuilt || "--"}</span>
             </div>
           </div>
         </div>
@@ -206,37 +221,42 @@ export default function PropertyDetailPage() {
             <CardContent className="p-0">
               <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-border/40">
                 <div className="flex-1 p-5 md:p-6 flex flex-col gap-6">
-                  {property.description && (
+                  {description ? (
                     <div className="border-b border-border/40 pb-5">
                       <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-bold">Description</p>
-                      <p className="text-sm leading-relaxed text-foreground/90">{property.description}</p>
+                      <p className="text-sm leading-relaxed text-foreground/90">{description}</p>
+                    </div>
+                  ) : (
+                    <div className="border-b border-border/40 pb-5">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-bold">Description</p>
+                      <p className="text-sm text-muted-foreground italic">No description provided.</p>
                     </div>
                   )}
                   
                   {/* Check if we have any specs to show */}
-                  {(!property.yearBuilt && !property.lotSize && !property.totalSquareFeet && !specs?.floorArea && !specs?.lotArea && specs?.bedrooms == null && specs?.bathrooms == null && !specs?.ceilingHeight && !specs?.finishType && !specs?.flooring && !specs?.appliances && !specs?.ac && !specs?.dimensions && specs?.garden == null && specs?.garage == null && specs?.covered == null && specs?.nearbyElevator == null && !specs?.smartHomeFeatures && !property.description) ? (
+                  {(!yearBuilt && !lotSize && !totalSquareFeet && !specs?.floorArea && !specs?.lotArea && specs?.bedrooms == null && specs?.bathrooms == null && !specs?.ceilingHeight && !specs?.finishType && !specs?.flooring && !specs?.appliances && !specs?.ac && !specs?.dimensions && specs?.garden == null && specs?.garage == null && specs?.covered == null && specs?.nearbyElevator == null && !specs?.smartHomeFeatures && !description) ? (
                     <div className="flex flex-col items-center justify-center py-6 text-muted-foreground opacity-70">
                       <FileText className="h-6 w-6 mb-2" />
                       <p className="text-sm">No additional property details or specifications.</p>
                     </div>
                   ) : (
                     <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-y-5 gap-x-6">
-                      {property.yearBuilt && (
+                      {yearBuilt && (
                         <div>
                           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Year Built</p>
-                          <p className="text-sm font-medium">{property.yearBuilt}</p>
+                          <p className="text-sm font-medium">{yearBuilt}</p>
                         </div>
                       )}
-                      {property.lotSize && (
+                      {lotSize && (
                         <div>
                           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Lot Size</p>
-                          <p className="text-sm font-medium">{property.lotSize}</p>
+                          <p className="text-sm font-medium">{lotSize}</p>
                         </div>
                       )}
-                      {property.totalSquareFeet && (
+                      {totalSquareFeet && (
                         <div>
-                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Total Area</p>
-                          <p className="text-sm font-medium">{property.totalSquareFeet}</p>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1 font-bold">Total Sq Ft</p>
+                          <p className="text-sm font-medium">{totalSquareFeet}</p>
                         </div>
                       )}
                       {specs?.floorArea && (
@@ -446,6 +466,21 @@ export default function PropertyDetailPage() {
           <ShowcaseTab property={property} />
         </Tabs.Content>
       </Tabs.Root>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Property</DialogTitle>
+            <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={async () => { await deleteProperty.mutateAsync(id); navigate({ to: "/properties" }); }} disabled={deleteProperty.isPending}>
+              {deleteProperty.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

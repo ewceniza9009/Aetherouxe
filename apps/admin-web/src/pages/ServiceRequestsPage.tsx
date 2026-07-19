@@ -25,12 +25,23 @@ import {
   DialogDescription,
 } from "@elite-realty/shared-ui/components/ui";
 import {
+  Dialog as DDialog,
+  DialogContent as DDialogContent,
+  DialogDescription as DDialogDescription,
+  DialogFooter as DDialogFooter,
+  DialogHeader as DDialogHeader,
+  DialogTitle as DDialogTitle,
+} from "@elite-realty/shared-ui/components/ui"; // delete dialog
+import {
   Plus,
   Loader2,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import {
   useServiceRequests,
   useCreateServiceRequest,
+  useDeleteServiceRequest,
   type ServiceRequest,
   type ServiceCategory,
   type ServicePriority,
@@ -107,6 +118,9 @@ export default function ServiceRequestsPage() {
 
   const { data, isLoading, isError, refetch } = useServiceRequests(fullQuery);
   const createRequest = useCreateServiceRequest();
+  const deleteRequest = useDeleteServiceRequest();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<ServiceRequest | null>(null);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -121,6 +135,13 @@ export default function ServiceRequestsPage() {
 
   const requests = data?.data ?? [];
   const meta = data?.meta;
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteRequest.mutateAsync(deleteTarget.id);
+    setDeleteDialogOpen(false);
+    setDeleteTarget(null);
+  };
 
   const handleCreate = async () => {
     setSaving(true);
@@ -252,6 +273,7 @@ export default function ServiceRequestsPage() {
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                       Organization / Unit
                     </th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -284,6 +306,31 @@ export default function ServiceRequestsPage() {
                         <div>{r.tenant?.name || "—"}</div>
                         <div className="text-xs text-muted-foreground">
                           {r.unit?.unitNumber || "—"}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate({ to: `/service-requests/${r.id}` });
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteTarget(r);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -423,6 +470,21 @@ export default function ServiceRequestsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DDialogContent>
+          <DDialogHeader>
+            <DDialogTitle>Delete Service Request</DDialogTitle>
+            <DDialogDescription>Are you sure? This cannot be undone.</DDialogDescription>
+          </DDialogHeader>
+          <DDialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteRequest.isPending}>
+              {deleteRequest.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DDialogFooter>
+        </DDialogContent>
+      </DDialog>
     </div>
   );
 }

@@ -15,12 +15,21 @@ import {
   SelectValue,
 } from "@elite-realty/shared-ui/components/ui";
 import { Switch } from "@elite-realty/shared-ui/components/ui";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import {
   useAgents,
+  useDeleteAgent,
   type Agent,
   type AgentTierValue,
 } from "@/hooks/use-agents";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@elite-realty/shared-ui/components/ui";
 import {
   TIER_LABELS,
   tierBadgeVariant,
@@ -47,9 +56,19 @@ export default function AgentsPage() {
   );
 
   const { data, isLoading, isError, refetch } = useAgents(fullQuery);
+  const deleteAgent = useDeleteAgent();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Agent | null>(null);
 
   const agents = data?.data ?? [];
   const meta = data?.meta;
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteAgent.mutateAsync(deleteTarget.id);
+    setDeleteDialogOpen(false);
+    setDeleteTarget(null);
+  };
 
   return (
     <div className="space-y-6 flex flex-col ">
@@ -181,16 +200,29 @@ export default function AgentsPage() {
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate({ to: `/agents/${a.id}` });
-                          }}
-                        >
-                          View
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate({ to: `/agents/${a.id}/edit` });
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteTarget(a);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -202,6 +234,21 @@ export default function AgentsPage() {
           </GridState>
         </CardContent>
       </Card>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Agent</DialogTitle>
+            <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteAgent.isPending}>
+              {deleteAgent.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

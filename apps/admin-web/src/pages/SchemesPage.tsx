@@ -12,8 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@elite-realty/shared-ui/components/ui";
-import { Plus, Lock, Unlock, FileCode } from "lucide-react";
-import { useSchemes, SCHEME_TYPES, type Scheme } from "@/hooks/use-schemes";
+import { Plus, Lock, Unlock, FileCode, Pencil, Trash2 } from "lucide-react";
+import { useSchemes, useDeleteScheme, SCHEME_TYPES, type Scheme } from "@/hooks/use-schemes";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@elite-realty/shared-ui/components/ui";
 import { ListPager } from "@/components/ListPager";
 
 const schemeTypeMeta: Record<string, { label: string; className: string }> = {
@@ -56,9 +64,19 @@ export default function SchemesPage() {
   );
 
   const { data: schemesResult, isLoading, isError } = useSchemes(fullQuery);
+  const deleteScheme = useDeleteScheme();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Scheme | null>(null);
 
   const schemes = schemesResult?.data ?? [];
   const meta = schemesResult?.meta;
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteScheme.mutateAsync(deleteTarget.id);
+    setDeleteDialogOpen(false);
+    setDeleteTarget(null);
+  };
 
   return (
     <div className="space-y-6 flex flex-col ">
@@ -118,6 +136,7 @@ export default function SchemesPage() {
                     <th {...sortHeader("isLocked", "px-4 py-3 text-center text-sm font-medium text-muted-foreground")}>
                       Status{sortIndicator("isLocked")}
                     </th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -151,6 +170,31 @@ export default function SchemesPage() {
                             <Unlock className="h-4 w-4 text-muted-foreground mx-auto" />
                           )}
                         </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate({ to: `/schemes/${s.id}` });
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteTarget(s);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </td>
                       </tr>
                     );
                   })}
@@ -161,6 +205,21 @@ export default function SchemesPage() {
           </GridState>
         </CardContent>
       </Card>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Scheme</DialogTitle>
+            <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteScheme.isPending}>
+              {deleteScheme.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -34,11 +34,15 @@ import {
   PenLine,
   CheckCircle2,
   CalendarClock,
+  Trash2,
+  Pencil,
 } from "lucide-react";
 import {
   useDocument,
   useRequestSignature,
   useMarkSignatureSigned,
+  useDeleteDocument,
+  useUpdateDocument,
   type DocumentSignature,
   type SignatureStatus,
 } from "@/hooks/use-documents";
@@ -80,6 +84,9 @@ export default function DocumentDetailPage() {
   const { data: doc, isLoading, isError } = useDocument(id);
   const requestSignature = useRequestSignature();
   const markSigned = useMarkSignatureSigned();
+  const deleteDocument = useDeleteDocument();
+  const updateDocument = useUpdateDocument();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const [sigOpen, setSigOpen] = useState(false);
   const [sigForm, setSigForm] = useState({
@@ -149,16 +156,21 @@ export default function DocumentDetailPage() {
             </p>
           </div>
         </div>
-        {!doc.isSigned && (
-          <Button onClick={() => markSigned.mutateAsync(doc.id)} disabled={markSigned.isPending}>
-            {markSigned.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-            )}
-            Mark Signed
+        <div className="flex items-center gap-3">
+          <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)} disabled={deleteDocument.isPending}>
+            <Trash2 className="mr-2 h-4 w-4" /> Delete
           </Button>
-        )}
+          {!doc.isSigned && (
+            <Button onClick={() => markSigned.mutateAsync(doc.id)} disabled={markSigned.isPending}>
+              {markSigned.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+              )}
+              Mark Signed
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card>
@@ -336,6 +348,21 @@ export default function DocumentDetailPage() {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
               Send Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Document</DialogTitle>
+            <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={async () => { await deleteDocument.mutateAsync(id); navigate({ to: "/documents" }); }} disabled={deleteDocument.isPending}>
+              {deleteDocument.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

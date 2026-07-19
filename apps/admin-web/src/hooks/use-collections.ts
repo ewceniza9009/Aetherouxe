@@ -372,6 +372,7 @@ export function useMarkReminderSent() {
 /* ----------------------------- Statements ----------------------------- */
 
 export function useStatements(query?: {
+  search?: string;
   tenantId?: string;
   status?: StatementStatus;
   limit?: number;

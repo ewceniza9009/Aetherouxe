@@ -21,6 +21,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
   DialogTrigger,
 } from "@elite-realty/shared-ui/components/ui";
 import {
@@ -30,8 +32,10 @@ import {
   HardHat,
   Phone,
   Mail,
+  Pencil,
+  Trash2,
 } from "lucide-react";
-import { useContractors, useEngagements, useCreateContractor } from "@/hooks/use-contractors";
+import { useContractors, useEngagements, useCreateContractor, useDeleteContractor } from "@/hooks/use-contractors";
 import type { Contractor } from "@/hooks/use-contractors";
 import { formatCurrency } from "@/lib/agent-meta";
 
@@ -54,6 +58,9 @@ export default function ContractorsPage() {
   );
 
   const createContractor = useCreateContractor();
+  const deleteContractor = useDeleteContractor();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Contractor | null>(null);
   const [newContractorDialog, setNewContractorDialog] = useState(false);
   const [newContractorForm, setNewContractorForm] = useState({
     companyName: "",
@@ -66,6 +73,13 @@ export default function ContractorsPage() {
 
   const contractors = data?.data ?? [];
   const meta = data?.meta;
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteContractor.mutateAsync(deleteTarget.id);
+    setDeleteDialogOpen(false);
+    setDeleteTarget(null);
+  };
 
   const handleCreateContractor = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -226,7 +240,7 @@ export default function ContractorsPage() {
                     <th {...sortHeader("isActive", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
                       Status{sortIndicator("isActive")}
                     </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground"></th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -269,22 +283,45 @@ export default function ContractorsPage() {
                           </Badge>
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const id = c.id;
-                              setExpandedRow(expandedRow === id ? null : id);
-                              setEngagementFilter(expandedRow === id ? "" : id);
-                            }}
-                          >
-                            {expandedRow === c.id ? (
-                              <ChevronDown className="h-4 w-4" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4" />
-                            )}
-                          </Button>
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate({ to: `/contractors/${c.id}` });
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteTarget(c);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const id = c.id;
+                                setExpandedRow(expandedRow === id ? null : id);
+                                setEngagementFilter(expandedRow === id ? "" : id);
+                              }}
+                            >
+                              {expandedRow === c.id ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                       {expandedRow === c.id && engagements && (
@@ -336,6 +373,21 @@ export default function ContractorsPage() {
           </GridState>
         </CardContent>
       </Card>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Contractor</DialogTitle>
+            <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteContractor.isPending}>
+              {deleteContractor.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

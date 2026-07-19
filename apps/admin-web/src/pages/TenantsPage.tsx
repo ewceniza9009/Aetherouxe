@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useListQuery } from "@/hooks/use-list-query";
 import { GridToolbar, GridState } from "@/components/GridToolbar";
@@ -7,9 +7,17 @@ import { Card, CardContent } from "@elite-realty/shared-ui/components/ui";
 import { Button } from "@elite-realty/shared-ui/components/ui";
 import { Badge } from "@elite-realty/shared-ui/components/ui";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Phone, Mail } from "lucide-react";
-import { useUsers } from "@/hooks/use-users";
+import { Plus, Phone, Mail, Pencil, Trash2 } from "lucide-react";
+import { useUsers, useDeleteUser } from "@/hooks/use-users";
 import { useLeases } from "@/hooks/use-leases";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@elite-realty/shared-ui/components/ui";
 
 interface TenantRow {
   id: string;
@@ -28,6 +36,8 @@ export default function TenantsPage() {
   const navigate = useNavigate();
   const listQuery = useListQuery(20);
   const { search, setSearch, page, setPage, query, sortHeader, sortIndicator } = listQuery;
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<TenantRow | null>(null);
 
   const { data: usersResult, isLoading } = useUsers({
     ...query,
@@ -35,6 +45,7 @@ export default function TenantsPage() {
   });
 
   const { data: leasesData } = useLeases({ limit: 500 });
+  const deleteUser = useDeleteUser();
 
   const tenants = useMemo<TenantRow[]>(() => {
     const leasesByUser = new Map<string, any>();
@@ -67,6 +78,13 @@ export default function TenantsPage() {
   }, [usersResult, leasesData]);
 
   const meta = usersResult?.meta;
+
+  const handleDelete = useCallback(async () => {
+    if (!deleteTarget) return;
+    await deleteUser.mutateAsync(deleteTarget.id);
+    setDeleteDialogOpen(false);
+    setDeleteTarget(null);
+  }, [deleteTarget, deleteUser]);
 
   return (
     <div className="space-y-6 flex flex-col ">
@@ -116,6 +134,7 @@ export default function TenantsPage() {
                     <th {...sortHeader("isActive", "px-4 py-3 text-right text-sm font-medium text-muted-foreground")}>
                       Status{sortIndicator("isActive")}
                     </th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -161,6 +180,31 @@ export default function TenantsPage() {
                           {tenant.status}
                         </Badge>
                       </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate({ to: `/tenants/${tenant.id}` });
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteTarget(tenant);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -170,6 +214,20 @@ export default function TenantsPage() {
           </GridState>
         </CardContent>
       </Card>
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Tenant</DialogTitle>
+            <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteUser.isPending}>
+              {deleteUser.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

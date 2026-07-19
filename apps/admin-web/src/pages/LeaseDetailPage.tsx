@@ -381,9 +381,9 @@ export default function LeaseDetailPage() {
                   ))}
                 </div>
               ) : (scenariosData?.data ?? []).length === 0 ? (
-                <div className="text-center py-8">
+                <div className="text-center py-8 flex flex-col items-center">
                   <EmptyState title="No scenarios generated yet" />
-                  <Button variant="outline" size="sm" className="mt-3" onClick={() => setGenerateOpen(true)}>
+                  <Button variant="outline" size="sm" className="mt-6" onClick={() => setGenerateOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" /> Generate First Scenario
                   </Button>
                 </div>

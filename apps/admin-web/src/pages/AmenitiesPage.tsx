@@ -27,19 +27,23 @@ import {
 import {
   Plus,
   Loader2,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/agent-meta";
 import {
   useAmenities,
   useCreateAmenity,
+  useUpdateAmenity,
+  useDeleteAmenity,
   type Amenity,
   type AmenityType,
 } from "@/hooks/use-community";
 
-const amenityTypeMeta: Record<
-  AmenityType,
-  { label: string; className: string }
-> = {
+  const amenityTypeMeta: Record<
+    AmenityType,
+    { label: string; className: string }
+  > = {
   gym: { label: "Gym", className: "bg-indigo-100 text-indigo-700 border-indigo-200" },
   pool: { label: "Pool", className: "bg-cyan-100 text-cyan-700 border-cyan-200" },
   function_room: {
@@ -71,7 +75,20 @@ export default function AmenitiesPage() {
 
   const { data, isLoading, isError, refetch } = useAmenities(fullQuery);
   const createAmenity = useCreateAmenity();
+  const updateAmenity = useUpdateAmenity();
+  const deleteAmenity = useDeleteAmenity();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Amenity | null>(null);
   const [open, setOpen] = useState(false);
+  const [editingAmenity, setEditingAmenity] = useState<Amenity | null>(null);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteAmenity.mutateAsync(deleteTarget.id);
+    setDeleteDialogOpen(false);
+    setDeleteTarget(null);
+  };
+
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: "",
@@ -97,21 +114,55 @@ export default function AmenitiesPage() {
       description: "",
     });
 
-  const handleCreate = async () => {
+  const openEdit = (a: Amenity) => {
+    setEditingAmenity(a);
+    setForm({
+      name: a.name,
+      type: a.type,
+      location: a.location || "",
+      propertyId: a.propertyId || "",
+      capacity: a.capacity != null ? String(a.capacity) : "",
+      hourlyRate: a.hourlyRate != null ? String(a.hourlyRate) : "",
+      description: a.description || "",
+    });
+    setOpen(true);
+  };
+
+  const openCreate = () => {
+    setEditingAmenity(null);
+    resetForm();
+    setOpen(true);
+  };
+
+  const handleSave = async () => {
     setSaving(true);
     try {
-      await createAmenity.mutateAsync({
-        name: form.name,
-        type: form.type,
-        location: form.location || undefined,
-        propertyId: form.propertyId || undefined,
-        capacity: form.capacity ? Number(form.capacity) : undefined,
-        hourlyRate: form.hourlyRate ? Number(form.hourlyRate) : undefined,
-        description: form.description || undefined,
-        isActive: true,
-      });
+      if (editingAmenity) {
+        await updateAmenity.mutateAsync({
+          id: editingAmenity.id,
+          name: form.name,
+          type: form.type,
+          location: form.location || undefined,
+          propertyId: form.propertyId || undefined,
+          capacity: form.capacity ? Number(form.capacity) : undefined,
+          hourlyRate: form.hourlyRate ? Number(form.hourlyRate) : undefined,
+          description: form.description || undefined,
+        });
+      } else {
+        await createAmenity.mutateAsync({
+          name: form.name,
+          type: form.type,
+          location: form.location || undefined,
+          propertyId: form.propertyId || undefined,
+          capacity: form.capacity ? Number(form.capacity) : undefined,
+          hourlyRate: form.hourlyRate ? Number(form.hourlyRate) : undefined,
+          description: form.description || undefined,
+          isActive: true,
+        });
+      }
       setOpen(false);
       resetForm();
+      setEditingAmenity(null);
       refetch();
     } finally {
       setSaving(false);
@@ -125,7 +176,7 @@ export default function AmenitiesPage() {
           <h1 className="font-serif text-3xl font-bold tracking-tight">Amenities</h1>
           <p className="text-muted-foreground">Shared facilities and bookings</p>
         </div>
-        <Button onClick={() => setOpen(true)} disabled={createAmenity.isPending}>
+        <Button onClick={openCreate} disabled={createAmenity.isPending}>
           <Plus className="mr-2 h-4 w-4" /> New Amenity
         </Button>
       </div>
@@ -182,6 +233,7 @@ export default function AmenitiesPage() {
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                       Status
                     </th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -215,6 +267,31 @@ export default function AmenitiesPage() {
                           <Badge variant="secondary">Inactive</Badge>
                         )}
                       </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEdit(a);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteTarget(a);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -226,11 +303,26 @@ export default function AmenitiesPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New Amenity</DialogTitle>
-            <DialogDescription>Add a shared facility to the portfolio.</DialogDescription>
+            <DialogTitle>Delete Amenity</DialogTitle>
+            <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteAmenity.isPending}>
+              {deleteAmenity.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setEditingAmenity(null); resetForm(); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingAmenity ? "Edit Amenity" : "New Amenity"}</DialogTitle>
+            <DialogDescription>{editingAmenity ? "Update this shared facility." : "Add a shared facility to the portfolio."}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -317,9 +409,9 @@ export default function AmenitiesPage() {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreate} disabled={saving || !form.name}>
+            <Button onClick={handleSave} disabled={saving || !form.name}>
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Create
+              {editingAmenity ? "Save Changes" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>

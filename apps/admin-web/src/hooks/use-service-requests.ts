@@ -188,6 +188,33 @@ export function useCompleteRequest() {
   });
 }
 
+export function useUpdateServiceRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: Partial<ServiceRequest> & { id: string }) => {
+      const { data } = await api.patch<ApiResponse<ServiceRequest>>(`/service-requests/${id}`, payload);
+      return data.data;
+    },
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["service-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["service-request", variables.id] });
+    },
+  });
+}
+
+export function useDeleteServiceRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/service-requests/${id}`);
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["service-requests"] });
+    },
+  });
+}
+
 export function useCancelRequest() {
   const queryClient = useQueryClient();
   return useMutation({

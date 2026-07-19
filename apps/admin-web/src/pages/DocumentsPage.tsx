@@ -22,20 +22,39 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui";
+} from "@elite-realty/shared-ui/components/ui"; // upload dialog
+import {
+  Dialog as DDialog,
+  DialogContent as DDialogContent,
+  DialogDescription as DDialogDescription,
+  DialogFooter as DDialogFooter,
+  DialogHeader as DDialogHeader,
+  DialogTitle as DDialogTitle,
+} from "@elite-realty/shared-ui/components/ui"; // delete dialog
 import {
   Plus,
   FileText,
   Loader2,
   Link2,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import {
   useDocuments,
   useUploadDocument,
+  useDeleteDocument,
   type DocumentVault,
   type DocumentOwnerType,
   type DocumentType,
 } from "@/hooks/use-documents";
+import {
+  Dialog as DeleteDialog,
+  DialogContent as DeleteDialogContent,
+  DialogDescription as DeleteDialogDescription,
+  DialogFooter as DeleteDialogFooter,
+  DialogHeader as DeleteDialogHeader,
+  DialogTitle as DeleteDialogTitle,
+} from "@elite-realty/shared-ui/components/ui";
 
 const ownerTypeMeta: Record<DocumentOwnerType, string> = {
   property: "Property",
@@ -104,6 +123,9 @@ export default function DocumentsPage() {
 
   const { data, isLoading, isError, refetch } = useDocuments(fullQuery);
   const uploadDocument = useUploadDocument();
+  const deleteDocument = useDeleteDocument();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<DocumentVault | null>(null);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -118,6 +140,13 @@ export default function DocumentsPage() {
 
   const documents = data?.data ?? [];
   const meta = data?.meta;
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteDocument.mutateAsync(deleteTarget.id);
+    setDeleteDialogOpen(false);
+    setDeleteTarget(null);
+  };
 
   const handleUpload = async () => {
     setSaving(true);
@@ -230,6 +259,7 @@ export default function DocumentsPage() {
                     <th {...sortHeader("isSigned", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
                       Signed{sortIndicator("isSigned")}
                     </th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -276,6 +306,31 @@ export default function DocumentsPage() {
                         ) : (
                           <Badge variant="warning">Unsigned</Badge>
                         )}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate({ to: `/documents/${d.id}` });
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteTarget(d);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -401,6 +456,21 @@ export default function DocumentsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DDialogContent>
+          <DDialogHeader>
+            <DDialogTitle>Delete Document</DDialogTitle>
+            <DDialogDescription>Are you sure? This cannot be undone.</DDialogDescription>
+          </DDialogHeader>
+          <DDialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteDocument.isPending}>
+              {deleteDocument.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DDialogFooter>
+        </DDialogContent>
+      </DDialog>
     </div>
   );
 }

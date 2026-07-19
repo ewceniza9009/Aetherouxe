@@ -1,10 +1,24 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStatementDto, UpdateStatementDto, StatementQueryDto } from './dto/statements.dto';
+import { buildListQuery, FieldMap } from '../common/list-query.builder';
+import { paginate } from '../common/dto/list-query.dto';
 
 @Injectable()
 export class StatementsService {
   constructor(private prisma: PrismaService) {}
+
+  private readonly fieldMap: FieldMap = {
+    filters: [
+      { field: 'tenantId', type: 'eq' },
+      { field: 'ownerId', type: 'eq' },
+      { field: 'propertyId', type: 'eq' },
+      { field: 'status', type: 'enum' },
+    ],
+    search: ['owner.firstName', 'owner.lastName', 'owner.email', 'tenant.name'],
+    sortable: ['periodStart', 'periodEnd', 'totalBilled', 'totalPaid', 'closingBalance', 'status', 'createdAt', 'updatedAt'],
+    sortAliases: { ownerId: 'periodStart' },
+  };
 
   async create(dto: CreateStatementDto) {
     const openingBalance = dto.openingBalance;
@@ -30,28 +44,15 @@ export class StatementsService {
   }
 
   async findAll(query: StatementQueryDto) {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-    if (query.tenantId) where.tenantId = query.tenantId;
-    if (query.ownerId) where.ownerId = query.ownerId;
-    if (query.propertyId) where.propertyId = query.propertyId;
-    if (query.status) where.status = query.status;
-
-    const [data, total] = await Promise.all([
-      this.prisma.statementOfAccount.findMany({
-        where,
-        skip,
-        take: limit,
-        include: { tenant: true, owner: true, property: true },
-        orderBy: { periodStart: 'desc' },
-      }),
-      this.prisma.statementOfAccount.count({ where }),
-    ]);
-
-    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    const built = buildListQuery(query, this.fieldMap, { periodStart: 'desc' });
+    return paginate(this.prisma.statementOfAccount, {
+      page: query.page,
+      limit: query.limit,
+      where: built.where,
+      include: { tenant: true, owner: true, property: true },
+      orderBy: built.orderBy,
+      allowedSortFields: this.fieldMap.sortable,
+    });
   }
 
   async findOne(id: string) {

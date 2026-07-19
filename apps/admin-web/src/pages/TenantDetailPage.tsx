@@ -20,8 +20,17 @@ import {
   Calendar,
   ArrowRight,
   ChevronRight,
+  Trash2,
 } from "lucide-react";
-import { useUser } from "@/hooks/use-users";
+import { useUser, useDeleteUser } from "@/hooks/use-users";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@elite-realty/shared-ui/components/ui";
 import { useTenantLeases, type TenantLease } from "@/hooks/use-leases";
 import { useMortgageScenario } from "@/hooks/use-mortgage";
 import { useRtoContract, useRtoLedger } from "@/hooks/use-rto";
@@ -53,6 +62,8 @@ export default function TenantDetailPage() {
   const { id } = useParams({ from: "/protected/tenants/$id" });
   const navigate = useNavigate();
   const { data: user, isLoading: loadingUser } = useUser(id);
+  const deleteUser = useDeleteUser();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { data: leases, isLoading: loadingLeases } = useTenantLeases(id);
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
 
@@ -66,12 +77,30 @@ export default function TenantDetailPage() {
 
   const isLoading = loadingUser || loadingLeases;
 
+  const handleDelete = async () => {
+    await deleteUser.mutateAsync(id);
+    navigate({ to: "/tenants" });
+  };
+
   return (
     <div className="space-y-6 flex flex-col ">
-      {/* Back */}
-      <Button variant="outline" size="icon" onClick={() => navigate({ to: "/tenants" })}>
-        <ArrowLeft className="h-4 w-4" />
-      </Button>
+      <div className="sticky top-0 z-10 bg-background flex items-center justify-between gap-4 py-3 border-b mb-2">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" type="button" onClick={() => navigate({ to: "/tenants" })}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Tenant Details</h1>
+            <p className="text-muted-foreground text-sm">{user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email : ""}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)} disabled={deleteUser.isPending}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            {deleteUser.isPending ? "Deleting..." : "Delete"}
+          </Button>
+        </div>
+      </div>
 
       {/* Tenant header */}
       <Card>
@@ -158,6 +187,21 @@ export default function TenantDetailPage() {
           )}
         </div>
       )}
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Tenant</DialogTitle>
+            <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteUser.isPending}>
+              {deleteUser.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

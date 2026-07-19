@@ -40,6 +40,8 @@ import {
   Loader2,
   CalendarDays,
   Megaphone,
+  Trash2,
+  Pencil,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/agent-meta";
 import {
@@ -48,6 +50,9 @@ import {
   useCreateBooking,
   usePosts,
   useCreatePost,
+  useDeleteAmenity,
+  useUpdateAmenity,
+  type Amenity,
   type AmenityType,
   type AmenityBooking,
   type CommunityPost,
@@ -131,6 +136,18 @@ export default function AmenityDetailPage() {
 
   const createBooking = useCreateBooking();
   const createPost = useCreatePost();
+  const deleteAmenity = useDeleteAmenity();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const updateAmenity = useUpdateAmenity();
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    type: "gym" as AmenityType,
+    location: "",
+    capacity: "",
+    hourlyRate: "",
+    description: "",
+  });
   const [bookingOpen, setBookingOpen] = useState(false);
   const [postOpen, setPostOpen] = useState(false);
 
@@ -244,6 +261,14 @@ export default function AmenityDetailPage() {
               {amenity.location || "No location set"}
             </p>
           </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => { setEditForm({ name: amenity.name, type: amenity.type, location: amenity.location || "", capacity: amenity.capacity != null ? String(amenity.capacity) : "", hourlyRate: amenity.hourlyRate != null ? String(amenity.hourlyRate) : "", description: amenity.description || "" }); setEditOpen(true); }}>
+            <Pencil className="mr-2 h-4 w-4" /> Edit
+          </Button>
+          <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+            <Trash2 className="mr-2 h-4 w-4" /> Delete
+          </Button>
         </div>
       </div>
 
@@ -493,6 +518,74 @@ export default function AmenityDetailPage() {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
               Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Amenity</DialogTitle>
+            <DialogDescription>Update this shared facility.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Name *</Label>
+              <Input id="edit-name" value={editForm.name} onChange={(e) => setEditForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Type *</Label>
+                <Select value={editForm.type} onValueChange={(v) => setEditForm(f => ({ ...f, type: v as AmenityType }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(amenityTypeMeta) as AmenityType[]).map((t) => (
+                      <SelectItem key={t} value={t}>{amenityTypeMeta[t].label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-location">Location</Label>
+                <Input id="edit-location" value={editForm.location} onChange={(e) => setEditForm(f => ({ ...f, location: e.target.value }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-capacity">Capacity</Label>
+                <Input id="edit-capacity" type="number" min="0" value={editForm.capacity} onChange={(e) => setEditForm(f => ({ ...f, capacity: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-hourlyRate">Hourly Rate</Label>
+                <Input id="edit-hourlyRate" type="number" min="0" step="0.01" value={editForm.hourlyRate} onChange={(e) => setEditForm(f => ({ ...f, hourlyRate: e.target.value }))} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea id="edit-description" value={editForm.description} onChange={(e) => setEditForm(f => ({ ...f, description: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button onClick={async () => { await updateAmenity.mutateAsync({ id: amenity.id, name: editForm.name, type: editForm.type, location: editForm.location || undefined, capacity: editForm.capacity ? Number(editForm.capacity) : undefined, hourlyRate: editForm.hourlyRate ? Number(editForm.hourlyRate) : undefined, description: editForm.description || undefined }); setEditOpen(false); }} disabled={updateAmenity.isPending || !editForm.name}>
+              {updateAmenity.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Amenity</DialogTitle>
+            <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={async () => { await deleteAmenity.mutateAsync(id); navigate({ to: "/amenities" }); }} disabled={deleteAmenity.isPending}>
+              {deleteAmenity.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
