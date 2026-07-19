@@ -51,6 +51,8 @@ import {
   useCreateBooking,
   usePosts,
   useCreatePost,
+  useUpdatePost,
+  useDeletePost,
   useDeleteAmenity,
   useUpdateAmenity,
   type Amenity,
@@ -132,13 +134,18 @@ export default function AmenityDetailPage() {
     amenityId: id,
     limit: 100,
   });
-  const { data: postsData, isLoading: loadingPosts } = usePosts({ limit: 100 });
+  const { data: postsData, isLoading: loadingPosts } = usePosts({
+    limit: 100,
+    propertyId: amenity?.propertyId || 'none',
+  });
 
   const bookings = useMemo(() => (bookingsData?.data ?? []).slice().reverse(), [bookingsData]);
   const posts = postsData?.data ?? [];
 
   const createBooking = useCreateBooking();
   const createPost = useCreatePost();
+  const updatePost = useUpdatePost();
+  const deletePost = useDeletePost();
   const deleteAmenity = useDeleteAmenity();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const updateAmenity = useUpdateAmenity();
@@ -154,6 +161,7 @@ export default function AmenityDetailPage() {
   });
   const [bookingOpen, setBookingOpen] = useState(false);
   const [postOpen, setPostOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<CommunityPost | null>(null);
 
   const [bookingForm, setBookingForm] = useState({
     tenantName: '',
@@ -171,6 +179,19 @@ export default function AmenityDetailPage() {
     propertyId: '',
     scheduledAt: '',
   });
+
+  const openEditPost = (p: CommunityPost) => {
+    setEditingPost(p);
+    setPostForm({
+      title: p.title,
+      body: p.body,
+      postType: p.postType,
+      audience: p.audience,
+      propertyId: p.propertyId || '',
+      scheduledAt: p.scheduledAt ? p.scheduledAt.slice(0, 16) : '',
+    });
+    setPostOpen(true);
+  };
 
   if (isError) {
     return (
@@ -222,8 +243,8 @@ export default function AmenityDetailPage() {
     });
   };
 
-  const handleCreatePost = async () => {
-    await createPost.mutateAsync({
+  const handleSavePost = async () => {
+    const payload = {
       title: postForm.title,
       body: postForm.body,
       postType: postForm.postType,
@@ -231,9 +252,15 @@ export default function AmenityDetailPage() {
       propertyId: postForm.propertyId || null,
       scheduledAt: postForm.scheduledAt || undefined,
       published: postForm.scheduledAt ? false : true,
-      status: postForm.scheduledAt ? 'scheduled' : 'published',
-    });
+      status: (postForm.scheduledAt ? 'scheduled' : 'published') as any,
+    };
+    if (editingPost) {
+      await updatePost.mutateAsync({ id: editingPost.id, ...payload });
+    } else {
+      await createPost.mutateAsync(payload);
+    }
     setPostOpen(false);
+    setEditingPost(null);
     setPostForm({
       title: '',
       body: '',
@@ -435,7 +462,22 @@ export default function AmenityDetailPage() {
                         </div>
                         <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.body}</p>
                       </div>
-                      {!p.published && <Badge variant="warning">Scheduled</Badge>}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {!p.published && <Badge variant="warning">Scheduled</Badge>}
+                        <Button variant="ghost" size="sm" onClick={() => openEditPost(p)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            if (!window.confirm('Delete this post?')) return;
+                            await deletePost.mutateAsync(p.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -675,11 +717,29 @@ export default function AmenityDetailPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={postOpen} onOpenChange={setPostOpen}>
+      <Dialog
+        open={postOpen}
+        onOpenChange={(o) => {
+          setPostOpen(o);
+          if (!o) {
+            setEditingPost(null);
+            setPostForm({
+              title: '',
+              body: '',
+              postType: 'announcement',
+              audience: 'all',
+              propertyId: '',
+              scheduledAt: '',
+            });
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New Post</DialogTitle>
-            <DialogDescription>Publish to the community feed.</DialogDescription>
+            <DialogTitle>{editingPost ? 'Edit Post' : 'New Post'}</DialogTitle>
+            <DialogDescription>
+              {editingPost ? 'Update this community post.' : 'Publish to the community feed.'}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -776,11 +836,15 @@ export default function AmenityDetailPage() {
               Cancel
             </Button>
             <Button
-              onClick={handleCreatePost}
-              disabled={createPost.isPending || !postForm.title || !postForm.body}
+              onClick={handleSavePost}
+              disabled={
+                createPost.isPending || updatePost.isPending || !postForm.title || !postForm.body
+              }
             >
-              {createPost.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Publish
+              {createPost.isPending || updatePost.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              {editingPost ? 'Save Changes' : 'Publish'}
             </Button>
           </DialogFooter>
         </DialogContent>

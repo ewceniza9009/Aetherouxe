@@ -180,7 +180,6 @@ export default function AmenitiesPage() {
         search={search}
         onSearchChange={setSearch}
         placeholder="Search amenities…"
-        action={{ label: 'New Amenity', onClick: () => setOpen(true) }}
         filters={
           <Select
             value={typeFilter}

@@ -1,22 +1,23 @@
-import { EmptyState } from "@/components/ui/empty-state";
-import { useState } from "react";
-import { useListQuery } from "@/hooks/use-list-query";
-import { GridToolbar, GridState } from "@/components/GridToolbar";
-import { ListPager } from "@/components/ListPager";
-import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
-import { Textarea } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { EmptyState } from '@/components/ui/empty-state';
+import { useState } from 'react';
+import { useListQuery } from '@/hooks/use-list-query';
+import { GridToolbar, GridState } from '@/components/GridToolbar';
+import { ListPager } from '@/components/ListPager';
+import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { Textarea } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
+import { useProperties } from '@/hooks/use-properties';
 import {
   Dialog,
   DialogContent,
@@ -24,13 +25,8 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@elite-realty/shared-ui/components/ui';
 import {
   Plus,
   Megaphone,
@@ -42,7 +38,7 @@ import {
   Archive,
   Flag,
   MessageSquare,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   usePosts,
   useCreatePost,
@@ -58,35 +54,35 @@ import {
   type PostType,
   type PostAudience,
   type ModerationStatus,
-} from "@/hooks/use-community";
+} from '@/hooks/use-community';
 
 const postTypeMeta: Record<string, { label: string; className: string }> = {
   announcement: {
-    label: "Announcement",
-    className: "bg-blue-100 text-blue-700 border-blue-200",
+    label: 'Announcement',
+    className: 'bg-blue-100 text-blue-700 border-blue-200',
   },
-  event: { label: "Event", className: "bg-purple-100 text-purple-700 border-purple-200" },
+  event: { label: 'Event', className: 'bg-purple-100 text-purple-700 border-purple-200' },
 };
 
 const audienceMeta: Record<string, { label: string; className: string }> = {
-  all: { label: "All", className: "bg-muted text-muted-foreground border-border" },
-  building: { label: "Building", className: "bg-cyan-100 text-cyan-700 border-cyan-200" },
-  property: { label: "Property", className: "bg-amber-100 text-amber-700 border-amber-200" },
-  unit: { label: "Unit", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  all: { label: 'All', className: 'bg-muted text-muted-foreground border-border' },
+  building: { label: 'Building', className: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
+  property: { label: 'Property', className: 'bg-amber-100 text-amber-700 border-amber-200' },
+  unit: { label: 'Unit', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
 };
 
 const moderationMeta: Record<
   ModerationStatus,
-  { label: string; variant: "success" | "warning" | "secondary" }
+  { label: string; variant: 'success' | 'warning' | 'secondary' }
 > = {
-  published: { label: "Published", variant: "success" },
-  hidden: { label: "Hidden", variant: "warning" },
-  archived: { label: "Archived", variant: "secondary" },
+  published: { label: 'Published', variant: 'success' },
+  hidden: { label: 'Hidden', variant: 'warning' },
+  archived: { label: 'Archived', variant: 'secondary' },
 };
 
 const META_FALLBACK = {
-  label: "Unknown",
-  className: "bg-muted text-muted-foreground border-border",
+  label: 'Unknown',
+  className: 'bg-muted text-muted-foreground border-border',
 };
 
 type PostForm = {
@@ -99,12 +95,12 @@ type PostForm = {
 };
 
 const EMPTY_FORM: PostForm = {
-  title: "",
-  body: "",
-  postType: "announcement",
-  audience: "all",
-  propertyId: "",
-  scheduledAt: "",
+  title: '',
+  body: '',
+  postType: 'announcement',
+  audience: 'all',
+  propertyId: '',
+  scheduledAt: '',
 };
 
 export default function CommunityPostsPage() {
@@ -112,9 +108,7 @@ export default function CommunityPostsPage() {
     <div className="space-y-6 flex flex-col ">
       <div>
         <h1 className="font-serif text-3xl font-bold tracking-tight">Community</h1>
-        <p className="text-muted-foreground">
-          Manage posts and moderate community content
-        </p>
+        <p className="text-muted-foreground">Manage posts and moderate community content</p>
       </div>
       <Tabs defaultValue="posts">
         <TabsList className="grid w-full max-w-md grid-cols-3">
@@ -144,17 +138,20 @@ export default function CommunityPostsPage() {
 
 function PostsTab() {
   const listQuery = useListQuery(10);
-  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [audienceFilter, setAudienceFilter] = useState<string>("all");
-  const [moderationFilter, setModerationFilter] = useState<string>("all");
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } =
+    listQuery;
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [audienceFilter, setAudienceFilter] = useState<string>('all');
+  const [moderationFilter, setModerationFilter] = useState<string>('all');
+
+  const { data: propertiesData } = useProperties({ limit: 100 });
 
   const fullQuery = {
     ...query,
-    postType: typeFilter !== "all" ? (typeFilter as PostType) : undefined,
-    audience: audienceFilter !== "all" ? (audienceFilter as PostAudience) : undefined,
+    postType: typeFilter !== 'all' ? (typeFilter as PostType) : undefined,
+    audience: audienceFilter !== 'all' ? (audienceFilter as PostAudience) : undefined,
     moderationStatus:
-      moderationFilter !== "all" ? (moderationFilter as ModerationStatus) : undefined,
+      moderationFilter !== 'all' ? (moderationFilter as ModerationStatus) : undefined,
   };
 
   const { data, isLoading, isError, refetch } = usePosts(fullQuery);
@@ -184,8 +181,8 @@ function PostsTab() {
       body: p.body,
       postType: p.postType,
       audience: p.audience,
-      propertyId: p.propertyId ?? "",
-      scheduledAt: p.scheduledAt ? p.scheduledAt.slice(0, 16) : "",
+      propertyId: p.propertyId ?? '',
+      scheduledAt: p.scheduledAt ? p.scheduledAt.slice(0, 16) : '',
     });
     setOpen(true);
   };
@@ -198,7 +195,7 @@ function PostsTab() {
         body: form.body,
         postType: form.postType,
         audience: form.audience,
-        propertyId: form.propertyId || undefined,
+        propertyId: form.propertyId || null,
         scheduledAt: form.scheduledAt || undefined,
         isPublished: form.scheduledAt ? false : true,
       };
@@ -217,15 +214,14 @@ function PostsTab() {
   };
 
   const handleDelete = async (p: CommunityPost) => {
-    if (!window.confirm(`Delete "${p.title}"? This also removes its comments and reports.`))
-      return;
+    if (!window.confirm(`Delete "${p.title}"? This also removes its comments and reports.`)) return;
     await deletePost.mutateAsync(p.id);
   };
 
   const handleModerate = (p: CommunityPost, status: ModerationStatus) => {
     let reason: string | undefined;
-    if (status === "hidden") {
-      reason = window.prompt("Reason for hiding this post (optional):") ?? undefined;
+    if (status === 'hidden') {
+      reason = window.prompt('Reason for hiding this post (optional):') ?? undefined;
     }
     moderatePost.mutate({ id: p.id, moderationStatus: status, reason });
   };
@@ -237,12 +233,15 @@ function PostsTab() {
           search={search}
           onSearchChange={setSearch}
           placeholder="Search posts…"
-          action={{ label: "New Post", onClick: openCreate }}
+          action={{ label: 'New Post', onClick: openCreate }}
           filters={
             <>
               <Select
                 value={typeFilter}
-                onValueChange={(v) => { setTypeFilter(v); resetPage(); }}
+                onValueChange={(v) => {
+                  setTypeFilter(v);
+                  resetPage();
+                }}
               >
                 <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder="Type" />
@@ -258,7 +257,10 @@ function PostsTab() {
               </Select>
               <Select
                 value={audienceFilter}
-                onValueChange={(v) => { setAudienceFilter(v); resetPage(); }}
+                onValueChange={(v) => {
+                  setAudienceFilter(v);
+                  resetPage();
+                }}
               >
                 <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder="Audience" />
@@ -274,7 +276,10 @@ function PostsTab() {
               </Select>
               <Select
                 value={moderationFilter}
-                onValueChange={(v) => { setModerationFilter(v); resetPage(); }}
+                onValueChange={(v) => {
+                  setModerationFilter(v);
+                  resetPage();
+                }}
               >
                 <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder="Status" />
@@ -303,8 +308,13 @@ function PostsTab() {
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                     Title
                   </th>
-                  <th {...sortHeader("postType", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                    Type{sortIndicator("postType")}
+                  <th
+                    {...sortHeader(
+                      'postType',
+                      'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                    )}
+                  >
+                    Type{sortIndicator('postType')}
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                     Audience
@@ -312,8 +322,13 @@ function PostsTab() {
                   <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                     Engagement
                   </th>
-                  <th {...sortHeader("moderationStatus", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                    Status{sortIndicator("moderationStatus")}
+                  <th
+                    {...sortHeader(
+                      'moderationStatus',
+                      'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                    )}
+                  >
+                    Status{sortIndicator('moderationStatus')}
                   </th>
                   <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
                     Actions
@@ -325,9 +340,7 @@ function PostsTab() {
                   <tr key={p.id} className="border-b hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">
                       <div className="font-medium">{p.title}</div>
-                      <div className="line-clamp-1 text-xs text-muted-foreground">
-                        {p.body}
-                      </div>
+                      <div className="line-clamp-1 text-xs text-muted-foreground">{p.body}</div>
                     </td>
                     <td className="px-4 py-3">
                       <Badge className={(postTypeMeta[p.postType] ?? META_FALLBACK).className}>
@@ -356,12 +369,12 @@ function PostsTab() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
-                        {p.moderationStatus !== "published" ? (
+                        {p.moderationStatus !== 'published' ? (
                           <Button
                             size="icon"
                             variant="ghost"
                             title="Publish"
-                            onClick={() => handleModerate(p, "published")}
+                            onClick={() => handleModerate(p, 'published')}
                           >
                             <Eye className="h-4 w-4 text-emerald-600" />
                           </Button>
@@ -370,17 +383,17 @@ function PostsTab() {
                             size="icon"
                             variant="ghost"
                             title="Hide"
-                            onClick={() => handleModerate(p, "hidden")}
+                            onClick={() => handleModerate(p, 'hidden')}
                           >
                             <EyeOff className="h-4 w-4 text-amber-600" />
                           </Button>
                         )}
-                        {p.moderationStatus !== "archived" && (
+                        {p.moderationStatus !== 'archived' && (
                           <Button
                             size="icon"
                             variant="ghost"
                             title="Archive"
-                            onClick={() => handleModerate(p, "archived")}
+                            onClick={() => handleModerate(p, 'archived')}
                           >
                             <Archive className="h-4 w-4 text-muted-foreground" />
                           </Button>
@@ -411,14 +424,14 @@ function PostsTab() {
 
           <ListPager meta={meta} page={page} onPageChange={setPage} />
         </GridState>
-        </CardContent>
+      </CardContent>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Post" : "New Post"}</DialogTitle>
+            <DialogTitle>{editing ? 'Edit Post' : 'New Post'}</DialogTitle>
             <DialogDescription>
-              {editing ? "Update this community post." : "Publish to the community feed."}
+              {editing ? 'Update this community post.' : 'Publish to the community feed.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -471,13 +484,25 @@ function PostsTab() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="propertyId">Property ID</Label>
-                <Input
-                  id="propertyId"
-                  value={form.propertyId}
-                  onChange={(e) => setForm((f) => ({ ...f, propertyId: e.target.value }))}
-                  placeholder="Optional"
-                />
+                <Label htmlFor="propertyId">Property (optional)</Label>
+                <Select
+                  value={form.propertyId || 'none'}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, propertyId: v === 'none' ? '' : v }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a property" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None / Global</SelectItem>
+                    {propertiesData?.data.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name} ({p.code})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="scheduledAt">Schedule (optional)</Label>
@@ -505,7 +530,7 @@ function PostsTab() {
             </Button>
             <Button onClick={handleSave} disabled={saving || !form.title || !form.body}>
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {editing ? "Save Changes" : "Publish"}
+              {editing ? 'Save Changes' : 'Publish'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -515,9 +540,9 @@ function PostsTab() {
 }
 
 function ReportsTab() {
-  const [statusFilter, setStatusFilter] = useState<string>("open");
+  const [statusFilter, setStatusFilter] = useState<string>('open');
   const { data, isLoading, isError } = useReports(
-    statusFilter !== "all" ? { status: statusFilter as any } : {}
+    statusFilter !== 'all' ? { status: statusFilter as any } : {},
   );
   const resolveReport = useResolveReport();
   const deletePost = useDeletePost();
@@ -549,9 +574,7 @@ function ReportsTab() {
       </CardHeader>
       <CardContent>
         {isError ? (
-          <div className="py-12 text-center text-sm text-destructive">
-            Failed to load reports.
-          </div>
+          <div className="py-12 text-center text-sm text-destructive">Failed to load reports.</div>
         ) : isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -570,23 +593,23 @@ function ReportsTab() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <Badge variant={r.commentId ? "secondary" : "outline"}>
-                        {r.commentId ? "Comment" : "Post"}
+                      <Badge variant={r.commentId ? 'secondary' : 'outline'}>
+                        {r.commentId ? 'Comment' : 'Post'}
                       </Badge>
                       <span className="font-medium">{r.reason}</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {r.postId ? `On post: ${r.postTitle ?? r.postId}` : ""}
-                      {r.commentId ? `On comment: "${r.commentBody ?? ""}"` : ""}
+                      {r.postId ? `On post: ${r.postTitle ?? r.postId}` : ''}
+                      {r.commentId ? `On comment: "${r.commentBody ?? ''}"` : ''}
                     </p>
                     {r.details && <p className="text-sm">{r.details}</p>}
                     <p className="text-xs text-muted-foreground">
-                      Reported by {r.reporterName ?? "Anonymous"} ·{" "}
+                      Reported by {r.reporterName ?? 'Anonymous'} ·{' '}
                       {new Date(r.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    {r.status === "open" ? (
+                    {r.status === 'open' ? (
                       <>
                         {r.postId && (
                           <Button
@@ -595,7 +618,7 @@ function ReportsTab() {
                             onClick={() =>
                               moderatePost.mutate({
                                 id: r.postId!,
-                                moderationStatus: "hidden",
+                                moderationStatus: 'hidden',
                                 reason: `Report: ${r.reason}`,
                               })
                             }
@@ -607,10 +630,10 @@ function ReportsTab() {
                           size="sm"
                           variant="destructive"
                           onClick={async () => {
-                            if (!window.confirm("Remove the reported content?")) return;
+                            if (!window.confirm('Remove the reported content?')) return;
                             if (r.commentId) await deleteComment.mutateAsync(r.commentId);
                             else if (r.postId) await deletePost.mutateAsync(r.postId);
-                            resolveReport.mutate({ id: r.id, status: "actioned" });
+                            resolveReport.mutate({ id: r.id, status: 'actioned' });
                           }}
                         >
                           <Trash2 className="mr-1 h-4 w-4" /> Remove
@@ -618,17 +641,13 @@ function ReportsTab() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() =>
-                            resolveReport.mutate({ id: r.id, status: "dismissed" })
-                          }
+                          onClick={() => resolveReport.mutate({ id: r.id, status: 'dismissed' })}
                         >
                           Dismiss
                         </Button>
                       </>
                     ) : (
-                      <Badge
-                        variant={r.status === "dismissed" ? "secondary" : "success"}
-                      >
+                      <Badge variant={r.status === 'dismissed' ? 'secondary' : 'success'}>
                         {r.status}
                       </Badge>
                     )}
@@ -644,9 +663,9 @@ function ReportsTab() {
 }
 
 function CommentsTab() {
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const { data, isLoading, isError } = useComments(
-    statusFilter !== "all" ? { moderationStatus: statusFilter as ModerationStatus } : {}
+    statusFilter !== 'all' ? { moderationStatus: statusFilter as ModerationStatus } : {},
   );
   const moderateComment = useModerateComment();
   const deleteComment = useDeleteComment();
@@ -675,9 +694,7 @@ function CommentsTab() {
       </CardHeader>
       <CardContent>
         {isError ? (
-          <div className="py-12 text-center text-sm text-destructive">
-            Failed to load comments.
-          </div>
+          <div className="py-12 text-center text-sm text-destructive">Failed to load comments.</div>
         ) : isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -697,8 +714,7 @@ function CommentsTab() {
                   <div className="space-y-1">
                     <p className="text-sm">{c.body}</p>
                     <p className="text-xs text-muted-foreground">
-                      {c.authorName ?? "Unknown"} ·{" "}
-                      {c.postTitle ? `on "${c.postTitle}"` : ""} ·{" "}
+                      {c.authorName ?? 'Unknown'} · {c.postTitle ? `on "${c.postTitle}"` : ''} ·{' '}
                       {new Date(c.createdAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -711,12 +727,12 @@ function CommentsTab() {
                         <Flag className="mr-1 h-3 w-3" /> {c.openReportCount}
                       </Badge>
                     )}
-                    {c.moderationStatus === "published" ? (
+                    {c.moderationStatus === 'published' ? (
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() =>
-                          moderateComment.mutate({ id: c.id, moderationStatus: "hidden" })
+                          moderateComment.mutate({ id: c.id, moderationStatus: 'hidden' })
                         }
                       >
                         <EyeOff className="mr-1 h-4 w-4" /> Hide
@@ -728,7 +744,7 @@ function CommentsTab() {
                         onClick={() =>
                           moderateComment.mutate({
                             id: c.id,
-                            moderationStatus: "published",
+                            moderationStatus: 'published',
                           })
                         }
                       >
@@ -739,7 +755,7 @@ function CommentsTab() {
                       size="sm"
                       variant="ghost"
                       onClick={async () => {
-                        if (!window.confirm("Delete this comment?")) return;
+                        if (!window.confirm('Delete this comment?')) return;
                         await deleteComment.mutateAsync(c.id);
                       }}
                     >
@@ -755,5 +771,3 @@ function CommentsTab() {
     </Card>
   );
 }
-
-
