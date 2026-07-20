@@ -34,12 +34,34 @@ export interface Account {
   updatedAt: string;
 }
 
-export function useGeneralLedgerEntries() {
+export interface GlEntriesParams {
+  search?: string;
+  function?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GlEntriesResponse {
+  data: GlEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  summary: { totalDebit: number; totalCredit: number; balance: number };
+}
+
+export function useGeneralLedgerEntries(params: GlEntriesParams = {}) {
   return useQuery({
-    queryKey: ['general-ledger-entries'],
+    queryKey: ['general-ledger-entries', params],
     queryFn: async () => {
-      const { data } = await api.get('/general-ledger/entries');
-      return data?.data ?? data;
+      const qp = new URLSearchParams();
+      if (params.search) qp.set('search', params.search);
+      if (params.function && params.function !== 'all') qp.set('function', params.function);
+      if (params.page) qp.set('page', String(params.page));
+      if (params.limit) qp.set('limit', String(params.limit));
+      const qs = qp.toString();
+      const { data } = await api.get(`/general-ledger/entries${qs ? `?${qs}` : ''}`);
+      return (data?.data ?? data) as GlEntriesResponse;
     },
   });
 }

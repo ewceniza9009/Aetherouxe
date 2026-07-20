@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Get, Post, Param, UseGuards, Request, Query, Body } from '@nestjs/common';
 import { ApInvoicesService } from './ap-invoices.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApInvoiceQueryDto } from './dto/ap-invoices.dto';
@@ -12,6 +12,16 @@ export class ApInvoicesController {
   findAll(@Request() req: any, @Query() query: ApInvoiceQueryDto) {
     const tenantId = req.user.tenantId;
     return this.apInvoicesService.findAll(tenantId, query);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.apInvoicesService.findOne(id);
+  }
+
+  @Post(':id/approve')
+  approve(@Param('id') id: string) {
+    return this.apInvoicesService.approve(id);
   }
 
   @Post(':id/disburse')

@@ -1,5 +1,5 @@
-import { Controller, Get, UseGuards, Request } from '@nestjs/common';
-import { GeneralLedgerService } from './general-ledger.service';
+import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
+import { GeneralLedgerService, GlEntriesQuery } from './general-ledger.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('general-ledger')
@@ -8,9 +8,9 @@ export class GeneralLedgerController {
   constructor(private readonly generalLedgerService: GeneralLedgerService) {}
 
   @Get('entries')
-  findAllEntries(@Request() req: any) {
+  findAllEntries(@Request() req: any, @Query() query: GlEntriesQuery) {
     const tenantId = req.user.tenantId;
-    return this.generalLedgerService.findAllEntries(tenantId);
+    return this.generalLedgerService.findAllEntries(tenantId, query);
   }
 
   @Get('coa')

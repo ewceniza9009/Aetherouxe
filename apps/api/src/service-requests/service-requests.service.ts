@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ApInvoicesService } from '../ap-invoices/ap-invoices.service';
 import {
   CreateServiceRequestDto,
   UpdateServiceRequestDto,
@@ -13,7 +14,10 @@ import { paginate } from '../common/dto/list-query.dto';
 
 @Injectable()
 export class ServiceRequestsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private apInvoicesService: ApInvoicesService,
+  ) {}
 
   private readonly fieldMap: FieldMap = {
     filters: [
@@ -76,7 +80,9 @@ export class ServiceRequestsService {
     return rows.map((r) => ({
       ...r,
       tenant: r.tenantId ? { id: r.tenantId, name: tenantMap.get(r.tenantId)?.name ?? null } : null,
-      unit: r.unitId ? { id: r.unitId, unitNumber: unitMap.get(r.unitId)?.unitNumber ?? null } : null,
+      unit: r.unitId
+        ? { id: r.unitId, unitNumber: unitMap.get(r.unitId)?.unitNumber ?? null }
+        : null,
     }));
   }
 
@@ -84,9 +90,9 @@ export class ServiceRequestsService {
     const request = await this.prisma.serviceRequest.findUnique({
       where: { id },
       include: {
-        workOrders: { 
+        workOrders: {
           include: { vendor: true },
-          orderBy: { createdAt: 'desc' } 
+          orderBy: { createdAt: 'desc' },
         },
       },
     });
@@ -145,7 +151,9 @@ export class ServiceRequestsService {
 
   // ─── Maintenance Work Orders ───────────────
   async createWorkOrder(dto: CreateWorkOrderDto) {
-    const request = await this.prisma.serviceRequest.findUnique({ where: { id: dto.serviceRequestId } });
+    const request = await this.prisma.serviceRequest.findUnique({
+      where: { id: dto.serviceRequestId },
+    });
     if (!request) throw new NotFoundException('Service request not found');
 
     return this.prisma.maintenanceWorkOrder.create({
@@ -183,6 +191,24 @@ export class ServiceRequestsService {
 
   async updateWorkOrder(id: string, dto: UpdateWorkOrderDto) {
     const existing = await this.findOneWorkOrder(id);
+
+    // Validate: cannot set actualCost > estimatedCost
+    const newActualCost = dto.actualCost ?? existing.actualCost;
+    const newEstimatedCost = dto.estimatedCost ?? existing.estimatedCost;
+    if (newActualCost && newEstimatedCost && newActualCost > newEstimatedCost) {
+      throw new BadRequestException(
+        `Actual cost (${newActualCost}) cannot exceed estimated cost (${newEstimatedCost}).`,
+      );
+    }
+
+    // Validate: cannot complete without a vendor and actualCost
+    if (dto.status === 'completed' && !existing.vendorId && !dto.vendorId) {
+      throw new BadRequestException('Cannot complete a work order without an assigned vendor.');
+    }
+    if (dto.status === 'completed' && !newActualCost) {
+      throw new BadRequestException('Cannot complete a work order without an actual cost.');
+    }
+
     const updated = await this.prisma.maintenanceWorkOrder.update({
       where: { id },
       data: {
@@ -192,24 +218,21 @@ export class ServiceRequestsService {
         estimatedCost: dto.estimatedCost,
         actualCost: dto.actualCost,
         notes: dto.notes,
-        completedDate:
-          dto.status === 'completed' ? new Date() : undefined,
+        completedDate: dto.status === 'completed' ? new Date() : undefined,
       },
     });
 
-    if (existing.status !== 'completed' && dto.status === 'completed' && dto.actualCost) {
-      if (existing.vendorId && existing.serviceRequest?.tenantId) {
-        await this.prisma.apInvoice.create({
-          data: {
-            tenantId: existing.serviceRequest.tenantId,
-            sourceType: 'WORK_ORDER',
-            sourceId: existing.id,
-            vendorId: existing.vendorId,
-            amount: dto.actualCost,
-            status: 'pending_approval',
-            notes: `Auto-generated from completed Work Order ${existing.id}`,
-            dueDate: new Date(new Date().setDate(new Date().getDate() + 30)), // Due in 30 days
-          }
+    // Create AP Invoice via service (handles duplicate guard + GL entry)
+    if (existing.status !== 'completed' && dto.status === 'completed' && newActualCost) {
+      const vendorId = dto.vendorId ?? existing.vendorId;
+      const tenantId = existing.serviceRequest?.tenantId;
+      if (vendorId && tenantId) {
+        await this.apInvoicesService.createFromWorkOrder({
+          tenantId,
+          workOrderId: existing.id,
+          vendorId,
+          amount: newActualCost,
+          notes: `Work Order ${existing.id} — ${existing.serviceRequest?.description ?? 'maintenance'}`,
         });
       }
     }
