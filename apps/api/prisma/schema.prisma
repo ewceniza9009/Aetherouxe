@@ -227,6 +227,9 @@ model Tenant {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 
+  companyOwnerId String?
+  companyOwner   User?    @relation("TenantCompanyOwner", fields: [companyOwnerId], references: [id])
+
   users                User[]
   roles                Role[]
   properties           Property[]
@@ -267,6 +270,7 @@ model User {
   phone        String?
   passwordHash String
   userType     UserType
+  isDeveloper  Boolean   @default(false)
   firstName    String?
   lastName     String?
   avatarUrl    String?
@@ -278,6 +282,7 @@ model User {
   updatedAt    DateTime  @updatedAt
 
   tenant                  Tenant             @relation(fields: [tenantId], references: [id])
+  companyTenants          Tenant[]           @relation("TenantCompanyOwner")
   role                    Role?              @relation(fields: [roleId], references: [id])
   realEstateAgent         RealEstateAgent?
   leaseAgreementsAsTenant LeaseAgreement[]   @relation("TenantLeaseAgreements")
@@ -303,6 +308,7 @@ model User {
   titleTransfersAsBuyer     TitleTransfer[]        @relation("TitleTransferBuyer")
   titleTransfersAsPrevOwner TitleTransfer[]        @relation("TitleTransferPreviousOwner")
   titleTransfersProcessed   TitleTransfer[]        @relation("TitleTransferProcessedBy")
+  ownedProperties           Property[]
 
   @@map("users")
 }
@@ -358,6 +364,7 @@ model Property {
   id               String         @id @default(uuid())
   tenantId         String
   projectId        String
+  ownerId          String?
   propertyCode     String         @unique
   propertyType     PropertyType
   status           PropertyStatus @default(available)
@@ -368,6 +375,7 @@ model Property {
 
   tenant            Tenant               @relation(fields: [tenantId], references: [id])
   project           Project              @relation(fields: [projectId], references: [id])
+  owner             User?                @relation(fields: [ownerId], references: [id])
   parentProperty    Property?            @relation("PropertyHierarchy", fields: [parentPropertyId], references: [id])
   childProperties   Property[]           @relation("PropertyHierarchy")
   units             Unit[]
@@ -391,6 +399,7 @@ model Property {
   @@index([tenantId, status])
   @@index([tenantId, projectId])
   @@index([tenantId, createdAt])
+  @@index([tenantId, ownerId])
 
   @@map("properties")
 }

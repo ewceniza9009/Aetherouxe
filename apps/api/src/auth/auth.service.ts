@@ -143,6 +143,7 @@ export class AuthService {
         lastName: true,
         phone: true,
         userType: true,
+        isDeveloper: true,
         isActive: true,
         lastLoginAt: true,
         createdAt: true,

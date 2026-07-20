@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { useListQuery } from "@/hooks/use-list-query";
-import { GridToolbar, GridState } from "@/components/GridToolbar";
-import { ListPager } from "@/components/ListPager";
-import { Card, CardContent, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
+import { useState, useMemo } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useListQuery } from '@/hooks/use-list-query';
+import { GridToolbar, GridState } from '@/components/GridToolbar';
+import { ListPager } from '@/components/ListPager';
+import { Card, CardContent, CardTitle } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -15,25 +15,18 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui";
-import {
-  Plus,
-  PieChart,
-  Loader2,
-} from "lucide-react";
-import {
-  usePnlStatements,
-  useGeneratePnl,
-  type OwnerPnlStatement,
-} from "@/hooks/use-owner-pnl";
-import { formatCurrency } from "@/lib/agent-meta";
+} from '@elite-realty/shared-ui/components/ui';
+import { Plus, PieChart, Loader2 } from 'lucide-react';
+import { usePnlStatements, useGeneratePnl, type OwnerPnlStatement } from '@/hooks/use-owner-pnl';
+import { useCompanyOwner } from '@/hooks/use-company-owner';
+import { formatCurrency } from '@/lib/agent-meta';
 
 const pnlStatusMeta: Record<string, { label: string; variant: any }> = {
-  draft: { label: "Draft", variant: "secondary" },
-  issued: { label: "Issued", variant: "default" },
+  draft: { label: 'Draft', variant: 'secondary' },
+  issued: { label: 'Issued', variant: 'default' },
 };
 
-const PNL_STATUS_FALLBACK = { label: "Unknown", variant: "secondary" };
+const PNL_STATUS_FALLBACK = { label: 'Unknown', variant: 'secondary' };
 
 function money(n: number) {
   return formatCurrency(Number(n ?? 0));
@@ -43,20 +36,39 @@ export default function OwnerPnlPage() {
   const navigate = useNavigate();
   const listQuery = useListQuery(10);
   const { search, setSearch, page, setPage, query, sortHeader, sortIndicator } = listQuery;
+  const companyOwner = useCompanyOwner();
+  const [showCompanyOnly, setShowCompanyOnly] = useState(false);
 
-  const { data, isLoading, isError, refetch } = usePnlStatements(query);
+  // When "Company only" is on, scope the list (and the generate form) to the
+  // developer's own owner account so the P&L reflects the company, not buyers.
+  const pnlQuery = useMemo(
+    () => ({ ...query, ownerId: showCompanyOnly ? companyOwner.data?.id : undefined }),
+    [query, showCompanyOnly, companyOwner.data?.id],
+  );
+
+  const { data, isLoading, isError, refetch } = usePnlStatements(pnlQuery);
   const generatePnl = useGeneratePnl();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    ownerId: "",
-    ownerName: "",
-    propertyId: "",
-    propertyName: "",
-    periodStart: "",
-    periodEnd: "",
-    managementFeeRate: "0.10",
+    ownerId: '',
+    ownerName: '',
+    propertyId: '',
+    propertyName: '',
+    periodStart: '',
+    periodEnd: '',
+    managementFeeRate: '0.10',
   });
+
+  const toggleCompanyOnly = (checked: boolean) => {
+    setShowCompanyOnly(checked);
+    if (checked && companyOwner.data) {
+      const name =
+        `${companyOwner.data.firstName ?? ''} ${companyOwner.data.lastName ?? ''}`.trim() ||
+        companyOwner.data.email;
+      setForm((f) => ({ ...f, ownerId: companyOwner.data!.id, ownerName: name }));
+    }
+  };
 
   const statements = data?.data ?? [];
   const meta = data?.meta;
@@ -73,13 +85,13 @@ export default function OwnerPnlPage() {
       });
       setOpen(false);
       setForm({
-        ownerId: "",
-        ownerName: "",
-        propertyId: "",
-        propertyName: "",
-        periodStart: "",
-        periodEnd: "",
-        managementFeeRate: "0.10",
+        ownerId: '',
+        ownerName: '',
+        propertyId: '',
+        propertyName: '',
+        periodStart: '',
+        periodEnd: '',
+        managementFeeRate: '0.10',
       });
       refetch();
       if (result?.id) navigate({ to: `/owner-pnl/${result.id}` });
@@ -100,11 +112,27 @@ export default function OwnerPnlPage() {
         </Button>
       </div>
 
+      <div className="flex flex-wrap items-center gap-3 text-sm">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showCompanyOnly}
+            onChange={(e) => toggleCompanyOnly(e.target.checked)}
+          />
+          <span>Company only (developer P&amp;L)</span>
+        </label>
+        {showCompanyOnly && companyOwner.data && (
+          <span className="text-muted-foreground">
+            Showing P&amp;L for {companyOwner.data.email}
+          </span>
+        )}
+      </div>
+
       <GridToolbar
         search={search}
         onSearchChange={setSearch}
         placeholder="Search statements…"
-        action={{ label: "Generate Statement", onClick: () => setOpen(true) }}
+        action={{ label: 'Generate Statement', onClick: () => setOpen(true) }}
       />
 
       <Card>
@@ -128,8 +156,13 @@ export default function OwnerPnlPage() {
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                       Period
                     </th>
-                    <th {...sortHeader("grossRentalIncome", "px-4 py-3 text-right text-sm font-medium text-muted-foreground")}>
-                      Gross{sortIndicator("grossRentalIncome")}
+                    <th
+                      {...sortHeader(
+                        'grossRentalIncome',
+                        'px-4 py-3 text-right text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Gross{sortIndicator('grossRentalIncome')}
                     </th>
                     <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
                       Expenses
@@ -137,11 +170,21 @@ export default function OwnerPnlPage() {
                     <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
                       Fee
                     </th>
-                    <th {...sortHeader("netIncome", "px-4 py-3 text-right text-sm font-medium text-muted-foreground")}>
-                      Net{sortIndicator("netIncome")}
+                    <th
+                      {...sortHeader(
+                        'netIncome',
+                        'px-4 py-3 text-right text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Net{sortIndicator('netIncome')}
                     </th>
-                    <th {...sortHeader("status", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Status{sortIndicator("status")}
+                    <th
+                      {...sortHeader(
+                        'status',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Status{sortIndicator('status')}
                     </th>
                   </tr>
                 </thead>
@@ -153,13 +196,20 @@ export default function OwnerPnlPage() {
                       onClick={() => navigate({ to: `/owner-pnl/${s.id}` })}
                     >
                       <td className="px-4 py-3 font-medium">
-                        {s.ownerName || (s.owner?.firstName ? `${s.owner.firstName} ${s.owner.lastName || ''}`.trim() : null) || s.ownerId.slice(0, 8).toUpperCase()}
+                        {s.ownerName ||
+                          (s.owner?.firstName
+                            ? `${s.owner.firstName} ${s.owner.lastName || ''}`.trim()
+                            : null) ||
+                          s.ownerId.slice(0, 8).toUpperCase()}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {s.propertyName || s.property?.propertyCode || s.propertyId?.slice(0, 8).toUpperCase() || "-"}
+                        {s.propertyName ||
+                          s.property?.propertyCode ||
+                          s.propertyId?.slice(0, 8).toUpperCase() ||
+                          '-'}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {new Date(s.periodStart).toLocaleDateString()} –{" "}
+                        {new Date(s.periodStart).toLocaleDateString()} –{' '}
                         {new Date(s.periodEnd).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums">
@@ -194,9 +244,7 @@ export default function OwnerPnlPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Generate Statement</DialogTitle>
-            <DialogDescription>
-              Produce an owner P&amp;L for a period.
-            </DialogDescription>
+            <DialogDescription>Produce an owner P&amp;L for a period.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -256,9 +304,7 @@ export default function OwnerPnlPage() {
                 min="0"
                 step="0.01"
                 value={form.managementFeeRate}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, managementFeeRate: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, managementFeeRate: e.target.value }))}
               />
             </div>
           </div>
@@ -279,5 +325,3 @@ export default function OwnerPnlPage() {
     </div>
   );
 }
-
-

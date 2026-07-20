@@ -385,6 +385,33 @@ async function main() {
   });
   console.log(`Tenant/Company: ${tenant.name}`);
 
+  /* ── Company owner (developer/business) ──
+   * The default owner of record for inventory that has not yet been sold or
+   * transferred to a buyer. Mirrors CompanyOwnerService.getOrCreate().
+   */
+  const companyOwnerEmail = `portfolio@${tenant.domain}`;
+  let companyOwner = await prisma.user.findUnique({ where: { email: companyOwnerEmail } });
+  if (!companyOwner) {
+    companyOwner = await prisma.user.create({
+      data: {
+        tenantId: tenant.id,
+        email: companyOwnerEmail,
+        phone: null,
+        passwordHash: 'NOLOGIN',
+        userType: UserType.owner,
+        firstName: 'Portfolio',
+        lastName: tenant.name,
+        isActive: true,
+        tokenVersion: 0,
+      },
+    });
+  }
+  await prisma.tenant.update({
+    where: { id: tenant.id },
+    data: { companyOwnerId: companyOwner.id },
+  });
+  console.log(`Company owner: ${companyOwner.email}`);
+
   /* ── Users ── */
   const hash = await bcrypt.hash('Admin123!', 12);
   const residentHash = await bcrypt.hash('Tenant123!', 12);
@@ -1100,6 +1127,7 @@ async function main() {
           propertyType: ptype,
           status: propStatus,
           specsDocumentId: null,
+          ownerId: companyOwner.id,
         },
       });
 
@@ -2559,6 +2587,14 @@ async function main() {
         notes: tt.notes,
       },
     });
+    // Completed transfers reassign ownership from the company to the buyer,
+    // matching the runtime behavior in TitlesService.complete().
+    if (tt.status === TitleTransferStatus.completed) {
+      await prisma.property.update({
+        where: { id: tt.propertyId },
+        data: { status: 'sold', ownerId: tt.buyerUserId },
+      });
+    }
     titleTransferCount++;
   }
   console.log(`Title Transfers: ${titleTransferCount}`);

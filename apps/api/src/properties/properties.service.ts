@@ -5,6 +5,7 @@ import { NumberingEngineService } from '../numbering-engine/numbering-engine.ser
 import { buildListQuery, FieldMap } from '../common/list-query.builder';
 import { paginate } from '../common/dto/list-query.dto';
 import { PropertySpecService } from '../mongodb/property-spec.service';
+import { CompanyOwnerService } from '../company-owner/company-owner.service';
 import { CreatePropertyDto, UpdatePropertyDto, PropertyQueryDto } from './dto/properties.dto';
 
 @Injectable()
@@ -13,6 +14,7 @@ export class PropertiesService {
     private prisma: PrismaService,
     private numberingEngine: NumberingEngineService,
     private propertySpecService: PropertySpecService,
+    private companyOwner: CompanyOwnerService,
   ) {}
 
   private generateFallbackCode(): string {
@@ -29,6 +31,7 @@ export class PropertiesService {
       });
 
     let lastError: unknown;
+    const ownerId = dto.ownerId ?? (await this.companyOwner.getOrCreate(tenantId)).id;
     for (let attempt = 0; attempt < 5; attempt++) {
       const candidateCode = attempt === 0 ? code : this.generateFallbackCode();
       try {
@@ -40,6 +43,7 @@ export class PropertiesService {
             propertyType: dto.propertyType as any,
             status: (dto.status as any) || 'available',
             parentPropertyId: dto.parentPropertyId,
+            ownerId,
           },
           include: { project: true, units: { include: { building: true, floor: true } } },
         });

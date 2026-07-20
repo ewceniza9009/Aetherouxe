@@ -51,7 +51,9 @@ import { ReservationsModule } from './reservations/reservations.module';
 import { CodeSequenceModule } from './code-sequence/code-sequence.module';
 import { ApInvoicesModule } from './ap-invoices/ap-invoices.module';
 import { GeneralLedgerModule } from './general-ledger/general-ledger.module';
+import { OwnerPortalModule } from './owner-portal/owner-portal.module';
 import { RolesModule } from './roles/roles.module';
+import { CompanyOwnerModule } from './company-owner/company-owner.module';
 import { LedgerModule } from './ledger/ledger.module';
 import { SearchModule } from './search/search.module';
 
@@ -111,7 +113,9 @@ import { SearchModule } from './search/search.module';
     ]),
     ApInvoicesModule,
     GeneralLedgerModule,
+    OwnerPortalModule,
     RolesModule,
+    CompanyOwnerModule,
     LedgerModule,
     SearchModule,
   ],

@@ -7,7 +7,7 @@ import type { ApiResponse } from '@elite-realty/shared-types';
  * Types
  * ------------------------------------------------------------------ */
 
-export type OwnerPnlStatus = 'draft' | 'published' | 'final';
+export type OwnerPnlStatus = 'draft' | 'issued';
 
 export interface OwnerPnl {
   id: string;
@@ -16,8 +16,9 @@ export interface OwnerPnl {
   period: string;
   periodStart?: string | null;
   periodEnd?: string | null;
-  grossIncome: number;
+  grossRentalIncome: number;
   totalExpenses: number;
+  managementFee: number;
   netIncome: number;
   yieldPct?: number | null;
   status: OwnerPnlStatus;
@@ -40,14 +41,61 @@ export interface OwnerDocument {
   createdAt: string;
 }
 
+export interface PortfolioStats {
+  totalProperties: number;
+  totalUnits: number;
+  occupiedUnits: number;
+  occupancyRate: number;
+  totalNetIncome: number;
+  totalGrossIncome: number;
+  totalExpenses: number;
+  avgYield: number;
+}
+
+export interface OwnerProperty {
+  id: string;
+  name: string;
+  propertyCode: string;
+  propertyType: string;
+  status: string;
+  totalUnits: number;
+  occupiedUnits: number;
+  occupancy: number;
+  monthlyIncome: number;
+  annualNoi: number;
+  imageUrl: string | null;
+}
+
+export interface OwnerFinancials {
+  summary: {
+    totalRevenue: number;
+    totalExpenses: number;
+    totalNetIncome: number;
+    avgYield: number;
+    statementCount: number;
+  };
+  statements: {
+    id: string;
+    propertyName: string;
+    propertyType: string;
+    periodStart: string | null;
+    periodEnd: string | null;
+    grossRentalIncome: number;
+    expenses: number;
+    netIncome: number;
+    yield: number;
+    status: string;
+    generatedAt: string | null;
+  }[];
+}
+
 /* ------------------------------------------------------------------ *
  * Small inline color / label maps
  * ------------------------------------------------------------------ */
 
 export const PNL_STATUS_STYLES: Record<OwnerPnlStatus, { label: string; className: string }> = {
   draft: { label: 'Draft', className: 'bg-gray-100 text-gray-700' },
-  published: { label: 'Published', className: 'bg-blue-100 text-blue-700' },
-  final: { label: 'Final', className: 'bg-emerald-100 text-emerald-700' },
+  issued: { label: 'Issued', className: 'bg-emerald-100 text-emerald-700' },
 };
 
 export const DOCUMENT_TYPE_STYLES: Record<OwnerDocumentType, { label: string; className: string }> =
@@ -67,8 +115,6 @@ export const DOCUMENT_TYPE_STYLES: Record<OwnerDocumentType, { label: string; cl
  * Formatting helpers
  * ------------------------------------------------------------------ */
 
-// Tenant-aware currency formatting. Defaults to PHP/₱ to match the company
-// settings (currency: 'PHP', currencySymbol: '₱') used across the platform.
 let currencyCode = 'PHP';
 let currencySymbol = '₱';
 
@@ -107,6 +153,42 @@ export function formatDate(value?: string | null): string {
 /* ------------------------------------------------------------------ *
  * Queries
  * ------------------------------------------------------------------ */
+
+export function usePortfolioStats() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['owner-portfolio-stats', user?.id],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<PortfolioStats>>('/owner-portal/portfolio-stats');
+      return (data.data ?? data) as PortfolioStats;
+    },
+    enabled: !!user?.id,
+  });
+}
+
+export function useMyProperties() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['owner-properties', user?.id],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<OwnerProperty[]>>('/owner-portal/properties');
+      return (data.data ?? []) as OwnerProperty[];
+    },
+    enabled: !!user?.id,
+  });
+}
+
+export function useMyFinancials() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['owner-financials', user?.id],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<OwnerFinancials>>('/owner-portal/financials');
+      return (data.data ?? data) as OwnerFinancials;
+    },
+    enabled: !!user?.id,
+  });
+}
 
 export function useMyPnl() {
   const { user } = useAuth();

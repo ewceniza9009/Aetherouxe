@@ -1,16 +1,37 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Building2, MapPin } from "lucide-react";
+import { Card, CardContent } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Building2, MapPin, Loader2 } from 'lucide-react';
+import { useMyProperties, formatCurrency, type OwnerProperty } from '@/hooks/use-owner-portal';
 
-const ownedProperties = [
-  { id: "1", name: "Maple Towers", address: "123 Maple St, Portland, OR", type: "Multi-Family", units: 48, value: "$8.2M", equity: "$5.6M", noi: "$1.19M/yr", occupancy: 94, status: "leased" },
-  { id: "2", name: "Oakwood Estates", address: "456 Oak Ave, Portland, OR", type: "Single Family", units: 12, value: "$4.5M", equity: "$3.2M", noi: "$432K/yr", occupancy: 100, status: "leased" },
-  { id: "3", name: "Cedar Heights", address: "321 Cedar Ln, Beaverton, OR", type: "Multi-Family", units: 36, value: "$6.1M", equity: "$4.0M", noi: "$864K/yr", occupancy: 92, status: "leased" },
-  { id: "4", name: "Riverfront Plaza", address: "555 River Dr, Portland, OR", type: "Commercial", units: 15, value: "$4.8M", equity: "$3.5M", noi: "$720K/yr", occupancy: 87, status: "leased" },
-  { id: "5", name: "Pine Valley Ranch", address: "789 Pine Rd, Salem, OR", type: "Land", units: 0, value: "$1.2M", equity: "$1.2M", noi: "$0/yr", occupancy: 0, status: "under_construction" },
-];
+const statusConfig: Record<string, { label: string; className: string }> = {
+  available: { label: 'Available', className: 'bg-emerald-100 text-emerald-700' },
+  leased: { label: 'Leased', className: 'bg-blue-100 text-blue-700' },
+  sold: { label: 'Sold', className: 'bg-gray-100 text-gray-700' },
+  under_construction: { label: 'Under Construction', className: 'bg-amber-100 text-amber-700' },
+};
 
 export default function OwnerPropertiesPage() {
+  const { data: properties, isLoading, isError } = useMyProperties();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">My Properties</h1>
+          <p className="text-muted-foreground">Failed to load properties</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -18,52 +39,67 @@ export default function OwnerPropertiesPage() {
         <p className="text-muted-foreground">View your real estate portfolio</p>
       </div>
 
-      <div className="space-y-4">
-        {ownedProperties.map((property) => (
-          <Card key={property.id}>
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <Building2 className="h-6 w-6 text-primary" />
+      {!properties || properties.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Building2 className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
+            <p className="text-sm text-muted-foreground">No properties assigned yet</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {properties.map((property: OwnerProperty) => {
+            const cfg = statusConfig[property.status] ?? statusConfig.available;
+            return (
+              <Card key={property.id}>
+                <CardContent className="pt-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                        <Building2 className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold">{property.name}</h3>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <MapPin className="h-3 w-3" /> {property.propertyCode}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {property.propertyType.replace(/_/g, ' ')} ·{' '}
+                          {property.totalUnits > 0 ? `${property.totalUnits} units` : 'Development'}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className={cfg.className}>{cfg.label}</Badge>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">{property.name}</h3>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
-                      <MapPin className="h-3 w-3" /> {property.address}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">{property.type} &middot; {property.units > 0 ? `${property.units} units` : "Development"}</p>
-                  </div>
-                </div>
-                <Badge variant={property.status === "leased" ? "success" : "warning"}>
-                  {property.status.replace(/_/g, " ")}
-                </Badge>
-              </div>
 
-              <div className="grid grid-cols-4 gap-4 mt-4 pt-4 border-t">
-                <div>
-                  <p className="text-sm text-muted-foreground">Market Value</p>
-                  <p className="font-semibold">{property.value}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Equity</p>
-                  <p className="font-semibold">{property.equity}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Annual NOI</p>
-                  <p className="font-semibold">{property.noi}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Occupancy</p>
-                  <p className="font-semibold">{property.occupancy > 0 ? `${property.occupancy}%` : "N/A"}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  <div className="grid grid-cols-4 gap-4 mt-4 pt-4 border-t">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Monthly Income</p>
+                      <p className="font-semibold">{formatCurrency(property.monthlyIncome)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Annual NOI</p>
+                      <p className="font-semibold">{formatCurrency(property.annualNoi)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Occupancy</p>
+                      <p className="font-semibold">
+                        {property.occupancy > 0 ? `${property.occupancy}%` : 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Occupied Units</p>
+                      <p className="font-semibold">
+                        {property.occupiedUnits}/{property.totalUnits}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
-
-

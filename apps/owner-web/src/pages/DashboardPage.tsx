@@ -1,21 +1,61 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Building2, DollarSign, TrendingUp, PieChart, ArrowUpRight, ArrowDownRight } from "lucide-react";
-
-const portfolioStats = [
-  { title: "Properties Owned", value: "12", icon: Building2, change: "+1", positive: true },
-  { title: "Portfolio Value", value: "$24.8M", icon: DollarSign, change: "+$1.2M", positive: true },
-  { title: "Total ROI", value: "14.2%", icon: TrendingUp, change: "+2.3%", positive: true },
-  { title: "Monthly Income", value: "$184K", icon: PieChart, change: "+$12K", positive: true },
-];
-
-const projects = [
-  { name: "Pine Valley Ranch", status: "in_progress", progress: 65, completion: "Dec 2026", roi: "18%" },
-  { name: "Riverfront Plaza Expansion", status: "planning", progress: 10, completion: "Jun 2028", roi: "22%" },
-  { name: "Oakwood Estates Phase 2", status: "completed", progress: 100, completion: "Mar 2026", roi: "15%" },
-];
+import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import {
+  Building2,
+  DollarSign,
+  TrendingUp,
+  PieChart,
+  ArrowUpRight,
+  ArrowDownRight,
+  Loader2,
+} from 'lucide-react';
+import { usePortfolioStats, useMyProperties, formatCurrency } from '@/hooks/use-owner-portal';
 
 export default function OwnerDashboardPage() {
+  const { data: stats, isLoading: loadingStats } = usePortfolioStats();
+  const { data: properties, isLoading: loadingProps } = useMyProperties();
+
+  const isLoading = loadingStats || loadingProps;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const portfolioStats = [
+    {
+      title: 'Properties Owned',
+      value: stats?.totalProperties ?? 0,
+      icon: Building2,
+      change: `${stats?.totalUnits ?? 0} units`,
+      positive: true,
+    },
+    {
+      title: 'Occupancy Rate',
+      value: `${stats?.occupancyRate ?? 0}%`,
+      icon: TrendingUp,
+      change: `${stats?.occupiedUnits ?? 0}/${stats?.totalUnits ?? 0} occupied`,
+      positive: (stats?.occupancyRate ?? 0) >= 80,
+    },
+    {
+      title: 'Average Yield',
+      value: `${stats?.avgYield ?? 0}%`,
+      icon: PieChart,
+      change: 'across portfolio',
+      positive: (stats?.avgYield ?? 0) > 0,
+    },
+    {
+      title: 'Net Income',
+      value: formatCurrency(stats?.totalNetIncome),
+      icon: DollarSign,
+      change: `${formatCurrency(stats?.totalGrossIncome)} gross`,
+      positive: (stats?.totalNetIncome ?? 0) > 0,
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -34,9 +74,15 @@ export default function OwnerDashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
-                <p className={`text-xs flex items-center gap-1 ${stat.positive ? "text-green-600" : "text-red-600"}`}>
-                  {stat.positive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                  {stat.change} this quarter
+                <p
+                  className={`text-xs flex items-center gap-1 ${stat.positive ? 'text-green-600' : 'text-red-600'}`}
+                >
+                  {stat.positive ? (
+                    <ArrowUpRight className="h-3 w-3" />
+                  ) : (
+                    <ArrowDownRight className="h-3 w-3" />
+                  )}
+                  {stat.change}
                 </p>
               </CardContent>
             </Card>
@@ -47,50 +93,58 @@ export default function OwnerDashboardPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>ROI by Property</CardTitle>
+            <CardTitle>My Properties</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[250px] flex items-center justify-center border-2 border-dashed rounded-lg border-muted-foreground/20">
-              <p className="text-muted-foreground">ROI chart will render here</p>
-            </div>
+          <CardContent className="space-y-4">
+            {(!properties || properties.length === 0) && (
+              <p className="text-sm text-muted-foreground">No properties yet</p>
+            )}
+            {properties?.map((prop) => (
+              <div
+                key={prop.id}
+                className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0"
+              >
+                <div>
+                  <p className="text-sm font-medium">{prop.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {prop.propertyType.replace(/_/g, ' ')} · {prop.totalUnits} units
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold">{prop.occupancy}% occupied</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatCurrency(prop.monthlyIncome)}/mo
+                  </p>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Project Completion Timeline</CardTitle>
+            <CardTitle>Financial Summary</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {projects.map((project) => (
-              <div key={project.name} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{project.name}</span>
-                  <Badge
-                    variant={
-                      project.status === "completed" ? "success" :
-                      project.status === "in_progress" ? "default" : "secondary"
-                    }
-                  >
-                    {project.status.replace(/_/g, " ")}
-                  </Badge>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full ${project.status === "completed" ? "bg-green-500" : "bg-primary"}`}
-                    style={{ width: `${project.progress}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Est. completion: {project.completion}</span>
-                  <span>Projected ROI: {project.roi}</span>
-                </div>
-              </div>
-            ))}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Total Revenue</span>
+              <span className="font-semibold">{formatCurrency(stats?.totalGrossIncome)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Operating Expenses</span>
+              <span className="font-semibold text-red-600">
+                -{formatCurrency(stats?.totalExpenses)}
+              </span>
+            </div>
+            <div className="border-t pt-3 flex items-center justify-between">
+              <span className="text-sm font-medium">Net Income</span>
+              <span className="font-bold text-green-600">
+                {formatCurrency(stats?.totalNetIncome)}
+              </span>
+            </div>
           </CardContent>
         </Card>
       </div>
     </div>
   );
 }
-
-

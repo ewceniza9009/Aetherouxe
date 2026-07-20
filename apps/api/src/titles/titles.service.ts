@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TitleTransferStatus } from '@prisma/client';
 import {
@@ -65,7 +61,14 @@ export class TitlesService {
       { field: 'buyerUserId', type: 'eq' },
       { field: 'status', type: 'eq' },
     ],
-    sortable: ['requestedDate', 'completedDate', 'createdAt', 'contractValue', 'status', 'propertyId'],
+    sortable: [
+      'requestedDate',
+      'completedDate',
+      'createdAt',
+      'contractValue',
+      'status',
+      'propertyId',
+    ],
     search: ['buyer.firstName', 'buyer.lastName', 'buyer.email', 'property.propertyCode'],
   };
 
@@ -121,7 +124,7 @@ export class TitlesService {
     if (willComplete) {
       await this.prisma.property.update({
         where: { id: transfer.propertyId },
-        data: { status: 'sold' },
+        data: { status: 'sold', ownerId: transfer.buyerUserId },
       });
     }
 
@@ -148,7 +151,7 @@ export class TitlesService {
 
     await this.prisma.property.update({
       where: { id: transfer.propertyId },
-      data: { status: 'sold' },
+      data: { status: 'sold', ownerId: transfer.buyerUserId },
     });
 
     return transfer;

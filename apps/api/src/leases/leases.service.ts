@@ -67,6 +67,18 @@ export class LeasesService {
       });
     }
 
+    const statusUpdate: { status: 'rented' } = { status: 'rented' };
+    await this.prisma.property.update({
+      where: { id: lease.propertyId },
+      data: statusUpdate,
+    });
+    if (lease.unitId) {
+      await this.prisma.unit.update({
+        where: { id: lease.unitId },
+        data: statusUpdate,
+      });
+    }
+
     return lease;
   }
 

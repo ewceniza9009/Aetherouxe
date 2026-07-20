@@ -3,22 +3,40 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePropertyDto {
   @ApiProperty() @IsString() @IsUUID() projectId: string;
-  @ApiProperty({ enum: ['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'] })
+  @ApiProperty({
+    enum: ['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'],
+  })
   @IsIn(['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'])
   propertyType: string;
-  @ApiPropertyOptional({ enum: ['available', 'reserved', 'sold', 'rented', 'rto_active', 'under_maintenance'] })
-  @IsOptional() @IsIn(['available', 'reserved', 'sold', 'rented', 'rto_active', 'under_maintenance'])
+  @ApiPropertyOptional({
+    enum: ['available', 'reserved', 'sold', 'rented', 'rto_active', 'under_maintenance'],
+  })
+  @IsOptional()
+  @IsIn(['available', 'reserved', 'sold', 'rented', 'rto_active', 'under_maintenance'])
   status?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() parentPropertyId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() propertyCode?: string;
+  @ApiPropertyOptional({
+    description: 'Owning user. Defaults to the tenant company owner when omitted.',
+  })
+  @IsOptional()
+  @IsString()
+  @IsUUID()
+  ownerId?: string;
 }
 
 export class UpdatePropertyDto {
-  @ApiPropertyOptional({ enum: ['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'] })
-  @IsOptional() @IsIn(['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'])
+  @ApiPropertyOptional({
+    enum: ['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'],
+  })
+  @IsOptional()
+  @IsIn(['condo_unit', 'house_and_lot', 'townhouse', 'commercial_space', 'parking_slot'])
   propertyType?: string;
-  @ApiPropertyOptional({ enum: ['available', 'reserved', 'sold', 'rented', 'rto_active', 'under_maintenance'] })
-  @IsOptional() @IsIn(['available', 'reserved', 'sold', 'rented', 'rto_active', 'under_maintenance'])
+  @ApiPropertyOptional({
+    enum: ['available', 'reserved', 'sold', 'rented', 'rto_active', 'under_maintenance'],
+  })
+  @IsOptional()
+  @IsIn(['available', 'reserved', 'sold', 'rented', 'rto_active', 'under_maintenance'])
   status?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() parentPropertyId?: string;
 }
