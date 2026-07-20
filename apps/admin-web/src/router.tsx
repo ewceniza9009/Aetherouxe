@@ -18,6 +18,7 @@ import BuildingsPage from './pages/BuildingsPage';
 import NewBuildingPage from './pages/NewBuildingPage';
 import EditBuildingPage from './pages/EditBuildingPage';
 import FloorListPage from './pages/FloorListPage';
+import DirectoryPage from './pages/DirectoryPage';
 import TenantsPage from './pages/TenantsPage';
 import TenantDetailPage from './pages/TenantDetailPage';
 import LeasesPage from './pages/LeasesPage';
@@ -185,10 +186,16 @@ const floorListRoute = createRoute({
   component: FloorListPage,
 });
 
+const directoryRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: '/directory',
+  component: DirectoryPage,
+});
+
 const tenantsRoute = createRoute({
   getParentRoute: () => protectedLayout,
   path: '/tenants',
-  component: TenantsPage,
+  component: DirectoryPage,
 });
 
 const tenantDetailRoute = createRoute({
@@ -531,6 +538,7 @@ const routeTree = rootRoute.addChildren([
     newBuildingRoute,
     editBuildingRoute,
     floorListRoute,
+    directoryRoute,
     tenantsRoute,
     tenantDetailRoute,
     leasesRoute,

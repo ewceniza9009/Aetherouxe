@@ -43,6 +43,8 @@ import {
   CollectionCasePriority,
   NotificationType,
   NotificationRole,
+  TitleTransferBasis,
+  TitleTransferStatus,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker';
@@ -2457,6 +2459,109 @@ async function main() {
     leadCount++;
   }
   console.log(`Leads: ${leadCount}`);
+
+  /* ── Title Transfers ──
+   * Links buyers (owners) to properties they've purchased.
+   * Each transfer records the basis (spot cash, installment, RTO, mortgage),
+   * status, contract value, and TCT/CCT number.
+   */
+  const titleTransfers = [
+    {
+      propertyId: propA?.id ?? properties[0].id,
+      buyerUserId: owners[0].id,
+      basis: TitleTransferBasis.spot_cash,
+      status: TitleTransferStatus.completed,
+      titleNumber: 'TCT-2024-00142',
+      contractValue: 8_500_000,
+      amountSettled: 8_500_000,
+      transferFeeAmount: 85_000,
+      completedDate: faker.date.past({ years: 1 }),
+      notes: 'Spot cash purchase of unit A-1201. Title released.',
+    },
+    {
+      propertyId: propB?.id ?? properties[1].id,
+      buyerUserId: owners[1].id,
+      basis: TitleTransferBasis.installment_paid,
+      status: TitleTransferStatus.completed,
+      titleNumber: 'TCT-2024-00198',
+      contractValue: 6_200_000,
+      amountSettled: 6_200_000,
+      transferFeeAmount: 62_000,
+      completedDate: faker.date.past({ years: 1 }),
+      notes: 'In-house installment fully paid after 36 months.',
+    },
+    {
+      propertyId: propC?.id ?? properties[2].id,
+      buyerUserId: owners[2].id,
+      basis: TitleTransferBasis.rto_exercised,
+      status: TitleTransferStatus.completed,
+      titleNumber: 'CCT-2025-00067',
+      contractValue: 5_800_000,
+      amountSettled: 5_800_000,
+      transferFeeAmount: 58_000,
+      completedDate: faker.date.recent({ days: 90 }),
+      notes: 'Rent-to-own option exercised after 5-year term. Equity fully credited.',
+    },
+    {
+      propertyId: propD?.id ?? properties[3].id,
+      buyerUserId: owners[3].id,
+      basis: TitleTransferBasis.mortgage_settled,
+      status: TitleTransferStatus.in_progress,
+      titleNumber: null,
+      contractValue: 7_400_000,
+      amountSettled: 0,
+      transferFeeAmount: null,
+      completedDate: null,
+      notes:
+        'Bank loan approved. Awaiting release of funds from BDO. Docs submitted to Registry of Deeds.',
+    },
+    {
+      propertyId: propE?.id ?? properties[4].id,
+      buyerUserId: owners[4].id,
+      basis: TitleTransferBasis.spot_cash,
+      status: TitleTransferStatus.pending,
+      titleNumber: null,
+      contractValue: 12_000_000,
+      amountSettled: 12_000_000,
+      transferFeeAmount: null,
+      completedDate: null,
+      notes: 'Full payment received. BIR clearance in process. Target completion within 30 days.',
+    },
+    {
+      propertyId: properties[5]?.id ?? properties[0].id,
+      buyerUserId: owners[5].id,
+      basis: TitleTransferBasis.installment_paid,
+      status: TitleTransferStatus.cancelled,
+      titleNumber: null,
+      contractValue: 4_500_000,
+      amountSettled: 2_250_000,
+      transferFeeAmount: null,
+      completedDate: null,
+      notes:
+        'Buyer defaulted on 18th installment. Transfer cancelled. Refund of partial payment pending.',
+    },
+  ];
+
+  let titleTransferCount = 0;
+  for (const tt of titleTransfers) {
+    await prisma.titleTransfer.create({
+      data: {
+        tenantId: tenant.id,
+        propertyId: tt.propertyId,
+        buyerUserId: tt.buyerUserId,
+        basis: tt.basis,
+        status: tt.status,
+        titleNumber: tt.titleNumber,
+        contractValue: tt.contractValue,
+        amountSettled: tt.amountSettled,
+        transferFeeAmount: tt.transferFeeAmount,
+        completedDate: tt.completedDate,
+        notes: tt.notes,
+      },
+    });
+    titleTransferCount++;
+  }
+  console.log(`Title Transfers: ${titleTransferCount}`);
 
   /* ── Documents (linked to properties, units, leases) ── */
   for (const owner of owners) {

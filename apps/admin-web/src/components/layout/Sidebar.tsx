@@ -85,7 +85,7 @@ const navGroups: NavGroup[] = [
       { label: 'Buildings', icon: <Building2 size={18} />, path: '/buildings', kind: 'setup' },
       { label: 'Properties', icon: <MapPin size={18} />, path: '/properties', kind: 'setup' },
       { label: 'Amenities', icon: <Coffee size={18} />, path: '/amenities', kind: 'setup' },
-      { label: 'Tenants', icon: <Users size={18} />, path: '/tenants', kind: 'txn' },
+      { label: 'Directory', icon: <Users size={18} />, path: '/directory', kind: 'txn' },
       { label: 'Leases', icon: <FileText size={18} />, path: '/leases', kind: 'txn' },
       { label: 'Rent-to-Own', icon: <KeyRound size={18} />, path: '/rto', kind: 'txn' },
       {
