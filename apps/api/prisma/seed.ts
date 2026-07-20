@@ -27,6 +27,7 @@ import {
   ServiceCategory,
   Priority,
   ServiceStatus,
+  ApInvoiceStatus,
   PostType,
   Audience,
   DocumentType,
@@ -44,6 +45,7 @@ import {
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker';
+import mongoose from 'mongoose';
 
 const prisma = new PrismaClient();
 
@@ -385,15 +387,14 @@ async function main() {
   const ownerHash = await bcrypt.hash('Owner123!', 12);
   const agentHash = await bcrypt.hash('Agent123!', 12);
 
-  const adminP = person();
   const admin = await prisma.user.create({
     data: {
       tenantId: tenant.id,
       email: 'admin@elite-realty.com',
       passwordHash: hash,
       userType: UserType.super_admin,
-      firstName: 'Ma. Cristina',
-      lastName: 'Alcantara',
+      firstName: 'Erwin',
+      lastName: 'Ceniza',
       phone: phPhone(),
     },
   });
@@ -459,6 +460,12 @@ async function main() {
         {
           tenantId: tenant.id,
           transactionType: 'COMMISSION_APPROVED',
+          debitAccountId: commAcc.id,
+          creditAccountId: apAcc.id,
+        },
+        {
+          tenantId: tenant.id,
+          transactionType: 'COMMISSION_ACCRUAL',
           debitAccountId: commAcc.id,
           creditAccountId: apAcc.id,
         },
@@ -698,6 +705,19 @@ async function main() {
       },
     });
 
+    // Project image gallery (deterministic picsum seeds for stable URLs).
+    for (let i = 0; i < 3; i++) {
+      await prisma.projectImage.create({
+        data: {
+          projectId: project.id,
+          url: `https://picsum.photos/seed/project-${project.id}-${i}/1200/800`,
+          sortOrder: i,
+          isPrimary: i === 0,
+          alt: `${project.name} image ${i + 1}`,
+        },
+      });
+    }
+
     const phaseCount = faker.number.int({ min: 2, max: 3 });
     for (let ph = 1; ph <= phaseCount; ph++) {
       await prisma.phase.create({
@@ -822,6 +842,11 @@ async function main() {
       graceDays: 5,
       agentCommissionPercentage: '1.5',
       companyCommissionPercentage: '0.5',
+      // Split: listing agent (lead) + selling agent share the 1.5% payout.
+      splitAgents: [
+        { agentId: agents[0]?.agent.id, commissionPercentage: 1.0 },
+        { agentId: agents[1]?.agent.id, commissionPercentage: 0.5 },
+      ],
     },
     {
       code: 'SCH-SPOT-CASH',
@@ -832,6 +857,11 @@ async function main() {
       discountPercent: '10',
       agentCommissionPercentage: '4',
       companyCommissionPercentage: '2',
+      // Split: 2.5% to lead agent, 1.5% to co-broker.
+      splitAgents: [
+        { agentId: agents[0]?.agent.id, commissionPercentage: 2.5 },
+        { agentId: agents[2]?.agent.id, commissionPercentage: 1.5 },
+      ],
     },
     {
       code: 'SCH-INHOUSE-24',
@@ -920,17 +950,26 @@ async function main() {
 
   const schemes: any[] = [];
   for (const s of schemeDefs) {
-    schemes.push(
-      await prisma.scheme.create({
-        data: {
-          ...s,
-          agentId: agents[0]?.agent.id ?? null,
-          assignedAgents: [
+    // Default: a single lead agent carries the full commission.
+    // Schemes may declare `splitAgents` to model a real split-commission deal
+    // (e.g. a listing agent + a selling agent sharing the payout).
+    const { splitAgents, ...schemeData } = s as any;
+    const assignedAgents =
+      splitAgents && splitAgents.length > 0
+        ? splitAgents
+        : [
             {
               agentId: agents[0]?.agent.id,
               commissionPercentage: agents[0]?.agent.commissionRateDefault ?? 3,
             },
-          ],
+          ];
+    const leadAgentId = assignedAgents[0]!.agentId;
+    schemes.push(
+      await prisma.scheme.create({
+        data: {
+          ...schemeData,
+          agentId: leadAgentId,
+          assignedAgents,
         } as any,
       }),
     );
@@ -982,6 +1021,19 @@ async function main() {
         address: project.address!,
       },
     });
+
+    // Building image gallery.
+    for (let i = 0; i < 3; i++) {
+      await prisma.buildingImage.create({
+        data: {
+          buildingId: building.id,
+          url: `https://picsum.photos/seed/building-${building.id}-${i}/1200/800`,
+          sortOrder: i,
+          isPrimary: i === 0,
+          alt: `${building.name} image ${i + 1}`,
+        },
+      });
+    }
 
     // Floors belong to the building (created once, shared by all its properties)
     const floorCount = faker.number.int({ min: 5, max: 12 });
@@ -1294,6 +1346,119 @@ async function main() {
   }
   console.log(`Unit statuses synced (${leasedUnitIds.size} occupied/rto)`);
 
+  /* ── Reservations (option holds) ──
+   * Mirrors reservations.service.create/convert/cancel/expire: a reservation
+   * holds a unit (unit.status -> reserved), carries an option fee derived from
+   * the scheme's optionFeePercent (default 2%), and may collect the fee now
+   * (issuing an AR `reservation` invoice). We seed a realistic spread of
+   * statuses (reserved / converted / expired / cancelled) over currently
+   * AVAILABLE units so the reservations module is populated and coherent.
+   */
+  const availableUnits = await prisma.unit.findMany({
+    where: { status: 'available', propertyId: { not: null } },
+    include: { property: true },
+    take: 30,
+  });
+  const activeSchemes = schemes.filter((s) => s.isActive !== false);
+  let reservationCount = 0;
+  let reservationInvoiceCount = 0;
+
+  // Deterministic stage to ensure a realistic spread of all statuses every run.
+  const reserveStages: string[] = [
+    'reserved',
+    'reserved',
+    'reserved',
+    'converted',
+    'expired',
+    'cancelled',
+  ];
+
+  for (let ui = 0; ui < availableUnits.length; ui++) {
+    const unit = availableUnits[ui]!;
+    if (activeSchemes.length === 0) break;
+    const scheme = pick(activeSchemes);
+    const stage = reserveStages[ui % reserveStages.length]!;
+    const holdDays = faker.number.int({ min: 15, max: 60 });
+    const optionFeePct = scheme.optionFeePercent ? Number(scheme.optionFeePercent) : 2;
+    const optionFee = round2((Number(unit.listPrice) * optionFeePct) / 100);
+    const prospect = person();
+    const collectNow = stage === 'reserved' && chance(0.6);
+
+    // holdExpiry in the past for expired, near-future otherwise.
+    const holdExpiry =
+      stage === 'expired' ? faker.date.recent({ days: 20 }) : faker.date.soon({ days: holdDays });
+
+    const res = await prisma.reservation.create({
+      data: {
+        unitId: unit.id,
+        schemeId: scheme.id,
+        tenantId: unit.property!.tenantId,
+        prospectName: `${prospect.first} ${prospect.last}`,
+        prospectContact: phPhone(),
+        optionFeeAmount: optionFee,
+        holdingFeeCollected: collectNow,
+        holdDays,
+        holdExpiry,
+        status:
+          stage === 'expired'
+            ? 'expired'
+            : stage === 'cancelled'
+              ? 'cancelled'
+              : stage === 'converted'
+                ? 'converted'
+                : 'reserved',
+        notes:
+          stage === 'cancelled'
+            ? 'Cancelled by prospect.'
+            : stage === 'expired'
+              ? 'Hold lapsed without conversion.'
+              : null,
+      },
+    });
+
+    // For converted reservations, link to a real lease (mirrors the convert flow).
+    if (stage === 'converted') {
+      const existingLease = await prisma.leaseAgreement.findFirst({
+        where: { unitId: unit.id },
+      });
+      if (existingLease) {
+        await prisma.reservation.update({
+          where: { id: res.id },
+          data: { convertedLeaseId: existingLease.id },
+        });
+      }
+    }
+    reservationCount++;
+
+    // Mirror the service: reserve the unit while the hold is active.
+    if (stage === 'reserved' || stage === 'converted') {
+      const newStatus = stage === 'converted' ? 'sold' : 'reserved';
+      await prisma.unit.update({ where: { id: unit.id }, data: { status: newStatus } });
+    }
+
+    // Mirror the service: collect fee now -> AR reservation invoice.
+    if (collectNow && optionFee > 0) {
+      await prisma.arInvoice.create({
+        data: {
+          tenantId: unit.property!.tenantId,
+          userId: unit.property!.tenantId,
+          invoiceType: 'reservation' as any,
+          referenceSource: `reservation:${res.id}`,
+          invoiceNumber: `RES-INV-${faker.string.alphanumeric(8).toUpperCase()}`,
+          amount: optionFee,
+          dueDate: holdExpiry,
+          status: 'pending',
+          issuedDate: new Date(),
+          notes: `Reservation option fee for unit ${unit.unitNumber} (prospect: ${prospect.first} ${prospect.last})`,
+        },
+      });
+      reservationInvoiceCount++;
+    }
+  }
+  console.log(
+    `Reservations: ${reservationCount} (with ${reservationInvoiceCount} option-fee AR invoices)`,
+  );
+
   /* ── Utility Meters, Readings, Bills ── */
   let billCount = 0;
   const billedUnits = allUnits.filter((u) => leasedUnitIds.has(u.id));
@@ -1434,7 +1599,20 @@ async function main() {
   }
   console.log(`AR invoices: ${arCount}`);
 
-  /* ── Agent Commissions, Transactions, Releases ── */
+  /* ── Agent Commissions, Transactions, Releases ──
+   *
+   * This block mirrors the runtime commission workflow so the seed is fully
+   * coherent with the live services (agent-transactions.service + commission-releases.service):
+   *
+   *   1. A commission is APPROVED  -> an AP Invoice (accrual) is created against
+   *      the agent (as a Contractor/vendor) in `pending_approval`, plus a GL
+   *      journal entry (Debit Commission Expense / Credit Accounts Payable).
+   *   2. A commission is PAID      -> an AP Disbursement is recorded against that
+   *      invoice (invoice marked `paid`) and a payment GL entry is posted
+   *      (Debit AP / Credit Cash). Commission releases are the per-payment record.
+   *
+   * Every agent therefore also exists as a `Contractor` (vendor) so AP links resolve.
+   */
   const commissionRules = [
     await prisma.agentCommission.create({
       data: {
@@ -1532,96 +1710,345 @@ async function main() {
     'Unit interior',
   ];
 
+  // Property + unit image galleries (deterministic picsum seeds, every record covered).
   let imgCount = 0;
-  for (const prop of pickN(properties, Math.min(8, properties.length))) {
-    const numImages = faker.number.int({ min: 2, max: 4 });
-    for (let i = 0; i < numImages; i++) {
+  for (const prop of properties) {
+    for (let i = 0; i < 3; i++) {
       await prisma.propertyImage.create({
         data: {
           propertyId: prop.id,
-          url: UNSPLASH_PROPERTY[(imgCount + i) % UNSPLASH_PROPERTY.length],
-          alt: PROP_ALTS[(imgCount + i) % PROP_ALTS.length],
+          url: `https://picsum.photos/seed/property-${prop.id}-${i}/1200/800`,
+          alt: `${prop.propertyCode} image ${i + 1}`,
           sortOrder: i,
           isPrimary: i === 0,
         },
       });
+      imgCount++;
     }
-    imgCount += numImages;
   }
 
   let unitImgCount = 0;
-  for (const unit of pickN(allUnits, Math.min(20, allUnits.length))) {
+  for (const unit of allUnits) {
     const numImages = faker.number.int({ min: 1, max: 3 });
     for (let i = 0; i < numImages; i++) {
       await prisma.unitImage.create({
         data: {
           unitId: unit.id,
-          url: UNSPLASH_UNIT[(unitImgCount + i) % UNSPLASH_UNIT.length],
-          alt: UNIT_ALTS[(unitImgCount + i) % UNIT_ALTS.length],
+          url: `https://picsum.photos/seed/unit-${unit.id}-${i}/1200/800`,
+          alt: `${unit.unitNumber} image ${i + 1}`,
           sortOrder: i,
           isPrimary: i === 0,
         },
       });
+      unitImgCount++;
     }
-    unitImgCount += numImages;
   }
   console.log(`Showcase images: ${imgCount} property + ${unitImgCount} unit`);
 
-  for (const agent of agents) {
-    const txns = faker.number.int({ min: 3, max: 6 });
-    for (let t = 0; t < txns; t++) {
-      const property = pick(properties);
-      const txType = pick([
-        TransactionType.sale,
-        TransactionType.rental_lease,
-        TransactionType.rto_contract,
-        TransactionType.lease_renewal,
-      ]);
-      const txAmount =
-        txType === TransactionType.rental_lease
-          ? money(15000, 120000)
-          : money(3_000_000, 20_000_000);
-      const rule = commissionRules[t % commissionRules.length]!;
-      const calc =
-        rule.commissionType === CommissionType.tiered
-          ? round2(txAmount * 0.04)
-          : rule.commissionType === CommissionType.percentage_of_rent
-            ? round2((txAmount * Number(rule.commissionValue)) / 100)
-            : round2((txAmount * Number(rule.commissionValue)) / 100);
+  // Resolve (or create) the Contractor/vendor record for every agent so AP links resolve.
+  const agentVendor = new Map<string, any>();
+  for (const a of agents) {
+    let vendor = await prisma.contractor.findFirst({
+      where: { tenantId: tenant.id, userId: a.user.id },
+    });
+    if (!vendor) {
+      vendor = await prisma.contractor.create({
+        data: {
+          tenantId: tenant.id,
+          userId: a.user.id,
+          companyName: `${a.user.firstName} ${a.user.lastName} Realty Services`,
+          contactPerson: `${a.user.firstName} ${a.user.lastName}`,
+          email: a.user.email,
+          phone: a.user.phone,
+          isAgent: true,
+          isActive: true,
+        },
+      });
+    }
+    agentVendor.set(a.agent.id, vendor);
+  }
+
+  // Pre-fetch the GL accounts + mapping used for commission postings.
+  const mapping =
+    cashAcc && apAcc && commAcc
+      ? await prisma.financialMapping.findFirst({
+          where: { tenantId: tenant.id, transactionType: 'COMMISSION_ACCRUAL' },
+        })
+      : null;
+  let apInvoiceSeq = 0;
+  const nextApInvoiceNumber = () => {
+    apInvoiceSeq += 1;
+    return `AP-COMM-${new Date().getFullYear()}-${String(apInvoiceSeq).padStart(4, '0')}`;
+  };
+
+  const postCommissionAccrual = async (tx: any, vendor: any) => {
+    const amount = Number(tx.finalCommission ?? 0);
+    if (amount <= 0) return null;
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 30);
+    const invoice = await prisma.apInvoice.create({
+      data: {
+        tenantId: tenant.id,
+        sourceType: 'COMMISSION',
+        sourceId: tx.id,
+        vendorId: vendor.id,
+        invoiceNumber: nextApInvoiceNumber(),
+        amount,
+        dueDate,
+        status: ApInvoiceStatus.pending_approval,
+        notes: `Commission accrual for ${tx.transactionType} on property ${tx.property?.propertyCode ?? tx.propertyId}. Agent: ${vendor.companyName}`,
+      },
+    });
+    if (mapping?.debitAccountId && mapping?.creditAccountId) {
+      await prisma.journalEntry.create({
+        data: {
+          tenantId: tenant.id,
+          reference: `COMM-ACC-${tx.id.substring(0, 8)}`,
+          notes: `Commission accrual for agent ${vendor.companyName}`,
+          lines: {
+            create: [
+              {
+                accountId: mapping.debitAccountId,
+                debitAmount: amount,
+                description: 'Commission Expense',
+              },
+              {
+                accountId: mapping.creditAccountId,
+                creditAmount: amount,
+                description: 'Commission Payable (AP)',
+              },
+            ],
+          },
+        },
+      });
+    }
+    return invoice;
+  };
+
+  const postCommissionPayment = async (invoice: any, vendor: any, amount: number, ref: string) => {
+    await prisma.apDisbursement.create({
+      data: {
+        invoiceId: invoice.id,
+        amount,
+        paymentMethod: pick(['bank_transfer', 'check', 'gcash']),
+        reference: ref,
+        notes: `Commission payout to agent. Ref: ${ref}`,
+      },
+    });
+    if (cashAcc && apAcc) {
+      await prisma.journalEntry.create({
+        data: {
+          tenantId: tenant.id,
+          reference: `COMM-PAY-${ref}`,
+          notes: `Commission payout for ${vendor.companyName}`,
+          lines: {
+            create: [
+              { accountId: apAcc.id, debitAmount: amount, description: 'AP Disbursement' },
+              { accountId: cashAcc.id, creditAmount: amount, description: 'Cash Outflow' },
+            ],
+          },
+        },
+      });
+    }
+  };
+
+  let txCount = 0;
+  let apInvoiceCount = 0;
+  let disbursementCount = 0;
+
+  /**
+   * Seeds a single commission deal. For a split deal, `agentsWithPct` carries
+   * more than one agent and the total commission is split across them by
+   * percentage — producing one agentTransaction (and its own AP accrual /
+   * disbursement trail) per participating agent, exactly like the runtime
+   * `SalesService.recordSale()` split path.
+   */
+  const seedCommissionDeal = async (
+    agentsWithPct: { agentId: string; commissionPercentage: number }[],
+    property: any,
+    txType: TransactionType,
+    txAmount: number,
+    rule: any,
+  ) => {
+    const totalPct = agentsWithPct.reduce((s, a) => s + (a.commissionPercentage || 0), 0) || 1;
+    const totalCalc =
+      rule.commissionType === CommissionType.tiered
+        ? round2(txAmount * 0.04)
+        : rule.commissionType === CommissionType.percentage_of_rent
+          ? round2((txAmount * Number(rule.commissionValue)) / 100)
+          : round2((txAmount * Number(rule.commissionValue)) / 100);
+
+    for (const awp of agentsWithPct) {
+      const vendor = agentVendor.get(awp.agentId);
+      if (!vendor) continue;
+
+      // Decide the lifecycle of this agent's share up-front.
+      const stage = pick([
+        'pending',
+        'pending',
+        'approved',
+        'approved',
+        'partially_paid',
+        'fully_paid',
+        'disputed',
+      ]) as string;
+
+      const shareCalc = round2((totalCalc * (awp.commissionPercentage || 0)) / totalPct);
+      const finalCommission = stage === 'disputed' ? round2(shareCalc * 0.5) : shareCalc;
+
       const tx = await prisma.agentTransaction.create({
         data: {
-          agentId: agent.agent.id,
+          agentId: awp.agentId,
           transactionType: txType,
           propertyId: property.id,
           transactionAmount: txAmount,
           commissionRuleId: rule.id,
-          calculatedCommission: calc,
-          finalCommission: calc,
-          status: pick([
-            CommissionStatus.approved,
-            CommissionStatus.pending,
-            CommissionStatus.partially_paid,
-            CommissionStatus.fully_paid,
-          ]),
+          calculatedCommission: shareCalc,
+          finalCommission,
+          status: stage === 'disputed' ? CommissionStatus.disputed : CommissionStatus.pending,
           transactionDate: faker.date.past({ years: 1 }),
         },
       });
-      // releases
-      if (chance(0.7)) {
-        const rel = await prisma.agentCommissionRelease.create({
-          data: {
-            agentTransactionId: tx.id,
-            amount: round2(calc * faker.number.float({ min: 0.3, max: 1 })),
-            releaseDate: faker.date.recent({ days: 120 }),
-            releaseType: pick(['initial', 'installment', 'final_payment', 'bonus']),
-            paymentReference: `COMM-${faker.string.alphanumeric(6).toUpperCase()}`,
-          },
+      txCount++;
+
+      // Approved & beyond -> create the AP accrual invoice (+ GL) for this agent's share.
+      let invoice: any = null;
+      if (stage !== 'pending' && stage !== 'disputed') {
+        invoice = await postCommissionAccrual(tx, vendor);
+        if (invoice) apInvoiceCount++;
+      }
+
+      // Paid stages -> create release(s) that fully/partially pay this share.
+      if (stage === 'partially_paid' || stage === 'fully_paid') {
+        const totalToPay =
+          stage === 'fully_paid'
+            ? finalCommission
+            : round2(finalCommission * faker.number.float({ min: 0.3, max: 0.8 }));
+        const numReleases = faker.number.int({ min: 1, max: 3 });
+        let remaining = totalToPay;
+        for (let r = 0; r < numReleases; r++) {
+          const isLast = r === numReleases - 1;
+          const amt = isLast ? remaining : round2(totalToPay / numReleases);
+          remaining = round2(remaining - amt);
+          const ref = `COMM-${faker.string.alphanumeric(8).toUpperCase()}`;
+          const payDate = faker.date.recent({ days: 120 });
+          await prisma.agentCommissionRelease.create({
+            data: {
+              agentTransactionId: tx.id,
+              amount: amt,
+              releaseDate: payDate,
+              releaseType: pick(['initial', 'installment', 'final_payment', 'bonus']),
+              agingBucket: 'Current',
+              paymentMethod: pick(['bank_transfer', 'check', 'gcash']),
+              paymentDate: payDate,
+              paymentReference: ref,
+              status: 'paid',
+              approvedByUserId: chance(0.85) ? admin.id : null,
+            },
+          });
+          if (invoice) {
+            await postCommissionPayment(invoice, vendor, amt, ref);
+            disbursementCount++;
+          }
+        }
+        // Mark the AP invoice paid once released.
+        if (invoice) {
+          await prisma.apInvoice.update({
+            where: { id: invoice.id },
+            data: { status: ApInvoiceStatus.paid },
+          });
+        }
+      }
+
+      // Set the transaction's final status to match the chosen stage.
+      const finalStatus =
+        stage === 'approved'
+          ? CommissionStatus.approved
+          : stage === 'partially_paid'
+            ? CommissionStatus.partially_paid
+            : stage === 'fully_paid'
+              ? CommissionStatus.fully_paid
+              : stage === 'disputed'
+                ? CommissionStatus.disputed
+                : CommissionStatus.pending;
+      if (finalStatus !== CommissionStatus.pending) {
+        await prisma.agentTransaction.update({
+          where: { id: tx.id },
+          data: { status: finalStatus },
         });
-        void rel;
       }
     }
+  };
+
+  // Helper to pick a transaction type + amount.
+  const randomTx = () => {
+    const txType = pick([
+      TransactionType.sale,
+      TransactionType.sale,
+      TransactionType.rental_lease,
+      TransactionType.rto_contract,
+      TransactionType.lease_renewal,
+    ]);
+    const txAmount =
+      txType === TransactionType.rental_lease ? money(15000, 120000) : money(3_000_000, 20_000_000);
+    return { txType, txAmount };
+  };
+
+  // 1) Per-agent single-owner deals (baseline coverage).
+  for (const agent of agents) {
+    const txns = faker.number.int({ min: 3, max: 6 });
+    for (let t = 0; t < txns; t++) {
+      const { txType, txAmount } = randomTx();
+      const rule = commissionRules[t % commissionRules.length]!;
+      await seedCommissionDeal(
+        [{ agentId: agent.agent.id, commissionPercentage: agent.agent.commissionRateDefault ?? 3 }],
+        pick(properties),
+        txType,
+        txAmount,
+        rule,
+      );
+    }
   }
-  console.log('Agent commissions, transactions & releases created');
+
+  // 2) Explicit split-commission deals mirroring the two split schemes.
+  //    These exercise the multi-agent ("cobroke") path end to end.
+  const splitDeals = [
+    // Corporate rental split: listing agent (agents[0]) + selling agent (agents[1]).
+    {
+      agentsWithPct: [
+        { agentId: agents[0]?.agent.id, commissionPercentage: 1.0 },
+        { agentId: agents[1]?.agent.id, commissionPercentage: 0.5 },
+      ],
+      rule: commissionRules.find((r) => r.name === 'Rental Lease Commission')!,
+      txType: TransactionType.rental_lease,
+      txAmount: money(15000, 120000),
+    },
+    // Spot-cash sale split: lead agent (agents[0]) + co-broker (agents[2]).
+    {
+      agentsWithPct: [
+        { agentId: agents[0]?.agent.id, commissionPercentage: 2.5 },
+        { agentId: agents[2]?.agent.id, commissionPercentage: 1.5 },
+      ],
+      rule: commissionRules[0]!,
+      txType: TransactionType.sale,
+      txAmount: money(5_000_000, 20_000_000),
+    },
+  ];
+  for (const deal of splitDeals) {
+    const reps = faker.number.int({ min: 2, max: 3 });
+    for (let i = 0; i < reps; i++) {
+      await seedCommissionDeal(
+        deal.agentsWithPct,
+        pick(properties),
+        deal.txType,
+        deal.txAmount,
+        deal.rule,
+      );
+    }
+  }
+  console.log(
+    `Agent commissions: ${txCount} transactions, ${apInvoiceCount} AP accruals, ${disbursementCount} disbursements`,
+  );
 
   /* ── Owner P&L Statements ── */
   let pnlCount = 0;
@@ -1651,42 +2078,19 @@ async function main() {
   }
   console.log(`Owner P&L statements: ${pnlCount}`);
 
-  /* ── Community Posts ── */
-  const POST_TITLES = [
-    'Water Interruption Notice — Scheduled Maintenance',
-    'Annual Townhall Meeting',
-    'New Gym Equipment Arrived',
-    'Fire Drill on Saturday 9AM',
-    'Holiday Lighting Ceremony',
-    'Pool Closure for Cleaning',
-    'Garbage Collection Schedule Update',
-    'Welcome New Residents!',
-  ];
-  for (const title of POST_TITLES) {
-    await prisma.communityPost.create({
-      data: {
-        title,
-        body: faker.lorem.paragraph(),
-        postType: pick([PostType.announcement, PostType.event, PostType.announcement]),
-        audience: pick([Audience.all, Audience.building, Audience.property]),
-        isPublished: true,
-        scheduledAt: chance(0.3) ? faker.date.future({ years: 1 }) : null,
-        authorId: admin.id,
-      },
-    });
-  }
-
-  /* ── Amenities & Bookings ── */
-  const amenityDefs: { name: string; type: AmenityType }[] = [
-    { name: 'Olympic Lap Pool', type: AmenityType.pool },
-    { name: 'Fitness Gym', type: AmenityType.gym },
-    { name: 'Function Hall A', type: AmenityType.function_room },
-    { name: 'Function Hall B', type: AmenityType.function_room },
-    { name: 'Meditation Garden', type: AmenityType.garden },
-    { name: 'Visitor Parking', type: AmenityType.parking },
+  /* ── Amenities (created first so posts can reference them) ── */
+  const amenityDefs: { name: string; type: AmenityType; blurb: string }[] = [
+    { name: 'Olympic Lap Pool', type: AmenityType.pool, blurb: 'Lap Pool' },
+    { name: 'Fitness Gym', type: AmenityType.gym, blurb: 'Gym' },
+    { name: 'Function Hall A', type: AmenityType.function_room, blurb: 'Function Hall A' },
+    { name: 'Function Hall B', type: AmenityType.function_room, blurb: 'Function Hall B' },
+    { name: 'Meditation Garden', type: AmenityType.garden, blurb: 'Meditation Garden' },
+    { name: 'Visitor Parking', type: AmenityType.parking, blurb: 'Visitor Parking' },
   ];
   const amenityRecs: any[] = [];
   for (const a of amenityDefs) {
+    // Anchor each amenity to a real property so amenity-scoped posts link coherently.
+    const anchorProp = pick(properties);
     amenityRecs.push(
       await prisma.amenity.create({
         data: {
@@ -1695,12 +2099,84 @@ async function main() {
           description: faker.lorem.sentence(),
           capacity: faker.number.int({ min: 10, max: 200 }),
           location: pick(STREETS),
+          propertyId: anchorProp.id,
           hourlyRate: a.type === AmenityType.function_room ? money(500, 3000) : null,
           isActive: true,
         },
       }),
     );
   }
+
+  /* ── Community Posts ──
+   * Two coherent tiers:
+   *   1. PER-AMENITY posts — one operational notice per amenity, scoped to that
+   *      amenity's property (audience: property) so residents see relevant news.
+   *   2. GENERAL community posts — portfolio-wide announcements/events
+   *      (audience: all) plus a few property-scoped notices that are actually
+   *      linked to a real property (no dangling audience:property with null FK).
+   */
+  const AMENITY_POSTS: Record<string, string[]> = {
+    pool: [
+      'Olympic Lap Pool — Temporary Closure for Drainage Maintenance',
+      'Lap Pool New Operating Hours: 6AM to 10PM Daily',
+    ],
+    gym: ['Fitness Gym — New Equipment Now Available', 'Gym Etiquette Reminder & Peak-Hour Limits'],
+    function_room: [
+      'Function Hall Booking Guidelines & Rates',
+      'Function Hall A Unavailable This Weekend — Private Event',
+    ],
+    garden: ['Meditation Garden Refresh — New Plantings Added'],
+    parking: ['Visitor Parking Sticker Renewal Drive'],
+  };
+
+  for (const amenity of amenityRecs) {
+    const titles = AMENITY_POSTS[amenity.type] ?? ['Amenity Update'];
+    const title = pick(titles);
+    await prisma.communityPost.create({
+      data: {
+        title,
+        body: faker.lorem.paragraph(),
+        postType: PostType.announcement,
+        audience: Audience.property,
+        propertyId: amenity.propertyId,
+        isPublished: true,
+        scheduledAt: chance(0.25) ? faker.date.future({ years: 1 }) : null,
+        authorId: admin.id,
+        moderationStatus: 'published',
+        moderatedById: admin.id,
+        moderatedAt: new Date(),
+      },
+    });
+  }
+
+  const GENERAL_POSTS = [
+    { title: 'Water Interruption Notice — Scheduled Maintenance', type: PostType.announcement },
+    { title: 'Annual Townhall Meeting', type: PostType.event },
+    { title: 'Fire Drill on Saturday 9AM', type: PostType.announcement },
+    { title: 'Holiday Lighting Ceremony', type: PostType.event },
+    { title: 'Garbage Collection Schedule Update', type: PostType.announcement },
+    { title: 'Welcome New Residents!', type: PostType.announcement },
+  ];
+  for (const p of GENERAL_POSTS) {
+    const propertyScoped = p.type === PostType.announcement && chance(0.4);
+    await prisma.communityPost.create({
+      data: {
+        title: p.title,
+        body: faker.lorem.paragraph(),
+        postType: p.type,
+        audience: propertyScoped ? Audience.property : Audience.all,
+        propertyId: propertyScoped ? pick(properties).id : null,
+        isPublished: true,
+        scheduledAt: chance(0.3) ? faker.date.future({ years: 1 }) : null,
+        authorId: admin.id,
+        moderationStatus: 'published',
+        moderatedById: admin.id,
+        moderatedAt: new Date(),
+      },
+    });
+  }
+
+  /* ── Amenity Bookings ── */
   const residentsWithLeases = residents.filter((r) => residentLeases[r.id]);
   for (const resident of pickN(residentsWithLeases, Math.min(10, residentsWithLeases.length))) {
     const lease = residentLeases[resident.id];
@@ -1999,6 +2475,92 @@ async function main() {
     );
   }
   console.log('Documents, statements, reminders, collections & notifications created');
+
+  /* ── Property Specs (MongoDB) ──
+   * The admin/owner/resident UIs read property `description` and the
+   * "Additional Details" panel from the MongoDB `property_specs` document
+   * (keyed by propertyId), not from the Postgres `properties` table. Seed a
+   * rich, type-appropriate spec for every property so those pages are not empty.
+   */
+  const mongoUri = process.env.MONGODB_URI;
+  if (mongoUri) {
+    await mongoose.connect(mongoUri);
+    const SpecModel = mongoose.model(
+      'PropertySpec',
+      new mongoose.Schema(
+        {
+          propertyId: { type: String, required: true, unique: true },
+          specs: { type: Object, default: {} },
+          metadata: { type: Object, default: {} },
+        },
+        { collection: 'property_specs', timestamps: true },
+      ),
+    );
+
+    // Idempotent reseed: drop any specs from prior runs (cleanup() only clears Postgres).
+    await SpecModel.deleteMany({});
+
+    const allProps = await prisma.property.findMany({});
+    let specCount = 0;
+    for (const prop of allProps) {
+      const city = pick(CITIES);
+      const yearBuilt = faker.number.int({ min: 2008, max: 2025 });
+      const lotSize = `${faker.number.int({ min: 40, max: 600 })} sqm`;
+      const totalSquareFeet = `${faker.number.int({ min: 300, max: 4500 })} sqft`;
+      const baseSpecs: Record<string, any> = {
+        description: `A meticulously maintained ${prop.propertyType.replace('_', ' ')} at ${prop.propertyCode}, ${city}. Offers resort-grade finishes, abundant natural light, and effortless access to premium amenities — an ideal address for discerning owners and tenants alike.`,
+        yearBuilt,
+        lotSize,
+        totalSquareFeet,
+        floorPlanImage: `https://picsum.photos/seed/floorplan-${prop.id}/800/600`,
+      };
+
+      // Type-specific "Additional Details" (mirrors the Edit Property form fields).
+      if (prop.propertyType === PropertyType.condo_unit) {
+        Object.assign(baseSpecs, {
+          ceilingHeight: `${faker.number.float({ min: 2.4, max: 3.6, fractionDigits: 1 })} m`,
+          finishType: pick(['Premium', 'Semi-furnished', 'Bare', 'Fully-furnished']),
+          appliances: pick(['Refrigerator, Range, Hood', 'Refrigerator, Microwave', 'None']),
+          ac: pick(['Split-type', 'Central', 'Window-type']),
+          flooring: pick(['Engineered wood', 'Vinyl', 'Marble', 'Tiles']),
+          smartHomeFeatures: pick(['Smart lock', 'None', 'Smart thermostat', 'CCTV ready']),
+        });
+      } else if (
+        prop.propertyType === PropertyType.house_and_lot ||
+        prop.propertyType === PropertyType.townhouse
+      ) {
+        Object.assign(baseSpecs, {
+          lotArea: `${faker.number.int({ min: 80, max: 400 })} sqm`,
+          floorArea: `${faker.number.int({ min: 120, max: 600 })} sqm`,
+          bedrooms: faker.number.int({ min: 2, max: 5 }),
+          bathrooms: faker.number.int({ min: 2, max: 4 }),
+          garden: chance(0.6),
+          garage: chance(0.7),
+        });
+      } else if (prop.propertyType === PropertyType.parking_slot) {
+        Object.assign(baseSpecs, {
+          dimensions: `${faker.number.int({ min: 2, max: 3 })}.${faker.number.int({ min: 2, max: 9 })} x ${faker.number.int({ min: 4, max: 6 })}.${faker.number.int({ min: 0, max: 9 })} m`,
+          covered: chance(0.5),
+          nearbyElevator: chance(0.7),
+        });
+      } else if (prop.propertyType === PropertyType.commercial_space) {
+        Object.assign(baseSpecs, {
+          floorArea: `${faker.number.int({ min: 50, max: 1200 })} sqm`,
+          finishType: pick(['Bare', 'Semi-furnished', 'Fully-furnished']),
+          ac: pick(['Central', 'Split-type', 'None']),
+        });
+      }
+
+      await SpecModel.findOneAndUpdate(
+        { propertyId: prop.id },
+        { $set: { specs: baseSpecs, metadata: { seeded: true } } },
+        { upsert: true, returnDocument: 'after' },
+      );
+      specCount++;
+    }
+    await mongoose.disconnect();
+    console.log(`Property specs (MongoDB): ${specCount} documents`);
+  }
 
   console.log('\n✅ Seed completed successfully.');
   console.log('\nLogin credentials:');
