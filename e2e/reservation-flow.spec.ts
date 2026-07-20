@@ -1,29 +1,39 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page, APIRequestContext } from '@playwright/test';
 import { request } from '@playwright/test';
 
-const BASE_URL = 'http://localhost:7077';
-const ADMIN_URL = BASE_URL;
+const BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:7077';
 
-async function login(page) {
-  await page.goto(`${BASE_URL}/login`);
-  await page.waitForSelector('input[type="email"]', { timeout: 30000 });
-  await page.fill('input[type="email"]', 'admin@elite-realty.com');
-  await page.fill('input[type="password"]', 'Admin123!');
-  await page.click('button[type="submit"]');
-  await page.waitForURL(`${BASE_URL}/dashboard`, { timeout: 30000 });
-}
+let token: string;
+let apiRequest: APIRequestContext;
 
-async function getAvailableUnitId(request, token, schemeType) {
+test.beforeAll(async () => {
+  apiRequest = await request.newContext();
+  const response = await apiRequest.post(`${BASE_URL}/api/auth/login`, {
+    data: {
+      email: process.env.E2E_ADMIN_EMAIL || 'admin@elite-realty.com',
+      password: process.env.E2E_ADMIN_PASSWORD || 'Admin123!',
+    },
+  });
+  const data = await response.json();
+  token = data.data.accessToken;
+});
+
+async function getAvailableUnitId(request: APIRequestContext, token: string) {
   const response = await request.get(`${BASE_URL}/api/units?status=available&take=100`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const data = await response.json();
-  const units = data.data.filter((u) => u.status === 'available' && u.listPrice > 0);
+  const units = data.data.filter((u: any) => u.status === 'available' && u.listPrice > 0);
   if (units.length === 0) throw new Error('No available units');
   return units[0].id;
 }
 
-async function createReservationViaUI(page, unitId, schemeCode, prospectName) {
+async function createReservationViaUI(
+  page: Page,
+  unitId: string,
+  schemeCode: string,
+  prospectName: string,
+) {
   // Navigate to unit edit page
   await page.goto(`${BASE_URL}/properties/0/units/${unitId}/edit`);
   await page.waitForSelector('button:has-text("Reserve")', { timeout: 30000 });
@@ -56,7 +66,7 @@ async function createReservationViaUI(page, unitId, schemeCode, prospectName) {
   await page.waitForSelector('dialog[role="dialog"]', { state: 'hidden', timeout: 10000 });
 }
 
-async function convertReservationViaUI(page, unitId) {
+async function convertReservationViaUI(page: Page, unitId: string) {
   // Navigate to reservations page
   await page.goto(`${BASE_URL}/reservations`);
   await page.waitForSelector('table tbody tr', { timeout: 10000 });
@@ -70,7 +80,7 @@ async function convertReservationViaUI(page, unitId) {
       await row
         .locator('td:first-child')
         .textContent()
-        .then((t) => t?.includes('Reserved'))
+        .then((t: string | null) => t?.includes('Reserved'))
     ) {
       await row.locator('button:has-text("Convert to Sale")').click();
       await page.waitForURL('**/units/*/edit', { timeout: 10000 });
@@ -80,19 +90,17 @@ async function convertReservationViaUI(page, unitId) {
   return false;
 }
 
+async function login(page: Page) {
+  await page.goto(`${BASE_URL}/login`);
+  await page.waitForSelector('input[type="email"]', { timeout: 30000 });
+  await page.fill('input[type="email"]', process.env.E2E_ADMIN_EMAIL || 'admin@elite-realty.com');
+  await page.fill('input[type="password"]', process.env.E2E_ADMIN_PASSWORD || 'Admin123!');
+  await page.click('button[type="submit"]');
+  await page.waitForURL(`${BASE_URL}/dashboard`, { timeout: 30000 });
+  await page.waitForSelector('button:has-text("Reserve")', { timeout: 10000 });
+}
+
 test.describe('Reservation Feature - Leasing / Rent-to-Own / Buying', () => {
-  let token;
-  let apiRequest;
-
-  test.beforeAll(async () => {
-    apiRequest = await request.newContext();
-    const response = await apiRequest.post(`${BASE_URL}/api/auth/login`, {
-      data: { email: 'admin@elite-realty.com', password: 'Admin123!' },
-    });
-    const data = await response.json();
-    token = data.data.accessToken;
-  });
-
   test.beforeEach(async ({ page }) => {
     await login(page);
   });
@@ -100,7 +108,7 @@ test.describe('Reservation Feature - Leasing / Rent-to-Own / Buying', () => {
   test('Leasing: Reserve unit with Standard Rental scheme and convert to lease', async ({
     page,
   }) => {
-    const unitId = await getAvailableUnitId(apiRequest, token, 'standard_rental');
+    const unitId = await getAvailableUnitId(apiRequest, token);
     await createReservationViaUI(page, unitId, 'Standard Rental', 'Lease Prospect');
 
     // Verify reservation created (unit should show reserved)
@@ -115,7 +123,7 @@ test.describe('Reservation Feature - Leasing / Rent-to-Own / Buying', () => {
   test('Rent-to-Own: Reserve unit with RTO scheme and convert to RTO contract', async ({
     page,
   }) => {
-    const unitId = await getAvailableUnitId(apiRequest, token, 'rent_to_own');
+    const unitId = await getAvailableUnitId(apiRequest, token);
     await createReservationViaUI(page, unitId, 'Rent-to-Own', 'RTO Prospect');
 
     const converted = await convertReservationViaUI(page, unitId);
@@ -123,19 +131,10 @@ test.describe('Reservation Feature - Leasing / Rent-to-Own / Buying', () => {
   });
 
   test('Buying: Reserve unit with Installment scheme and convert to sale', async ({ page }) => {
-    const unitId = await getAvailableUnitId(apiRequest, token, 'installment');
+    const unitId = await getAvailableUnitId(apiRequest, token);
     await createReservationViaUI(page, unitId, 'Installment', 'Buyer Prospect');
 
     const converted = await convertReservationViaUI(page, unitId);
     expect(converted).toBe(true);
   });
 });
-
-async function login(page) {
-  await page.goto(`${BASE_URL}/login`);
-  await page.waitForSelector('input[type="email"]', { timeout: 30000 });
-  await page.fill('input[type="email"]', 'admin@elite-realty.com');
-  await page.fill('input[type="password"]', 'Admin123!');
-  await page.click('button[type="submit"]');
-  await page.waitForURL(`${BASE_URL}/dashboard`, { timeout: 30000 });
-}

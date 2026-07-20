@@ -644,6 +644,7 @@ model BudgetLineItem {
 model Contractor {
   id             String   @id @default(uuid())
   tenantId       String
+  userId         String?
   companyName    String
   contactPerson  String?
   email          String?
@@ -652,6 +653,7 @@ model Contractor {
   taxId          String?
   specialization String?
   isActive       Boolean  @default(true)
+  isAgent        Boolean  @default(false)
   createdAt      DateTime @default(now())
 
   tenant        Tenant                 @relation(fields: [tenantId], references: [id])
@@ -1780,9 +1782,12 @@ model Scheme {
   equityAccumulationPercent Decimal? @db.Decimal(8, 4) // % of rent that accumulates as equity
   targetPurchaseYears       Int? // years until purchase option matures
 
-  // ── Commissions (all sale types) ──
+  // 🏢 Commissions (all sale types) 🏢
   agentCommissionPercentage   Decimal? @db.Decimal(8, 4)
   companyCommissionPercentage Decimal? @db.Decimal(8, 4)
+  assignedAgents              Json?    // [{agentId:string, commissionPercentage:number}]
+  agentId                     String?
+  commissionRuleId            String?
 
   leases LeaseAgreement[]
   reservations Reservation[]

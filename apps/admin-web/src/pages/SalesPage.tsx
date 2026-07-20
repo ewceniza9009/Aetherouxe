@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useListQuery } from '@/hooks/use-list-query';
@@ -611,9 +611,7 @@ export default function SalesPage() {
                       <SelectContent>
                         {agents.map((a: any) => (
                           <SelectItem key={a.id} value={a.id} className="text-sm">
-                            {a.user?.firstName
-                              ? [a.user.firstName, a.user.lastName].filter(Boolean).join(' ')
-                              : a.userId}
+                            {a.name || a.userId}
                             <span className="text-muted-foreground ml-1.5">({a.tier})</span>
                           </SelectItem>
                         ))}

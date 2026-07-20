@@ -200,28 +200,83 @@ export class SalesService {
       }
 
       // ── 3. Create Agent Transaction (commission) ──
-      const commissionPct = nnum(scheme.agentCommissionPercentage);
+      const commissionPct = nnum(scheme.companyCommissionPercentage);
       if (commissionPct > 0 && value > 0) {
         const calculatedCommission = round2(value * (commissionPct / 100));
-        const agentTx = await tx.agentTransaction.create({
-          data: {
-            agentId: agent.id,
-            transactionType: this.mapTransactionType(scheme.schemeType) as any,
-            propertyId: unit.propertyId!,
-            leaseAgreementId: lease.id,
-            transactionAmount: value,
-            calculatedCommission,
-            finalCommission: calculatedCommission,
+
+        // Handle split commissions - iterate through all assigned agents
+        const assignedAgents =
+          (scheme.assignedAgents as Array<{ agentId: string; commissionPercentage: number }>) || [];
+        const totalCommissionPct = Array.isArray(scheme.assignedAgents)
+          ? (scheme.assignedAgents as Array<{ commissionPercentage?: number }>).reduce(
+              (sum: number, a: any) => sum + (a.commissionPercentage || 0),
+              0,
+            )
+          : commissionPct;
+
+        // Group agent assignments by agentId and calculate their percentages
+        const agentAssignments: Record<string, number> = {};
+        for (const assigned of assignedAgents) {
+          const agentId = typeof assigned === 'object' ? assigned.agentId : assigned;
+          const agentPct =
+            totalCommissionPct > 0
+              ? (typeof assigned === 'object'
+                  ? assigned.commissionPercentage || 0
+                  : commissionPct) *
+                (totalCommissionPct / commissionPct)
+              : 0;
+          agentAssignments[agentId] = agentPct;
+        }
+
+        // Create agent transaction for each assigned agent
+        for (const [agentId, agentPct] of Object.entries(agentAssignments)) {
+          if (agentPct > 0) {
+            const agentCommission = round2(value * (agentPct / 100));
+            const agentTx = await tx.agentTransaction.create({
+              data: {
+                agentId,
+                transactionType: this.mapTransactionType(scheme.schemeType) as any,
+                propertyId: unit.propertyId!,
+                leaseAgreementId: lease.id,
+                transactionAmount: value,
+                calculatedCommission: agentCommission,
+                finalCommission: agentCommission,
+                status: 'pending',
+                transactionDate: new Date(),
+                commissionRuleId: scheme.commissionRuleId,
+              },
+            });
+          }
+        }
+
+        // Create primary agent transaction for backward compatibility
+        const primaryAgentId = scheme.agentId as string;
+        if (
+          !assignedAgents.some((a) =>
+            typeof a === 'object' ? a.agentId === primaryAgentId : a === primaryAgentId,
+          )
+        ) {
+          const agentTx = await tx.agentTransaction.create({
+            data: {
+              agentId: primaryAgentId,
+              transactionType: this.mapTransactionType(scheme.schemeType) as any,
+              propertyId: unit.propertyId!,
+              leaseAgreementId: lease.id,
+              transactionAmount: value,
+              calculatedCommission: calculatedCommission,
+              finalCommission: calculatedCommission,
+              status: 'pending',
+              transactionDate: new Date(),
+              commissionRuleId: scheme.commissionRuleId,
+            },
+          });
+          result.agentTransaction = {
+            id: agentTx.id,
+            calculatedCommission: calculatedCommission,
+            commissionPercent: commissionPct,
             status: 'pending',
-            transactionDate: new Date(),
-          },
-        });
-        result.agentTransaction = {
-          id: agentTx.id,
-          calculatedCommission,
-          commissionPercent: commissionPct,
-          status: 'pending',
-        };
+          };
+        }
       }
 
       // ── 4. GL Integration (Sales/Receivables) ──

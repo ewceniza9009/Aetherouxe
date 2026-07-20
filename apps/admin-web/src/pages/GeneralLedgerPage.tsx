@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { GridState } from '@/components/GridToolbar';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useGeneralLedgerEntries, useChartOfAccounts, type GlEntry, type GlEntryLine, type Account } from '@/hooks/use-gl';
+import {
+  useGeneralLedgerEntries,
+  useChartOfAccounts,
+  type GlEntry,
+  type GlEntryLine,
+  type Account,
+} from '@/hooks/use-gl';
 import {
   Table,
   TableBody,
@@ -15,7 +21,13 @@ import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@elite-realty/shared-ui/components/ui';
 
 export default function GeneralLedgerPage() {
   const { data: entries, isLoading: loadingEntries } = useGeneralLedgerEntries();
@@ -32,12 +44,8 @@ export default function GeneralLedgerPage() {
 
       <Tabs defaultValue="entries" className="w-full">
         <TabsList className="mb-4 grid w-full max-w-[400px] grid-cols-2">
-          <TabsTrigger value="entries">
-            Journal Entries
-          </TabsTrigger>
-          <TabsTrigger value="coa">
-            Chart of Accounts
-          </TabsTrigger>
+          <TabsTrigger value="entries">Journal Entries</TabsTrigger>
+          <TabsTrigger value="coa">Chart of Accounts</TabsTrigger>
         </TabsList>
 
         <TabsContent value="entries" className="m-0">
@@ -53,43 +61,77 @@ export default function GeneralLedgerPage() {
                 <div className="rounded-md scroll-grid overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Reference</TableHead>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="w-[150px]">Date</TableHead>
+                        <TableHead className="w-[250px]">Reference</TableHead>
                         <TableHead>Account</TableHead>
-                        <TableHead className="text-right">Debit</TableHead>
-                        <TableHead className="text-right">Credit</TableHead>
+                        <TableHead className="text-right w-[150px]">Debit</TableHead>
+                        <TableHead className="text-right w-[150px]">Credit</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-{entries?.map((entry: GlEntry) => (
+                      {entries?.map((entry: GlEntry, entryIdx: number) =>
                         entry.lines.map((line: GlEntryLine, idx: number) => (
-                          <TableRow key={line.id}>
-                            <TableCell className="text-muted-foreground whitespace-nowrap">
-                              {idx === 0 ? format(new Date(entry.date), 'MMM dd, yyyy') : ''}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {idx === 0 ? (
-                                <div className="flex flex-col">
-                                  <span>{entry.entryNumber}</span>
-                                  <span className="text-xs text-muted-foreground font-normal">{entry.description}</span>
+                          <TableRow
+                            key={line.id}
+                            className={
+                              entryIdx % 2 === 0
+                                ? 'bg-card hover:bg-muted/30'
+                                : 'bg-muted/10 hover:bg-muted/30'
+                            }
+                          >
+                            {idx === 0 && (
+                              <TableCell
+                                rowSpan={entry.lines.length}
+                                className="text-muted-foreground whitespace-nowrap align-top py-4 border-r border-border/40"
+                              >
+                                {format(new Date(entry.date), 'MMM dd, yyyy')}
+                              </TableCell>
+                            )}
+                            {idx === 0 && (
+                              <TableCell
+                                rowSpan={entry.lines.length}
+                                className="font-medium align-top py-4 border-r border-border/40"
+                              >
+                                <div className="flex flex-col gap-1.5">
+                                  <span className="font-semibold text-primary">
+                                    {entry.reference}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground font-normal leading-tight">
+                                    {entry.notes}
+                                  </span>
                                 </div>
-                              ) : ''}
+                              </TableCell>
+                            )}
+                            <TableCell className="py-2.5">
+                              <div
+                                className={
+                                  Number(line.creditAmount) > 0
+                                    ? 'ml-8 text-muted-foreground flex items-center gap-2'
+                                    : 'flex items-center gap-2 font-medium'
+                                }
+                              >
+                                {Number(line.creditAmount) > 0 ? (
+                                  <div className="w-1 h-4 rounded-full bg-amber-500/30" />
+                                ) : (
+                                  <div className="w-1 h-4 rounded-full bg-emerald-500/30" />
+                                )}
+                                <span>{line.account?.accountCode}</span>
+                                <span className="text-muted-foreground/50 mx-1">•</span>
+                                <span>{line.account?.name}</span>
+                              </div>
                             </TableCell>
-                            <TableCell>
-                              <span className={Number(line.credit) > 0 ? "ml-4 text-muted-foreground" : ""}>
-                                {line.accountCode} - {line.accountName}
-                              </span>
+                            <TableCell className="text-right font-mono text-emerald-600 dark:text-emerald-400 py-2.5">
+                              {Number(line.debitAmount) > 0 ? formatCurrency(line.debitAmount) : ''}
                             </TableCell>
-                            <TableCell className="text-right font-mono text-emerald-600 dark:text-emerald-400">
-                              {Number(line.debit) > 0 ? formatCurrency(line.debit) : ''}
-                            </TableCell>
-                            <TableCell className="text-right font-mono text-amber-600 dark:text-amber-400">
-                              {Number(line.credit) > 0 ? formatCurrency(line.credit) : ''}
+                            <TableCell className="text-right font-mono text-amber-600 dark:text-amber-400 py-2.5">
+                              {Number(line.creditAmount) > 0
+                                ? formatCurrency(line.creditAmount)
+                                : ''}
                             </TableCell>
                           </TableRow>
-                        ))
-                      ))}
+                        )),
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -106,15 +148,18 @@ export default function GeneralLedgerPage() {
             </CardHeader>
             <CardContent>
               {loadingAccounts ? (
-                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               ) : !accounts?.length ? (
                 <EmptyState title="No accounts found" />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {accounts.map((account: Account) => (
-                    <div key={account.id} className="p-4 rounded-lg border bg-card text-card-foreground flex items-center justify-between shadow-sm">
+                    <div
+                      key={account.id}
+                      className="p-4 rounded-lg border bg-card text-card-foreground flex items-center justify-between shadow-sm"
+                    >
                       <div>
-                        <div className="text-lg font-mono font-medium">{account.code}</div>
+                        <div className="text-lg font-mono font-medium">{account.accountCode}</div>
                         <div className="text-sm text-muted-foreground">{account.name}</div>
                       </div>
                       <Badge variant="secondary" className="uppercase text-[10px]">
@@ -131,5 +176,3 @@ export default function GeneralLedgerPage() {
     </div>
   );
 }
-
-

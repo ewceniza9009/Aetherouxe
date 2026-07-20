@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CommissionsService } from '../commissions/commissions.service';
 import { LedgerService } from '../ledger/ledger.service';
+import { ApInvoicesService } from '../ap-invoices/ap-invoices.service';
+import { CodeSequenceService } from '../code-sequence/code-sequence.service';
 import {
   CreateTransactionDto,
   UpdateTransactionDto,
@@ -11,9 +13,11 @@ import {
 @Injectable()
 export class AgentTransactionsService {
   constructor(
-    private prisma: PrismaService,
-    private commissionsService: CommissionsService,
-    private ledger: LedgerService,
+    private readonly prisma: PrismaService,
+    private readonly commissionsService: CommissionsService,
+    private readonly ledger: LedgerService,
+    private readonly apInvoicesService: ApInvoicesService,
+    private readonly codeSequence: CodeSequenceService,
   ) {}
 
   async create(dto: CreateTransactionDto) {
@@ -38,15 +42,16 @@ export class AgentTransactionsService {
       });
       if (!commissionRule) throw new NotFoundException('Commission rule not found');
       rule = commissionRule;
-      const leaseMonthlyRent = dto.transactionType === 'rental_lease' && dto.leaseAgreementId
-        ? Number(
-            (
-              await this.prisma.leaseAgreement.findUnique({
-                where: { id: dto.leaseAgreementId },
-              })
-            )?.monthlyRentAmount || 0,
-          )
-        : undefined;
+      const leaseMonthlyRent =
+        dto.transactionType === 'rental_lease' && dto.leaseAgreementId
+          ? Number(
+              (
+                await this.prisma.leaseAgreement.findUnique({
+                  where: { id: dto.leaseAgreementId },
+                })
+              )?.monthlyRentAmount || 0,
+            )
+          : undefined;
       commissionValue = this.commissionsService.calculateCommissionForRule(
         rule,
         dto.transactionAmount,
@@ -116,12 +121,11 @@ export class AgentTransactionsService {
       amount: t.transactionAmount,
       commissionAmount: t.calculatedCommission,
       owedCommission: owed,
-      ...(bal
-        ? { paidCommission: bal.paid, remainingCommission: bal.remaining }
-        : {}),
+      ...(bal ? { paidCommission: bal.paid, remainingCommission: bal.remaining } : {}),
       propertyName: t.property?.name ?? t.property?.propertyCode ?? null,
       agentName: t.agent?.user
-        ? [t.agent.user.firstName, t.agent.user.lastName].filter(Boolean).join(' ') || t.agent.user.email
+        ? [t.agent.user.firstName, t.agent.user.lastName].filter(Boolean).join(' ') ||
+          t.agent.user.email
         : null,
     };
   }
@@ -161,7 +165,100 @@ export class AgentTransactionsService {
       data: { status: 'approved' },
       include: { agent: { include: { user: true } }, property: true, commissionRule: true },
     });
+
+    // ── Elite Workflow: Create AP Accrual when commission is approved ──
+    if (tx.finalCommission && Number(tx.finalCommission) > 0) {
+      await this.createCommissionApAccrual(tx);
+    }
+
     return this.serializeTransaction(tx);
+  }
+
+  /**
+   * Creates an AP Invoice (accrual) for the approved commission.
+   * The agent is linked as a vendor (Contractor) for AP purposes.
+   */
+  private async createCommissionApAccrual(tx: any) {
+    const agent = await this.prisma.realEstateAgent.findUnique({
+      where: { id: tx.agentId },
+      include: { user: true },
+    });
+    if (!agent) return;
+
+    // Ensure agent exists as a Contractor (vendor) for AP
+    let contractor = await this.prisma.contractor.findFirst({
+      where: { tenantId: tx.agent?.user?.tenantId || tx.property?.tenantId, userId: agent.userId },
+    });
+    if (!contractor) {
+      contractor = await this.prisma.contractor.create({
+        data: {
+          tenantId: tx.agent?.user?.tenantId || tx.property?.tenantId,
+          userId: agent.userId,
+          companyName:
+            `${agent.user?.firstName || ''} ${agent.user?.lastName || ''}`.trim() ||
+            agent.user?.email ||
+            'Agent',
+          contactPerson: `${agent.user?.firstName || ''} ${agent.user?.lastName || ''}`.trim(),
+          email: agent.user?.email,
+          phone: agent.user?.phone,
+          isAgent: true,
+        },
+      });
+    }
+
+    // Create AP Invoice (accrual) for the commission
+    const apInvoiceNumber = await this.codeSequence.next('ap_invoice', {
+      prefix: 'AP-COMM',
+      suffix: String(new Date().getFullYear()),
+    });
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 30); // Net 30
+
+    await this.prisma.apInvoice.create({
+      data: {
+        tenantId: tx.agent?.user?.tenantId || tx.property?.tenantId,
+        sourceType: 'COMMISSION',
+        sourceId: tx.id,
+        vendorId: contractor.id,
+        invoiceNumber: apInvoiceNumber,
+        amount: tx.finalCommission,
+        dueDate,
+        status: 'pending_approval', // Will be approved when commission is paid
+        notes: `Commission accrual for ${tx.transactionType} on property ${tx.property?.propertyCode || tx.propertyId}. Agent: ${contractor.companyName}`,
+      },
+    });
+
+    // GL Entry: Debit Commission Expense, Credit AP
+    const mapping = await this.prisma.financialMapping.findFirst({
+      where: {
+        tenantId: tx.agent?.user?.tenantId || tx.property?.tenantId,
+        transactionType: 'COMMISSION_ACCRUAL',
+      },
+    });
+    if (mapping && mapping.debitAccountId && mapping.creditAccountId) {
+      const amount = Number(tx.finalCommission);
+      await this.prisma.journalEntry.create({
+        data: {
+          tenantId: tx.agent?.user?.tenantId || tx.property?.tenantId,
+          reference: `COMM-ACC-${tx.id.substring(0, 8)}`,
+          notes: `Commission accrual for agent ${contractor.companyName}`,
+          lines: {
+            create: [
+              {
+                accountId: mapping.debitAccountId,
+                debitAmount: amount,
+                description: 'Commission Expense',
+              },
+              {
+                accountId: mapping.creditAccountId,
+                creditAmount: amount,
+                description: 'Commission Payable (AP)',
+              },
+            ],
+          },
+        },
+      });
+    }
   }
 
   async remove(id: string) {

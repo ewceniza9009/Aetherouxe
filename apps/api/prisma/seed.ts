@@ -163,20 +163,20 @@ const DEVELOPERS = [
 ];
 
 const PROJECTS = [
-  { name: 'Horizon Ayala Towers', code: 'HAT', type: ProjectType.high_rise, city: 'Makati City' },
+  { name: 'The Pinnacle Towers', code: 'TPT', type: ProjectType.high_rise, city: 'Makati City' },
   {
-    name: 'Avida Village Nuvali',
-    code: 'AVV',
+    name: 'Aura Executive Estates',
+    code: 'AEE',
     type: ProjectType.village,
     city: 'Sta. Rosa Laguna',
   },
   {
-    name: 'The Arca South Residences',
-    code: 'ARC',
+    name: 'Serenade Residences',
+    code: 'SER',
     type: ProjectType.commercial_complex,
     city: 'Taguig City',
   },
-  { name: 'Vertis North Residences', code: 'VNN', type: ProjectType.mid_rise, city: 'Quezon City' },
+  { name: 'Vanguard North', code: 'VAN', type: ProjectType.mid_rise, city: 'Quezon City' },
 ];
 
 const BUILDINGS = [
@@ -279,6 +279,7 @@ async function cleanup() {
     'mortgageScenario',
     'rentalPayment',
     'leaseAgreement',
+    'reservation',
     'scheme',
     'consumptionReading',
     'utilityBill',
@@ -649,6 +650,26 @@ async function main() {
             'Structural',
           ]),
           isActive: true,
+          isAgent: false,
+        },
+      }),
+    );
+  }
+
+  // Convert an agent user into a contractor for agent payouts
+  if (agents.length > 0) {
+    const agentToConvert = agents[0];
+    contractors.push(
+      await prisma.contractor.create({
+        data: {
+          tenantId: tenant.id,
+          companyName: `${agentToConvert.user.firstName} ${agentToConvert.user.lastName} Realty Services`,
+          contactPerson: `${agentToConvert.user.firstName} ${agentToConvert.user.lastName}`,
+          email: agentToConvert.user.email,
+          phone: agentToConvert.user.phone,
+          userId: agentToConvert.user.id,
+          isAgent: true,
+          isActive: true,
         },
       }),
     );
@@ -772,10 +793,10 @@ async function main() {
 
   /* ── Payment / Pricing Schemes ── */
   const byName = (n: string) => projects.find((p) => p.name === n) ?? null;
-  const horizon = byName('Horizon Ayala Towers');
-  const avida = byName('Avida Village Nuvali');
-  const arca = byName('The Arca South Residences');
-  const vertis = byName('Vertis North Residences');
+  const pinnacle = byName('The Pinnacle Towers');
+  const aura = byName('Aura Executive Estates');
+  const serenade = byName('Serenade Residences');
+  const vanguard = byName('Vanguard North');
 
   const schemeDefs = [
     {
@@ -794,7 +815,7 @@ async function main() {
       code: 'SCH-CORP-RENTAL',
       name: 'Corporate Long-Term Lease',
       schemeType: SchemeType.standard_rental,
-      projectId: horizon?.id ?? null,
+      projectId: pinnacle?.id ?? null,
       remarks: '3-year corporate lease with 3-month deposit and 5-day grace.',
       securityDepositPercent: '300',
       penaltyPercent: '3',
@@ -816,14 +837,14 @@ async function main() {
       code: 'SCH-INHOUSE-24',
       name: 'In-House 24-Month Installment',
       schemeType: SchemeType.installment,
-      projectId: avida?.id ?? null,
+      projectId: aura?.id ?? null,
       remarks: '20% DP over 24 months, 80% balance on turnover.',
       dpNumberOfPayments: 24,
       dpNumberOfDaysFromDp: 30,
       eqPaymentPercentage: '20',
-      eqMonthlyAmortPercentage: '20',
+      eqMonthlyAmortPercentage: '80',
       eqNumberOfPayments: 24,
-      eqDownpaymentPercentage: '0',
+      eqDownpaymentPercentage: '20',
       blPaymentPercentage: '80',
       blMiscPercentage: '8.5',
       blNumberOfPayments: 1,
@@ -834,7 +855,7 @@ async function main() {
       code: 'SCH-INHOUSE-60',
       name: 'In-House 60-Month Deferred',
       schemeType: SchemeType.installment,
-      projectId: arca?.id ?? null,
+      projectId: serenade?.id ?? null,
       remarks: '10% DP, 90% spread over 60 months, no balloon.',
       dpNumberOfPayments: 12,
       dpNumberOfDaysFromDp: 30,
@@ -853,7 +874,7 @@ async function main() {
       code: 'SCH-MORTGAGE-BDO',
       name: 'Bank Mortgage Assisted (BDO)',
       schemeType: SchemeType.mortgage_assisted,
-      projectId: vertis?.id ?? null,
+      projectId: vanguard?.id ?? null,
       remarks: '20% DP in-house over 12 months; 80% via bank at 7% for 20 years.',
       dpNumberOfPayments: 12,
       dpNumberOfDaysFromDp: 30,
@@ -871,7 +892,7 @@ async function main() {
       schemeType: SchemeType.mortgage_assisted,
       projectId: null,
       remarks: '10% DP; 90% via Pag-IBIG at 6.25% for 30 years.',
-      dpNumberOfPayments: 6,
+      dpNumberOfPayments: 12,
       dpNumberOfDaysFromDp: 30,
       mortgageDownPaymentPercent: '10',
       interestRatePercent: '6.25',
@@ -885,7 +906,7 @@ async function main() {
       code: 'SCH-RTO-5YR',
       name: 'Rent-to-Own 5-Year Path',
       schemeType: SchemeType.rent_to_own,
-      projectId: avida?.id ?? null,
+      projectId: aura?.id ?? null,
       remarks: 'Option fee 2%; 30% of rent accrues as equity; purchase option matures in 5 years.',
       optionFeePercent: '2',
       equityAccumulationPercent: '30',
@@ -899,7 +920,20 @@ async function main() {
 
   const schemes: any[] = [];
   for (const s of schemeDefs) {
-    schemes.push(await prisma.scheme.create({ data: s as any }));
+    schemes.push(
+      await prisma.scheme.create({
+        data: {
+          ...s,
+          agentId: agents[0]?.agent.id ?? null,
+          assignedAgents: [
+            {
+              agentId: agents[0]?.agent.id,
+              commissionPercentage: agents[0]?.agent.commissionRateDefault ?? 3,
+            },
+          ],
+        } as any,
+      }),
+    );
   }
   const schemesByType: Record<string, any[]> = {};
   for (const s of schemes) {

@@ -1,11 +1,11 @@
-﻿import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '@elite-realty/shared-ui/lib/api';
 
 export interface GlEntry {
   id: string;
-  entryNumber: string;
+  reference?: string;
   date: string;
-  description: string;
+  notes?: string;
   lines: GlEntryLine[];
   createdAt: string;
   updatedAt: string;
@@ -14,16 +14,18 @@ export interface GlEntry {
 export interface GlEntryLine {
   id: string;
   accountId: string;
-  accountCode: string;
-  accountName: string;
-  debit: number;
-  credit: number;
+  account?: {
+    accountCode: string;
+    name: string;
+  };
+  debitAmount: number;
+  creditAmount: number;
   description?: string;
 }
 
 export interface Account {
   id: string;
-  code: string;
+  accountCode: string;
   name: string;
   type: string;
   balance: number;

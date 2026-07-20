@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../ledger/ledger.service';
+import { CodeSequenceService } from '../code-sequence/code-sequence.service';
 import {
   CreateReleaseDto,
   UpdateReleaseDto,
@@ -21,7 +22,10 @@ function bucketForDays(days: number): AgingBucketType {
 
 @Injectable()
 export class CommissionReleasesService {
-  constructor(private prisma: PrismaService, private ledger: LedgerService) {}
+  constructor(
+    private prisma: PrismaService,
+    private ledger: LedgerService,
+  ) {}
 
   async create(dto: CreateReleaseDto) {
     const tx = await this.prisma.agentTransaction.findUnique({
@@ -63,7 +67,7 @@ export class CommissionReleasesService {
   async payCommission(agentTransactionId: string, dto: PayCommissionDto) {
     const tx = await this.prisma.agentTransaction.findUnique({
       where: { id: agentTransactionId },
-      include: { agent: true }
+      include: { agent: true },
     });
     if (!tx) throw new NotFoundException('Agent transaction not found');
     if (tx.status === 'disputed') {
@@ -88,8 +92,7 @@ export class CommissionReleasesService {
 
     const paymentDate = dto.paymentDate ? new Date(dto.paymentDate) : new Date();
     const willBeFullyPaid = alreadyPaid + dto.amount >= owed - 0.01;
-    const releaseType =
-      dto.releaseType ?? (willBeFullyPaid ? 'full_payout' : 'partial_payout');
+    const releaseType = dto.releaseType ?? (willBeFullyPaid ? 'full_payout' : 'partial_payout');
 
     const release = await this.prisma.agentCommissionRelease.create({
       data: {
@@ -112,13 +115,13 @@ export class CommissionReleasesService {
     // GL Integration: Record Commission Expense
     const tenantId = tx.agent.tenantId;
     const commAcc = await this.prisma.chartOfAccount.findFirst({
-      where: { tenantId, accountCode: '5100' }
+      where: { tenantId, accountCode: '5100' },
     });
     const cashAcc = await this.prisma.chartOfAccount.findFirst({
-      where: { tenantId, accountCode: '1000' }
+      where: { tenantId, accountCode: '1000' },
     });
     const apAcc = await this.prisma.chartOfAccount.findFirst({
-      where: { tenantId, accountCode: '2000' }
+      where: { tenantId, accountCode: '2000' },
     });
 
     if (commAcc && cashAcc && apAcc) {
@@ -127,11 +130,11 @@ export class CommissionReleasesService {
           tenantId,
           sourceType: 'COMMISSION',
           sourceId: release.id,
-          invoiceNumber: `COMM-${release.id.substring(0,8)}`,
+          invoiceNumber: `COMM-${release.id.substring(0, 8)}`,
           amount: dto.amount,
           status: 'paid',
           dueDate: paymentDate,
-        }
+        },
       });
 
       await this.prisma.apDisbursement.create({
@@ -139,7 +142,7 @@ export class CommissionReleasesService {
           invoiceId: apInvoice.id,
           amount: dto.amount,
           notes: `Commission payout to agent. Ref: ${release.id}`,
-        }
+        },
       });
 
       await this.prisma.journalEntry.create({
@@ -151,9 +154,9 @@ export class CommissionReleasesService {
             create: [
               { accountId: commAcc.id, debitAmount: dto.amount, description: 'Commission Expense' },
               { accountId: cashAcc.id, creditAmount: dto.amount, description: 'Cash Outflow' },
-            ]
-          }
-        }
+            ],
+          },
+        },
       });
     }
 
@@ -239,8 +242,9 @@ export class CommissionReleasesService {
       ...r,
       type: r.releaseType,
       agentName: r.transaction?.agent?.user
-        ? [r.transaction.agent.user.firstName, r.transaction.agent.user.lastName].filter(Boolean).join(' ') ||
-          r.transaction.agent.user.email
+        ? [r.transaction.agent.user.firstName, r.transaction.agent.user.lastName]
+            .filter(Boolean)
+            .join(' ') || r.transaction.agent.user.email
         : null,
     };
   }
