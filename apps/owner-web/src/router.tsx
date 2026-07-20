@@ -4,17 +4,17 @@ import {
   createRootRoute,
   redirect,
   Outlet,
-} from "@tanstack/react-router";
-import { LoginPage } from "@elite-realty/shared-ui/pages";
-import OwnerDashboardPage from "./pages/DashboardPage";
-import OwnerPropertiesPage from "./pages/PropertiesPage";
-import OwnerProjectsPage from "./pages/ProjectsPage";
-import OwnerProjectDetailPage from "./pages/ProjectDetailPage";
-import OwnerBudgetHealthPage from "./pages/BudgetHealthPage";
-import FinancialsPage from "./pages/FinancialsPage";
-import DocumentsPage from "./pages/DocumentsPage";
-import PnlPage from "./pages/PnlPage";
-import DashboardLayout from "./components/layout/DashboardLayout";
+} from '@tanstack/react-router';
+import { LoginPage } from '@elite-realty/shared-ui/pages';
+import OwnerDashboardPage from './pages/DashboardPage';
+import OwnerPropertiesPage from './pages/PropertiesPage';
+import OwnerProjectsPage from './pages/ProjectsPage';
+import OwnerProjectDetailPage from './pages/ProjectDetailPage';
+import OwnerBudgetHealthPage from './pages/BudgetHealthPage';
+import FinancialsPage from './pages/FinancialsPage';
+import DocumentsPage from './pages/DocumentsPage';
+import PnlPage from './pages/PnlPage';
+import DashboardLayout from './components/layout/DashboardLayout';
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -22,24 +22,24 @@ const rootRoute = createRootRoute({
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/",
+  path: '/',
   beforeLoad: () => {
-    throw redirect({ to: "/dashboard" });
+    throw redirect({ to: '/dashboard' });
   },
 });
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/login",
-  component: LoginPage,
+  path: '/login',
+  component: () => <LoginPage portalName="Owner" />,
 });
 
 const protectedLayout = createRoute({
   getParentRoute: () => rootRoute,
-  id: "__protected",
+  id: '__protected',
   component: () => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) return <LoginPage />;
+    const token = localStorage.getItem('accessToken');
+    if (!token) return <LoginPage portalName="Owner" />;
     return (
       <DashboardLayout>
         <Outlet />
@@ -50,73 +50,73 @@ const protectedLayout = createRoute({
 
 const dashboardRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/dashboard",
+  path: '/dashboard',
   component: OwnerDashboardPage,
 });
 
 const propertiesRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/properties",
+  path: '/properties',
   component: OwnerPropertiesPage,
 });
 
 const projectsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/projects",
+  path: '/projects',
   component: OwnerProjectsPage,
 });
 
 const projectDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/projects/$projectId",
+  path: '/projects/$projectId',
   component: OwnerProjectDetailPage,
 });
 
 const budgetHealthRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/projects/$projectId/budgets/$budgetId",
+  path: '/projects/$projectId/budgets/$budgetId',
   component: OwnerBudgetHealthPage,
 });
 
 const financialsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/financials",
+  path: '/financials',
   component: FinancialsPage,
 });
 
 const pnlRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/pnl",
+  path: '/pnl',
   component: PnlPage,
 });
 
 const documentsRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/documents",
+  path: '/documents',
   component: DocumentsPage,
 });
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
-      protectedLayout.addChildren([
-        dashboardRoute,
-        propertiesRoute,
-        projectsRoute,
-        projectDetailRoute,
-        budgetHealthRoute,
-        financialsRoute,
-        pnlRoute,
-        documentsRoute,
-      ]),
+  protectedLayout.addChildren([
+    dashboardRoute,
+    propertiesRoute,
+    projectsRoute,
+    projectDetailRoute,
+    budgetHealthRoute,
+    financialsRoute,
+    pnlRoute,
+    documentsRoute,
+  ]),
 ]);
 
 const router = createRouter({
   routeTree,
-  defaultPreload: "intent",
+  defaultPreload: 'intent',
 });
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
   }

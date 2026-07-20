@@ -89,7 +89,7 @@ const indexRoute = createRoute({
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
-  component: LoginPage,
+  component: () => <LoginPage portalName="Admin" />,
 });
 
 import { useAuth } from '@elite-realty/shared-ui/hooks';
@@ -102,7 +102,7 @@ const protectedLayout = createRoute({
     const token = localStorage.getItem('accessToken');
 
     if (!token && !isAuthenticated) {
-      return <LoginPage />;
+      return <LoginPage portalName="Admin" />;
     }
     return (
       <DashboardLayout>

@@ -40,7 +40,7 @@ function projectDescription(p: Project): string {
 
 function propertyDescription(type: string | null | undefined, code: string): string {
   const typeLabel = TYPE_LABEL[type ?? ''] ?? 'residence';
-  return `${code} is a meticulously presented ${typeLabel}, appointed for effortless everyday living. Bathed in natural light with refined finishes and intelligently zoned spaces, it offers the rare balance of privacy, comfort, and prestige that defines the Elite Realty collection.`;
+  return `${code} is a meticulously presented ${typeLabel}, appointed for effortless everyday living. Bathed in natural light with refined finishes and intelligently zoned spaces, it offers the rare balance of privacy, comfort, and prestige that defines the Aetherouxe collection.`;
 }
 
 async function main() {

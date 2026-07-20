@@ -658,7 +658,17 @@ export class SalesService {
         property: { select: { id: true, propertyCode: true } },
         tenant: { select: { id: true, firstName: true, lastName: true, email: true } },
         agent: { include: { user: { select: { firstName: true, lastName: true, email: true } } } },
-        scheme: { select: { id: true, code: true, name: true } },
+        scheme: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            agentCommissionPercentage: true,
+            companyCommissionPercentage: true,
+            assignedAgents: true,
+            commissionRuleId: true,
+          },
+        },
         mortgageScenarios: { orderBy: { createdAt: 'desc' }, take: 1 },
         rtoContract: true,
       },
@@ -690,6 +700,16 @@ export class SalesService {
       schemeId: l.schemeId ?? null,
       schemeCode: l.scheme?.code ?? null,
       schemeName: l.scheme?.name ?? null,
+      agentCommissionPercentage: l.scheme?.agentCommissionPercentage
+        ? Number(l.scheme.agentCommissionPercentage)
+        : null,
+      companyCommissionPercentage: l.scheme?.companyCommissionPercentage
+        ? Number(l.scheme.companyCommissionPercentage)
+        : null,
+      assignedAgents:
+        (l.scheme?.assignedAgents as { agentId: string; commissionPercentage: number }[] | null) ??
+        null,
+      commissionRuleId: l.scheme?.commissionRuleId ?? null,
     }));
   }
 

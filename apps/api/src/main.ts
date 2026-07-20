@@ -16,8 +16,10 @@ async function bootstrap() {
   // CORS: restrict to known portal origins (supports credentials).
   // Configure via ALLOWED_ORIGINS (comma-separated). Requests without an
   // Origin header (server-to-server, health checks, smoke tests) are allowed.
-  const allowedOrigins = (process.env.ALLOWED_ORIGINS ||
-    'http://admin.localhost,http://owner.localhost,http://resident.localhost,http://api.localhost,http://localhost:8080')
+  const allowedOrigins = (
+    process.env.ALLOWED_ORIGINS ||
+    'http://admin.localhost,http://owner.localhost,http://resident.localhost,http://api.localhost,http://localhost:8080'
+  )
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean);
@@ -55,7 +57,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new TransformInterceptor());
 
   const config = new DocumentBuilder()
-    .setTitle('Elite Realty API')
+    .setTitle('Aetherouxe API')
     .setDescription('Property management & real estate backend API')
     .setVersion('1.0')
     .addBearerAuth()

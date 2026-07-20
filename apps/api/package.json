@@ -1,7 +1,7 @@
 {
   "name": "@elite-realty/api",
   "version": "1.0.0",
-  "description": "Elite Realty - NestJS Backend API",
+  "description": "Aetherouxe - NestJS Backend API",
   "private": true,
   "engines": {
     "node": ">=22.0.0"

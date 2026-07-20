@@ -334,7 +334,7 @@ async function main() {
     return;
   }
 
-  console.log('Seeding Elite Realty with realistic, portal-rich Filipino data...\n');
+  console.log('Seeding Aetherouxe with realistic, portal-rich Filipino data...\n');
   await cleanup();
 
   /* ── Tenant / Company ── */
@@ -349,7 +349,7 @@ async function main() {
       settings: {
         company: {
           legalName: `${developer}, Inc.`,
-          tradeName: 'Elite Realty',
+          tradeName: 'Aetherouxe Estates',
           tin: `000-${faker.string.numeric(3)}-${faker.string.numeric(3)}-000`,
           secRegistration: `CS${faker.string.numeric(6)}`,
           address: `${faker.number.int({ min: 10, max: 999 })} ${pick(STREETS)}, ${pick(CITIES)}`,

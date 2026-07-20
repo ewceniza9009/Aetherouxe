@@ -1,21 +1,26 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path from "path";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
   build: {
     rollupOptions: {
-      treeshake: false,
+      treeshake: true,
       output: {
         manualChunks: {
-          vendor: ["react", "react-dom", "@tanstack/react-router", "@tanstack/react-query"],
-          ui: ["lucide-react", "@radix-ui/react-tabs", "@radix-ui/react-dialog", "@radix-ui/react-select"],
+          vendor: ['react', 'react-dom', '@tanstack/react-router', '@tanstack/react-query'],
+          ui: [
+            'lucide-react',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-select',
+          ],
         },
       },
     },
@@ -23,8 +28,8 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/api": {
-        target: "http://localhost:4000",
+      '/api': {
+        target: 'http://localhost:4000',
         changeOrigin: true,
       },
     },
