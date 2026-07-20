@@ -1,25 +1,25 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { useListQuery } from "@/hooks/use-list-query";
-import { GridState } from "@/components/GridToolbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
+import { useMemo, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useListQuery } from '@/hooks/use-list-query';
+import { GridState } from '@/components/GridToolbar';
+import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Table,
   TableBody,
@@ -27,8 +27,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Plus, Percent, Trash2, Pencil } from "lucide-react";
+} from '@/components/ui/table';
+import { Plus, Percent, Trash2, Pencil } from 'lucide-react';
 import {
   useCommissions,
   useCreateCommission,
@@ -39,38 +39,42 @@ import {
   type CommissionRuleScope,
   type CommissionRulePropertyScope,
   type CommissionRuleType,
-} from "@/hooks/use-commissions";
-import { TIER_LABELS, COMMISSION_TYPE_LABELS, formatCurrency } from "@/lib/agent-meta";
-import { PropertyType } from "@elite-realty/shared-types";
-import { ListPager } from "@/components/ListPager";
+} from '@/hooks/use-commissions';
+import { TIER_LABELS, COMMISSION_TYPE_LABELS, formatCurrency } from '@/lib/agent-meta';
+import { PropertyType } from '@elite-realty/shared-types';
+import { ListPager } from '@/components/ListPager';
 
 const PROPERTY_LABELS: Record<string, string> = {
-  all: "All Types",
-  [PropertyType.CondoUnit]: "Condo Unit",
-  [PropertyType.HouseAndLot]: "House & Lot",
-  [PropertyType.Townhouse]: "Townhouse",
-  [PropertyType.CommercialSpace]: "Commercial Space",
-  [PropertyType.ParkingSlot]: "Parking Slot",
+  all: 'All Types',
+  [PropertyType.CondoUnit]: 'Condo Unit',
+  [PropertyType.HouseAndLot]: 'House & Lot',
+  [PropertyType.Townhouse]: 'Townhouse',
+  [PropertyType.CommercialSpace]: 'Commercial Space',
+  [PropertyType.ParkingSlot]: 'Parking Slot',
 };
 
 const EMPTY_FORM: CommissionRulePayload = {
-  name: "",
-  tier: "all",
-  propertyType: "all",
-  type: "percentage_of_sale",
+  name: '',
+  tier: 'all',
+  propertyType: 'all',
+  type: 'percentage_of_sale',
   value: 0,
-  status: "active",
+  status: 'active',
 };
 
 export default function CommissionsPage() {
   const navigate = useNavigate();
   const listQuery = useListQuery(20);
-  const { page, setPage, sort, setSort, order, setOrder, query, sortHeader, sortIndicator } = listQuery;
+  const { page, setPage, sort, setSort, order, setOrder, query, sortHeader, sortIndicator } =
+    listQuery;
 
-  const fullQuery = useMemo(() => ({
-    ...query,
-    status: undefined as "active" | "inactive" | undefined,
-  }), [query]);
+  const fullQuery = useMemo(
+    () => ({
+      ...query,
+      status: undefined as 'active' | 'inactive' | undefined,
+    }),
+    [query],
+  );
 
   const { data, isLoading, isError } = useCommissions(fullQuery);
   const createCommission = useCreateCommission();
@@ -94,7 +98,7 @@ export default function CommissionsPage() {
       tier: rule.tier,
       propertyType: rule.propertyType,
       type: rule.type,
-      value: rule.value,
+      value: typeof rule.value === 'number' ? rule.value : Number(rule.value ?? 0),
       status: rule.status,
     });
     setDialogOpen(true);
@@ -151,19 +155,15 @@ export default function CommissionsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead {...sortHeader("name")}>
-                    Rule Name{sortIndicator("name")}
-                  </TableHead>
-                  <TableHead {...sortHeader("tier")}>
-                    Tier{sortIndicator("tier")}
-                  </TableHead>
-                  <TableHead {...sortHeader("propertyType")}>
-                    Property Type{sortIndicator("propertyType")}
+                  <TableHead {...sortHeader('name')}>Rule Name{sortIndicator('name')}</TableHead>
+                  <TableHead {...sortHeader('tier')}>Tier{sortIndicator('tier')}</TableHead>
+                  <TableHead {...sortHeader('propertyType')}>
+                    Property Type{sortIndicator('propertyType')}
                   </TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Value</TableHead>
-                  <TableHead {...sortHeader("isActive")}>
-                    Status{sortIndicator("isActive")}
+                  <TableHead {...sortHeader('isActive')}>
+                    Status{sortIndicator('isActive')}
                   </TableHead>
                   <TableHead></TableHead>
                 </TableRow>
@@ -180,7 +180,7 @@ export default function CommissionsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {rule.tier === "all" ? (
+                      {rule.tier === 'all' ? (
                         <Badge variant="outline">All Tiers</Badge>
                       ) : (
                         <Badge variant="secondary">
@@ -188,35 +188,27 @@ export default function CommissionsPage() {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>
-                      {PROPERTY_LABELS[rule.propertyType] ?? rule.propertyType}
-                    </TableCell>
+                    <TableCell>{PROPERTY_LABELS[rule.propertyType] ?? rule.propertyType}</TableCell>
                     <TableCell>
                       {(COMMISSION_TYPE_LABELS as Record<string, string>)[rule.type] ?? rule.type}
                     </TableCell>
                     <TableCell className="font-semibold tabular-nums text-primary">
-                      {rule.type === "flat_amount" ? (
-                        formatCurrency(Number(rule.value ?? 0))
-                      ) : rule.type === "tiered" ? (
-                        Array.isArray(rule.value)
-                          ? rule.value.map((t: { rate?: number }) => `${t.rate}%`).join(" / ")
-                          : "—"
-                      ) : (
-                        `${Number(rule.value ?? 0)}%`
-                      )}
+                      {rule.type === 'flat_amount'
+                        ? formatCurrency(Number(rule.value ?? 0))
+                        : rule.type === 'tiered'
+                          ? Array.isArray(rule.value)
+                            ? rule.value.map((t: { rate?: number }) => `${t.rate}%`).join(' / ')
+                            : '—'
+                          : `${Number(rule.value ?? 0)}%`}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={rule.status === "active" ? "success" : "secondary"}>
+                      <Badge variant={rule.status === 'active' ? 'success' : 'secondary'}>
                         {rule.status}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEdit(rule)}
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(rule)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
@@ -241,9 +233,7 @@ export default function CommissionsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {editing ? "Edit Commission Rule" : "New Commission Rule"}
-            </DialogTitle>
+            <DialogTitle>{editing ? 'Edit Commission Rule' : 'New Commission Rule'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
             <div className="space-y-2">
@@ -268,13 +258,13 @@ export default function CommissionsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Tiers</SelectItem>
-                    {(["junior", "senior", "team_lead", "external_broker"] as CommissionRuleScope[]).map(
-                      (t) => (
-                        <SelectItem key={t} value={t}>
-                          {(TIER_LABELS as Record<string, string>)[t]}
-                        </SelectItem>
-                      )
-                    )}
+                    {(
+                      ['junior', 'senior', 'team_lead', 'external_broker'] as CommissionRuleScope[]
+                    ).map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {(TIER_LABELS as Record<string, string>)[t]}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -300,7 +290,7 @@ export default function CommissionsPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-               <div className="space-y-2">
+              <div className="space-y-2">
                 <Label>Type</Label>
                 <Select
                   value={form.type}
@@ -319,9 +309,9 @@ export default function CommissionsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="c-value">
-                  {form.type === "tiered" ? "Tier Rates (auto)" : "Value"}
+                  {form.type === 'tiered' ? 'Tier Rates (auto)' : 'Value'}
                 </Label>
-                {form.type === "tiered" ? (
+                {form.type === 'tiered' ? (
                   <p className="text-sm text-muted-foreground">
                     Tiered rates are generated automatically from the sale price brackets.
                   </p>
@@ -332,10 +322,8 @@ export default function CommissionsPage() {
                     min="0"
                     step="0.01"
                     required
-                    value={typeof form.value === "number" ? form.value : 0}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, value: Number(e.target.value) }))
-                    }
+                    value={Number(form.value ?? 0)}
+                    onChange={(e) => setForm((p) => ({ ...p, value: Number(e.target.value) }))}
                   />
                 )}
               </div>
@@ -345,7 +333,7 @@ export default function CommissionsPage() {
               <Select
                 value={form.status}
                 onValueChange={(v) =>
-                  setForm((p) => ({ ...p, status: v as "active" | "inactive" }))
+                  setForm((p) => ({ ...p, status: v as 'active' | 'inactive' }))
                 }
               >
                 <SelectTrigger>
@@ -361,8 +349,11 @@ export default function CommissionsPage() {
               <Button variant="outline" type="button" onClick={() => setDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createCommission.isPending || updateCommission.isPending}>
-                {editing ? "Save Changes" : "Create Rule"}
+              <Button
+                type="submit"
+                disabled={createCommission.isPending || updateCommission.isPending}
+              >
+                {editing ? 'Save Changes' : 'Create Rule'}
               </Button>
             </div>
           </form>
@@ -371,5 +362,3 @@ export default function CommissionsPage() {
     </div>
   );
 }
-
-
