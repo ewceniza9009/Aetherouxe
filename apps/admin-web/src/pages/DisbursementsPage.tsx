@@ -41,24 +41,20 @@ export default function DisbursementsPage() {
           toast.error('Failed to process disbursement.');
           setProcessingId(null);
         },
-      }
+      },
     );
   };
 
   return (
     <div className="space-y-6 flex flex-col ">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-white">Accounts Payable</h2>
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">Accounts Payable</h2>
         <p className="text-muted-foreground mt-2">
           Manage and disburse funds for approved AP invoices.
         </p>
       </div>
 
-      <GridToolbar
-        search={search}
-        onSearchChange={setSearch}
-        placeholder="Search invoices..."
-      />
+      <GridToolbar search={search} onSearchChange={setSearch} placeholder="Search invoices..." />
 
       <Card>
         <CardContent className="p-0">
@@ -70,30 +66,33 @@ export default function DisbursementsPage() {
           >
             <Table>
               <TableHeader>
-                <TableRow className="border-white/10 hover:bg-transparent">
-                  <TableHead {...sortHeader("sourceType", "text-white/60")}>
-                    Source{sortIndicator("sourceType")}
+                <TableRow className="border-border hover:bg-transparent">
+                  <TableHead {...sortHeader('sourceType', 'text-muted-foreground')}>
+                    Source{sortIndicator('sourceType')}
                   </TableHead>
-                  <TableHead className="text-white/60">Notes</TableHead>
-                  <TableHead {...sortHeader("amount", "text-white/60")}>
-                    Amount{sortIndicator("amount")}
+                  <TableHead className="text-muted-foreground">Notes</TableHead>
+                  <TableHead {...sortHeader('amount', 'text-muted-foreground')}>
+                    Amount{sortIndicator('amount')}
                   </TableHead>
-                  <TableHead {...sortHeader("status", "text-white/60")}>
-                    Status{sortIndicator("status")}
+                  <TableHead {...sortHeader('status', 'text-muted-foreground')}>
+                    Status{sortIndicator('status')}
                   </TableHead>
-                  <TableHead className="text-right text-white/60">Actions</TableHead>
+                  <TableHead className="text-right text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {invoices.map((invoice: ApInvoice) => (
-                  <TableRow key={invoice.id} className="border-white/10 hover:bg-card/5 transition-colors">
-                    <TableCell className="font-medium text-white">
-                      <Badge variant="outline" className="border-white/20 text-white/80">
+                  <TableRow
+                    key={invoice.id}
+                    className="border-border hover:bg-card/5 transition-colors"
+                  >
+                    <TableCell className="font-medium text-foreground">
+                      <Badge variant="outline" className="border-border text-foreground/80">
                         {invoice.sourceType.replace('_', ' ')}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-white/70">{invoice.notes}</TableCell>
-                    <TableCell className="font-semibold text-white">
+                    <TableCell className="text-muted-foreground">{invoice.notes}</TableCell>
+                    <TableCell className="font-semibold text-foreground">
                       {formatCurrency(invoice.amount)}
                     </TableCell>
                     <TableCell>
@@ -115,7 +114,11 @@ export default function DisbursementsPage() {
                         size="sm"
                         disabled={invoice.status === 'paid' || processingId === invoice.id}
                         onClick={() => handleDisburse(invoice.id, invoice.amount)}
-                        className={invoice.status !== 'paid' ? 'bg-gold hover:bg-gold/90 text-black font-semibold' : 'border-white/20 text-white/50'}
+                        className={
+                          invoice.status !== 'paid'
+                            ? 'bg-gold hover:bg-gold/90 text-black font-semibold'
+                            : 'border-border text-muted-foreground'
+                        }
                       >
                         {processingId === invoice.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -137,4 +140,3 @@ export default function DisbursementsPage() {
     </div>
   );
 }
-

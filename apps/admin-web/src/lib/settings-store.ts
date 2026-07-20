@@ -10,7 +10,7 @@ export interface CompanyMeta {
   logoUrl?: string;
 }
 
-let currencyMeta: CurrencyMeta = { code: 'PHP', symbol: 'â‚±' };
+let currencyMeta: CurrencyMeta = { code: 'PHP', symbol: '₱' };
 let companyMeta: CompanyMeta = { name: 'Aetherouxe Estates' };
 
 export function getCurrencyMeta(): CurrencyMeta {

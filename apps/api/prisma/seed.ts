@@ -1781,7 +1781,7 @@ async function main() {
     return `AP-COMM-${new Date().getFullYear()}-${String(apInvoiceSeq).padStart(4, '0')}`;
   };
 
-  const postCommissionAccrual = async (tx: any, vendor: any) => {
+  const postCommissionAccrual = async (tx: any, vendor: any, propertyCode?: string) => {
     const amount = Number(tx.finalCommission ?? 0);
     if (amount <= 0) return null;
     const dueDate = new Date();
@@ -1796,7 +1796,7 @@ async function main() {
         amount,
         dueDate,
         status: ApInvoiceStatus.pending_approval,
-        notes: `Commission accrual for ${tx.transactionType} on property ${tx.property?.propertyCode ?? tx.propertyId}. Agent: ${vendor.companyName}`,
+        notes: `Commission accrual for ${tx.transactionType} on property ${propertyCode ?? tx.propertyId}. Agent: ${vendor.companyName}`,
       },
     });
     if (mapping?.debitAccountId && mapping?.creditAccountId) {
@@ -1914,7 +1914,7 @@ async function main() {
       // Approved & beyond -> create the AP accrual invoice (+ GL) for this agent's share.
       let invoice: any = null;
       if (stage !== 'pending' && stage !== 'disputed') {
-        invoice = await postCommissionAccrual(tx, vendor);
+        invoice = await postCommissionAccrual(tx, vendor, property.propertyCode);
         if (invoice) apInvoiceCount++;
       }
 

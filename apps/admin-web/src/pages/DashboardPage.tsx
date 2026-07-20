@@ -451,7 +451,7 @@ export default function DashboardPage() {
                       tickLine={false}
                       axisLine={false}
                       width={56}
-                      tickFormatter={(v) => `â‚±${(Number(v) / 1000).toFixed(0)}k`}
+                      tickFormatter={(v) => `₱${(Number(v) / 1000).toFixed(0)}k`}
                     />
                     <Tooltip
                       contentStyle={{

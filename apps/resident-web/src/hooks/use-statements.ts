@@ -43,12 +43,34 @@ export const STATEMENT_STATUS_LABELS: Record<StatementStatus, string> = {
   cancelled: 'Cancelled',
 };
 
+// Tenant-aware currency formatting. Defaults to PHP/₱ to match the company
+// settings (currency: 'PHP', currencySymbol: '₱') used across the platform.
+let currencyCode = 'PHP';
+let currencySymbol = '₱';
+
+export function setCurrencyMeta(meta: { code?: string; symbol?: string }): void {
+  if (meta.code) currencyCode = meta.code;
+  if (meta.symbol) currencySymbol = meta.symbol;
+}
+
 export function formatCurrency(value?: number | null): string {
   if (value === undefined || value === null) return '—';
-  return `$${value.toLocaleString(undefined, {
+  const sign = value < 0 ? '-' : '';
+  const num = Math.abs(value).toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })}`;
+  });
+  if (currencySymbol) return `${sign}${currencySymbol}${num}`;
+  try {
+    return `${sign}${new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: currencyCode,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Math.abs(value))}`;
+  } catch {
+    return `${sign}${currencyCode} ${num}`;
+  }
 }
 
 export function formatDate(value?: string | null): string {
