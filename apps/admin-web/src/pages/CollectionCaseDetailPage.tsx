@@ -1,24 +1,19 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
+import { useState } from 'react';
+import { useParams, useNavigate } from '@tanstack/react-router';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
-import { Separator } from "@elite-realty/shared-ui/components/ui";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
+import { Separator } from '@elite-realty/shared-ui/components/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -26,14 +21,14 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   ArrowLeft,
   FolderOpen,
@@ -46,7 +41,7 @@ import {
   Receipt,
   AlertTriangle,
   Wallet,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   useCollectionCase,
   useAddCaseNote,
@@ -61,28 +56,28 @@ import {
   formatCurrency,
   formatDate,
   type CollectionCaseStatus,
-} from "@/hooks/use-collections";
-import { useLeasePayments, useRecordPayment, type PaymentMethod } from "@/hooks/use-leases";
-import { useUsers } from "@/hooks/use-users";
+} from '@/hooks/use-collections';
+import { useLeasePayments, useRecordPayment, type PaymentMethod } from '@/hooks/use-leases';
+import { useUsers } from '@/hooks/use-users';
 
 export default function CollectionCaseDetailPage() {
-  const { id } = useParams({ from: "/protected/collections/cases/$id" });
+  const { id } = useParams({ from: '/protected/collections/cases/$id' });
   const navigate = useNavigate();
   const { data, isLoading, isError } = useCollectionCase(id);
 
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState('');
   const addNote = useAddCaseNote();
   const submitNote = async () => {
     if (!note.trim()) return;
     await addNote.mutateAsync({ caseId: id, note: note.trim() });
-    setNote("");
+    setNote('');
   };
 
   const [activityOpen, setActivityOpen] = useState(false);
-  const [activityType, setActivityType] = useState("call");
-  const [activityOutcome, setActivityOutcome] = useState("");
-  const [activityDate, setActivityDate] = useState("");
-  const [activityNotes, setActivityNotes] = useState("");
+  const [activityType, setActivityType] = useState('call');
+  const [activityOutcome, setActivityOutcome] = useState('');
+  const [activityDate, setActivityDate] = useState('');
+  const [activityNotes, setActivityNotes] = useState('');
   const addActivity = useAddCaseActivity();
   const submitActivity = async () => {
     await addActivity.mutateAsync({
@@ -93,31 +88,31 @@ export default function CollectionCaseDetailPage() {
       notes: activityNotes || undefined,
     });
     setActivityOpen(false);
-    setActivityOutcome("");
-    setActivityDate("");
-    setActivityNotes("");
+    setActivityOutcome('');
+    setActivityDate('');
+    setActivityNotes('');
   };
 
-  const leaseId = data?.lease?.id ?? data?.leaseId ?? "";
+  const leaseId = data?.lease?.id ?? data?.leaseId ?? '';
   const { data: payments } = useLeasePayments(leaseId);
   const outstandingPayments = (payments ?? []).filter(
-    (p) => Number(p.amountDue ?? p.amount) - Number(p.amountPaid ?? 0) > 0
+    (p) => Number(p.amountDue ?? p.amount) - Number(p.amountPaid ?? 0) > 0,
   );
   const recordPayment = useRecordPayment();
   const updateCase = useUpdateCase();
 
   const { data: staffResult } = useUsers({ limit: 200 });
   const staff = (staffResult?.data ?? []).filter((u) =>
-    ["super_admin", "admin", "property_manager", "finance"].includes(u.userType)
+    ['super_admin', 'admin', 'property_manager', 'finance'].includes(u.userType),
   );
   const staffName = (u: { firstName?: string | null; lastName?: string | null; email: string }) =>
-    `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email;
+    `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.email;
 
   const [payOpen, setPayOpen] = useState(false);
-  const [payPaymentId, setPayPaymentId] = useState("");
-  const [payAmount, setPayAmount] = useState("");
-  const [payMethod, setPayMethod] = useState<PaymentMethod>("bank_transfer");
-  const [payDate, setPayDate] = useState("");
+  const [payPaymentId, setPayPaymentId] = useState('');
+  const [payAmount, setPayAmount] = useState('');
+  const [payMethod, setPayMethod] = useState<PaymentMethod>('bank_transfer');
+  const [payDate, setPayDate] = useState('');
 
   const selectedPayment = outstandingPayments.find((p) => p.id === payPaymentId);
   const selectedRemaining = selectedPayment
@@ -127,15 +122,11 @@ export default function CollectionCaseDetailPage() {
 
   const openPayDialog = () => {
     const first = outstandingPayments[0];
-    setPayPaymentId(first?.id ?? "");
+    setPayPaymentId(first?.id ?? '');
     setPayAmount(
-      first
-        ? String(
-            Number(first.amountDue ?? first.amount) - Number(first.amountPaid ?? 0)
-          )
-        : ""
+      first ? String(Number(first.amountDue ?? first.amount) - Number(first.amountPaid ?? 0)) : '',
     );
-    setPayMethod("bank_transfer");
+    setPayMethod('bank_transfer');
     setPayDate(new Date().toISOString().slice(0, 10));
     setPayOpen(true);
   };
@@ -153,7 +144,7 @@ export default function CollectionCaseDetailPage() {
 
   if (isLoading) {
     return (
-    <div className="space-y-6 flex flex-col ">
+      <div className="space-y-6 flex flex-col ">
         <Skeleton className="h-24 w-full" />
         <div className="grid gap-4 md:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -168,7 +159,7 @@ export default function CollectionCaseDetailPage() {
   if (isError || !data) {
     return (
       <div className="space-y-6">
-        <Button variant="outline" onClick={() => navigate({ to: "/collections/cases" })}>
+        <Button variant="outline" onClick={() => navigate({ to: '/collections/cases' })}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Cases
         </Button>
         <Card>
@@ -217,18 +208,18 @@ export default function CollectionCaseDetailPage() {
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <User className="h-4 w-4" /> {personName(data.lease)}
-              {data.lease?.tenant?.phone ? ` · ${data.lease.tenant.phone}` : ""}
+              {data.lease?.tenant?.phone ? ` · ${data.lease.tenant.phone}` : ''}
             </span>
             <span className="flex items-center gap-1">
               <Home className="h-4 w-4" />
-              {data.lease?.property?.propertyCode ?? "—"}
-              {data.lease?.unitLabel ? ` · Unit ${data.lease.unitLabel}` : ""}
+              {data.lease?.property?.propertyCode ?? '—'}
+              {data.lease?.unitLabel ? ` · Unit ${data.lease.unitLabel}` : ''}
             </span>
             <span className="flex items-center gap-1">
-              <Receipt className="h-4 w-4" /> Owed for{" "}
+              <Receipt className="h-4 w-4" /> Owed for{' '}
               {data.lease?.leaseType
-                ? LEASE_TYPE_LABELS[data.lease.leaseType] ?? data.lease.leaseType
-                : "Rent"}
+                ? (LEASE_TYPE_LABELS[data.lease.leaseType] ?? data.lease.leaseType)
+                : 'Rent'}
             </span>
             {data.tenant?.name && (
               <span className="flex items-center gap-1">
@@ -241,18 +232,19 @@ export default function CollectionCaseDetailPage() {
           <Button onClick={openPayDialog} disabled={outstandingPayments.length === 0}>
             <Wallet className="mr-2 h-4 w-4" /> Record Payment
           </Button>
-          <Button variant="outline" onClick={() => navigate({ to: "/collections/cases" })}>
+          <Button variant="outline" onClick={() => navigate({ to: '/collections/cases' })}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Cases
           </Button>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <SummaryCard title="Total Outstanding" value={formatCurrency(Number(data.totalOutstanding ?? 0))} tone="text-rose-700" />
         <SummaryCard
-          title="Opened"
-          value={formatDate(data.openedAt ?? data.createdAt)}
+          title="Total Outstanding"
+          value={formatCurrency(Number(data.totalOutstanding ?? 0))}
+          tone="text-rose-700"
         />
+        <SummaryCard title="Opened" value={formatDate(data.openedAt ?? data.createdAt)} />
         <SummaryCard title="Last Activity" value={formatDate(data.lastActivityAt)} />
         <SummaryCard
           title="Next Action"
@@ -274,11 +266,11 @@ export default function CollectionCaseDetailPage() {
           <div className="space-y-2">
             <Label>Assigned Staff</Label>
             <Select
-              value={data.assignedToId ?? "unassigned"}
+              value={data.assignedToId ?? 'unassigned'}
               onValueChange={(v) =>
                 updateCase.mutate({
                   id: data.id,
-                  assignedToId: v === "unassigned" ? null : v,
+                  assignedToId: v === 'unassigned' ? null : v,
                 })
               }
             >
@@ -291,7 +283,7 @@ export default function CollectionCaseDetailPage() {
                   <SelectItem key={u.id} value={u.id}>
                     {staffName(u)}
                     <span className="ml-1 text-xs capitalize text-muted-foreground">
-                      · {u.userType.replace(/_/g, " ")}
+                      · {u.userType.replace(/_/g, ' ')}
                     </span>
                   </SelectItem>
                 ))}
@@ -299,9 +291,9 @@ export default function CollectionCaseDetailPage() {
             </Select>
             {data.assignedTo && (
               <p className="text-xs text-muted-foreground">
-                Currently:{" "}
-                {`${data.assignedTo.firstName ?? ""} ${data.assignedTo.lastName ?? ""}`.trim() ||
-                  "—"}
+                Currently:{' '}
+                {`${data.assignedTo.firstName ?? ''} ${data.assignedTo.lastName ?? ''}`.trim() ||
+                  '—'}
               </p>
             )}
           </div>
@@ -310,7 +302,7 @@ export default function CollectionCaseDetailPage() {
             <Input
               id="nextaction"
               type="date"
-              value={data.nextActionDate ? data.nextActionDate.slice(0, 10) : ""}
+              value={data.nextActionDate ? data.nextActionDate.slice(0, 10) : ''}
               onChange={(e) =>
                 updateCase.mutate({
                   id: data.id,
@@ -327,9 +319,7 @@ export default function CollectionCaseDetailPage() {
           <TabsTrigger value="activities">
             Activities {activities.length > 0 && `(${activities.length})`}
           </TabsTrigger>
-          <TabsTrigger value="notes">
-            Notes {notes.length > 0 && `(${notes.length})`}
-          </TabsTrigger>
+          <TabsTrigger value="notes">Notes {notes.length > 0 && `(${notes.length})`}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="activities">
@@ -348,9 +338,7 @@ export default function CollectionCaseDetailPage() {
               {activities.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 py-10 text-center">
                   <AlertTriangle className="h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    No activities recorded yet.
-                  </p>
+                  <p className="text-sm text-muted-foreground">No activities recorded yet.</p>
                 </div>
               ) : (
                 <div className="relative space-y-4 pl-4">
@@ -360,7 +348,9 @@ export default function CollectionCaseDetailPage() {
                       <span className="absolute -left-[14px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent" />
                       <div className="rounded-lg border p-3">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium capitalize">{a.type?.replace(/_/g, " ") ?? "activity"}</span>
+                          <span className="font-medium capitalize">
+                            {a.type?.replace(/_/g, ' ') ?? 'activity'}
+                          </span>
                           <span className="text-xs text-muted-foreground">
                             {formatDate(a.date ?? a.createdAt)}
                           </span>
@@ -368,12 +358,12 @@ export default function CollectionCaseDetailPage() {
                         {a.outcome && (
                           <p className="mt-1 text-sm">
                             <span className="text-muted-foreground">Outcome: </span>
-                            {a.outcome}
+                            <span className="capitalize">
+                              {a.outcome?.replace(/_/g, ' ') ?? a.outcome}
+                            </span>
                           </p>
                         )}
-                        {a.notes && (
-                          <p className="mt-1 text-sm text-muted-foreground">{a.notes}</p>
-                        )}
+                        {a.notes && <p className="mt-1 text-sm text-muted-foreground">{a.notes}</p>}
                       </div>
                     </div>
                   ))}
@@ -398,13 +388,10 @@ export default function CollectionCaseDetailPage() {
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Add a note..."
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") submitNote();
+                    if (e.key === 'Enter') submitNote();
                   }}
                 />
-                <Button
-                  onClick={submitNote}
-                  disabled={addNote.isPending || !note.trim()}
-                >
+                <Button onClick={submitNote} disabled={addNote.isPending || !note.trim()}>
                   {addNote.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
@@ -415,16 +402,14 @@ export default function CollectionCaseDetailPage() {
               </div>
               <Separator />
               {notes.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  No notes yet.
-                </p>
+                <p className="py-8 text-center text-sm text-muted-foreground">No notes yet.</p>
               ) : (
                 <div className="space-y-3">
                   {notes.map((n) => (
                     <div key={n.id} className="rounded-lg border p-3">
                       <p className="text-sm">{n.note}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {n.authorName ?? "Staff"} · {formatDate(n.createdAt)}
+                        {n.authorName ?? 'Staff'} · {formatDate(n.createdAt)}
                       </p>
                     </div>
                   ))}
@@ -508,9 +493,7 @@ export default function CollectionCaseDetailPage() {
                   const p = outstandingPayments.find((x) => x.id === v);
                   if (p)
                     setPayAmount(
-                      String(
-                        Number(p.amountDue ?? p.amount) - Number(p.amountPaid ?? 0)
-                      )
+                      String(Number(p.amountDue ?? p.amount) - Number(p.amountPaid ?? 0)),
                     );
                 }}
               >
@@ -519,8 +502,7 @@ export default function CollectionCaseDetailPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {outstandingPayments.map((p) => {
-                    const rem =
-                      Number(p.amountDue ?? p.amount) - Number(p.amountPaid ?? 0);
+                    const rem = Number(p.amountDue ?? p.amount) - Number(p.amountPaid ?? 0);
                     return (
                       <SelectItem key={p.id} value={p.id}>
                         {p.period ?? formatDate(p.dueDate)} · {formatCurrency(rem)} due
@@ -549,10 +531,7 @@ export default function CollectionCaseDetailPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Method</Label>
-                <Select
-                  value={payMethod}
-                  onValueChange={(v) => setPayMethod(v as PaymentMethod)}
-                >
+                <Select value={payMethod} onValueChange={(v) => setPayMethod(v as PaymentMethod)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -584,9 +563,7 @@ export default function CollectionCaseDetailPage() {
               onClick={submitPayment}
               disabled={recordPayment.isPending || !payPaymentId || !payAmount}
             >
-              {recordPayment.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+              {recordPayment.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Record Payment
             </Button>
           </DialogFooter>
@@ -614,11 +591,8 @@ function SummaryCard({
         {icon ?? <FolderOpen className="h-4 w-4 text-muted-foreground" />}
       </CardHeader>
       <CardContent>
-        <div className={`text-xl font-bold tabular-nums ${tone ?? ""}`}>{value}</div>
+        <div className={`text-xl font-bold tabular-nums ${tone ?? ''}`}>{value}</div>
       </CardContent>
     </Card>
   );
 }
-
-
-
