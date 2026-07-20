@@ -46,6 +46,23 @@ export enum UnitType {
   Parking = 'parking',
 }
 
+export enum UnitStatus {
+  Available = 'available',
+  Occupied = 'occupied',
+  Reserved = 'reserved',
+  UnderMaintenance = 'under_maintenance',
+  Rented = 'rented',
+  RtoActive = 'rto_active',
+  Sold = 'sold',
+}
+
+export enum ReservationStatus {
+  Reserved = 'reserved',
+  Converted = 'converted',
+  Expired = 'expired',
+  Cancelled = 'cancelled',
+}
+
 export enum ProjectType {
   HighRise = 'high_rise',
   MidRise = 'mid_rise',
@@ -127,40 +144,6 @@ export enum TransactionType {
   LeaseRenewal = 'lease_renewal',
 }
 
-export enum SalesSchemeType {
-  SALE_MORTGAGE = 'sale_mortgage',
-  RENT_TO_OWN = 'rent_to_own',
-  RESERVATION = 'reservation',
-  LONG_TERM_RENTAL = 'long_term_rental',
-}
-
-export interface SchemeListItem {
-  id: string;
-  schemeType: SalesSchemeType | null;
-  unitLabel: string | null;
-  unitId: string | null;
-  propertyId: string;
-  propertyName: string | null;
-  leaseType: LeaseType | null;
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
-  mortgageScenarioId: string | null;
-  rtoContractId: string | null;
-  tenantUserId: string | null;
-  tenantName: string | null;
-  monthlyRentAmount: number | null;
-  agentId: string | null;
-  agentName: string | null;
-  schemeId: string | null;
-  schemeCode: string | null;
-  schemeName: string | null;
-  agentCommissionPercentage: number | null;
-  companyCommissionPercentage: number | null;
-  assignedAgents: { agentId: string; commissionPercentage: number }[] | null;
-  commissionRuleId: string | null;
-}
-
 export enum CommissionStatus {
   Pending = 'pending',
   Approved = 'approved',
@@ -187,6 +170,9 @@ export enum InvoiceType {
   LateFee = 'late_fee',
   DamageCharge = 'damage_charge',
   Misc = 'misc',
+  Downpayment = 'downpayment',
+  Reservation = 'reservation',
+  EquityCredit = 'equity_credit',
 }
 
 export enum InvoiceStatus {
@@ -295,6 +281,69 @@ export enum WorkOrderStatus {
   Cancelled = 'cancelled',
 }
 
+export enum LeadStatus {
+  New = 'new',
+  Contacted = 'contacted',
+  Qualified = 'qualified',
+  Won = 'won',
+  Lost = 'lost',
+}
+
+export interface SchemeListItem {
+  id: string;
+  schemeType: SchemeType | null;
+  unitLabel: string | null;
+  unitId: string | null;
+  propertyId: string;
+  propertyName: string | null;
+  leaseType: LeaseType | null;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  mortgageScenarioId: string | null;
+  rtoContractId: string | null;
+  tenantUserId: string | null;
+  tenantName: string | null;
+  monthlyRentAmount: number | null;
+  agentId: string | null;
+  agentName: string | null;
+  schemeId: string | null;
+  schemeCode: string | null;
+  schemeName: string | null;
+  agentCommissionPercentage: number | null;
+  companyCommissionPercentage: number | null;
+  assignedAgents: { agentId: string; commissionPercentage: number }[] | null;
+  commissionRuleId: string | null;
+}
+
+export enum ModerationStatus {
+  Published = 'published',
+  Hidden = 'hidden',
+  Archived = 'archived',
+}
+
+export enum ReportStatus {
+  Open = 'open',
+  Reviewed = 'reviewed',
+  Dismissed = 'dismissed',
+  Actioned = 'actioned',
+}
+
+export enum ModerationTargetType {
+  Post = 'post',
+  Comment = 'comment',
+}
+
+export enum ModerationAction {
+  Publish = 'publish',
+  Hide = 'hide',
+  Archive = 'archive',
+  Restore = 'restore',
+  Delete = 'delete',
+  DismissReport = 'dismiss_report',
+  ActionReport = 'action_report',
+}
+
 export enum DocOwnerType {
   Tenant = 'tenant',
   Owner = 'owner',
@@ -377,6 +426,29 @@ export enum CollectionCasePriority {
   Critical = 'critical',
 }
 
+export enum SchemeType {
+  StandardRentalMonthlyLeaseWithDepositPenaltyTerms = 'standard_rental // Monthly lease with deposit + penalty terms',
+  SpotCashFullUpfrontPaymentWithOptionalDiscount = 'spot_cash // Full upfront payment with optional discount',
+  InstallmentDPEquityBalancePhasesinhouseFinancing = 'installment // DP + Equity + Balance phases (in-house financing)',
+  MortgageAssistedDPInhouseBalanceViaBankMortgage = 'mortgage_assisted // DP in-house, balance via bank mortgage',
+  RentToOwnRentWithEquityAccumulationTowardPurchase = 'rent_to_own // Rent with equity accumulation toward purchase',
+}
+
+export enum TitleTransferStatus {
+  PendingRequestedInitiatedAwaitingRequirements = 'pending // Requested / initiated, awaiting requirements',
+  InProgressDocumentsBeingProcessedBIRRegistryOfDeeds = 'in_progress // Documents being processed (BIR, Registry of Deeds)',
+  CompletedTitleTransferredBuyerIsNewOwnerOfRecord = 'completed // Title transferred; buyer is new owner of record',
+  CancelledTransferAborted = 'cancelled // Transfer aborted',
+}
+
+export enum TitleTransferBasis {
+  SpotCashFullyPaidInCash = 'spot_cash // Fully paid in cash',
+  InstallmentPaidInhouseInstallmentFullyPaid = 'installment_paid // In-house installment fully paid',
+  RtoExercisedRenttoownOptionExercisedEquityComplete = 'rto_exercised // Rent-to-own option exercised / equity complete',
+  MortgageSettledBankPagIBIGLoanReleasedToDeveloper = 'mortgage_settled // Bank/Pag-IBIG loan released to developer',
+  ManualAdministrativeOther = 'manual // Administrative / other',
+}
+
 export enum NotificationType {
   RentDue = 'rent_due',
   RentOverdue = 'rent_overdue',
@@ -391,4 +463,19 @@ export enum NotificationRole {
   Admin = 'admin',
   Owner = 'owner',
   Resident = 'resident',
+}
+
+export enum AccountType {
+  Asset = 'asset',
+  Liability = 'liability',
+  Equity = 'equity',
+  Revenue = 'revenue',
+  Expense = 'expense',
+}
+
+export enum ApInvoiceStatus {
+  PendingApproval = 'pending_approval',
+  Approved = 'approved',
+  Paid = 'paid',
+  Cancelled = 'cancelled',
 }

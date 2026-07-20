@@ -34,6 +34,7 @@ import {
   DocOwnerType,
   SignatureStatus,
   PnlStatus,
+  LeadStatus,
   ReminderType,
   ReminderChannel,
   ReminderStatus,
@@ -263,6 +264,7 @@ function buildAmortization(loanAmount: number, annualRatePct: number, n: number)
 async function cleanup() {
   const order = [
     'notification',
+    'lead',
     'collectionActivity',
     'collectionCase',
     'collectionCaseNote',
@@ -2276,6 +2278,185 @@ async function main() {
     }
   }
   console.log('Service requests + work orders created');
+
+  /* ── Leads (CRM) ──
+   * Curated lead pipeline with realistic Filipino names, phone numbers,
+   * source attributions, property matches, agent assignments, and notes.
+   * Spread across all pipeline stages for meaningful demo data.
+   */
+  const propA = properties[0];
+  const propB = properties[1];
+  const propC = properties[2];
+  const propD = properties[3];
+  const propE = properties[4];
+  const ag0 = agents[0]?.user; // team lead
+  const ag1 = agents[1]?.user; // senior
+  const ag2 = agents[2]?.user; // senior
+  const ag3 = agents[3]?.user; // junior
+  const ag4 = agents[4]?.user; // external broker
+
+  const leadData = [
+    {
+      name: 'Maria Santos',
+      email: 'maria.santos@gmail.com',
+      phone: '+63 917 555 0101',
+      source: 'website',
+      propertyId: propA?.id ?? null,
+      assignedToId: ag0?.id ?? null,
+      status: 'qualified' as LeadStatus,
+      notes:
+        'Interested in 3BR unit at Lumina Residences. Pre-approved for bank financing. Follow up on required documents.',
+    },
+    {
+      name: 'Juan Dela Cruz',
+      email: 'juan.delacruz@yahoo.com',
+      phone: '+63 918 555 0202',
+      source: 'referral',
+      propertyId: propB?.id ?? null,
+      assignedToId: ag1?.id ?? null,
+      status: 'contacted' as LeadStatus,
+      notes:
+        'Referred by Maria Santos. Looking for a studio unit near BGC. Budget 3-4M. Wants to schedule site visit.',
+    },
+    {
+      name: 'Angela Reyes',
+      email: 'angela.reyes@outlook.com',
+      phone: '+63 919 555 0303',
+      source: 'social_media',
+      propertyId: propC?.id ?? null,
+      assignedToId: ag2?.id ?? null,
+      status: 'new' as LeadStatus,
+      notes: 'DMed our Facebook page asking about RTO terms for a 2BR unit. Sent pricing brochure.',
+    },
+    {
+      name: 'Roberto Garcia',
+      email: 'r.garcia@gmail.com',
+      phone: '+63 920 555 0404',
+      source: 'walk_in',
+      propertyId: propA?.id ?? null,
+      assignedToId: ag0?.id ?? null,
+      status: 'won' as LeadStatus,
+      notes: 'Walked in on Saturday. Signed reservation for unit A-1201. Downpayment started.',
+    },
+    {
+      name: 'Patricia Lim',
+      email: 'p.lim@proton.me',
+      phone: '+63 921 555 0505',
+      source: 'website',
+      propertyId: propD?.id ?? null,
+      assignedToId: ag3?.id ?? null,
+      status: 'qualified' as LeadStatus,
+      notes:
+        'Submitted inquiry form for townhouse units. OFW based in Singapore — wants investment property. Can pay spot cash.',
+    },
+    {
+      name: 'Miguel Torres',
+      email: 'miguel.torres@gmail.com',
+      phone: '+63 922 555 0606',
+      source: 'cold_call',
+      propertyId: null,
+      assignedToId: ag4?.id ?? null,
+      status: 'lost' as LeadStatus,
+      notes:
+        'Cold call from property listing. Not interested — already bought from a competitor. Do not contact again.',
+    },
+    {
+      name: 'Carmen Aquino',
+      email: 'carmen.aquino@yahoo.com',
+      phone: '+63 923 555 0707',
+      source: 'referral',
+      propertyId: propE?.id ?? null,
+      assignedToId: ag1?.id ?? null,
+      status: 'contacted' as LeadStatus,
+      notes:
+        'Referred by a current tenant. Wants to transfer to a bigger unit next quarter. Hold for now.',
+    },
+    {
+      name: 'Daniel Ramos',
+      email: 'dramos@outlook.com',
+      phone: '+63 924 555 0808',
+      source: 'website',
+      propertyId: propB?.id ?? null,
+      assignedToId: ag2?.id ?? null,
+      status: 'new' as LeadStatus,
+      notes: 'Submitted web form for duplex units. No response to follow-up email yet.',
+    },
+    {
+      name: 'Sofia Mendoza',
+      email: 'sofia.mendoza@gmail.com',
+      phone: '+63 925 555 0909',
+      source: 'social_media',
+      propertyId: propC?.id ?? null,
+      assignedToId: ag0?.id ?? null,
+      status: 'won' as LeadStatus,
+      notes: 'Instagram lead. Signed contract last week. Unit C-0802. Fully paid spot cash.',
+    },
+    {
+      name: 'Eduardo Villanueva',
+      email: 'ed.villanueva@gmail.com',
+      phone: '+63 926 555 1010',
+      source: 'walk_in',
+      propertyId: propD?.id ?? null,
+      assignedToId: ag3?.id ?? null,
+      status: 'qualified' as LeadStatus,
+      notes:
+        'Walked in with spouse. Interested in pre-selling 3BR. Needs time to decide — target close by end of month.',
+    },
+    {
+      name: 'Isabella Cruz',
+      email: 'isabella.cruz@yahoo.com',
+      phone: '+63 927 555 1111',
+      source: 'cold_call',
+      propertyId: propA?.id ?? null,
+      assignedToId: ag4?.id ?? null,
+      status: 'contacted' as LeadStatus,
+      notes: 'Called from agent list. Expressed interest in condo units. Sent virtual tour link.',
+    },
+    {
+      name: 'Fernando Bautista',
+      email: 'f.bautista@outlook.com',
+      phone: '+63 928 555 1212',
+      source: 'website',
+      propertyId: propE?.id ?? null,
+      assignedToId: ag1?.id ?? null,
+      status: 'new' as LeadStatus,
+      notes: 'Inquiry about penthouse units. Requested price list via email. Awaiting response.',
+    },
+    {
+      name: 'Ana Pascual',
+      email: 'ana.pascual@gmail.com',
+      phone: '+63 929 555 1313',
+      source: 'referral',
+      propertyId: propB?.id ?? null,
+      assignedToId: ag2?.id ?? null,
+      status: 'lost' as LeadStatus,
+      notes:
+        'Referred by Roberto Garcia. Met twice but chose a property in Cavite for lower price.',
+    },
+    {
+      name: 'Ricardo Soriano',
+      email: 'ricardo.soriano@gmail.com',
+      phone: '+63 930 555 1414',
+      source: 'social_media',
+      propertyId: propC?.id ?? null,
+      assignedToId: ag0?.id ?? null,
+      status: 'won' as LeadStatus,
+      notes:
+        'Facebook ad lead. Converted after 2 site visits. Reservation signed, moved to sales pipeline.',
+    },
+  ];
+
+  let leadCount = 0;
+  for (const ld of leadData) {
+    await prisma.lead.create({
+      data: {
+        tenantId: tenant.id,
+        ...ld,
+      },
+    });
+    leadCount++;
+  }
+  console.log(`Leads: ${leadCount}`);
 
   /* ── Documents (linked to properties, units, leases) ── */
   for (const owner of owners) {

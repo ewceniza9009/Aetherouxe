@@ -149,6 +149,11 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: 'CRM',
+    icon: <UserCheck size={16} />,
+    items: [{ label: 'Leads', icon: <UserCheck size={18} />, path: '/leads', kind: 'txn' }],
+  },
+  {
     label: 'Operations',
     icon: <Activity size={16} />,
     items: [

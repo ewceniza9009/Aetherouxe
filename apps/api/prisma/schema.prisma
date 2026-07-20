@@ -247,7 +247,9 @@ model Tenant {
   amenityBookings  AmenityBooking[]
   serviceRequests  ServiceRequest[]
   notifications    Notification[]
-  titleTransfers   TitleTransfer[]
+  titleTransfers    TitleTransfer[]
+  leads             Lead[]
+
   reservations      Reservation[]
 
   chartOfAccounts   ChartOfAccount[]
@@ -288,6 +290,7 @@ model User {
   caseNotesAuthored         CollectionCaseNote[]
   activitiesPerformed       CollectionActivity[]
   pnlStatements             OwnerPnlStatement[]
+  leadsAssigned             Lead[]
   communityPostsAuthored    CommunityPost[]
   postsModerated            CommunityPost[]        @relation("PostModeratedBy")
   commentsAuthored          PostComment[]          @relation("CommentAuthor")
@@ -381,6 +384,7 @@ model Property {
   documents         DocumentVault[]
   images            PropertyImage[]
   titleTransfers    TitleTransfer[]
+  leads             Lead[]
 
   // List performance: filter/sort fields used by the properties list endpoint.
   @@index([tenantId, propertyType])
@@ -1347,6 +1351,35 @@ model MaintenanceWorkOrder {
   vendor           Contractor?     @relation(fields: [vendorId], references: [id])
 
   @@map("maintenance_work_orders")
+}
+
+model Lead {
+  id          String     @id @default(uuid())
+  tenantId    String
+  name        String
+  email       String?
+  phone       String?
+  source      String? // e.g. website, referral, walk_in, social_media
+  propertyId  String?
+  assignedToId String? // agent (User) handling the lead
+  status      LeadStatus @default(new)
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  tenant     Tenant    @relation(fields: [tenantId], references: [id])
+  property   Property? @relation(fields: [propertyId], references: [id])
+  assignedTo User?     @relation(fields: [assignedToId], references: [id])
+
+  @@map("leads")
+}
+
+enum LeadStatus {
+  new
+  contacted
+  qualified
+  won
+  lost
 }
 
 enum ModerationStatus {

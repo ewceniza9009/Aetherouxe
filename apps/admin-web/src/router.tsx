@@ -52,6 +52,7 @@ import StatementsPage from './pages/StatementsPage';
 import CollectionCasesPage from './pages/CollectionCasesPage';
 import CollectionCaseDetailPage from './pages/CollectionCaseDetailPage';
 import PaymentRemindersPage from './pages/PaymentRemindersPage';
+import LeadsPage from './pages/LeadsPage';
 import MetersPage from './pages/MetersPage';
 import SalesPage from './pages/SalesPage';
 import SchemesPage from './pages/SchemesPage';
@@ -334,6 +335,12 @@ const disbursementsRoute = createRoute({
   component: DisbursementsPage,
 });
 
+const leadsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: '/leads',
+  component: LeadsPage,
+});
+
 const settingsRoute = createRoute({
   getParentRoute: () => protectedLayout,
   path: '/settings',
@@ -549,6 +556,7 @@ const routeTree = rootRoute.addChildren([
     financeRoute,
     generalLedgerRoute,
     disbursementsRoute,
+    leadsRoute,
     settingsRoute,
     rolesSettingsRoute,
     profileRoute,

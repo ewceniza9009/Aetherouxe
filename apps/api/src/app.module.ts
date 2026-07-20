@@ -36,6 +36,7 @@ import { ConsumptionReadingsModule } from './consumption-readings/consumption-re
 import { UtilityBillsModule } from './utility-bills/utility-bills.module';
 import { CommunityModule } from './community/community.module';
 import { ServiceRequestsModule } from './service-requests/service-requests.module';
+import { LeadsModule } from './leads/leads.module';
 import { DocumentsModule } from './documents/documents.module';
 import { OwnerPnlModule } from './owner-pnl/owner-pnl.module';
 import { ReportsModule } from './reports/reports.module';
@@ -88,6 +89,7 @@ import { SearchModule } from './search/search.module';
     UtilityBillsModule,
     CommunityModule,
     ServiceRequestsModule,
+    LeadsModule,
     DocumentsModule,
     OwnerPnlModule,
     ReportsModule,
