@@ -9,8 +9,6 @@ on:
     - cron: '0 6 * * 1' # every Monday 6am — npm audit + build
 
 env:
-  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
   DATABASE_URL: postgresql://elite:elite123@localhost:5432/elite_realty_test
 
 jobs:
