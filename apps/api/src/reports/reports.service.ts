@@ -23,7 +23,10 @@ export interface RevenueTrendPoint {
 
 @Injectable()
 export class ReportsService {
-  constructor(private prisma: PrismaService, private ledger: LedgerService) {}
+  constructor(
+    private prisma: PrismaService,
+    private ledger: LedgerService,
+  ) {}
 
   private toNum(v: any): number {
     if (v === null || v === undefined) return 0;
@@ -34,9 +37,7 @@ export class ReportsService {
   async getPortfolioKpis(tenantId?: string): Promise<PortfolioKpis> {
     const propertyWhere = tenantId ? { tenantId } : {};
     const unitWhere = tenantId ? { property: { tenantId } } : {};
-    const leaseWhere = tenantId
-      ? { property: { tenantId }, isActive: true }
-      : { isActive: true };
+    const leaseWhere = tenantId ? { property: { tenantId }, isActive: true } : { isActive: true };
     const rtoWhere = tenantId
       ? { leaseAgreement: { property: { tenantId } }, status: 'active' as any }
       : { status: 'active' as any };
@@ -47,9 +48,7 @@ export class ReportsService {
     const totalUnits = await this.prisma.unit.count({ where: unitWhere });
 
     const activeLeaseRows = await this.prisma.leaseAgreement.findMany({
-      where: tenantId
-        ? { property: { tenantId }, isActive: true }
-        : { isActive: true },
+      where: tenantId ? { property: { tenantId }, isActive: true } : { isActive: true },
       select: { propertyId: true },
     });
     const activeLeasePropIds = [...new Set(activeLeaseRows.map((l) => l.propertyId))];
@@ -60,8 +59,7 @@ export class ReportsService {
       },
     });
 
-    const occupancyRate =
-      totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 1000) / 10 : 0;
+    const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 1000) / 10 : 0;
 
     const activeLeases = await this.prisma.leaseAgreement.count({ where: leaseWhere });
 
@@ -141,5 +139,79 @@ export class ReportsService {
       });
     }
     return result;
+  }
+
+  async exportCsv(type: 'pnl' | 'ar' | 'gl' | 'kpis'): Promise<string> {
+    if (type === 'kpis') {
+      const kpis = await this.getPortfolioKpis();
+      return [
+        'Metric,Value',
+        `Total Properties,${kpis.totalProperties}`,
+        `Total Units,${kpis.totalUnits}`,
+        `Occupied Units,${kpis.occupiedUnits}`,
+        `Occupancy Rate (%),${kpis.occupancyRate}`,
+        `Active Leases,${kpis.activeLeases}`,
+        `Monthly Recurring Revenue,${kpis.monthlyRecurringRevenue}`,
+        `Total Receivable,${kpis.totalReceivable}`,
+        `Open Service Requests,${kpis.openServiceRequests}`,
+        `Active RTO Contracts,${kpis.activeRtoContracts}`,
+        `Total Equity Accumulated,${kpis.totalEquityAccumulated}`,
+      ].join('\n');
+    }
+
+    if (type === 'pnl') {
+      const pnls = await this.prisma.ownerPnlStatement.findMany({
+        take: 100,
+        orderBy: { generatedAt: 'desc' },
+        include: { owner: true, property: true },
+      });
+      const headers = [
+        'ID,Owner,Property,Period Start,Period End,Gross Income,Expenses,Net Income,Status',
+      ];
+      const rows = pnls.map((p) =>
+        [
+          p.id,
+          `"${p.owner?.firstName ?? ''} ${p.owner?.lastName ?? ''}"`,
+          `"${p.property?.propertyCode ?? ''}"`,
+          p.periodStart.toISOString().split('T')[0],
+          p.periodEnd.toISOString().split('T')[0],
+          p.grossRentalIncome,
+          p.totalExpenses,
+          p.netIncome,
+          p.status,
+        ].join(','),
+      );
+      return headers.concat(rows).join('\n');
+    }
+
+    if (type === 'gl') {
+      const entries = await this.prisma.journalEntry.findMany({
+        take: 200,
+        orderBy: { date: 'desc' },
+      });
+      const headers = ['Entry ID,Date,Reference,Notes'];
+      const rows = entries.map((e) =>
+        [
+          e.id,
+          e.date.toISOString().split('T')[0],
+          `"${e.reference ?? ''}"`,
+          `"${e.notes ?? ''}"`,
+        ].join(','),
+      );
+      return headers.concat(rows).join('\n');
+    }
+
+    // Default AR export
+    const arInvoices = await this.prisma.arInvoice.findMany({
+      take: 200,
+      orderBy: { dueDate: 'asc' },
+    });
+    const headers = ['Invoice ID,Status,Due Date,Total Amount,Paid Amount,Balance'];
+    const rows = arInvoices.map((inv) =>
+      [inv.id, inv.status, inv.dueDate.toISOString().split('T')[0], inv.amount, inv.amount, 0].join(
+        ',',
+      ),
+    );
+    return headers.concat(rows).join('\n');
   }
 }

@@ -13,7 +13,7 @@ import {
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { LeadsService } from './leads.service';
-import { CreateLeadDto, UpdateLeadDto, LeadQueryDto } from './dto/leads.dto';
+import { CreateLeadDto, UpdateLeadDto, LeadQueryDto, ConvertLeadDto } from './dto/leads.dto';
 
 @ApiTags('Leads')
 @ApiBearerAuth()
@@ -44,6 +44,12 @@ export class LeadsController {
   @ApiOperation({ summary: 'Update a lead' })
   update(@Param('id') id: string, @Body() dto: UpdateLeadDto) {
     return this.service.update(id, dto);
+  }
+
+  @Post(':id/convert')
+  @ApiOperation({ summary: 'Convert lead to active user and initiate contract' })
+  convertLead(@Param('id') id: string, @Body() dto: ConvertLeadDto) {
+    return this.service.convertLead(id, dto);
   }
 
   @Delete(':id')

@@ -35,6 +35,15 @@ export class StatementsController {
     return this.service.generateForTenant(tenantId, body.periodStart, body.periodEnd);
   }
 
+  @Post('batch-generate')
+  @ApiOperation({ summary: 'Batch generate monthly statements for all active leases' })
+  generateBatch(@Body() body: { month: number; year: number }) {
+    return this.service.generateBatchMonthly(
+      body.month ?? new Date().getMonth() + 1,
+      body.year ?? new Date().getFullYear(),
+    );
+  }
+
   @Post('generate')
   @ApiOperation({ summary: 'Generate a statement of account (alias, body params)' })
   generateFromBody(

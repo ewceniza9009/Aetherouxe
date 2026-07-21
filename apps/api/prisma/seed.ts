@@ -2797,9 +2797,11 @@ async function main() {
 
   let leadCount = 0;
   for (const ld of leadData) {
+    const convertedUserId = ld.status === 'won' ? (residents[0]?.id ?? null) : null;
     await prisma.lead.create({
       data: {
         tenantId: tenant.id,
+        convertedUserId,
         ...ld,
       },
     });

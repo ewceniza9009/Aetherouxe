@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Trash2, Pencil, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Pencil, Loader2, UserCheck, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { ListPager } from '@/components/ListPager';
 import {
@@ -29,6 +29,7 @@ import {
   useCreateLead,
   useUpdateLead,
   useDeleteLead,
+  useConvertLead,
   type Lead,
   type LeadStatus,
 } from '@/hooks/use-leads';
@@ -70,10 +71,19 @@ export default function LeadsPage() {
   const createLead = useCreateLead();
   const updateLead = useUpdateLead();
   const deleteLead = useDeleteLead();
+  const convertLead = useConvertLead();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Lead | null>(null);
   const [form, setForm] = useState(EMPTY);
+
+  // Convert Modal State
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+  const [convertingLead, setConvertingLead] = useState<Lead | null>(null);
+  const [convertRole, setConvertRole] = useState<'tenant' | 'owner'>('tenant');
+  const [convertContractType, setConvertContractType] = useState<
+    'standard_rental' | 'rent_to_own' | 'spot_cash'
+  >('standard_rental');
 
   const leads = data?.data ?? [];
   const meta = data?.meta;
@@ -196,6 +206,21 @@ export default function LeadsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      {lead.status !== 'won' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/30"
+                          onClick={() => {
+                            setConvertingLead(lead);
+                            setConvertRole('tenant');
+                            setConvertContractType('standard_rental');
+                            setConvertDialogOpen(true);
+                          }}
+                        >
+                          <UserCheck className="mr-1 h-3.5 w-3.5" /> Convert
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => openEdit(lead)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -311,6 +336,82 @@ export default function LeadsPage() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 1-Click Lead Conversion Dialog */}
+      <Dialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-serif text-xl">
+              <Sparkles className="h-5 w-5 text-emerald-500" /> Convert Lead to System User
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-3">
+            <p className="text-sm text-muted-foreground">
+              Converting{' '}
+              <span className="font-semibold text-foreground">{convertingLead?.name}</span> will
+              auto-provision a portal user account with temporary credentials (
+              <code className="text-xs bg-muted px-1.5 py-0.5 rounded">Welcome123!</code>) and
+              initiate their contract.
+            </p>
+            <div className="space-y-2">
+              <Label>Target System Role</Label>
+              <Select value={convertRole} onValueChange={(v) => setConvertRole(v as any)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="tenant">Tenant (Resident Portal Access)</SelectItem>
+                  <SelectItem value="owner">Property Owner (Owner Portal Access)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Initiate Contract Type</Label>
+              <Select
+                value={convertContractType}
+                onValueChange={(v) => setConvertContractType(v as any)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="standard_rental">Standard Lease Agreement</SelectItem>
+                  <SelectItem value="rent_to_own">Rent-to-Own Contract</SelectItem>
+                  <SelectItem value="spot_cash">Spot Cash Sale Title Transfer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setConvertDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              disabled={convertLead.isPending}
+              onClick={async () => {
+                if (!convertingLead) return;
+                try {
+                  const res = await convertLead.mutateAsync({
+                    id: convertingLead.id,
+                    targetRole: convertRole,
+                    contractType: convertContractType,
+                  });
+                  toast.success(
+                    `Converted ${convertingLead.name}! Initial password: ${res.initialPassword || 'Welcome123!'}`,
+                  );
+                  setConvertDialogOpen(false);
+                } catch {
+                  toast.error('Failed to convert lead.');
+                }
+              }}
+            >
+              {convertLead.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Complete Conversion
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -80,3 +80,28 @@ export function useDeleteLead() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),
   });
 }
+
+export function useConvertLead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      targetRole,
+      unitId,
+      contractType,
+    }: {
+      id: string;
+      targetRole: 'tenant' | 'owner';
+      unitId?: string;
+      contractType?: 'standard_rental' | 'rent_to_own' | 'spot_cash';
+    }) => {
+      const { data } = await api.post(`/leads/${id}/convert`, {
+        targetRole,
+        unitId,
+        contractType,
+      });
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),
+  });
+}

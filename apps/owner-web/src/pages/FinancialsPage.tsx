@@ -75,6 +75,45 @@ export default function FinancialsPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Portfolio Performance & Net Yield Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {statements.map((s) => {
+              const rev = Number(s.grossRentalIncome) || 1;
+              const netPct = Math.min(
+                100,
+                Math.max(0, Math.round(((Number(s.netIncome) || 0) / rev) * 100)),
+              );
+              return (
+                <div key={s.id} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">
+                      {s.propertyName} ({formatDate(s.periodStart)})
+                    </span>
+                    <span className="text-emerald-600 font-semibold">
+                      {formatCurrency(s.netIncome)} ({netPct}% Margin)
+                    </span>
+                  </div>
+                  <div className="h-3 w-full bg-muted rounded-full overflow-hidden flex">
+                    <div
+                      className="bg-emerald-500 h-full transition-all duration-500"
+                      style={{ width: `${netPct}%` }}
+                    />
+                    <div
+                      className="bg-rose-400 h-full transition-all duration-500"
+                      style={{ width: `${100 - netPct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Profit & Loss Summary</CardTitle>
         </CardHeader>
         <CardContent>

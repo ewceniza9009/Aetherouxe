@@ -296,6 +296,7 @@ model User {
   activitiesPerformed       CollectionActivity[]
   pnlStatements             OwnerPnlStatement[]
   leadsAssigned             Lead[]
+  convertedLeads            Lead[]                 @relation("ConvertedLeadUser")
   communityPostsAuthored    CommunityPost[]
   postsModerated            CommunityPost[]        @relation("PostModeratedBy")
   commentsAuthored          PostComment[]          @relation("CommentAuthor")
@@ -1371,14 +1372,16 @@ model Lead {
   source      String? // e.g. website, referral, walk_in, social_media
   propertyId  String?
   assignedToId String? // agent (User) handling the lead
+  convertedUserId String? // User ID when lead is converted to tenant/owner
   status      LeadStatus @default(new)
   notes       String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  tenant     Tenant    @relation(fields: [tenantId], references: [id])
-  property   Property? @relation(fields: [propertyId], references: [id])
-  assignedTo User?     @relation(fields: [assignedToId], references: [id])
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+  property    Property? @relation(fields: [propertyId], references: [id])
+  assignedTo  User?     @relation(fields: [assignedToId], references: [id])
+  convertedUser User?   @relation("ConvertedLeadUser", fields: [convertedUserId], references: [id])
 
   @@map("leads")
 }

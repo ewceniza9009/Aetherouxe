@@ -16,7 +16,16 @@ export class StatementsService {
       { field: 'status', type: 'enum' },
     ],
     search: ['owner.firstName', 'owner.lastName', 'owner.email', 'tenant.name'],
-    sortable: ['periodStart', 'periodEnd', 'totalBilled', 'totalPaid', 'closingBalance', 'status', 'createdAt', 'updatedAt'],
+    sortable: [
+      'periodStart',
+      'periodEnd',
+      'totalBilled',
+      'totalPaid',
+      'closingBalance',
+      'status',
+      'createdAt',
+      'updatedAt',
+    ],
     sortAliases: { ownerId: 'periodStart' },
   };
 
@@ -60,8 +69,40 @@ export class StatementsService {
       where: { id },
       include: { tenant: true, owner: true, property: true },
     });
-    if (!statement) throw new NotFoundException('Statement of account not found');
+    if (!statement) throw new NotFoundException('Statement not found');
     return statement;
+  }
+
+  async generateBatchMonthly(month: number, year: number) {
+    const periodStart = new Date(year, month - 1, 1);
+    const periodEnd = new Date(year, month, 0, 23, 59, 59);
+
+    const activeLeases = await this.prisma.leaseAgreement.findMany({
+      where: { isActive: true },
+      include: { tenant: true, property: true },
+    });
+
+    const generated: any[] = [];
+    for (const lease of activeLeases) {
+      if (!lease.tenant || !lease.tenant.tenantId) continue;
+      const billed = Number(lease.monthlyRentAmount);
+      const paid = billed;
+      const stmt = await this.prisma.statementOfAccount.create({
+        data: {
+          tenantId: lease.tenant.tenantId,
+          propertyId: lease.propertyId,
+          periodStart,
+          periodEnd,
+          openingBalance: 0,
+          totalBilled: billed,
+          totalPaid: paid,
+          closingBalance: 0,
+          status: 'sent',
+        },
+      });
+      generated.push(stmt);
+    }
+    return { count: generated.length, generated };
   }
 
   async update(id: string, dto: UpdateStatementDto) {

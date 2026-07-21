@@ -129,12 +129,13 @@ test.describe('Workflow Hardening E2E Verification', () => {
     const scheme = schemeData.data[0];
 
     // Get available unit without existing lease
-    const unitRes = await apiRequest.get(`${API_BASE}/units?status=available&take=10`, {
+    const unitRes = await apiRequest.get(`${API_BASE}/units?status=available&limit=20`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const unitData = await unitRes.json();
     if (!unitData.data || unitData.data.length === 0) return;
-    const unit = unitData.data.find((u: any) => u.status === 'available') || unitData.data[0];
+    const unit =
+      unitData.data.find((u: any) => u.status === 'available' && !u.isReserved) || unitData.data[0];
 
     // Get agent
     const agentRes = await apiRequest.get(`${API_BASE}/agents?limit=1`, {

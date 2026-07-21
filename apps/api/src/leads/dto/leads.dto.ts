@@ -43,3 +43,20 @@ export class LeadQueryDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @IsUUID() tenantId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() search?: string;
 }
+
+export class ConvertLeadDto {
+  @ApiProperty({ enum: ['tenant', 'owner'] })
+  @IsEnum(['tenant', 'owner'])
+  targetRole: 'tenant' | 'owner';
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @IsUUID()
+  unitId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  contractType?: 'standard_rental' | 'rent_to_own' | 'spot_cash';
+}

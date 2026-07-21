@@ -1,17 +1,12 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { useListQuery } from "@/hooks/use-list-query";
-import { GridToolbar, GridState } from "@/components/GridToolbar";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
+import { useMemo, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useListQuery } from '@/hooks/use-list-query';
+import { GridToolbar, GridState } from '@/components/GridToolbar';
+import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -19,14 +14,14 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Table,
   TableBody,
@@ -34,8 +29,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { FileText, Plus, Loader2, ArrowLeft, Sparkles } from "lucide-react";
+} from '@/components/ui/table';
+import { FileText, Plus, Loader2, ArrowLeft, Sparkles } from 'lucide-react';
 import {
   useStatements,
   useCreateStatement,
@@ -45,13 +40,13 @@ import {
   formatCurrency,
   formatDate,
   type Statement,
-} from "@/hooks/use-collections";
-import { useUsers } from "@/hooks/use-users";
-import { ListPager } from "@/components/ListPager";
+} from '@/hooks/use-collections';
+import { useUsers } from '@/hooks/use-users';
+import { ListPager } from '@/components/ListPager';
 
 function getTenantId(): string | undefined {
   try {
-    const stored = localStorage.getItem("user");
+    const stored = localStorage.getItem('user');
     if (!stored) return undefined;
     const parsed = JSON.parse(stored) as { tenantId?: string };
     return parsed.tenantId || undefined;
@@ -62,54 +57,55 @@ function getTenantId(): string | undefined {
 
 function recipientName(s: Statement): string {
   if (s.owner) {
-    const name = `${s.owner.firstName ?? ""} ${s.owner.lastName ?? ""}`.trim();
+    const name = `${s.owner.firstName ?? ''} ${s.owner.lastName ?? ''}`.trim();
     if (name) return name;
     if (s.owner.email) return s.owner.email;
   }
-  return "—";
+  return '—';
 }
 
 function formatPeriodRange(start?: string | null, end?: string | null): string {
-  if (!start && !end) return "—";
+  if (!start && !end) return '—';
   const fmt = (v?: string | null) => {
-    if (!v) return "—";
+    if (!v) return '—';
     const d = new Date(v);
     if (Number.isNaN(d.getTime())) return v;
-    const opts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
-    if (d.getFullYear() !== new Date().getFullYear()) opts.year = "numeric";
+    const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+    if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
     return d.toLocaleDateString(undefined, opts);
   };
   if (start && end) return `${fmt(start)} \u2013 ${fmt(end)}`;
-  return fmt(start) ?? fmt(end) ?? "—";
+  return fmt(start) ?? fmt(end) ?? '—';
 }
 
 export default function StatementsPage() {
   const navigate = useNavigate();
   const listQuery = useListQuery(20);
-  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } =
+    listQuery;
   const { data, isLoading, isError } = useStatements(query);
   const createStatement = useCreateStatement();
   const generateStatement = useGenerateStatement();
-  const { data: ownersData } = useUsers({ userType: "owner" });
+  const { data: ownersData } = useUsers({ userType: 'owner' });
 
   const [open, setOpen] = useState(false);
-  const [ownerId, setOwnerId] = useState("");
-  const [periodStart, setPeriodStart] = useState("");
-  const [periodEnd, setPeriodEnd] = useState("");
-  const [openingBalance, setOpeningBalance] = useState("0");
-  const [billed, setBilled] = useState("");
-  const [paid, setPaid] = useState("0");
+  const [ownerId, setOwnerId] = useState('');
+  const [periodStart, setPeriodStart] = useState('');
+  const [periodEnd, setPeriodEnd] = useState('');
+  const [openingBalance, setOpeningBalance] = useState('0');
+  const [billed, setBilled] = useState('');
+  const [paid, setPaid] = useState('0');
 
   const statements = data?.data ?? [];
   const owners = ownersData?.data ?? [];
 
   const resetForm = () => {
-    setOwnerId("");
-    setPeriodStart("");
-    setPeriodEnd("");
-    setOpeningBalance("0");
-    setBilled("");
-    setPaid("0");
+    setOwnerId('');
+    setPeriodStart('');
+    setPeriodEnd('');
+    setOpeningBalance('0');
+    setBilled('');
+    setPaid('0');
   };
 
   const submit = async () => {
@@ -137,23 +133,27 @@ export default function StatementsPage() {
           <p className="text-muted-foreground">Generated tenant and owner statements</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate({ to: "/collections" })}
-          >
+          <Button variant="outline" onClick={() => navigate({ to: '/collections' })}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Collections
           </Button>
           <Button
             variant="outline"
-            onClick={() => generateStatement.mutate({ tenantId: getTenantId(), period: "" })}
-            disabled={generateStatement.isPending}
+            onClick={async () => {
+              const res = await fetch('/api/statements/batch-generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  month: new Date().getMonth() + 1,
+                  year: new Date().getFullYear(),
+                }),
+              });
+              const data = await res.json();
+              alert(
+                `Successfully batch generated ${data.count ?? 0} active tenant monthly statements!`,
+              );
+            }}
           >
-            {generateStatement.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="mr-2 h-4 w-4" />
-            )}
-            Generate for Organization
+            <Sparkles className="mr-2 h-4 w-4" /> Batch Generate Monthly Statements
           </Button>
           <Button onClick={() => setOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> New Statement
@@ -184,20 +184,18 @@ export default function StatementsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead {...sortHeader("ownerId")}>
-                      Recipient{sortIndicator("ownerId")}
+                    <TableHead {...sortHeader('ownerId')}>
+                      Recipient{sortIndicator('ownerId')}
                     </TableHead>
                     <TableHead>Period</TableHead>
-                    <TableHead {...sortHeader("totalBilled")}>
-                      Billed{sortIndicator("totalBilled")}
+                    <TableHead {...sortHeader('totalBilled')}>
+                      Billed{sortIndicator('totalBilled')}
                     </TableHead>
-                    <TableHead {...sortHeader("totalPaid")}>
-                      Paid{sortIndicator("totalPaid")}
+                    <TableHead {...sortHeader('totalPaid')}>
+                      Paid{sortIndicator('totalPaid')}
                     </TableHead>
                     <TableHead>Closing</TableHead>
-                    <TableHead {...sortHeader("status")}>
-                      Status{sortIndicator("status")}
-                    </TableHead>
+                    <TableHead {...sortHeader('status')}>Status{sortIndicator('status')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -206,9 +204,7 @@ export default function StatementsPage() {
                       <TableCell>
                         <div className="font-medium">{recipientName(s)}</div>
                         {s.tenant?.name && (
-                          <div className="text-xs text-muted-foreground">
-                            {s.tenant.name}
-                          </div>
+                          <div className="text-xs text-muted-foreground">{s.tenant.name}</div>
                         )}
                       </TableCell>
                       <TableCell className="text-sm">
@@ -234,7 +230,12 @@ export default function StatementsPage() {
               </Table>
             </div>
 
-            <ListPager meta={data?.meta} page={page} onPageChange={setPage} itemLabel="statements" />
+            <ListPager
+              meta={data?.meta}
+              page={page}
+              onPageChange={setPage}
+              itemLabel="statements"
+            />
           </GridState>
         </CardContent>
       </Card>
@@ -243,9 +244,7 @@ export default function StatementsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New Statement</DialogTitle>
-            <DialogDescription>
-              Create a statement for an owner.
-            </DialogDescription>
+            <DialogDescription>Create a statement for an owner.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -257,7 +256,7 @@ export default function StatementsPage() {
                 <SelectContent>
                   {owners.map((o) => (
                     <SelectItem key={o.id} value={o.id}>
-                      {`${o.firstName ?? ""} ${o.lastName ?? ""}`.trim() || o.email}
+                      {`${o.firstName ?? ''} ${o.lastName ?? ''}`.trim() || o.email}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -323,16 +322,10 @@ export default function StatementsPage() {
             <Button
               onClick={submit}
               disabled={
-                createStatement.isPending ||
-                !ownerId ||
-                !periodStart ||
-                !periodEnd ||
-                !billed
+                createStatement.isPending || !ownerId || !periodStart || !periodEnd || !billed
               }
             >
-              {createStatement.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+              {createStatement.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Statement
             </Button>
           </DialogFooter>
@@ -341,5 +334,3 @@ export default function StatementsPage() {
     </div>
   );
 }
-
-
