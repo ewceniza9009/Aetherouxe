@@ -2142,25 +2142,20 @@ async function main() {
   };
 
   // 1) Per-agent single-owner deals (baseline coverage).
-  for (const agent of agents) {
-    const txns = faker.number.int({ min: 1, max: 2 });
-    for (let t = 0; t < txns; t++) {
-      const { txType, txAmount } = randomTx();
-      const rule = commissionRules[t % commissionRules.length]!;
-      await seedCommissionDeal(
-        [{ agentId: agent.agent.id, commissionPercentage: agent.agent.commissionRateDefault ?? 3 }],
-        pick(properties),
-        txType,
-        txAmount,
-        rule,
-      );
-    }
+  for (const agent of agents.slice(0, 3)) {
+    const { txType, txAmount } = randomTx();
+    const rule = commissionRules[0]!;
+    await seedCommissionDeal(
+      [{ agentId: agent.agent.id, commissionPercentage: agent.agent.commissionRateDefault ?? 3 }],
+      pick(properties),
+      txType,
+      txAmount,
+      rule,
+    );
   }
 
   // 2) Explicit split-commission deals mirroring the two split schemes.
-  //    These exercise the multi-agent ("cobroke") path end to end.
   const splitDeals = [
-    // Corporate rental split: listing agent (agents[0]) + selling agent (agents[1]).
     {
       agentsWithPct: [
         { agentId: agents[0]?.agent.id, commissionPercentage: 1.0 },
@@ -2170,28 +2165,15 @@ async function main() {
       txType: TransactionType.rental_lease,
       txAmount: money(15000, 120000),
     },
-    // Spot-cash sale split: lead agent (agents[0]) + co-broker (agents[2]).
-    {
-      agentsWithPct: [
-        { agentId: agents[0]?.agent.id, commissionPercentage: 2.5 },
-        { agentId: agents[2]?.agent.id, commissionPercentage: 1.5 },
-      ],
-      rule: commissionRules[0]!,
-      txType: TransactionType.sale,
-      txAmount: money(5_000_000, 20_000_000),
-    },
   ];
   for (const deal of splitDeals) {
-    const reps = faker.number.int({ min: 2, max: 3 });
-    for (let i = 0; i < reps; i++) {
-      await seedCommissionDeal(
-        deal.agentsWithPct,
-        pick(properties),
-        deal.txType,
-        deal.txAmount,
-        deal.rule,
-      );
-    }
+    await seedCommissionDeal(
+      deal.agentsWithPct,
+      pick(properties),
+      deal.txType,
+      deal.txAmount,
+      deal.rule,
+    );
   }
   console.log(
     `Agent commissions: ${txCount} transactions, ${apInvoiceCount} AP accruals, ${disbursementCount} disbursements`,
@@ -2480,18 +2462,10 @@ async function main() {
     cancelled: 'cancelled',
   };
   const woInvoices: { invoice: any; vendor: any; description: string; amount: number }[] = [];
-  for (let s = 0; s < 18; s++) {
+  for (let s = 0; s < 6; s++) {
     const resident = pick(residents);
     const unit = pick(allUnits);
     const status = pick([
-      ServiceStatus.completed,
-      ServiceStatus.completed,
-      ServiceStatus.completed,
-      ServiceStatus.completed,
-      ServiceStatus.completed,
-      ServiceStatus.completed,
-      ServiceStatus.completed,
-      ServiceStatus.completed,
       ServiceStatus.completed,
       ServiceStatus.completed,
       ServiceStatus.open,
@@ -2521,9 +2495,9 @@ async function main() {
       },
     });
 
-    if (chance(0.85)) {
+    if (chance(0.5)) {
       const woStatus = woStatusByRequest[status] ?? 'scheduled';
-      const est = money(1500, 85000);
+      const est = money(1500, 25000);
       const actualCostVal =
         woStatus === 'completed' ? Math.round(est * (0.8 + Math.random() * 0.4)) : null;
       const vendor = pick(contractors);
@@ -2589,7 +2563,7 @@ async function main() {
     }
   }
   for (const woItem of woInvoices) {
-    if (chance(0.5)) {
+    if (chance(0.25)) {
       await prisma.apInvoice.update({
         where: { id: woItem.invoice.id },
         data: { status: ApInvoiceStatus.approved },

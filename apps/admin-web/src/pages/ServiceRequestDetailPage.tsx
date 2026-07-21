@@ -1,25 +1,25 @@
-import { EmptyState } from "@/components/ui/empty-state";
-import { useMemo, useState } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge, badgeVariants } from "@elite-realty/shared-ui/components/ui";
-import type { VariantProps } from "class-variance-authority";
+import { EmptyState } from '@/components/ui/empty-state';
+import { useMemo, useState } from 'react';
+import { useParams, useNavigate } from '@tanstack/react-router';
+import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge, badgeVariants } from '@elite-realty/shared-ui/components/ui';
+import type { VariantProps } from 'class-variance-authority';
 
-type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
-import { Textarea } from "@elite-realty/shared-ui/components/ui";
-import { Separator } from "@elite-realty/shared-ui/components/ui";
+type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { Textarea } from '@elite-realty/shared-ui/components/ui';
+import { Separator } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   ArrowLeft,
   AlertCircle,
@@ -43,9 +43,9 @@ import {
   Wrench,
   MessageSquare,
   Trash2,
-  Edit2
-} from "lucide-react";
-import { formatCurrency } from "@/lib/agent-meta";
+  Edit2,
+} from 'lucide-react';
+import { formatCurrency } from '@/lib/agent-meta';
 import {
   useServiceRequest,
   useWorkOrders,
@@ -60,39 +60,39 @@ import {
   type ServicePriority,
   type WorkOrder,
   type WorkOrderStatus,
-} from "@/hooks/use-service-requests";
-import { useContractors } from "@/hooks/use-contractors";
+} from '@/hooks/use-service-requests';
+import { useContractors } from '@/hooks/use-contractors';
 
 const priorityMeta: Record<ServicePriority, { label: string; className: string }> = {
-  low: { label: "Low", className: "bg-muted text-muted-foreground border-border" },
-  medium: { label: "Medium", className: "bg-blue-100 text-blue-700 border-blue-200" },
-  high: { label: "High", className: "bg-orange-100 text-orange-700 border-orange-200" },
-  emergency: { label: "Emergency", className: "bg-red-100 text-red-700 border-red-200" },
+  low: { label: 'Low', className: 'bg-muted text-muted-foreground border-border' },
+  medium: { label: 'Medium', className: 'bg-blue-100 text-blue-700 border-blue-200' },
+  high: { label: 'High', className: 'bg-orange-100 text-orange-700 border-orange-200' },
+  emergency: { label: 'Emergency', className: 'bg-red-100 text-red-700 border-red-200' },
 };
 
 const statusMeta: Record<string, { label: string; variant: BadgeVariant }> = {
-  open: { label: "Open", variant: "default" },
-  assigned: { label: "Assigned", variant: "secondary" },
-  in_progress: { label: "In Progress", variant: "warning" },
-  completed: { label: "Completed", variant: "success" },
-  cancelled: { label: "Cancelled", variant: "destructive" },
+  open: { label: 'Open', variant: 'default' },
+  assigned: { label: 'Assigned', variant: 'secondary' },
+  in_progress: { label: 'In Progress', variant: 'warning' },
+  completed: { label: 'Completed', variant: 'success' },
+  cancelled: { label: 'Cancelled', variant: 'destructive' },
 };
 
 const categoryMeta: Record<ServiceCategory, string> = {
-  plumbing: "Plumbing",
-  electrical: "Electrical",
-  hvac: "HVAC",
-  general: "General",
-  pest: "Pest Control",
-  elevator: "Elevator",
-  other: "Other",
+  plumbing: 'Plumbing',
+  electrical: 'Electrical',
+  hvac: 'HVAC',
+  general: 'General',
+  pest: 'Pest Control',
+  elevator: 'Elevator',
+  other: 'Other',
 };
 
 const woStatusMeta: Record<WorkOrderStatus, { label: string; variant: BadgeVariant }> = {
-  scheduled: { label: "Scheduled", variant: "secondary" },
-  in_progress: { label: "In Progress", variant: "warning" },
-  completed: { label: "Completed", variant: "success" },
-  cancelled: { label: "Cancelled", variant: "destructive" },
+  scheduled: { label: 'Scheduled', variant: 'secondary' },
+  in_progress: { label: 'In Progress', variant: 'warning' },
+  completed: { label: 'Completed', variant: 'success' },
+  cancelled: { label: 'Cancelled', variant: 'destructive' },
 };
 
 function money(n: number) {
@@ -100,9 +100,10 @@ function money(n: number) {
 }
 
 export default function ServiceRequestDetailPage() {
-  const { id } = useParams({ from: "/protected/service-requests/$id" });
+  const { id } = useParams({ strict: false });
+  const requestId = (id as string) || '';
   const navigate = useNavigate();
-  const { data: request, isLoading, isError } = useServiceRequest(id);
+  const { data: request, isLoading, isError } = useServiceRequest(requestId);
   const { data: workOrdersData, isLoading: loadingWo } = useWorkOrders({
     serviceRequestId: id,
     limit: 100,
@@ -125,27 +126,32 @@ export default function ServiceRequestDetailPage() {
   const [woOpen, setWoOpen] = useState(false);
   const [woEditingId, setWoEditingId] = useState<string | null>(null);
 
-  const [assignForm, setAssignForm] = useState({ assignedToId: "", assignedToType: "" });
-  const [resolutionNotes, setResolutionNotes] = useState("");
+  const [assignForm, setAssignForm] = useState({ assignedToId: '', assignedToType: '' });
+  const [resolutionNotes, setResolutionNotes] = useState('');
   const [woForm, setWoForm] = useState({
-    vendorId: "",
-    estimatedCost: "",
-    actualCost: "",
-    scheduledDate: "",
-    notes: "",
-    status: "scheduled" as WorkOrderStatus,
+    vendorId: '',
+    estimatedCost: '',
+    actualCost: '',
+    scheduledDate: '',
+    notes: '',
+    status: 'scheduled' as WorkOrderStatus,
   });
 
   const workOrders = useMemo(
     () => (workOrdersData?.data ?? []).slice().reverse(),
-    [workOrdersData]
+    [workOrdersData],
   );
 
   if (isError) {
     return (
       <div className="flex flex-col h-full">
         <div className="flex items-center gap-3 px-8 py-5 border-b border-border/60 bg-card/50 shrink-0">
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate({ to: "/service-requests" })}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => navigate({ to: '/service-requests' })}
+          >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-2xl font-bold tracking-tight">Service Request</h1>
@@ -172,7 +178,9 @@ export default function ServiceRequestDetailPage() {
         <div className="flex-1 overflow-auto p-8 space-y-6">
           <Skeleton className="h-10 w-64" />
           <div className="grid gap-4 md:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
+            ))}
           </div>
           <Skeleton className="h-48 w-full rounded-xl" />
           <Skeleton className="h-64 w-full rounded-xl" />
@@ -188,19 +196,19 @@ export default function ServiceRequestDetailPage() {
       assignedToType: assignForm.assignedToType,
     });
     setAssignOpen(false);
-    setAssignForm({ assignedToId: "", assignedToType: "" });
+    setAssignForm({ assignedToId: '', assignedToType: '' });
   };
 
   const handleComplete = async () => {
     await complete.mutateAsync({ id: request.id, resolutionNotes });
     setCompleteOpen(false);
-    setResolutionNotes("");
+    setResolutionNotes('');
   };
 
   const handleCancel = async () => {
     await cancel.mutateAsync({ id: request.id, reason: resolutionNotes || undefined });
     setCancelOpen(false);
-    setResolutionNotes("");
+    setResolutionNotes('');
   };
 
   const handleSubmitWo = async () => {
@@ -220,23 +228,34 @@ export default function ServiceRequestDetailPage() {
     }
     setWoOpen(false);
     setWoEditingId(null);
-    setWoForm({ vendorId: "", estimatedCost: "", actualCost: "", scheduledDate: "", notes: "", status: "scheduled" });
+    setWoForm({
+      vendorId: '',
+      estimatedCost: '',
+      actualCost: '',
+      scheduledDate: '',
+      notes: '',
+      status: 'scheduled',
+    });
   };
 
   const handleDeleteWo = async (id: string) => {
-    if (confirm("Are you sure you want to delete this work order?")) {
+    if (confirm('Are you sure you want to delete this work order?')) {
       await deleteWorkOrder.mutateAsync(id);
     }
   };
 
-  const terminal = request.status === "completed" || request.status === "cancelled";
+  const terminal = request.status === 'completed' || request.status === 'cancelled';
 
   return (
     <div className="space-y-6 flex flex-col ">
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="icon" onClick={() => navigate({ to: "/service-requests" })}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => navigate({ to: '/service-requests' })}
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -252,12 +271,17 @@ export default function ServiceRequestDetailPage() {
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              {categoryMeta[request.category]} — {request.description.slice(0, 60)}{request.description.length > 60 ? "..." : ""}
+              {categoryMeta[request.category]} — {request.description.slice(0, 60)}
+              {request.description.length > 60 ? '...' : ''}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)} disabled={deleteRequest.isPending}>
+          <Button
+            variant="destructive"
+            onClick={() => setDeleteDialogOpen(true)}
+            disabled={deleteRequest.isPending}
+          >
             <Trash2 className="mr-2 h-4 w-4" /> Delete
           </Button>
           {!terminal && (
@@ -275,228 +299,255 @@ export default function ServiceRequestDetailPage() {
           )}
         </div>
       </div>
-        {/* Summary Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Category</CardTitle>
-              <Tag className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-bold">{categoryMeta[request.category]}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Requested</CardTitle>
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-bold">{new Date(request.createdAt).toLocaleDateString()}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Scheduled</CardTitle>
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-bold">
-                {request.scheduledAt ? new Date(request.scheduledAt).toLocaleDateString() : "—"}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Assigned To</CardTitle>
-              <User className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-bold">{request.assignedToName || "Unassigned"}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Description */}
+      {/* Summary Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-              <FileText className="h-4 w-4" /> Description
-            </CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Category</CardTitle>
+            <Tag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-sm leading-relaxed text-foreground/90">
-              {request.description}
-            </p>
-            {request.resolutionNotes && (
-              <div className="mt-4 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
-                  Resolution
-                </p>
-                <p className="mt-1.5 text-sm text-emerald-700 dark:text-emerald-300">{request.resolutionNotes}</p>
-              </div>
-            )}
+            <div className="text-lg font-bold">{categoryMeta[request.category]}</div>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Requested</CardTitle>
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-bold">
+              {new Date(request.createdAt).toLocaleDateString()}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Scheduled</CardTitle>
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-bold">
+              {request.scheduledAt ? new Date(request.scheduledAt).toLocaleDateString() : '—'}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Assigned To</CardTitle>
+            <User className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-bold">{request.assignedToName || 'Unassigned'}</div>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Tabs — fixed min-height to prevent layout shift */}
-        <Tabs defaultValue="workorders">
-          <TabsList>
-            <TabsTrigger value="workorders">
-              <Wrench className="h-3.5 w-3.5 mr-1.5" />
-              Work Orders
-            </TabsTrigger>
-            <TabsTrigger value="activity">
-              <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
-              Activity
-            </TabsTrigger>
-          </TabsList>
+      {/* Description */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+            <FileText className="h-4 w-4" /> Description
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm leading-relaxed text-foreground/90">{request.description}</p>
+          {request.resolutionNotes && (
+            <div className="mt-4 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+                Resolution
+              </p>
+              <p className="mt-1.5 text-sm text-emerald-700 dark:text-emerald-300">
+                {request.resolutionNotes}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-          <TabsContent value="workorders" className="mt-4 min-h-[300px]">
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-sm font-semibold">Work Orders</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-0.5">Vendor work for this request</p>
-                  </div>
-                  <Button size="sm" className="h-8 text-xs" onClick={() => {
-                    setWoEditingId(null);
-                    setWoForm({ vendorId: "", estimatedCost: "", actualCost: "", scheduledDate: "", notes: "", status: "scheduled" });
-                    setWoOpen(true);
-                  }}>
-                    <Plus className="mr-1.5 h-3.5 w-3.5" /> New Work Order
-                  </Button>
+      {/* Tabs — fixed min-height to prevent layout shift */}
+      <Tabs defaultValue="workorders">
+        <TabsList>
+          <TabsTrigger value="workorders">
+            <Wrench className="h-3.5 w-3.5 mr-1.5" />
+            Work Orders
+          </TabsTrigger>
+          <TabsTrigger value="activity">
+            <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+            Activity
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="workorders" className="mt-4 min-h-[300px]">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-semibold">Work Orders</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Vendor work for this request
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {loadingWo ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <Skeleton key={i} className="h-12 w-full" />
-                    ))}
-                  </div>
-                ) : workOrders.length === 0 ? (
-                  <EmptyState title="No work orders created yet" />
-                ) : (
-                  <div className="rounded-lg border border-border/60 overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border/60 text-xs uppercase tracking-wider text-muted-foreground bg-muted/30">
-                          <th className="px-4 py-3 text-left font-semibold">Contractor</th>
-                          <th className="px-4 py-3 text-right font-semibold">Est. Cost</th>
-                          <th className="px-4 py-3 text-right font-semibold">Actual</th>
-                          <th className="px-4 py-3 text-left font-semibold">Scheduled</th>
-                          <th className="px-4 py-3 text-left font-semibold">Status</th>
-                          <th className="px-4 py-3 text-right font-semibold">Actions</th>
+                <Button
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => {
+                    setWoEditingId(null);
+                    setWoForm({
+                      vendorId: '',
+                      estimatedCost: '',
+                      actualCost: '',
+                      scheduledDate: '',
+                      notes: '',
+                      status: 'scheduled',
+                    });
+                    setWoOpen(true);
+                  }}
+                >
+                  <Plus className="mr-1.5 h-3.5 w-3.5" /> New Work Order
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingWo ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : workOrders.length === 0 ? (
+                <EmptyState title="No work orders created yet" />
+              ) : (
+                <div className="rounded-lg border border-border/60 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/60 text-xs uppercase tracking-wider text-muted-foreground bg-muted/30">
+                        <th className="px-4 py-3 text-left font-semibold">Contractor</th>
+                        <th className="px-4 py-3 text-right font-semibold">Est. Cost</th>
+                        <th className="px-4 py-3 text-right font-semibold">Actual</th>
+                        <th className="px-4 py-3 text-left font-semibold">Scheduled</th>
+                        <th className="px-4 py-3 text-left font-semibold">Status</th>
+                        <th className="px-4 py-3 text-right font-semibold">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {workOrders.map((w: WorkOrder) => (
+                        <tr
+                          key={w.id}
+                          className="border-b border-border/30 hover:bg-muted/20 transition-colors"
+                        >
+                          <td className="px-4 py-3 font-medium text-sm">
+                            {w.vendor?.companyName || '—'}
+                          </td>
+                          <td className="px-4 py-3 text-right tabular-nums text-sm">
+                            {w.estimatedCost != null ? money(w.estimatedCost) : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-right tabular-nums text-sm">
+                            {w.actualCost != null ? money(w.actualCost) : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {w.scheduledDate ? new Date(w.scheduledDate).toLocaleDateString() : '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge variant={woStatusMeta[w.status].variant} className="text-[10px]">
+                              {woStatusMeta[w.status].label}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => {
+                                setWoEditingId(w.id);
+                                setWoForm({
+                                  vendorId: w.vendorId || '',
+                                  estimatedCost: w.estimatedCost?.toString() || '',
+                                  actualCost: w.actualCost?.toString() || '',
+                                  scheduledDate: w.scheduledDate
+                                    ? new Date(w.scheduledDate).toISOString().slice(0, 16)
+                                    : '',
+                                  notes: w.notes || '',
+                                  status: w.status,
+                                });
+                                setWoOpen(true);
+                              }}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                              onClick={() => handleDeleteWo(w.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {workOrders.map((w: WorkOrder) => (
-                          <tr key={w.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
-                            <td className="px-4 py-3 font-medium text-sm">{w.vendor?.companyName || "—"}</td>
-                            <td className="px-4 py-3 text-right tabular-nums text-sm">
-                              {w.estimatedCost != null ? money(w.estimatedCost) : "—"}
-                            </td>
-                            <td className="px-4 py-3 text-right tabular-nums text-sm">
-                              {w.actualCost != null ? money(w.actualCost) : "—"}
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              {w.scheduledDate ? new Date(w.scheduledDate).toLocaleDateString() : "—"}
-                            </td>
-                            <td className="px-4 py-3">
-                              <Badge variant={woStatusMeta[w.status].variant} className="text-[10px]">
-                                {woStatusMeta[w.status].label}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-3 text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={() => {
-                                  setWoEditingId(w.id);
-                                  setWoForm({
-                                    vendorId: w.vendorId || "",
-                                    estimatedCost: w.estimatedCost?.toString() || "",
-                                    actualCost: w.actualCost?.toString() || "",
-                                    scheduledDate: w.scheduledDate ? new Date(w.scheduledDate).toISOString().slice(0, 16) : "",
-                                    notes: w.notes || "",
-                                    status: w.status,
-                                  });
-                                  setWoOpen(true);
-                                }}
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
-                                onClick={() => handleDeleteWo(w.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <TabsContent value="activity" className="mt-4 min-h-[300px]">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold">Activity Timeline</CardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">Status changes and work orders</p>
-              </CardHeader>
-              <CardContent>
-                {workOrders.length === 0 ? (
-                  <EmptyState title="No activity recorded yet" />
-                ) : (
-                  <ol className="relative border-l border-border/60 pl-8 space-y-6">
-                    {workOrders.map((w: WorkOrder) => (
-                      <li key={w.id} className="relative">
-                        <span className="absolute -left-[31px] top-1.5 h-3 w-3 rounded-full bg-primary/60 ring-4 ring-background" />
-                        <div>
-                            <p className="text-sm font-medium">
-                              Work Order Assigned {w.vendor?.companyName ? `to ${w.vendor.companyName}` : ""}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {new Date(w.createdAt).toLocaleString()} • Status: <span className="font-semibold">{woStatusMeta[w.status].label}</span>
-                            </p>
-                            {(w.estimatedCost || w.actualCost || w.notes) && (
-                              <div className="mt-3 p-3 rounded-md bg-muted/30 border text-sm space-y-1.5">
-                                {w.estimatedCost && (
-                                  <p className="text-muted-foreground">
-                                    <span className="font-medium text-foreground">Estimated Cost:</span> ₱{w.estimatedCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                  </p>
-                                )}
-                                {w.actualCost && (
-                                  <p className="text-muted-foreground">
-                                    <span className="font-medium text-foreground">Actual Cost:</span> ₱{w.actualCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                  </p>
-                                )}
-                                {w.notes && (
-                                  <p className="text-muted-foreground italic">
-                                    "{w.notes}"
-                                  </p>
-                                )}
-                              </div>
+        <TabsContent value="activity" className="mt-4 min-h-[300px]">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold">Activity Timeline</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">Status changes and work orders</p>
+            </CardHeader>
+            <CardContent>
+              {workOrders.length === 0 ? (
+                <EmptyState title="No activity recorded yet" />
+              ) : (
+                <ol className="relative border-l border-border/60 pl-8 space-y-6">
+                  {workOrders.map((w: WorkOrder) => (
+                    <li key={w.id} className="relative">
+                      <span className="absolute -left-[31px] top-1.5 h-3 w-3 rounded-full bg-primary/60 ring-4 ring-background" />
+                      <div>
+                        <p className="text-sm font-medium">
+                          Work Order Assigned{' '}
+                          {w.vendor?.companyName ? `to ${w.vendor.companyName}` : ''}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {new Date(w.createdAt).toLocaleString()} • Status:{' '}
+                          <span className="font-semibold">{woStatusMeta[w.status].label}</span>
+                        </p>
+                        {(w.estimatedCost || w.actualCost || w.notes) && (
+                          <div className="mt-3 p-3 rounded-md bg-muted/30 border text-sm space-y-1.5">
+                            {w.estimatedCost && (
+                              <p className="text-muted-foreground">
+                                <span className="font-medium text-foreground">Estimated Cost:</span>{' '}
+                                ₱
+                                {w.estimatedCost.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                })}
+                              </p>
                             )}
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                            {w.actualCost && (
+                              <p className="text-muted-foreground">
+                                <span className="font-medium text-foreground">Actual Cost:</span> ₱
+                                {w.actualCost.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                })}
+                              </p>
+                            )}
+                            {w.notes && <p className="text-muted-foreground italic">"{w.notes}"</p>}
+                          </div>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* ── Dialogs ── */}
       <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
@@ -532,7 +583,9 @@ export default function ServiceRequestDetailPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setAssignOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleAssign} disabled={assign.isPending || !assignForm.assignedToId}>
               {assign.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Assign
@@ -556,7 +609,9 @@ export default function ServiceRequestDetailPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCompleteOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setCompleteOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleComplete} disabled={complete.isPending}>
               {complete.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Mark Complete
@@ -580,7 +635,9 @@ export default function ServiceRequestDetailPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setCancelOpen(false)}>
+              Cancel
+            </Button>
             <Button variant="destructive" onClick={handleCancel} disabled={cancel.isPending}>
               {cancel.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Confirm Cancel
@@ -606,12 +663,16 @@ export default function ServiceRequestDetailPage() {
                   <SelectValue placeholder="Select contractor" />
                 </SelectTrigger>
                 <SelectContent>
-                  {contractors.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.companyName}</SelectItem>
+                  {contractors.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.companyName}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground">Select the external contractor performing this work.</p>
+              <p className="text-[11px] text-muted-foreground">
+                Select the external contractor performing this work.
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -657,7 +718,9 @@ export default function ServiceRequestDetailPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {(Object.keys(woStatusMeta) as WorkOrderStatus[]).map((s) => (
-                      <SelectItem key={s} value={s}>{woStatusMeta[s].label}</SelectItem>
+                      <SelectItem key={s} value={s}>
+                        {woStatusMeta[s].label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -673,10 +736,23 @@ export default function ServiceRequestDetailPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setWoOpen(false); setWoEditingId(null); }}>Cancel</Button>
-            <Button onClick={handleSubmitWo} disabled={createWorkOrder.isPending || updateWorkOrder.isPending}>
-              {(createWorkOrder.isPending || updateWorkOrder.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {woEditingId ? "Save Changes" : "Create"}
+            <Button
+              variant="outline"
+              onClick={() => {
+                setWoOpen(false);
+                setWoEditingId(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmitWo}
+              disabled={createWorkOrder.isPending || updateWorkOrder.isPending}
+            >
+              {(createWorkOrder.isPending || updateWorkOrder.isPending) && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {woEditingId ? 'Save Changes' : 'Create'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -689,9 +765,19 @@ export default function ServiceRequestDetailPage() {
             <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={async () => { await deleteRequest.mutateAsync(id); navigate({ to: "/service-requests" }); }} disabled={deleteRequest.isPending}>
-              {deleteRequest.isPending ? "Deleting..." : "Delete"}
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (!requestId) return;
+                await deleteRequest.mutateAsync(requestId);
+                navigate({ to: '/service-requests' });
+              }}
+              disabled={deleteRequest.isPending}
+            >
+              {deleteRequest.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -699,5 +785,3 @@ export default function ServiceRequestDetailPage() {
     </div>
   );
 }
-
-
