@@ -1,15 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { GeneralLedgerService } from './general-ledger.service';
 
 describe('GeneralLedgerService', () => {
   let service: GeneralLedgerService;
+  let mockPrisma: any;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [GeneralLedgerService],
-    }).compile();
-
-    service = module.get<GeneralLedgerService>(GeneralLedgerService);
+  beforeEach(() => {
+    mockPrisma = {};
+    service = new GeneralLedgerService(mockPrisma);
   });
 
   it('should be defined', () => {

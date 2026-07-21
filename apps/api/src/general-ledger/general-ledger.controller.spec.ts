@@ -1,15 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { GeneralLedgerController } from './general-ledger.controller';
 
 describe('GeneralLedgerController', () => {
   let controller: GeneralLedgerController;
+  let mockService: any;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [GeneralLedgerController],
-    }).compile();
-
-    controller = module.get<GeneralLedgerController>(GeneralLedgerController);
+  beforeEach(() => {
+    mockService = {};
+    controller = new GeneralLedgerController(mockService);
   });
 
   it('should be defined', () => {

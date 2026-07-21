@@ -1,15 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ApInvoicesService } from './ap-invoices.service';
 
 describe('ApInvoicesService', () => {
   let service: ApInvoicesService;
+  let mockPrisma: any;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [ApInvoicesService],
-    }).compile();
-
-    service = module.get<ApInvoicesService>(ApInvoicesService);
+  beforeEach(() => {
+    mockPrisma = {};
+    service = new ApInvoicesService(mockPrisma);
   });
 
   it('should be defined', () => {
