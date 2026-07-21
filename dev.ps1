@@ -4,7 +4,8 @@ Write-Host "Checking for .env file..." -ForegroundColor Cyan
 if (-not (Test-Path ".env")) {
     Write-Host "Creating .env from .env.example..." -ForegroundColor Yellow
     Copy-Item ".env.example" ".env"
-} else {
+}
+else {
     Write-Host ".env file found." -ForegroundColor Green
 }
 
