@@ -1,5 +1,4 @@
 -- CreateEnum
-CREATE TYPE "UnitStatus" AS ENUM ('available', 'occupied', 'reserved', 'under_maintenance', 'rented', 'rto_active');
 CREATE TYPE "ReservationStatus" AS ENUM ('reserved', 'converted', 'expired', 'cancelled');
 
 -- CreateTable

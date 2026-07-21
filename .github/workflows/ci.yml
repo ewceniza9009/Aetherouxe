@@ -106,6 +106,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build shared-types
+        run: npm run build
+        working-directory: packages/shared-types
+
       - name: Build ${{ matrix.app }}
         run: npx vite build
         working-directory: apps/${{ matrix.app }}
@@ -122,6 +126,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build shared-types
+        run: npm run build
+        working-directory: packages/shared-types
 
       - name: Generate Prisma client
         run: npx prisma generate
