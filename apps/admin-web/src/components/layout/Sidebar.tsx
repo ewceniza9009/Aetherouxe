@@ -45,6 +45,7 @@ import {
   HardHat,
   Key,
   Scale,
+  Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@elite-realty/shared-ui/components/ui';
@@ -254,6 +255,7 @@ import { useCompanyMeta } from '@/lib/settings-store';
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { pathname } = useLocation();
   const { logout } = useAuth();
   const companyMeta = useCompanyMeta();
@@ -279,6 +281,19 @@ export default function Sidebar() {
     }
     return stored;
   });
+
+  const filteredGroups = useMemo(() => {
+    if (!searchQuery.trim()) return navGroups;
+    const q = searchQuery.toLowerCase();
+    return navGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter(
+          (item) => item.label.toLowerCase().includes(q) || group.label.toLowerCase().includes(q),
+        ),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [searchQuery]);
 
   // Always keep the group containing the current route expanded.
   useEffect(() => {
@@ -363,16 +378,28 @@ export default function Sidebar() {
 
       {/* Navigation */}
       {!collapsed && (
-        <div className="flex items-center justify-between px-5 pb-2 pt-5">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
-            Menu
-          </span>
-          <button
-            onClick={() => setOpenGroups({})}
-            className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40 transition-colors hover:text-sidebar-foreground"
-          >
-            Collapse All
-          </button>
+        <div className="space-y-3 px-4 pb-2 pt-5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
+              Menu
+            </span>
+            <button
+              onClick={() => setOpenGroups({})}
+              className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40 transition-colors hover:text-sidebar-foreground"
+            >
+              Collapse All
+            </button>
+          </div>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-sidebar-foreground/40" />
+            <input
+              type="text"
+              placeholder="Search menu..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-8 rounded-md border border-sidebar-border bg-sidebar-accent/30 pl-8 pr-3 text-xs text-sidebar-foreground placeholder:text-sidebar-foreground/30 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all"
+            />
+          </div>
         </div>
       )}
 
@@ -383,7 +410,7 @@ export default function Sidebar() {
           collapsed ? 'py-4 space-y-2' : 'pb-4 space-y-1.5',
         )}
       >
-        {navGroups.map((group) => {
+        {filteredGroups.map((group) => {
           const open = collapsed || openGroups[group.label];
           const hasActive = groupHasActive(group);
 

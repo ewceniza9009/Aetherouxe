@@ -169,9 +169,10 @@ export class ServiceRequestsService {
     });
   }
 
-  async findAllWorkOrders(requestId?: string) {
+  async findAllWorkOrders(requestId?: string, vendorId?: string) {
     const where: any = {};
     if (requestId) where.serviceRequestId = requestId;
+    if (vendorId) where.vendorId = vendorId;
 
     return this.prisma.maintenanceWorkOrder.findMany({
       where,

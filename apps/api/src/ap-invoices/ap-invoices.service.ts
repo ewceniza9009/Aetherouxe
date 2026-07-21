@@ -77,7 +77,7 @@ export class ApInvoicesService {
     const existing = await this.prisma.apInvoice.findFirst({
       where: {
         tenantId: data.tenantId,
-        sourceType: 'WORK_ORDER',
+        sourceType: 'SERVICE_REQUEST',
         sourceId: data.workOrderId,
       },
     });
@@ -92,12 +92,16 @@ export class ApInvoicesService {
     dueDate.setDate(dueDate.getDate() + 30);
 
     return this.prisma.$transaction(async (tx) => {
+      // Look up work order to resolve service request ID for drillable links
+      const wo = await tx.maintenanceWorkOrder.findUnique({ where: { id: data.workOrderId } });
+      const sourceId = wo?.serviceRequestId ?? data.workOrderId;
+
       // 1. Create AP Invoice
       const invoice = await tx.apInvoice.create({
         data: {
           tenantId: data.tenantId,
-          sourceType: 'WORK_ORDER',
-          sourceId: data.workOrderId,
+          sourceType: 'SERVICE_REQUEST',
+          sourceId,
           vendorId: data.vendorId,
           invoiceNumber,
           amount: data.amount,
@@ -139,7 +143,7 @@ export class ApInvoicesService {
       await tx.journalEntry.create({
         data: {
           tenantId: data.tenantId,
-          reference: `AP-${invoiceNumber}`,
+          reference: `AP-AP-${data.workOrderId}`,
           notes: `AP Liability recognized: ${invoiceNumber}`,
           lines: {
             create: [
@@ -255,7 +259,7 @@ export class ApInvoicesService {
       await tx.journalEntry.create({
         data: {
           tenantId: invoice.tenantId,
-          reference: `DISB-${disbursement.id.substring(0, 8)}`,
+          reference: `DISB-WO-${invoice.invoiceNumber ?? invoice.id}`,
           notes: `Disbursement for AP Invoice ${invoice.invoiceNumber ?? invoice.id}`,
           lines: {
             create: [

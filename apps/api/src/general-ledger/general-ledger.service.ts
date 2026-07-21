@@ -18,9 +18,47 @@ export interface GlEntriesResult {
   summary: { totalDebit: number; totalCredit: number; balance: number };
 }
 
+export interface GlEntrySource {
+  sourceType?: string;
+  sourceId?: string;
+  parentId?: string;
+}
+
 @Injectable()
 export class GeneralLedgerService {
   constructor(private prisma: PrismaService) {}
+
+  private parseSource(reference?: string | null): GlEntrySource {
+    const ref = reference ?? '';
+    // COMM-ACC-{agentId}:{txId}
+    if (ref.startsWith('COMM-ACC-')) {
+      const rest = ref.slice(9);
+      const colon = rest.indexOf(':');
+      if (colon > 0)
+        return {
+          sourceType: 'COMMISSION',
+          sourceId: rest.slice(colon + 1),
+          parentId: rest.slice(0, colon),
+        };
+      return { sourceType: 'COMMISSION', sourceId: rest };
+    }
+    if (ref.startsWith('COMM-PAY-')) return { sourceType: 'COMMISSION', sourceId: ref.slice(9) };
+    if (ref.startsWith('AP-AP-')) return { sourceType: 'SERVICE_REQUEST', sourceId: ref.slice(6) };
+    // SALE-CONTRACT-{propertyId}:{ttId}
+    if (ref.startsWith('SALE-CONTRACT-')) {
+      const rest = ref.slice(14);
+      const colon = rest.indexOf(':');
+      if (colon > 0)
+        return {
+          sourceType: 'TITLE_TRANSFER',
+          sourceId: rest.slice(colon + 1),
+          parentId: rest.slice(0, colon),
+        };
+      return { sourceType: 'TITLE_TRANSFER', sourceId: rest };
+    }
+    if (ref.startsWith('DISB-WO-')) return { sourceType: 'DISBURSEMENT', sourceId: ref.slice(8) };
+    return {};
+  }
 
   private classifyEntry(entry: any): string {
     const ref = (entry.reference ?? '').toLowerCase();
@@ -129,8 +167,10 @@ export class GeneralLedgerService {
     const totalDebit = Number(summaryRows._sum.debitAmount ?? 0);
     const totalCredit = Number(summaryRows._sum.creditAmount ?? 0);
 
+    const enriched = data.map((entry) => ({ ...entry, ...this.parseSource(entry.reference) }));
+
     return {
-      data,
+      data: enriched,
       total,
       page,
       limit,

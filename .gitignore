@@ -6,6 +6,11 @@ node_modules
 # Untracked workspace docs
 untracked/
 
+# Local scripts
+build.ps1
+dev.ps1
+scripts/reseed.ps1
+
 # Build / typecheck artifacts
 dist
 build

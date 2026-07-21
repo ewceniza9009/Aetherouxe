@@ -68,6 +68,71 @@ const phPhone = () =>
   `+63 ${faker.string.numeric(3)} ${faker.string.numeric(3)} ${faker.string.numeric(4)}`;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+const realisticNotes = [
+  'Engaged for structural integrity assessment of Tower B foundation.',
+  'Scope includes plumbing rough-in for units 301 to 320.',
+  'Contract covers electrical rewiring of common areas on floors 5-8.',
+  'Project requires seismic retrofit of parking structure.',
+  'Engaged for HVAC duct cleaning and maintenance across all towers.',
+  'Painting and waterproofing of exterior facade included in scope.',
+  'Fire suppression system upgrade for entire building.',
+  'Elevator modernization program for all 6 passenger elevators.',
+  'Inclusion of accessible ramps and railings per BIR requirements.',
+  'Swimming pool filtration system replacement project.',
+];
+const realisticParagraphs = [
+  'Please be advised that the scheduled water interruption will take place on Saturday from 8 AM to 5 PM to facilitate essential pipeline repairs. Residents are advised to store adequate water in advance. We apologize for any inconvenience caused.',
+  'We cordially invite all residents to attend the Annual Townhall Meeting on the 15th of the month at the Grand Function Room. Updates on community developments, financial reports, and upcoming projects will be presented. Light refreshments will be served.',
+  'The fire drill scheduled for this Saturday at 9 AM is mandatory for all residents and staff. Please proceed to the designated evacuation area upon hearing the alarm. Building management will provide further instructions on the day.',
+  'Join us for the Holiday Lighting Ceremony on December 1st at the Main Plaza. There will be performances, food stalls, and a visit from Santa. Bring your family and friends for a festive evening of celebration.',
+  'Please note that garbage collection will now occur every Monday and Thursday instead of the previous Tuesday and Friday schedule. Ensure your waste is properly segregated before placing it in the designated collection area.',
+  'We are delighted to welcome our newest residents to the community! Please visit the management office to collect your welcome packet and access cards. The team is available to assist with any questions about your new home.',
+  'This is a reminder that all outstanding association dues must be settled by the end of the month. Late payments will incur a penalty fee as stated in the homeowner association guidelines.',
+  'The swimming pool will be closed for annual maintenance from June 1-7. We apologize for any inconvenience and appreciate your understanding.',
+  "Please ensure that all vehicles are parked in designated parking slots only. Unauthorized parking in fire lanes or visitor spots will result in towing at the owner's expense.",
+  'The elevator in Tower A will be undergoing maintenance on Wednesday from 10 AM to 4 PM. Please use the service elevator during this period. We apologize for any inconvenience.',
+];
+const realisticReminderMessages = [
+  'Your monthly association dues are due in 5 days. Please pay to avoid late fees.',
+  'This is a reminder that your rent payment for this month is now due. Please remit at your earliest convenience.',
+  'Final notice: Your account has an outstanding balance of 30 days. Please settle immediately to avoid service interruption.',
+  'Your water bill payment is due next week. Kindly pay through the portal or at the management office.',
+  'Annual property tax payment is due by end of quarter. Please submit your proof of payment.',
+  'Your parking space renewal fee is due this month. Please settle at the admin office.',
+  'Your reservation payment for the function room is due within 3 days to confirm your booking.',
+  'Good day! This is a friendly reminder that your home insurance premium is due for renewal.',
+];
+const realisticCollectionNotes = [
+  'Resident not home. Left payment notice under the door.',
+  'Spoke with resident who promised to pay within 3 days.',
+  'Resident disputed the late charges. Escalated to property manager.',
+  'Left voicemail. No return call received.',
+  "Spoke with resident's spouse who said they will remit payment on payday.",
+  'Resident claims they already paid. Advised them to provide proof of payment.',
+  'Sent reminder via SMS and email. No response yet.',
+  'Visited unit but resident was not around. Neighbor said they are out of town.',
+  'Resident requested a payment arrangement. Submitted for manager approval.',
+  'Second visit. Resident acknowledged the debt and promised partial payment this week.',
+];
+const realisticWorkOrderNotes = [
+  'Vendor dispatched same day. Issue resolved within 2 hours.',
+  'Parts need to be ordered from supplier. Scheduled follow-up next week.',
+  'Work completed ahead of schedule. Resident satisfied with the result.',
+  'Vendor reported that the issue requires a specialist contractor.',
+  'Routine preventive maintenance performed. All systems functioning normally.',
+  'Emergency call-out. Team responded within 30 minutes.',
+  'Work order completed on time and within budget.',
+  'Inspection revealed additional damage. Scope expanded with resident approval.',
+];
+const realisticAmenityBookingNotes = [
+  'Booking for birthday celebration. Requires table setup for 20 guests.',
+  'Requested specific sound system setup for a corporate meeting.',
+  'Confirmed. Resident requested early access for decoration setup.',
+  'Booking cancelled due to conflict with resident schedule.',
+  'Event requires additional chairs and tables beyond standard capacity.',
+  'Resident requested air conditioning to be turned on 1 hour before event.',
+];
+
 const FILIPINO_FIRST = [
   'Juan',
   'Maria',
@@ -801,7 +866,7 @@ async function main() {
           startDate: faker.date.past({ years: 1 }),
           endDate: faker.date.future({ years: 2 }),
           vendorName: pick(contractors).companyName,
-          notes: faker.lorem.sentence(),
+          notes: pick(realisticNotes),
         },
       });
       // contractor engagement + payments (drives dynamic actual)
@@ -1808,9 +1873,9 @@ async function main() {
         })
       : null;
   let apInvoiceSeq = 0;
-  const nextApInvoiceNumber = () => {
+  const nextApInvoiceNumber = (prefix = 'COMM') => {
     apInvoiceSeq += 1;
-    return `AP-COMM-${new Date().getFullYear()}-${String(apInvoiceSeq).padStart(4, '0')}`;
+    return `AP-${prefix}-${new Date().getFullYear()}-${String(apInvoiceSeq).padStart(4, '0')}`;
   };
 
   const postCommissionAccrual = async (tx: any, vendor: any, propertyCode?: string) => {
@@ -1835,7 +1900,7 @@ async function main() {
       await prisma.journalEntry.create({
         data: {
           tenantId: tenant.id,
-          reference: `COMM-ACC-${tx.id.substring(0, 8)}`,
+          reference: `COMM-ACC-${tx.agentId}:${tx.id}`,
           notes: `Commission accrual for agent ${vendor.companyName}`,
           lines: {
             create: [
@@ -2028,7 +2093,7 @@ async function main() {
 
   // 1) Per-agent single-owner deals (baseline coverage).
   for (const agent of agents) {
-    const txns = faker.number.int({ min: 3, max: 6 });
+    const txns = faker.number.int({ min: 1, max: 2 });
     for (let t = 0; t < txns; t++) {
       const { txType, txAmount } = randomTx();
       const rule = commissionRules[t % commissionRules.length]!;
@@ -2128,7 +2193,7 @@ async function main() {
         data: {
           name: a.name,
           type: a.type,
-          description: faker.lorem.sentence(),
+          description: pick(realisticNotes),
           capacity: faker.number.int({ min: 10, max: 200 }),
           location: pick(STREETS),
           propertyId: anchorProp.id,
@@ -2167,7 +2232,7 @@ async function main() {
     await prisma.communityPost.create({
       data: {
         title,
-        body: faker.lorem.paragraph(),
+        body: pick(realisticParagraphs),
         postType: PostType.announcement,
         audience: Audience.property,
         propertyId: amenity.propertyId,
@@ -2194,7 +2259,7 @@ async function main() {
     await prisma.communityPost.create({
       data: {
         title: p.title,
-        body: faker.lorem.paragraph(),
+        body: pick(realisticParagraphs),
         postType: p.type,
         audience: propertyScoped ? Audience.property : Audience.all,
         propertyId: propertyScoped ? pick(properties).id : null,
@@ -2235,7 +2300,7 @@ async function main() {
             BookingStatus.cancelled,
           ]),
           totalAmount: amenity.hourlyRate ?? null,
-          notes: chance(0.5) ? faker.lorem.sentence() : null,
+          notes: chance(0.5) ? pick(realisticAmenityBookingNotes) : null,
         },
       });
     }
@@ -2251,6 +2316,112 @@ async function main() {
     ServiceCategory.pest,
     ServiceCategory.elevator,
   ];
+  const srDescriptions: Record<string, string[]> = {
+    [ServiceCategory.plumbing]: [
+      'Toilet continuously running after flush — needs new flapper valve',
+      'Kitchen sink drain very slow, possible grease buildup in pipe',
+      'Water heater not heating — pilot light keeps going out',
+      'Shower head leaking at the base where it meets the wall',
+      'Pipe under bathroom sink leaking — cabinet floor already wet',
+      'Main water shutoff valve in unit is seized, cannot turn',
+      'Low water pressure in master bath shower',
+      'Outside faucet/spigot dripping constantly',
+    ],
+    [ServiceCategory.electrical]: [
+      'Circuit breaker for living room keeps tripping when AC runs',
+      'Three wall outlets in bedroom not working after thunderstorm',
+      'Light fixture in hallway flickers intermittently',
+      'GFCI outlet in kitchen trips whenever microwave is used',
+      'Main electrical panel making buzzing noise',
+      'Ceiling fan in master bedroom stopped working',
+      'Doorbell not functioning — no sound when pressed',
+      'Smoke detector chirping every 30 seconds, new battery installed',
+    ],
+    [ServiceCategory.hvac]: [
+      'Aircon not cooling — compressor runs but fan not blowing',
+      'AC unit leaking water from indoor unit, dripping onto floor',
+      'Thermostat not responding, stuck at 30°C',
+      'Window-type AC making loud grinding noise when starting',
+      'Central AC blowing warm air, refrigerant likely low',
+      'Split-type AC remote not communicating with unit',
+      'Air conditioning smells musty when first turned on',
+      'AC drain pan overflowing, water stain on ceiling below',
+    ],
+    [ServiceCategory.general]: [
+      'Main door lock sticking, hard to turn key',
+      'Broken window pane in bedroom — crack from corner to corner',
+      'Ceiling leak in dining area, water stain growing',
+      'Closet sliding door came off its track',
+      'Tile in bathroom floor cracked and lifting',
+      'Paint peeling on exterior wall near the gutter downspout',
+      'Termite damage spotted on wooden window frame',
+      'Garage door opener not responding to remote',
+      'Gate intercom speaker static, can barely hear visitor',
+    ],
+    [ServiceCategory.pest]: [
+      'Cockroach infestation in kitchen cabinets — seen multiple daily',
+      'Ants trail from wall crack to pantry area',
+      'Termite mud tubes on foundation wall near garden',
+      'Rat droppings found in storage room',
+      'Mosquito breeding in stagnant water on rooftop',
+      'Bed bugs suspected — guest complained of bites after stay',
+      'Lizards inside unit, seems to be coming from ceiling gap',
+    ],
+    [ServiceCategory.elevator]: [
+      'Elevator stops between floors on 3rd to 4th',
+      'Elevator door not closing fully, reverses repeatedly',
+      'Elevator button panel unresponsive on ground floor',
+      'Elevator makes loud scraping noise when passing 5th floor',
+      'Elevator cabin light flickering and sometimes goes dark',
+    ],
+  };
+  const srResolutionNotes = [
+    'Replaced flapper valve and adjusted float level. Toilet now functioning properly.',
+    'Cleared drain blockage using auger. Sink draining normally. Advised tenant on grease disposal.',
+    'Replaced thermocouple on water heater. Pilot light stays lit. Water heating恢复正常.',
+    'Tightened shower arm connection and replaced O-ring. Leak resolved.',
+    'Replaced PVC trap under sink. Tested for leaks — all dry.',
+    'Replaced main shutoff valve. Water supply now controllable. Unit repressurized.',
+    'Cleaned shower head and supply line. Pressure restored to normal range.',
+    'Replaced outdoor faucet washer and packing nut. Drip stopped.',
+    'Reset tripped breaker and tightened loose connection in panel. AC running normally.',
+    'Replaced faulty outlets and verified wiring. All outlets now functional.',
+    'Replaced LED driver in light fixture. Flickering resolved.',
+    'Replaced GFCI outlet with 20A rated unit. Microwave no longer tripping.',
+    'Tightened bus bar connections in panel. Buzzing noise eliminated.',
+    'Replaced ceiling fan capacitor. Fan now operational at all speeds.',
+    'Wired doorbell transformer correctly. Doorbell now ringing.',
+    'Replaced smoke detector unit. Chirping stopped.',
+    'Cleaned AC condenser coils and replaced air filter. Cooling restored.',
+    'Cleaned drain line and cleared blockage. Leak stopped. Applied anti-algae treatment.',
+    'Replaced thermostat batteries and recalibrated. Temperature control working.',
+    'Tightened compressor mounting bolts and lubricated fan motor. Noise reduced.',
+    'Topped up refrigerant and fixed Schrader valve leak. AC cooling properly.',
+    'Replaced IR receiver board in indoor unit. Remote working again.',
+    'Cleaned evaporator coils and applied antimicrobial spray. Musty smell gone.',
+    'Cleared drain pan blockage and sealed pipe joint. No more leaking.',
+    'Lubricated lock cylinder and adjusted strike plate. Key turns smoothly.',
+    'Replaced broken window pane with tempered glass. Sealed frame.',
+    'Patched roof leak and replaced damaged ceiling board. Repainted.',
+    'Reinstalled closet door on track and adjusted rollers. Sliding smoothly.',
+    'Replaced cracked tile and regrouted. Bathroom floor sealed.',
+    'Scraped peeling paint, treated for moisture, and repainted exterior wall.',
+    'Applied borate treatment to termite-affected wood. Scheduled follow-up inspection.',
+    'Replaced garage door opener logic board. Remote working.',
+    'Replaced speaker unit in intercom. Audio clear.',
+    'Applied cockroach gel bait and sealed cabinet cracks. Scheduled follow-up treatment.',
+    'Sealed wall crack and applied perimeter ant repellent. Ant activity ceased.',
+    'Applied termiticide treatment to foundation. Termite tubes removed.',
+    'Set traps and sealed entry points in storage room. Rat activity monitored.',
+    'Drained stagnant water and treated roof area with larvicide. Screened drains.',
+    'Professional heat treatment conducted for bed bugs. Unit declared pest-free.',
+    'Sealed ceiling gap and applied repellent. Lizard entry prevented.',
+    'Reset elevator controller and recalibrated position sensors. Smooth operation restored.',
+    'Adjusted door limit switches and cleaned track sensors. Door closing properly.',
+    'Replaced button membrane panel. All floor buttons responsive.',
+    'Applied lubricant to guide rails and adjusted roller guides. Noise eliminated.',
+    'Replaced LED driver and emergency battery. Cabin lighting stable.',
+  ];
   const woStatusByRequest: Record<string, string> = {
     open: 'scheduled',
     assigned: 'scheduled',
@@ -2258,24 +2429,35 @@ async function main() {
     completed: 'completed',
     cancelled: 'cancelled',
   };
+  const woInvoices: { invoice: any; vendor: any; description: string; amount: number }[] = [];
   for (let s = 0; s < 18; s++) {
     const resident = pick(residents);
     const unit = pick(allUnits);
     const status = pick([
+      ServiceStatus.completed,
+      ServiceStatus.completed,
+      ServiceStatus.completed,
+      ServiceStatus.completed,
+      ServiceStatus.completed,
+      ServiceStatus.completed,
+      ServiceStatus.completed,
+      ServiceStatus.completed,
+      ServiceStatus.completed,
+      ServiceStatus.completed,
       ServiceStatus.open,
       ServiceStatus.assigned,
       ServiceStatus.in_progress,
-      ServiceStatus.completed,
       ServiceStatus.cancelled,
     ]);
+    const category = pick(serviceCats);
     const req = await prisma.serviceRequest.create({
       data: {
         tenantId: tenant.id,
         unitId: unit.id,
         propertyId: unit.propertyId,
-        category: pick(serviceCats),
+        category,
         priority: pick([Priority.low, Priority.medium, Priority.high, Priority.emergency]),
-        description: faker.lorem.sentence({ min: 8, max: 20 }),
+        description: pick(srDescriptions[category] ?? srDescriptions[ServiceCategory.general]),
         status,
         requestedAt: faker.date.past({ years: 1 }),
         scheduledAt: chance(0.5) ? faker.date.soon({ days: 14 }) : null,
@@ -2285,26 +2467,113 @@ async function main() {
             ? { assignedToId: pick(agents).user.id, assignedToType: 'agent' }
             : { assignedToId: pick(contractors).id, assignedToType: 'contractor' }
           : { assignedToId: null, assignedToType: null }),
-        resolutionNotes: status === ServiceStatus.completed ? faker.lorem.sentence() : null,
+        resolutionNotes: status === ServiceStatus.completed ? pick(srResolutionNotes) : null,
       },
     });
 
     if (chance(0.85)) {
       const woStatus = woStatusByRequest[status] ?? 'scheduled';
       const est = money(1500, 85000);
-      await prisma.maintenanceWorkOrder.create({
+      const actualCostVal =
+        woStatus === 'completed' ? Math.round(est * (0.8 + Math.random() * 0.4)) : null;
+      const vendor = pick(contractors);
+      const wo = await prisma.maintenanceWorkOrder.create({
         data: {
           serviceRequestId: req.id,
-          vendorId: pick(contractors).id,
+          vendorId: vendor.id,
           scheduledDate: chance(0.7) ? faker.date.soon({ days: 21 }) : null,
           estimatedCost: est,
-          actualCost:
-            woStatus === 'completed' ? Math.round(est * (0.8 + Math.random() * 0.4)) : null,
+          actualCost: actualCostVal,
           status: woStatus as any,
           completedDate: woStatus === 'completed' ? faker.date.recent({ days: 20 }) : null,
-          notes: chance(0.5) ? faker.lorem.sentence() : null,
+          notes: chance(0.5) ? pick(realisticWorkOrderNotes) : null,
         },
       });
+
+      if (actualCostVal != null && actualCostVal > 0) {
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 30);
+        const inv = await prisma.apInvoice.create({
+          data: {
+            tenantId: tenant.id,
+            sourceType: 'SERVICE_REQUEST',
+            sourceId: req.id,
+            vendorId: vendor.id,
+            invoiceNumber: nextApInvoiceNumber('WO'),
+            amount: actualCostVal,
+            dueDate,
+            status: ApInvoiceStatus.pending_approval,
+            notes: `Work order for ${req.description.slice(0, 60)}`,
+          },
+        });
+        if (maintAcc && apAcc) {
+          await prisma.journalEntry.create({
+            data: {
+              tenantId: tenant.id,
+              reference: `AP-AP-${req.id}`,
+              notes: `Work order for ${req.description.slice(0, 60)}`,
+              lines: {
+                create: [
+                  {
+                    accountId: maintAcc.id,
+                    debitAmount: actualCostVal,
+                    description: 'Maintenance Expense',
+                  },
+                  {
+                    accountId: apAcc.id,
+                    creditAmount: actualCostVal,
+                    description: 'Work Order Payable',
+                  },
+                ],
+              },
+            },
+          });
+        }
+        woInvoices.push({
+          invoice: inv,
+          vendor,
+          description: req.description.slice(0, 60),
+          amount: actualCostVal,
+        });
+      }
+    }
+  }
+  for (const woItem of woInvoices) {
+    if (chance(0.5)) {
+      await prisma.apInvoice.update({
+        where: { id: woItem.invoice.id },
+        data: { status: ApInvoiceStatus.approved },
+      });
+      const ref = `WO-DISB-${woItem.invoice.invoiceNumber}`;
+      await prisma.apDisbursement.create({
+        data: {
+          invoiceId: woItem.invoice.id,
+          amount: woItem.amount,
+          paymentMethod: pick(['bank_transfer', 'check', 'gcash']),
+          reference: ref,
+          notes: `Work order payout to ${woItem.vendor.companyName}. Ref: ${ref}`,
+        },
+      });
+      if (apAcc && cashAcc) {
+        await prisma.journalEntry.create({
+          data: {
+            tenantId: tenant.id,
+            reference: `DISB-WO-${woItem.invoice.invoiceNumber}`,
+            notes: `Work order payout for ${woItem.description}`,
+            lines: {
+              create: [
+                {
+                  accountId: apAcc.id,
+                  debitAmount: woItem.amount,
+                  description: 'AP Disbursement - Work Order',
+                },
+                { accountId: cashAcc.id, creditAmount: woItem.amount, description: 'Cash Outflow' },
+              ],
+            },
+          },
+        });
+      }
+      disbursementCount++;
     }
   }
   console.log('Service requests + work orders created');
@@ -2572,7 +2841,7 @@ async function main() {
 
   let titleTransferCount = 0;
   for (const tt of titleTransfers) {
-    await prisma.titleTransfer.create({
+    const created = await prisma.titleTransfer.create({
       data: {
         tenantId: tenant.id,
         propertyId: tt.propertyId,
@@ -2594,6 +2863,29 @@ async function main() {
         where: { id: tt.propertyId },
         data: { status: 'sold', ownerId: tt.buyerUserId },
       });
+      if (arAcc && salesAcc) {
+        await prisma.journalEntry.create({
+          data: {
+            tenantId: tenant.id,
+            reference: `SALE-CONTRACT-${tt.propertyId}:${tt.titleNumber ?? created.id}`,
+            notes: `Property sale completed. ${tt.notes ?? 'Sale closed.'}`,
+            lines: {
+              create: [
+                {
+                  accountId: arAcc.id,
+                  debitAmount: tt.contractValue,
+                  description: 'Accounts Receivable - Sale',
+                },
+                {
+                  accountId: salesAcc.id,
+                  creditAmount: tt.contractValue,
+                  description: 'Sales Revenue',
+                },
+              ],
+            },
+          },
+        });
+      }
     }
     titleTransferCount++;
   }
@@ -2690,7 +2982,7 @@ async function main() {
         type: pick([ReminderType.pre_due, ReminderType.post_due, ReminderType.final_notice]),
         channel: pick([ReminderChannel.email, ReminderChannel.sms, ReminderChannel.portal]),
         scheduledAt: faker.date.soon({ days: 14 }),
-        message: faker.lorem.sentence(),
+        message: pick(realisticReminderMessages),
         status: pick([ReminderStatus.pending, ReminderStatus.sent]),
         sentAt: chance(0.4) ? faker.date.recent({ days: 5 }) : null,
       },
@@ -2743,7 +3035,7 @@ async function main() {
             CollectionActivityType.visit,
           ]),
           performedById: admin.id,
-          notes: faker.lorem.sentence(),
+          notes: pick(realisticCollectionNotes),
           outcome: pick(['no_answer', 'promised_payment', 'disputed', 'left_voicemail']),
           nextActionDate: chance(0.5) ? faker.date.soon({ days: 7 }) : null,
         },

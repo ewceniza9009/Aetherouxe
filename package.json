@@ -13,7 +13,8 @@
     "typecheck": "turbo typecheck",
     "clean": "turbo clean",
     "prepare": "husky",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "reseed": "pwsh -NoProfile -File scripts/reseed.ps1"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.5.0",

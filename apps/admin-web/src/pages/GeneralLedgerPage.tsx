@@ -97,6 +97,22 @@ function classifyEntry(entry: GlEntry): string {
   return 'other';
 }
 
+function glSourceLink(entry: GlEntry): { href: string } | null {
+  if (entry.sourceType === 'SERVICE_REQUEST' && entry.sourceId) {
+    return { href: `/service-requests/${entry.sourceId}` };
+  }
+  if (entry.sourceType === 'COMMISSION' && entry.parentId) {
+    return { href: `/agents/${entry.parentId}` };
+  }
+  if (entry.sourceType === 'TITLE_TRANSFER' && entry.parentId) {
+    return { href: `/properties/${entry.parentId}` };
+  }
+  if (entry.sourceType === 'DISBURSEMENT') {
+    return { href: '/finance/disbursements' };
+  }
+  return null;
+}
+
 export default function GeneralLedgerPage() {
   const [entryFilter, setEntryFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
@@ -323,7 +339,19 @@ export default function GeneralLedgerPage() {
                                         >
                                           <div className="flex flex-col gap-1">
                                             <span className="font-semibold text-primary text-sm">
-                                              {entry.reference}
+                                              {(() => {
+                                                const link = glSourceLink(entry);
+                                                return link ? (
+                                                  <a
+                                                    href={link.href}
+                                                    className="underline-offset-4 hover:underline cursor-pointer text-primary"
+                                                  >
+                                                    {entry.reference}
+                                                  </a>
+                                                ) : (
+                                                  <>{entry.reference}</>
+                                                );
+                                              })()}
                                             </span>
                                             <span className="text-xs text-muted-foreground leading-tight">
                                               {entry.notes}

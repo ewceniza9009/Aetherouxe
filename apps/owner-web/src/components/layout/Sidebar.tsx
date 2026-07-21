@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, useMemo } from 'react';
 import { Link, useLocation } from '@tanstack/react-router';
 import {
   LayoutDashboard,
@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@elite-realty/shared-ui/components/ui';
@@ -33,11 +34,17 @@ const navItems: NavItem[] = [
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { pathname } = useLocation();
   const { logout, user } = useAuth();
   const isDeveloper = user?.isDeveloper ?? false;
 
-  const visibleNavItems = navItems.filter((item) => !item.developerOnly || isDeveloper);
+  const visibleNavItems = useMemo(() => {
+    const filtered = navItems.filter((item) => !item.developerOnly || isDeveloper);
+    if (!searchQuery.trim()) return filtered;
+    const q = searchQuery.toLowerCase();
+    return filtered.filter((item) => item.label.toLowerCase().includes(q));
+  }, [searchQuery, isDeveloper]);
 
   return (
     <aside
@@ -58,7 +65,20 @@ export default function Sidebar() {
         </Button>
       </div>
 
-      <nav className="flex-1 py-4 space-y-1 px-2">
+      {!collapsed && (
+        <div className="relative px-3 pt-3 pb-1">
+          <Search className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-sidebar-foreground/40" />
+          <input
+            type="text"
+            placeholder="Search menu..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-8 rounded-md border border-sidebar-border bg-sidebar-accent/30 pl-8 pr-3 text-xs text-sidebar-foreground placeholder:text-sidebar-foreground/30 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all"
+          />
+        </div>
+      )}
+
+      <nav className="flex-1 py-2 space-y-1 px-2">
         {visibleNavItems.map((item) => {
           const isActive = pathname.startsWith(item.path);
           return (

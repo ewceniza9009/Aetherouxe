@@ -60,6 +60,16 @@ const statusConfig: Record<
   },
 };
 
+function sourceLink(invoice: ApInvoice): { href: string } | null {
+  if (invoice.sourceType === 'SERVICE_REQUEST' && invoice.sourceId) {
+    return { href: `/service-requests/${invoice.sourceId}` };
+  }
+  if (invoice.sourceType === 'COMMISSION') {
+    return { href: '/finance/commission-aging' };
+  }
+  return null;
+}
+
 export default function DisbursementsPage() {
   const listQuery = useListQuery(20);
   const { search, setSearch, page, setPage, query, sortHeader, sortIndicator } = listQuery;
@@ -178,7 +188,20 @@ export default function DisbursementsPage() {
                       className="border-border hover:bg-card/5 transition-colors"
                     >
                       <TableCell className="font-mono text-sm text-foreground">
-                        {invoice.invoiceNumber ?? '—'}
+                        {(() => {
+                          const link = sourceLink(invoice);
+                          const label = invoice.invoiceNumber ?? '—';
+                          return link && label !== '—' ? (
+                            <a
+                              href={link.href}
+                              className="text-primary underline-offset-4 hover:underline font-semibold"
+                            >
+                              {label}
+                            </a>
+                          ) : (
+                            <span>{label}</span>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="font-medium text-foreground">
                         <Badge variant="outline" className="border-border text-foreground/80">

@@ -47,6 +47,7 @@ export interface WorkOrder {
   status: WorkOrderStatus;
   createdAt: string;
   vendor?: { id: string; companyName: string } | null;
+  serviceRequest?: { id: string; description: string; category: string; status: string } | null;
 }
 
 export interface ServiceRequestQuery {
@@ -64,6 +65,7 @@ export interface WorkOrderQuery {
   page?: number;
   limit?: number;
   serviceRequestId?: string;
+  vendorId?: string;
 }
 
 interface Paginated<T> {

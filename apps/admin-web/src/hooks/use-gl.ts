@@ -7,6 +7,9 @@ export interface GlEntry {
   date: string;
   notes?: string;
   lines: GlEntryLine[];
+  sourceType?: string;
+  sourceId?: string;
+  parentId?: string;
   createdAt: string;
   updatedAt: string;
 }
