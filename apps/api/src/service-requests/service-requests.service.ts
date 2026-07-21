@@ -236,6 +236,24 @@ export class ServiceRequestsService {
           notes: `Work Order ${existing.id} — ${existing.serviceRequest?.description ?? 'maintenance'}`,
         });
       }
+
+      // Check if all work orders for the service request are completed -> auto-complete ServiceRequest
+      const parentRequestId = existing.serviceRequestId;
+      if (parentRequestId) {
+        const remainingOpen = await this.prisma.maintenanceWorkOrder.count({
+          where: {
+            serviceRequestId: parentRequestId,
+            status: { notIn: ['completed', 'cancelled'] },
+            id: { not: existing.id },
+          },
+        });
+        if (remainingOpen === 0) {
+          await this.completeServiceRequest(
+            parentRequestId,
+            'Auto-completed on all work orders finishing',
+          );
+        }
+      }
     }
 
     return updated;

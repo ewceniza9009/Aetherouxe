@@ -154,6 +154,20 @@ export class TitlesService {
       data: { status: 'sold', ownerId: transfer.buyerUserId },
     });
 
+    // Deactivate associated lease & mark RTO contract completed
+    if (transfer.leaseAgreementId) {
+      await this.prisma.leaseAgreement.update({
+        where: { id: transfer.leaseAgreementId },
+        data: { isActive: false },
+      });
+    }
+    if (transfer.rtoContractId) {
+      await this.prisma.rtoContract.update({
+        where: { id: transfer.rtoContractId },
+        data: { status: 'completed' },
+      });
+    }
+
     return transfer;
   }
 

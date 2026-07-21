@@ -648,6 +648,21 @@ export class SalesService {
     if (discountPct > 0) {
       result.discount = { percent: discountPct, originalAmount: value, finalAmount: invoiceAmount };
     }
+
+    // Auto-initiate Title Transfer record for spot cash purchase
+    await tx.titleTransfer.create({
+      data: {
+        tenantId,
+        propertyId: unit.propertyId,
+        unitId: unit.id,
+        leaseAgreementId: lease.id,
+        buyerUserId: buyerId,
+        basis: 'spot_cash',
+        status: 'pending',
+        contractValue: invoiceAmount,
+        notes: `Auto-initiated title transfer from spot cash purchase of unit ${unit.unitNumber}`,
+      },
+    });
   }
 
   async listSchemes(): Promise<SchemeListItem[]> {

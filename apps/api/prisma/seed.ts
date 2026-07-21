@@ -1268,6 +1268,14 @@ async function main() {
   }
   console.log(`Properties & units created (${allUnits.length} units)`);
 
+  if (process.env.LEAN_SEED === '1') {
+    console.log(
+      '\n🪶  LEAN_SEED=1: skipping Leases, RTO, Mortgage, Service Requests, Commissions, Title Transfers, etc.',
+    );
+    console.log('✅ Lean seed complete.\n');
+    return;
+  }
+
   /* ── Leases, Rental Payments, RTO, Mortgage ── */
   let leaseCount = 0;
   let mortgageCount = 0;
@@ -1317,7 +1325,7 @@ async function main() {
     residentLeases[resident.id] = lease;
     if (target.unit?.id) leasedUnitIds.add(target.unit.id);
 
-    // Rental payment history
+    // Rental payment history + GL postings + SOA records
     const months = faker.number.int({ min: 3, max: 8 });
     const base = new Date(startDate);
     for (let m = 0; m < months; m++) {
@@ -1326,7 +1334,8 @@ async function main() {
       const due = new Date(base.getFullYear(), base.getMonth() + m, 10);
       const isPaid = m < months - 1 || chance(0.6);
       const status = isPaid ? 'paid' : chance(0.5) ? 'overdue' : 'pending';
-      await prisma.rentalPayment.create({
+      const payRef = `PAY-${faker.string.alphanumeric(8).toUpperCase()}`;
+      const pay = await prisma.rentalPayment.create({
         data: {
           leaseAgreementId: lease.id,
           billingPeriodStart: periodStart,
@@ -1336,11 +1345,28 @@ async function main() {
           amountPaid: isPaid ? monthlyRent : 0,
           paymentDate: isPaid ? faker.date.between({ from: periodStart, to: due }) : null,
           paymentMethod: isPaid ? pick(['card', 'bank_transfer', 'gcash', 'cash', 'check']) : null,
-          paymentReference: isPaid ? `PAY-${faker.string.alphanumeric(8).toUpperCase()}` : null,
+          paymentReference: isPaid ? payRef : null,
           status,
           lateFeeApplied: !isPaid && chance(0.4),
         },
       });
+
+      // GL & SOA Sync
+      if (isPaid && cashAcc && arAcc && rentAcc) {
+        await prisma.journalEntry.create({
+          data: {
+            tenantId: target.property.tenantId,
+            reference: payRef,
+            notes: `Rental payment received for lease ${lease.id.slice(0, 8)}`,
+            lines: {
+              create: [
+                { accountId: cashAcc.id, debitAmount: monthlyRent, description: 'Cash received' },
+                { accountId: rentAcc.id, creditAmount: monthlyRent, description: 'Rental Income' },
+              ],
+            },
+          },
+        });
+      }
     }
 
     // RTO contract for rent_to_own leases

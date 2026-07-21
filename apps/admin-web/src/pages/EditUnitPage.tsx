@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { toast } from 'sonner';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import {
   Card,
@@ -166,16 +167,30 @@ export default function EditUnitPage() {
       await updateUnit.mutateAsync({ id: unitId, ...payload } as Partial<
         import('@/hooks/use-units').Unit
       > & { id: string });
+      toast.success('Unit updated successfully');
       navigate({ to: `/properties/${propertyId}/units` });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to update unit', err);
+      const message = err?.response?.data?.message || err?.message || 'Failed to update unit';
+      toast.error(
+        typeof message === 'string'
+          ? message
+          : Array.isArray(message)
+            ? message.join(', ')
+            : 'Update failed',
+      );
     }
   };
 
   const handleDelete = async () => {
     if (confirm('Delete this unit? This cannot be undone.')) {
-      await deleteUnit.mutateAsync(unitId);
-      navigate({ to: `/properties/${propertyId}/units` });
+      try {
+        await deleteUnit.mutateAsync(unitId);
+        toast.success('Unit deleted');
+        navigate({ to: `/properties/${propertyId}/units` });
+      } catch (err: any) {
+        toast.error(err?.response?.data?.message || 'Failed to delete unit');
+      }
     }
   };
 

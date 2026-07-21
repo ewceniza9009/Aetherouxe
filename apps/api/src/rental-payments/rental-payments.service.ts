@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RtoService } from '../rto/rto.service';
-import { CreateRentalPaymentDto, RecordPaymentDto, RentalPaymentQueryDto } from './dto/rental-payments.dto';
+import {
+  CreateRentalPaymentDto,
+  RecordPaymentDto,
+  RentalPaymentQueryDto,
+} from './dto/rental-payments.dto';
 
 @Injectable()
 export class RentalPaymentsService {
@@ -50,6 +54,7 @@ export class RentalPaymentsService {
 
     const lease = await this.prisma.leaseAgreement.findUnique({
       where: { id: existing.leaseAgreementId },
+      include: { property: true },
     });
 
     const amountDue = Number(existing.amountDue);
@@ -74,6 +79,39 @@ export class RentalPaymentsService {
         lateFeeApplied,
       },
     });
+
+    // Record General Ledger posting for paid rental amount
+    if (Number(dto.amountPaid) > 0 && lease) {
+      const cashAcc = await this.prisma.chartOfAccount.findFirst({
+        where: { tenantId: lease.property.tenantId, accountCode: '1000' },
+      });
+      const rentAcc = await this.prisma.chartOfAccount.findFirst({
+        where: { tenantId: lease.property.tenantId, accountCode: '4000' },
+      });
+      if (cashAcc && rentAcc) {
+        await this.prisma.journalEntry.create({
+          data: {
+            tenantId: lease.property.tenantId,
+            reference: dto.paymentReference ?? `PAY-${updated.id.slice(0, 8)}`,
+            notes: `Rental payment recorded for lease ${lease.id.slice(0, 8)}`,
+            lines: {
+              create: [
+                {
+                  accountId: cashAcc.id,
+                  debitAmount: Number(dto.amountPaid),
+                  description: 'Cash received',
+                },
+                {
+                  accountId: rentAcc.id,
+                  creditAmount: Number(dto.amountPaid),
+                  description: 'Rental Income',
+                },
+              ],
+            },
+          },
+        });
+      }
+    }
 
     if (lease?.leaseType === 'rent_to_own') {
       await this.rtoService.recordPaymentAllocation(updated.id);
