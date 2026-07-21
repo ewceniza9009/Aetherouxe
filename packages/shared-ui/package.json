@@ -44,24 +44,24 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
-    "axios": "^1.18.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
     "@radix-ui/react-dialog": "^1.1.0",
     "@radix-ui/react-select": "^2.1.0",
     "@radix-ui/react-separator": "^1.1.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-switch": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.0",
-    "@tanstack/react-query": "^5.62.0",
-    "@tanstack/react-router": "^1.99.0",
+    "@tanstack/react-query": "^5.101.4",
+    "@tanstack/react-router": "^1.170.18",
+    "axios": "^1.18.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
-    "lucide-react": "^0.400.0"
+    "lucide-react": "^0.400.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@elite-realty/config-tsconfig": "*",
     "@elite-realty/config-eslint": "*",
+    "@elite-realty/config-tsconfig": "*",
     "@elite-realty/shared-types": "*",
     "typescript": "^5.7.0"
   }
