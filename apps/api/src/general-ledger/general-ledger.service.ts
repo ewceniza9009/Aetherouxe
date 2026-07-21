@@ -195,7 +195,7 @@ export class GeneralLedgerService {
             .filter((t: any) => t.titleNumber)
             .map((t: any) => [String(t.titleNumber).toLowerCase(), t.propertyId] as const),
         );
-        for (const e of transferEntries) {
+        for (const e of transferEntries as any[]) {
           const key = e.sourceId ? String(e.sourceId).toLowerCase() : null;
           const propId = key ? titleToProp.get(key) : null;
           if (propId) e.propertyId = propId;

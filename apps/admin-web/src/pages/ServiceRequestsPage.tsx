@@ -1,21 +1,21 @@
-import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { useListQuery } from "@/hooks/use-list-query";
-import { GridToolbar, GridState } from "@/components/GridToolbar";
-import { ListPager } from "@/components/ListPager";
-import { Card, CardContent, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
-import { Textarea } from "@elite-realty/shared-ui/components/ui";
+import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useListQuery } from '@/hooks/use-list-query';
+import { GridToolbar, GridState } from '@/components/GridToolbar';
+import { ListPager } from '@/components/ListPager';
+import { Card, CardContent, CardTitle } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { Textarea } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog as DDialog,
   DialogContent as DDialogContent,
@@ -31,13 +31,8 @@ import {
   DialogFooter as DDialogFooter,
   DialogHeader as DDialogHeader,
   DialogTitle as DDialogTitle,
-} from "@elite-realty/shared-ui/components/ui"; // delete dialog
-import {
-  Plus,
-  Loader2,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+} from '@elite-realty/shared-ui/components/ui'; // delete dialog
+import { Plus, Loader2, Pencil, Trash2 } from 'lucide-react';
 import {
   useServiceRequests,
   useCreateServiceRequest,
@@ -46,13 +41,13 @@ import {
   type ServiceCategory,
   type ServicePriority,
   type ServiceStatus,
-} from "@/hooks/use-service-requests";
-import { useProperties } from "@/hooks/use-properties";
-import { useUnits } from "@/hooks/use-units";
+} from '@/hooks/use-service-requests';
+import { useProperties } from '@/hooks/use-properties';
+import { useUnits } from '@/hooks/use-units';
 
 function getTenantId(): string {
   try {
-    const stored = localStorage.getItem("user");
+    const stored = localStorage.getItem('user');
     if (stored) {
       const parsed = JSON.parse(stored);
       if (parsed.tenantId) return parsed.tenantId;
@@ -60,41 +55,38 @@ function getTenantId(): string {
   } catch {
     // ignore
   }
-  return "";
+  return '';
 }
 
-const priorityMeta: Record<
-  ServicePriority,
-  { label: string; className: string }
-> = {
-  low: { label: "Low", className: "bg-muted text-muted-foreground border-border" },
+const priorityMeta: Record<ServicePriority, { label: string; className: string }> = {
+  low: { label: 'Low', className: 'bg-muted text-muted-foreground border-border' },
   medium: {
-    label: "Medium",
-    className: "bg-blue-100 text-blue-700 border-blue-200",
+    label: 'Medium',
+    className: 'bg-blue-100 text-blue-700 border-blue-200',
   },
   high: {
-    label: "High",
-    className: "bg-orange-100 text-orange-700 border-orange-200",
+    label: 'High',
+    className: 'bg-orange-100 text-orange-700 border-orange-200',
   },
-  emergency: { label: "Emergency", className: "bg-red-100 text-red-700 border-red-200" },
+  emergency: { label: 'Emergency', className: 'bg-red-100 text-red-700 border-red-200' },
 };
 
 const statusMeta: Record<ServiceStatus, { label: string; variant: any }> = {
-  open: { label: "Open", variant: "default" },
-  assigned: { label: "Assigned", variant: "secondary" },
-  in_progress: { label: "In Progress", variant: "warning" },
-  completed: { label: "Completed", variant: "success" },
-  cancelled: { label: "Cancelled", variant: "destructive" },
+  open: { label: 'Open', variant: 'default' },
+  assigned: { label: 'Assigned', variant: 'secondary' },
+  in_progress: { label: 'In Progress', variant: 'warning' },
+  completed: { label: 'Completed', variant: 'success' },
+  cancelled: { label: 'Cancelled', variant: 'destructive' },
 };
 
 const categoryMeta: Record<ServiceCategory, string> = {
-  plumbing: "Plumbing",
-  electrical: "Electrical",
-  hvac: "HVAC",
-  general: "General",
-  pest: "Pest Control",
-  elevator: "Elevator",
-  other: "Other",
+  plumbing: 'Plumbing',
+  electrical: 'Electrical',
+  hvac: 'HVAC',
+  general: 'General',
+  pest: 'Pest Control',
+  elevator: 'Elevator',
+  other: 'Other',
 };
 
 export default function ServiceRequestsPage() {
@@ -102,18 +94,17 @@ export default function ServiceRequestsPage() {
   const { data: propertiesData } = useProperties({ limit: 200 });
   const { data: unitsData } = useUnits({ limit: 200 });
   const listQuery = useListQuery(10);
-  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [priorityFilter, setPriorityFilter] = useState<string>("all");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } =
+    listQuery;
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   const fullQuery = {
     ...query,
-    status: statusFilter !== "all" ? (statusFilter as ServiceStatus) : undefined,
-    priority:
-      priorityFilter !== "all" ? (priorityFilter as ServicePriority) : undefined,
-    category:
-      categoryFilter !== "all" ? (categoryFilter as ServiceCategory) : undefined,
+    status: statusFilter !== 'all' ? (statusFilter as ServiceStatus) : undefined,
+    priority: priorityFilter !== 'all' ? (priorityFilter as ServicePriority) : undefined,
+    category: categoryFilter !== 'all' ? (categoryFilter as ServiceCategory) : undefined,
   };
 
   const { data, isLoading, isError, refetch } = useServiceRequests(fullQuery);
@@ -125,12 +116,12 @@ export default function ServiceRequestsPage() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     tenantId: getTenantId(),
-    unitId: "",
-    propertyId: "",
-    category: "general" as ServiceCategory,
-    priority: "medium" as ServicePriority,
-    description: "",
-    scheduledAt: "",
+    unitId: '',
+    propertyId: '',
+    category: 'general' as ServiceCategory,
+    priority: 'medium' as ServicePriority,
+    description: '',
+    scheduledAt: '',
   });
 
   const requests = data?.data ?? [];
@@ -154,17 +145,17 @@ export default function ServiceRequestsPage() {
         priority: form.priority,
         description: form.description,
         scheduledAt: form.scheduledAt || undefined,
-        status: "open",
+        status: 'open',
       });
       setOpen(false);
       setForm({
         tenantId: getTenantId(),
-        unitId: "",
-        propertyId: "",
-        category: "general",
-        priority: "medium",
-        description: "",
-        scheduledAt: "",
+        unitId: '',
+        propertyId: '',
+        category: 'general',
+        priority: 'medium',
+        description: '',
+        scheduledAt: '',
       });
       refetch();
     } finally {
@@ -188,12 +179,14 @@ export default function ServiceRequestsPage() {
         search={search}
         onSearchChange={setSearch}
         placeholder="Search requests…"
-        action={{ label: "New Request", onClick: () => setOpen(true) }}
         filters={
           <>
             <Select
               value={statusFilter}
-              onValueChange={(v) => { setStatusFilter(v); resetPage(); }}
+              onValueChange={(v) => {
+                setStatusFilter(v);
+                resetPage();
+              }}
             >
               <SelectTrigger className="w-full sm:w-36">
                 <SelectValue placeholder="Status" />
@@ -209,7 +202,10 @@ export default function ServiceRequestsPage() {
             </Select>
             <Select
               value={priorityFilter}
-              onValueChange={(v) => { setPriorityFilter(v); resetPage(); }}
+              onValueChange={(v) => {
+                setPriorityFilter(v);
+                resetPage();
+              }}
             >
               <SelectTrigger className="w-full sm:w-36">
                 <SelectValue placeholder="Priority" />
@@ -225,7 +221,10 @@ export default function ServiceRequestsPage() {
             </Select>
             <Select
               value={categoryFilter}
-              onValueChange={(v) => { setCategoryFilter(v); resetPage(); }}
+              onValueChange={(v) => {
+                setCategoryFilter(v);
+                resetPage();
+              }}
             >
               <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="Category" />
@@ -258,22 +257,44 @@ export default function ServiceRequestsPage() {
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                       ID
                     </th>
-                    <th {...sortHeader("category", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Category{sortIndicator("category")}
+                    <th
+                      {...sortHeader(
+                        'category',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Category{sortIndicator('category')}
                     </th>
-                    <th {...sortHeader("priority", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Priority{sortIndicator("priority")}
+                    <th
+                      {...sortHeader(
+                        'priority',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Priority{sortIndicator('priority')}
                     </th>
-                    <th {...sortHeader("status", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Status{sortIndicator("status")}
+                    <th
+                      {...sortHeader(
+                        'status',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Status{sortIndicator('status')}
                     </th>
-                    <th {...sortHeader("createdAt", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Requested{sortIndicator("createdAt")}
+                    <th
+                      {...sortHeader(
+                        'createdAt',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Requested{sortIndicator('createdAt')}
                     </th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                       Organization / Unit
                     </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -286,9 +307,7 @@ export default function ServiceRequestsPage() {
                       <td className="px-4 py-3 font-mono text-xs">
                         #{r.id.slice(0, 8).toUpperCase()}
                       </td>
-                      <td className="px-4 py-3 text-sm">
-                        {categoryMeta[r.category]}
-                      </td>
+                      <td className="px-4 py-3 text-sm">{categoryMeta[r.category]}</td>
                       <td className="px-4 py-3">
                         <Badge className={priorityMeta[r.priority].className}>
                           {priorityMeta[r.priority].label}
@@ -303,9 +322,9 @@ export default function ServiceRequestsPage() {
                         {new Date(r.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <div>{r.tenant?.name || "—"}</div>
+                        <div>{r.tenant?.name || '—'}</div>
                         <div className="text-xs text-muted-foreground">
-                          {r.unit?.unitNumber || "—"}
+                          {r.unit?.unitNumber || '—'}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -356,9 +375,7 @@ export default function ServiceRequestsPage() {
                 <Label>Unit</Label>
                 <Select
                   value={form.unitId}
-                  onValueChange={(v) =>
-                    setForm((f) => ({ ...f, unitId: v === "none" ? "" : v }))
-                  }
+                  onValueChange={(v) => setForm((f) => ({ ...f, unitId: v === 'none' ? '' : v }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select unit" />
@@ -378,7 +395,7 @@ export default function ServiceRequestsPage() {
                 <Select
                   value={form.propertyId}
                   onValueChange={(v) =>
-                    setForm((f) => ({ ...f, propertyId: v === "none" ? "" : v }))
+                    setForm((f) => ({ ...f, propertyId: v === 'none' ? '' : v }))
                   }
                 >
                   <SelectTrigger>
@@ -400,9 +417,7 @@ export default function ServiceRequestsPage() {
                 <Label>Category</Label>
                 <Select
                   value={form.category}
-                  onValueChange={(v) =>
-                    setForm((f) => ({ ...f, category: v as ServiceCategory }))
-                  }
+                  onValueChange={(v) => setForm((f) => ({ ...f, category: v as ServiceCategory }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -420,9 +435,7 @@ export default function ServiceRequestsPage() {
                 <Label>Priority</Label>
                 <Select
                   value={form.priority}
-                  onValueChange={(v) =>
-                    setForm((f) => ({ ...f, priority: v as ServicePriority }))
-                  }
+                  onValueChange={(v) => setForm((f) => ({ ...f, priority: v as ServicePriority }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -460,10 +473,7 @@ export default function ServiceRequestsPage() {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleCreate}
-              disabled={saving || !form.description}
-            >
+            <Button onClick={handleCreate} disabled={saving || !form.description}>
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Create
             </Button>
@@ -478,9 +488,11 @@ export default function ServiceRequestsPage() {
             <DDialogDescription>Are you sure? This cannot be undone.</DDialogDescription>
           </DDialogHeader>
           <DDialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleteRequest.isPending}>
-              {deleteRequest.isPending ? "Deleting..." : "Delete"}
+              {deleteRequest.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </DDialogFooter>
         </DDialogContent>
@@ -488,5 +500,3 @@ export default function ServiceRequestsPage() {
     </div>
   );
 }
-
-

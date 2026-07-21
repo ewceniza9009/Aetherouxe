@@ -1,20 +1,20 @@
-import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { useListQuery } from "@/hooks/use-list-query";
-import { GridToolbar, GridState } from "@/components/GridToolbar";
-import { ListPager } from "@/components/ListPager";
-import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
+import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useListQuery } from '@/hooks/use-list-query';
+import { GridToolbar, GridState } from '@/components/GridToolbar';
+import { ListPager } from '@/components/ListPager';
+import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui"; // upload dialog
+} from '@elite-realty/shared-ui/components/ui'; // upload dialog
 import {
   Dialog as DDialog,
   DialogContent as DDialogContent,
@@ -30,15 +30,8 @@ import {
   DialogFooter as DDialogFooter,
   DialogHeader as DDialogHeader,
   DialogTitle as DDialogTitle,
-} from "@elite-realty/shared-ui/components/ui"; // delete dialog
-import {
-  Plus,
-  FileText,
-  Loader2,
-  Link2,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+} from '@elite-realty/shared-ui/components/ui'; // delete dialog
+import { Plus, FileText, Loader2, Link2, Pencil, Trash2 } from 'lucide-react';
 import {
   useDocuments,
   useUploadDocument,
@@ -46,7 +39,7 @@ import {
   type DocumentVault,
   type DocumentOwnerType,
   type DocumentType,
-} from "@/hooks/use-documents";
+} from '@/hooks/use-documents';
 import {
   Dialog as DeleteDialog,
   DialogContent as DeleteDialogContent,
@@ -54,71 +47,71 @@ import {
   DialogFooter as DeleteDialogFooter,
   DialogHeader as DeleteDialogHeader,
   DialogTitle as DeleteDialogTitle,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 
 const ownerTypeMeta: Record<DocumentOwnerType, string> = {
-  property: "Property",
-  unit: "Unit",
-  tenant: "Tenant",
-  lease: "Lease",
-  owner: "Owner",
-  rto: "RTO",
-  project: "Project",
-  vendor: "Vendor",
+  property: 'Property',
+  unit: 'Unit',
+  tenant: 'Tenant',
+  lease: 'Lease',
+  owner: 'Owner',
+  rto: 'RTO',
+  project: 'Project',
+  vendor: 'Vendor',
 };
 
 const docTypeMeta: Record<DocumentType, { label: string; className: string }> = {
   lease_agreement: {
-    label: "Lease Agreement",
-    className: "bg-blue-100 text-blue-700 border-blue-200",
+    label: 'Lease Agreement',
+    className: 'bg-blue-100 text-blue-700 border-blue-200',
   },
   contract: {
-    label: "Contract",
-    className: "bg-indigo-100 text-indigo-700 border-indigo-200",
+    label: 'Contract',
+    className: 'bg-indigo-100 text-indigo-700 border-indigo-200',
   },
   id_proof: {
-    label: "ID Proof",
-    className: "bg-muted text-muted-foreground border-border",
+    label: 'ID Proof',
+    className: 'bg-muted text-muted-foreground border-border',
   },
   invoice: {
-    label: "Invoice",
-    className: "bg-amber-100 text-amber-700 border-amber-200",
+    label: 'Invoice',
+    className: 'bg-amber-100 text-amber-700 border-amber-200',
   },
   statement: {
-    label: "Statement",
-    className: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    label: 'Statement',
+    className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   },
   permit: {
-    label: "Permit",
-    className: "bg-violet-100 text-violet-700 border-violet-200",
+    label: 'Permit',
+    className: 'bg-violet-100 text-violet-700 border-violet-200',
   },
   insurance: {
-    label: "Insurance",
-    className: "bg-cyan-100 text-cyan-700 border-cyan-200",
+    label: 'Insurance',
+    className: 'bg-cyan-100 text-cyan-700 border-cyan-200',
   },
   title_deed: {
-    label: "Title Deed",
-    className: "bg-rose-100 text-rose-700 border-rose-200",
+    label: 'Title Deed',
+    className: 'bg-rose-100 text-rose-700 border-rose-200',
   },
   maintenance_record: {
-    label: "Maintenance Record",
-    className: "bg-orange-100 text-orange-700 border-orange-200",
+    label: 'Maintenance Record',
+    className: 'bg-orange-100 text-orange-700 border-orange-200',
   },
-  other: { label: "Other", className: "bg-muted text-muted-foreground border-border" },
+  other: { label: 'Other', className: 'bg-muted text-muted-foreground border-border' },
 };
 
 export default function DocumentsPage() {
   const navigate = useNavigate();
   const listQuery = useListQuery(10);
-  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } = listQuery;
-  const [ownerTypeFilter, setOwnerTypeFilter] = useState<string>("all");
-  const [signedFilter, setSignedFilter] = useState<string>("all");
+  const { search, setSearch, page, setPage, resetPage, query, sortHeader, sortIndicator } =
+    listQuery;
+  const [ownerTypeFilter, setOwnerTypeFilter] = useState<string>('all');
+  const [signedFilter, setSignedFilter] = useState<string>('all');
 
   const fullQuery = {
     ...query,
-    ownerType:
-      ownerTypeFilter !== "all" ? (ownerTypeFilter as DocumentOwnerType) : undefined,
-    isSigned: signedFilter === "signed" ? true : signedFilter === "unsigned" ? false : undefined,
+    ownerType: ownerTypeFilter !== 'all' ? (ownerTypeFilter as DocumentOwnerType) : undefined,
+    isSigned: signedFilter === 'signed' ? true : signedFilter === 'unsigned' ? false : undefined,
   };
 
   const { data, isLoading, isError, refetch } = useDocuments(fullQuery);
@@ -129,13 +122,13 @@ export default function DocumentsPage() {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    ownerType: "property" as DocumentOwnerType,
-    ownerId: "",
-    documentType: "contract" as DocumentType,
-    title: "",
-    fileName: "",
-    fileUrl: "",
-    expiryDate: "",
+    ownerType: 'property' as DocumentOwnerType,
+    ownerId: '',
+    documentType: 'contract' as DocumentType,
+    title: '',
+    fileName: '',
+    fileUrl: '',
+    expiryDate: '',
   });
 
   const documents = data?.data ?? [];
@@ -163,13 +156,13 @@ export default function DocumentsPage() {
       });
       setOpen(false);
       setForm({
-        ownerType: "property",
-        ownerId: "",
-        documentType: "contract",
-        title: "",
-        fileName: "",
-        fileUrl: "",
-        expiryDate: "",
+        ownerType: 'property',
+        ownerId: '',
+        documentType: 'contract',
+        title: '',
+        fileName: '',
+        fileUrl: '',
+        expiryDate: '',
       });
       refetch();
     } finally {
@@ -193,12 +186,14 @@ export default function DocumentsPage() {
         search={search}
         onSearchChange={setSearch}
         placeholder="Search documents…"
-        action={{ label: "Upload Document", onClick: () => setOpen(true) }}
         filters={
           <>
             <Select
               value={ownerTypeFilter}
-              onValueChange={(v) => { setOwnerTypeFilter(v); resetPage(); }}
+              onValueChange={(v) => {
+                setOwnerTypeFilter(v);
+                resetPage();
+              }}
             >
               <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="Owner Type" />
@@ -214,7 +209,10 @@ export default function DocumentsPage() {
             </Select>
             <Select
               value={signedFilter}
-              onValueChange={(v) => { setSignedFilter(v); resetPage(); }}
+              onValueChange={(v) => {
+                setSignedFilter(v);
+                resetPage();
+              }}
             >
               <SelectTrigger className="w-full sm:w-36">
                 <SelectValue placeholder="Signed" />
@@ -244,22 +242,44 @@ export default function DocumentsPage() {
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                       Owner
                     </th>
-                    <th {...sortHeader("documentType", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Type{sortIndicator("documentType")}
+                    <th
+                      {...sortHeader(
+                        'documentType',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Type{sortIndicator('documentType')}
                     </th>
-                    <th {...sortHeader("title", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Title{sortIndicator("title")}
+                    <th
+                      {...sortHeader(
+                        'title',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Title{sortIndicator('title')}
                     </th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                       File
                     </th>
-                    <th {...sortHeader("expiryDate", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Expiry{sortIndicator("expiryDate")}
+                    <th
+                      {...sortHeader(
+                        'expiryDate',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Expiry{sortIndicator('expiryDate')}
                     </th>
-                    <th {...sortHeader("isSigned", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Signed{sortIndicator("isSigned")}
+                    <th
+                      {...sortHeader(
+                        'isSigned',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Signed{sortIndicator('isSigned')}
                     </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -291,14 +311,14 @@ export default function DocumentsPage() {
                             onClick={(e) => e.stopPropagation()}
                           >
                             <Link2 className="h-3.5 w-3.5" />
-                            {d.fileName || "open"}
+                            {d.fileName || 'open'}
                           </a>
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {d.expiryDate ? new Date(d.expiryDate).toLocaleDateString() : "—"}
+                        {d.expiryDate ? new Date(d.expiryDate).toLocaleDateString() : '—'}
                       </td>
                       <td className="px-4 py-3">
                         {d.isSigned ? (
@@ -386,9 +406,7 @@ export default function DocumentsPage() {
                 <Label>Document Type</Label>
                 <Select
                   value={form.documentType}
-                  onValueChange={(v) =>
-                    setForm((f) => ({ ...f, documentType: v as DocumentType }))
-                  }
+                  onValueChange={(v) => setForm((f) => ({ ...f, documentType: v as DocumentType }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -446,10 +464,7 @@ export default function DocumentsPage() {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleUpload}
-              disabled={saving || !form.ownerId || !form.title}
-            >
+            <Button onClick={handleUpload} disabled={saving || !form.ownerId || !form.title}>
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Upload
             </Button>
@@ -464,9 +479,15 @@ export default function DocumentsPage() {
             <DDialogDescription>Are you sure? This cannot be undone.</DDialogDescription>
           </DDialogHeader>
           <DDialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleteDocument.isPending}>
-              {deleteDocument.isPending ? "Deleting..." : "Delete"}
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteDocument.isPending}
+            >
+              {deleteDocument.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </DDialogFooter>
         </DDialogContent>
@@ -474,5 +495,3 @@ export default function DocumentsPage() {
     </div>
   );
 }
-
-

@@ -1,12 +1,18 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
-import { Textarea } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
-import { Separator } from "@elite-realty/shared-ui/components/ui";
+import { useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { Textarea } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
+import { Separator } from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -14,15 +20,15 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
-import { Wrench, Plus, Loader2, AlertCircle, Inbox } from "lucide-react";
+} from '@elite-realty/shared-ui/components/ui';
+import { Wrench, Plus, Loader2, AlertCircle, Inbox } from 'lucide-react';
 import {
   useMyServiceRequests,
   useCreateServiceRequest,
@@ -34,15 +40,15 @@ import {
   type ServicePriority,
   type ServiceRequest,
   type ServiceStatus,
-} from "@/hooks/use-resident-portal";
+} from '@/hooks/use-resident-portal';
 
-const STATUS_FLOW: ServiceStatus[] = ["submitted", "in_progress", "scheduled", "completed"];
+const STATUS_FLOW: ServiceStatus[] = ['submitted', 'in_progress', 'scheduled', 'completed'];
 
 function StatusTracker({ status }: { status: ServiceStatus }) {
-  if (status === "cancelled") {
+  if (status === 'cancelled') {
     return <p className="text-xs font-medium text-gray-500">Cancelled</p>;
   }
-  const currentIndex = STATUS_FLOW.indexOf(status === "on_hold" ? "in_progress" : status);
+  const currentIndex = STATUS_FLOW.indexOf(status === 'on_hold' ? 'in_progress' : status);
   return (
     <div className="flex items-center gap-1.5">
       {STATUS_FLOW.map((step, i) => {
@@ -51,12 +57,14 @@ function StatusTracker({ status }: { status: ServiceStatus }) {
         return (
           <div key={step} className="flex items-center gap-1.5">
             <div
-              className={`h-2 w-2 rounded-full ${done ? "bg-primary" : "bg-muted-foreground/25"} ${
-                isCurrent ? "ring-2 ring-primary/30" : ""
+              className={`h-2 w-2 rounded-full ${done ? 'bg-primary' : 'bg-muted-foreground/25'} ${
+                isCurrent ? 'ring-2 ring-primary/30' : ''
               }`}
             />
             {i < STATUS_FLOW.length - 1 && (
-              <div className={`h-0.5 w-5 ${i < currentIndex ? "bg-primary" : "bg-muted-foreground/20"}`} />
+              <div
+                className={`h-0.5 w-5 ${i < currentIndex ? 'bg-primary' : 'bg-muted-foreground/20'}`}
+              />
             )}
           </div>
         );
@@ -67,17 +75,17 @@ function StatusTracker({ status }: { status: ServiceStatus }) {
 
 function NewRequestDialog() {
   const [open, setOpen] = useState(false);
-  const [category, setCategory] = useState<ServiceCategory | "">("");
-  const [priority, setPriority] = useState<ServicePriority>("medium");
-  const [description, setDescription] = useState("");
-  const [unit, setUnit] = useState("");
+  const [category, setCategory] = useState<ServiceCategory | ''>('');
+  const [priority, setPriority] = useState<ServicePriority>('medium');
+  const [description, setDescription] = useState('');
+  const [unit, setUnit] = useState('');
   const createRequest = useCreateServiceRequest();
 
   const reset = () => {
-    setCategory("");
-    setPriority("medium");
-    setDescription("");
-    setUnit("");
+    setCategory('');
+    setPriority('medium');
+    setDescription('');
+    setUnit('');
   };
 
   const handleSubmit = async () => {
@@ -155,10 +163,19 @@ function NewRequestDialog() {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => { reset(); setOpen(false); }}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              reset();
+              setOpen(false);
+            }}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!category || !description.trim() || createRequest.isPending}>
+          <Button
+            onClick={handleSubmit}
+            disabled={!category || !description.trim() || createRequest.isPending}
+          >
             {createRequest.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Submit Request
           </Button>
@@ -173,13 +190,13 @@ function RequestRow({ req }: { req: ServiceRequest }) {
   const priority = SERVICE_PRIORITY_STYLES[req.priority];
   const status = SERVICE_STATUS_STYLES[req.status];
   const accent =
-    req.status === "completed"
-      ? "border-l-emerald-500"
-      : req.status === "cancelled"
-        ? "border-l-gray-400"
-        : req.status === "on_hold"
-          ? "border-l-amber-500"
-          : "border-l-primary";
+    req.status === 'completed'
+      ? 'border-l-emerald-500'
+      : req.status === 'cancelled'
+        ? 'border-l-gray-400'
+        : req.status === 'on_hold'
+          ? 'border-l-amber-500'
+          : 'border-l-primary';
 
   return (
     <div className={`p-4 rounded-lg border border-l-4 ${accent} hover:bg-muted/30`}>
@@ -199,8 +216,8 @@ function RequestRow({ req }: { req: ServiceRequest }) {
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {req.id} &middot; {req.unitLabel || req.propertyName || "My residence"} &middot; Requested{" "}
-              {formatDate(req.requestedDate ?? req.createdAt)}
+              {req.id} &middot; {req.unitLabel || req.propertyName || 'My residence'} &middot;
+              Requested {formatDate(req.requestedDate ?? req.createdAt)}
             </p>
           </div>
         </div>
@@ -240,7 +257,9 @@ export default function ServiceRequestsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Request History</CardTitle>
-          <CardDescription>Track the progress of each request from submission to completion</CardDescription>
+          <CardDescription>
+            Track the progress of each request from submission to completion
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -278,5 +297,3 @@ export default function ServiceRequestsPage() {
     </div>
   );
 }
-
-

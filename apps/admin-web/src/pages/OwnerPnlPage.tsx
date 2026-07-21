@@ -128,12 +128,7 @@ export default function OwnerPnlPage() {
         )}
       </div>
 
-      <GridToolbar
-        search={search}
-        onSearchChange={setSearch}
-        placeholder="Search statements…"
-        action={{ label: 'Generate Statement', onClick: () => setOpen(true) }}
-      />
+      <GridToolbar search={search} onSearchChange={setSearch} placeholder="Search statements…" />
 
       <Card>
         <CardContent className="pt-6">
