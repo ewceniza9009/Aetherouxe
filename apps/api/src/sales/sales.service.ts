@@ -289,7 +289,7 @@ export class SalesService {
           await tx.journalEntry.create({
             data: {
               tenantId,
-              reference: `SALE-${lease.id.substring(0, 8)}`,
+              reference: `SALE-${lease.id}`,
               notes: `Sale Contract Signed for unit ${unit.unitNumber} (${scheme.schemeType})`,
               lines: {
                 create: [
@@ -586,7 +586,7 @@ export class SalesService {
           transactionType: 'option_fee',
           amount: optionFee,
           runningBalance: optionFee,
-          reference: `RTO-INIT-${rto.id.slice(0, 8).toUpperCase()}`,
+          reference: `RTO-INIT-${rto.id}`,
           createdByUserId: performedByUserId,
         },
       });

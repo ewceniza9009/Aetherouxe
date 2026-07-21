@@ -97,15 +97,21 @@ function classifyEntry(entry: GlEntry): string {
   return 'other';
 }
 
-function glSourceLink(entry: GlEntry): { href: string } | null {
+function glSourceLink(entry: any): { href: string } | null {
   if (entry.sourceType === 'SERVICE_REQUEST' && entry.sourceId) {
     return { href: `/service-requests/${entry.sourceId}` };
   }
-  if (entry.sourceType === 'COMMISSION' && entry.parentId) {
-    return { href: `/agents/${entry.parentId}` };
+  if (entry.sourceType === 'COMMISSION') {
+    if (entry.parentId) return { href: `/agents/${entry.parentId}` };
+    return { href: '/finance/commission-aging' };
   }
-  if (entry.sourceType === 'TITLE_TRANSFER' && entry.parentId) {
-    return { href: `/properties/${entry.parentId}` };
+  if (entry.sourceType === 'TITLE_TRANSFER') {
+    const propId = entry.propertyId || entry.parentId || entry.sourceId;
+    if (propId && /^[0-9a-f-]{20,}$/i.test(propId)) {
+      return { href: `/properties/${propId}` };
+    }
+    if (entry.sourceId) return { href: `/properties?title=${encodeURIComponent(entry.sourceId)}` };
+    return { href: '/properties' };
   }
   if (entry.sourceType === 'DISBURSEMENT') {
     return { href: '/finance/disbursements' };

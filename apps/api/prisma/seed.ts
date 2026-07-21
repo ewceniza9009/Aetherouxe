@@ -1878,6 +1878,26 @@ async function main() {
     return `AP-${prefix}-${new Date().getFullYear()}-${String(apInvoiceSeq).padStart(4, '0')}`;
   };
 
+  const agentCodeMap = new Map<string, string>();
+  let agentSeq = 0;
+  const nextAgentCode = (agentId: string) => {
+    if (!agentCodeMap.has(agentId)) {
+      agentSeq += 1;
+      agentCodeMap.set(agentId, `AGT-${String(agentSeq).padStart(3, '0')}`);
+    }
+    return agentCodeMap.get(agentId)!;
+  };
+
+  const commissionTxnRefMap = new Map<string, string>();
+  let commissionSeq = 0;
+  const nextCommissionRef = (txId: string) => {
+    if (!commissionTxnRefMap.has(txId)) {
+      commissionSeq += 1;
+      commissionTxnRefMap.set(txId, `COMM-${String(commissionSeq).padStart(4, '0')}`);
+    }
+    return commissionTxnRefMap.get(txId)!;
+  };
+
   const postCommissionAccrual = async (tx: any, vendor: any, propertyCode?: string) => {
     const amount = Number(tx.finalCommission ?? 0);
     if (amount <= 0) return null;
@@ -1897,10 +1917,11 @@ async function main() {
       },
     });
     if (mapping?.debitAccountId && mapping?.creditAccountId) {
+      const ref = nextCommissionRef(tx.id);
       await prisma.journalEntry.create({
         data: {
           tenantId: tenant.id,
-          reference: `COMM-ACC-${tx.agentId}:${tx.id}`,
+          reference: ref,
           notes: `Commission accrual for agent ${vendor.companyName}`,
           lines: {
             create: [
@@ -1922,6 +1943,7 @@ async function main() {
     return invoice;
   };
 
+  let paymentSeq = 0;
   const postCommissionPayment = async (invoice: any, vendor: any, amount: number, ref: string) => {
     await prisma.apDisbursement.create({
       data: {
@@ -1933,10 +1955,12 @@ async function main() {
       },
     });
     if (cashAcc && apAcc) {
+      paymentSeq += 1;
+      const payRef = `COMM-PAY-${String(paymentSeq).padStart(4, '0')}`;
       await prisma.journalEntry.create({
         data: {
           tenantId: tenant.id,
-          reference: `COMM-PAY-${ref}`,
+          reference: payRef,
           notes: `Commission payout for ${vendor.companyName}`,
           lines: {
             create: [
@@ -2510,7 +2534,7 @@ async function main() {
           await prisma.journalEntry.create({
             data: {
               tenantId: tenant.id,
-              reference: `AP-AP-${req.id}`,
+              reference: `SVC-AP-${req.id}`,
               notes: `Work order for ${req.description.slice(0, 60)}`,
               lines: {
                 create: [
@@ -2867,7 +2891,7 @@ async function main() {
         await prisma.journalEntry.create({
           data: {
             tenantId: tenant.id,
-            reference: `SALE-CONTRACT-${tt.propertyId}:${tt.titleNumber ?? created.id}`,
+            reference: `SALE-${tt.titleNumber ?? created.id}`,
             notes: `Property sale completed. ${tt.notes ?? 'Sale closed.'}`,
             lines: {
               create: [

@@ -240,7 +240,7 @@ export class AgentTransactionsService {
       await this.prisma.journalEntry.create({
         data: {
           tenantId: tx.agent?.user?.tenantId || tx.property?.tenantId,
-          reference: `COMM-ACC-${tx.id.substring(0, 8)}`,
+          reference: `COMM-${tx.id}`,
           notes: `Commission accrual for agent ${contractor.companyName}`,
           lines: {
             create: [

@@ -30,33 +30,36 @@ export class GeneralLedgerService {
 
   private parseSource(reference?: string | null): GlEntrySource {
     const ref = reference ?? '';
-    // COMM-ACC-{agentId}:{txId}
+    // COMM-{seq}            -> commission accrual (drill to agent transaction by seq)
+    if (/^COMM-\d+$/.test(ref)) {
+      return { sourceType: 'COMMISSION', sourceId: ref };
+    }
+    // COMM-PAY-{seq or id}  -> commission payment (drill into AP disbursement list)
+    if (/^COMM-PAY-/.test(ref)) {
+      return { sourceType: 'COMMISSION', sourceId: ref };
+    }
+    // DISB-WO-{source}      -> work-order AP disbursement
+    if (ref.startsWith('DISB-WO-')) {
+      return { sourceType: 'DISBURSEMENT', sourceId: ref.slice(8) };
+    }
+    // SVC-AP-{sourceId}     -> service-request AP invoice (drill into service request)
+    if (ref.startsWith('SVC-AP-')) {
+      return { sourceType: 'SERVICE_REQUEST', sourceId: ref.slice(7) };
+    }
+    // SALE-{title}          -> title transfer / sale; drill to property via DB lookup
+    if (ref.startsWith('SALE-')) {
+      return { sourceType: 'TITLE_TRANSFER', sourceId: ref.slice(5) };
+    }
+    // Backwards-compat: legacy AP-AP- / COMM-ACC- / SALE-CONTRACT-
+    if (ref.startsWith('AP-AP-')) {
+      return { sourceType: 'SERVICE_REQUEST', sourceId: ref.slice(6) };
+    }
     if (ref.startsWith('COMM-ACC-')) {
-      const rest = ref.slice(9);
-      const colon = rest.indexOf(':');
-      if (colon > 0)
-        return {
-          sourceType: 'COMMISSION',
-          sourceId: rest.slice(colon + 1),
-          parentId: rest.slice(0, colon),
-        };
-      return { sourceType: 'COMMISSION', sourceId: rest };
+      return { sourceType: 'COMMISSION', sourceId: ref.slice(9) };
     }
-    if (ref.startsWith('COMM-PAY-')) return { sourceType: 'COMMISSION', sourceId: ref.slice(9) };
-    if (ref.startsWith('AP-AP-')) return { sourceType: 'SERVICE_REQUEST', sourceId: ref.slice(6) };
-    // SALE-CONTRACT-{propertyId}:{ttId}
     if (ref.startsWith('SALE-CONTRACT-')) {
-      const rest = ref.slice(14);
-      const colon = rest.indexOf(':');
-      if (colon > 0)
-        return {
-          sourceType: 'TITLE_TRANSFER',
-          sourceId: rest.slice(colon + 1),
-          parentId: rest.slice(0, colon),
-        };
-      return { sourceType: 'TITLE_TRANSFER', sourceId: rest };
+      return { sourceType: 'TITLE_TRANSFER', sourceId: ref.slice(14) };
     }
-    if (ref.startsWith('DISB-WO-')) return { sourceType: 'DISBURSEMENT', sourceId: ref.slice(8) };
     return {};
   }
 
@@ -64,8 +67,13 @@ export class GeneralLedgerService {
     const ref = (entry.reference ?? '').toLowerCase();
     const notes = (entry.notes ?? '').toLowerCase();
     if (ref.startsWith('sale-')) return 'sale';
+    if (ref.startsWith('comm-pay-')) return 'disbursement';
     if (ref.startsWith('comm-') || notes.includes('commission')) return 'commission';
-    if (ref.startsWith('ap-ap-') || (ref.startsWith('ap-') && notes.includes('work order')))
+    if (
+      ref.startsWith('ap-ap-') ||
+      ref.startsWith('svc-ap-') ||
+      (ref.startsWith('ap-') && notes.includes('work order'))
+    )
       return 'service';
     if (ref.startsWith('disb-') || (ref.startsWith('ap-') && !ref.startsWith('ap-ap-')))
       return 'disbursement';
@@ -114,7 +122,7 @@ export class GeneralLedgerService {
           notesContains.push('commission');
           break;
         case 'service':
-          refPrefixes.push('ap-ap-');
+          refPrefixes.push('ap-ap-', 'svc-ap-');
           notesContains.push('work order', 'maintenance');
           break;
         case 'disbursement':
@@ -168,6 +176,32 @@ export class GeneralLedgerService {
     const totalCredit = Number(summaryRows._sum.creditAmount ?? 0);
 
     const enriched = data.map((entry) => ({ ...entry, ...this.parseSource(entry.reference) }));
+
+    // Resolve TITLE_TRANSFER sourceId (title number like CCT-2025-00067)
+    // to a real Property ID for drill-down; populate `propertyId` on the row.
+    const transferEntries = enriched.filter((e: any) => e.sourceType === 'TITLE_TRANSFER');
+    if (transferEntries.length > 0) {
+      const titleSet = new Set(transferEntries.map((e: any) => e.sourceId).filter(Boolean));
+      if (titleSet.size > 0) {
+        const transfers = await this.prisma.titleTransfer.findMany({
+          where: {
+            tenantId,
+            titleNumber: { in: Array.from(titleSet) as string[], mode: 'insensitive' } as any,
+          },
+          select: { titleNumber: true, propertyId: true },
+        });
+        const titleToProp = new Map(
+          transfers
+            .filter((t: any) => t.titleNumber)
+            .map((t: any) => [String(t.titleNumber).toLowerCase(), t.propertyId] as const),
+        );
+        for (const e of transferEntries) {
+          const key = e.sourceId ? String(e.sourceId).toLowerCase() : null;
+          const propId = key ? titleToProp.get(key) : null;
+          if (propId) e.propertyId = propId;
+        }
+      }
+    }
 
     return {
       data: enriched,

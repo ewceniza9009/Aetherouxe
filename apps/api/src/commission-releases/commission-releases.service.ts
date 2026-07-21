@@ -130,7 +130,7 @@ export class CommissionReleasesService {
           tenantId,
           sourceType: 'COMMISSION',
           sourceId: release.id,
-          invoiceNumber: `COMM-${release.id.substring(0, 8)}`,
+          invoiceNumber: `COMM-REL-${release.id}`,
           amount: dto.amount,
           status: 'paid',
           dueDate: paymentDate,
@@ -148,7 +148,7 @@ export class CommissionReleasesService {
       await this.prisma.journalEntry.create({
         data: {
           tenantId,
-          reference: `COMM-${release.id.substring(0, 8)}`,
+          reference: `COMM-PAY-${release.id}`,
           notes: `Commission payout for Transaction ${tx.id}`,
           lines: {
             create: [
