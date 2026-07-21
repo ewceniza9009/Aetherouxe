@@ -24,7 +24,7 @@
     "playwright": "^1.61.1",
     "prettier": "^3.4.0",
     "turbo": "^2.5.0",
-    "typescript": "^5.7.0"
+    "typescript": "^7.0.2"
   },
   "workspaces": [
     "apps/*",
