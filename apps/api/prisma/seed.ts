@@ -1585,7 +1585,7 @@ async function main() {
   /* ── Utility Meters, Readings, Bills ── */
   let billCount = 0;
   const billedUnits = allUnits.filter((u) => leasedUnitIds.has(u.id));
-  for (const unit of pickN(billedUnits, Math.min(40, billedUnits.length))) {
+  for (const unit of pickN(billedUnits, Math.min(6, billedUnits.length))) {
     for (const meterType of [UtilityType.water, UtilityType.electricity]) {
       const meter = await prisma.utilityMeter.create({
         data: {
@@ -1600,7 +1600,7 @@ async function main() {
         },
       });
       let prev = faker.number.int({ min: 100, max: 500 });
-      const months = faker.number.int({ min: 3, max: 6 });
+      const months = 2;
       const now = new Date();
       for (let m = months; m >= 1; m--) {
         const periodEnd = new Date(now.getFullYear(), now.getMonth() - m + 1, 1);

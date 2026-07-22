@@ -367,7 +367,7 @@ export default function ServiceRequestDetailPage() {
 
       {/* Tabs — fixed min-height to prevent layout shift */}
       <Tabs defaultValue="workorders">
-        <TabsList>
+        <TabsList className="w-full justify-start">
           <TabsTrigger value="workorders">
             <Wrench className="h-3.5 w-3.5 mr-1.5" />
             Work Orders

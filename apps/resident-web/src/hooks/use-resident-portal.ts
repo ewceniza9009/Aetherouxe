@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@elite-realty/shared-ui/lib/api';
 import { useAuth } from '@elite-realty/shared-ui/hooks';
 import type { ApiResponse } from '@elite-realty/shared-types';
@@ -116,83 +116,122 @@ export interface ResidentDocument {
  * Small inline color / label maps
  * ------------------------------------------------------------------ */
 
-export const AMENITY_TYPE_STYLES: Record<AmenityType, { label: string; className: string }> = {
-  gym: { label: 'Gym', className: 'bg-rose-100 text-rose-700' },
-  pool: { label: 'Pool', className: 'bg-sky-100 text-sky-700' },
-  lounge: { label: 'Lounge', className: 'bg-violet-100 text-violet-700' },
-  parking: { label: 'Parking', className: 'bg-slate-100 text-slate-700' },
-  rooftop: { label: 'Rooftop', className: 'bg-amber-100 text-amber-700' },
-  bbq: { label: 'BBQ', className: 'bg-orange-100 text-orange-700' },
-  study: { label: 'Study', className: 'bg-teal-100 text-teal-700' },
-  tennis: { label: 'Tennis', className: 'bg-lime-100 text-lime-700' },
-  sauna: { label: 'Sauna', className: 'bg-pink-100 text-pink-700' },
-  playground: { label: 'Playground', className: 'bg-cyan-100 text-cyan-700' },
-  other: { label: 'Other', className: 'bg-gray-100 text-gray-700' },
-};
+const defaultStyle = { label: 'General', className: 'bg-gray-100 text-gray-700' };
 
-export const BOOKING_STATUS_STYLES: Record<BookingStatus, { label: string; className: string }> = {
-  requested: { label: 'Requested', className: 'bg-amber-100 text-amber-700' },
-  confirmed: { label: 'Confirmed', className: 'bg-emerald-100 text-emerald-700' },
-  completed: { label: 'Completed', className: 'bg-blue-100 text-blue-700' },
-  cancelled: { label: 'Cancelled', className: 'bg-gray-100 text-gray-600' },
-};
+export const AMENITY_TYPE_STYLES: Record<string, { label: string; className: string }> = new Proxy(
+  {
+    gym: { label: 'Gym', className: 'bg-rose-100 text-rose-700' },
+    pool: { label: 'Pool', className: 'bg-sky-100 text-sky-700' },
+    lounge: { label: 'Lounge', className: 'bg-violet-100 text-violet-700' },
+    parking: { label: 'Parking', className: 'bg-slate-100 text-slate-700' },
+    rooftop: { label: 'Rooftop', className: 'bg-amber-100 text-amber-700' },
+    bbq: { label: 'BBQ', className: 'bg-orange-100 text-orange-700' },
+    study: { label: 'Study', className: 'bg-teal-100 text-teal-700' },
+    tennis: { label: 'Tennis', className: 'bg-lime-100 text-lime-700' },
+    sauna: { label: 'Sauna', className: 'bg-pink-100 text-pink-700' },
+    playground: { label: 'Playground', className: 'bg-cyan-100 text-cyan-700' },
+    other: { label: 'Other', className: 'bg-gray-100 text-gray-700' },
+  },
+  {
+    get: (t: Record<string, { label: string; className: string }>, p: string) =>
+      t[p] ?? defaultStyle,
+  },
+);
 
-export const POST_TYPE_STYLES: Record<CommunityPostType, { label: string; className: string }> = {
-  announcement: { label: 'Announcement', className: 'bg-primary/15 text-primary' },
-  event: { label: 'Event', className: 'bg-violet-100 text-violet-700' },
-  general: { label: 'General', className: 'bg-slate-100 text-slate-700' },
-  alert: { label: 'Alert', className: 'bg-rose-100 text-rose-700' },
-};
+export const BOOKING_STATUS_STYLES: Record<string, { label: string; className: string }> =
+  new Proxy(
+    {
+      requested: { label: 'Requested', className: 'bg-amber-100 text-amber-700' },
+      confirmed: { label: 'Confirmed', className: 'bg-emerald-100 text-emerald-700' },
+      completed: { label: 'Completed', className: 'bg-blue-100 text-blue-700' },
+      cancelled: { label: 'Cancelled', className: 'bg-gray-100 text-gray-600' },
+    },
+    {
+      get: (t: Record<string, { label: string; className: string }>, p: string) =>
+        t[p] ?? defaultStyle,
+    },
+  );
 
-export const SERVICE_CATEGORY_STYLES: Record<
-  ServiceCategory,
-  { label: string; className: string }
-> = {
-  maintenance: { label: 'Maintenance', className: 'bg-slate-100 text-slate-700' },
-  plumbing: { label: 'Plumbing', className: 'bg-sky-100 text-sky-700' },
-  electrical: { label: 'Electrical', className: 'bg-amber-100 text-amber-700' },
-  hvac: { label: 'HVAC', className: 'bg-cyan-100 text-cyan-700' },
-  appliance: { label: 'Appliance', className: 'bg-teal-100 text-teal-700' },
-  pest_control: { label: 'Pest Control', className: 'bg-lime-100 text-lime-700' },
-  landscaping: { label: 'Landscaping', className: 'bg-green-100 text-green-700' },
-  security: { label: 'Security', className: 'bg-rose-100 text-rose-700' },
-  other: { label: 'Other', className: 'bg-gray-100 text-gray-700' },
-};
+export const POST_TYPE_STYLES: Record<string, { label: string; className: string }> = new Proxy(
+  {
+    announcement: { label: 'Announcement', className: 'bg-primary/15 text-primary' },
+    event: { label: 'Event', className: 'bg-violet-100 text-violet-700' },
+    general: { label: 'General', className: 'bg-slate-100 text-slate-700' },
+    alert: { label: 'Alert', className: 'bg-rose-100 text-rose-700' },
+  },
+  {
+    get: (t: Record<string, { label: string; className: string }>, p: string) =>
+      t[p] ?? defaultStyle,
+  },
+);
 
-export const SERVICE_PRIORITY_STYLES: Record<
-  ServicePriority,
-  { label: string; className: string }
-> = {
-  low: { label: 'Low', className: 'bg-slate-100 text-slate-600' },
-  medium: { label: 'Medium', className: 'bg-blue-100 text-blue-700' },
-  high: { label: 'High', className: 'bg-orange-100 text-orange-700' },
-  urgent: { label: 'Urgent', className: 'bg-rose-100 text-rose-700' },
-};
+export const SERVICE_CATEGORY_STYLES: Record<string, { label: string; className: string }> =
+  new Proxy(
+    {
+      maintenance: { label: 'Maintenance', className: 'bg-slate-100 text-slate-700' },
+      plumbing: { label: 'Plumbing', className: 'bg-sky-100 text-sky-700' },
+      electrical: { label: 'Electrical', className: 'bg-amber-100 text-amber-700' },
+      hvac: { label: 'HVAC', className: 'bg-cyan-100 text-cyan-700' },
+      appliance: { label: 'Appliance', className: 'bg-teal-100 text-teal-700' },
+      pest_control: { label: 'Pest Control', className: 'bg-lime-100 text-lime-700' },
+      landscaping: { label: 'Landscaping', className: 'bg-green-100 text-green-700' },
+      security: { label: 'Security', className: 'bg-rose-100 text-rose-700' },
+      other: { label: 'Other', className: 'bg-gray-100 text-gray-700' },
+    },
+    {
+      get: (t: Record<string, { label: string; className: string }>, p: string) =>
+        t[p] ?? defaultStyle,
+    },
+  );
 
-export const SERVICE_STATUS_STYLES: Record<ServiceStatus, { label: string; className: string }> = {
-  submitted: { label: 'Submitted', className: 'bg-slate-100 text-slate-700' },
-  in_progress: { label: 'In Progress', className: 'bg-blue-100 text-blue-700' },
-  scheduled: { label: 'Scheduled', className: 'bg-violet-100 text-violet-700' },
-  completed: { label: 'Completed', className: 'bg-emerald-100 text-emerald-700' },
-  cancelled: { label: 'Cancelled', className: 'bg-gray-100 text-gray-600' },
-  on_hold: { label: 'On Hold', className: 'bg-amber-100 text-amber-700' },
-};
+export const SERVICE_PRIORITY_STYLES: Record<string, { label: string; className: string }> =
+  new Proxy(
+    {
+      low: { label: 'Low', className: 'bg-slate-100 text-slate-600' },
+      medium: { label: 'Medium', className: 'bg-blue-100 text-blue-700' },
+      high: { label: 'High', className: 'bg-orange-100 text-orange-700' },
+      urgent: { label: 'Urgent', className: 'bg-rose-100 text-rose-700' },
+    },
+    {
+      get: (t: Record<string, { label: string; className: string }>, p: string) =>
+        t[p] ?? defaultStyle,
+    },
+  );
 
-export const DOCUMENT_TYPE_STYLES: Record<
-  ResidentDocumentType,
-  { label: string; className: string }
-> = {
-  lease: { label: 'Lease', className: 'bg-violet-100 text-violet-700' },
-  statement: { label: 'Statement', className: 'bg-sky-100 text-sky-700' },
-  tax: { label: 'Tax', className: 'bg-rose-100 text-rose-700' },
-  legal: { label: 'Legal', className: 'bg-indigo-100 text-indigo-700' },
-  inspection: { label: 'Inspection', className: 'bg-teal-100 text-teal-700' },
-  policy: { label: 'Policy', className: 'bg-cyan-100 text-cyan-700' },
-  addendum: { label: 'Addendum', className: 'bg-fuchsia-100 text-fuchsia-700' },
-  form: { label: 'Form', className: 'bg-amber-100 text-amber-700' },
-  insurance: { label: 'Insurance', className: 'bg-emerald-100 text-emerald-700' },
-  other: { label: 'Other', className: 'bg-slate-100 text-slate-700' },
-};
+export const SERVICE_STATUS_STYLES: Record<string, { label: string; className: string }> =
+  new Proxy(
+    {
+      submitted: { label: 'Submitted', className: 'bg-slate-100 text-slate-700' },
+      in_progress: { label: 'In Progress', className: 'bg-blue-100 text-blue-700' },
+      scheduled: { label: 'Scheduled', className: 'bg-violet-100 text-violet-700' },
+      completed: { label: 'Completed', className: 'bg-emerald-100 text-emerald-700' },
+      cancelled: { label: 'Cancelled', className: 'bg-gray-100 text-gray-600' },
+      on_hold: { label: 'On Hold', className: 'bg-amber-100 text-amber-700' },
+    },
+    {
+      get: (t: Record<string, { label: string; className: string }>, p: string) =>
+        t[p] ?? defaultStyle,
+    },
+  );
+
+export const DOCUMENT_TYPE_STYLES: Record<string, { label: string; className: string }> = new Proxy(
+  {
+    lease: { label: 'Lease', className: 'bg-violet-100 text-violet-700' },
+    statement: { label: 'Statement', className: 'bg-sky-100 text-sky-700' },
+    tax: { label: 'Tax', className: 'bg-rose-100 text-rose-700' },
+    legal: { label: 'Legal', className: 'bg-indigo-100 text-indigo-700' },
+    inspection: { label: 'Inspection', className: 'bg-teal-100 text-teal-700' },
+    policy: { label: 'Policy', className: 'bg-cyan-100 text-cyan-700' },
+    addendum: { label: 'Addendum', className: 'bg-fuchsia-100 text-fuchsia-700' },
+    form: { label: 'Form', className: 'bg-amber-100 text-amber-700' },
+    insurance: { label: 'Insurance', className: 'bg-emerald-100 text-emerald-700' },
+    other: { label: 'Other', className: 'bg-slate-100 text-slate-700' },
+  },
+  {
+    get: (t: Record<string, { label: string; className: string }>, p: string) =>
+      t[p] ?? defaultStyle,
+  },
+);
 
 /* ------------------------------------------------------------------ *
  * Formatting helpers

@@ -5,7 +5,7 @@ import {
   redirect,
   Outlet,
 } from '@tanstack/react-router';
-import { LoginPage } from '@elite-realty/shared-ui/pages';
+import { ResidentLoginPage } from './pages/ResidentLoginPage';
 import ResidentDashboardPage from './pages/DashboardPage';
 import PaymentsPage from './pages/PaymentsPage';
 import LeasePage from './pages/LeasePage';
@@ -35,7 +35,7 @@ const indexRoute = createRoute({
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
-  component: () => <LoginPage portalName="Resident" />,
+  component: () => <ResidentLoginPage portalName="Resident" />,
 });
 
 const protectedLayout = createRoute({
@@ -43,7 +43,7 @@ const protectedLayout = createRoute({
   id: 'protected',
   component: () => {
     const token = localStorage.getItem('accessToken');
-    if (!token) return <LoginPage portalName="Resident" />;
+    if (!token) return <ResidentLoginPage portalName="Resident" />;
     return (
       <DashboardLayout>
         <Outlet />

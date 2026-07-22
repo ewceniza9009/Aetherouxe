@@ -1,15 +1,21 @@
-import { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { useMemo, useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +23,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Droplets,
   Zap,
@@ -28,15 +34,15 @@ import {
   CreditCard,
   Loader2,
   Gauge,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   useMyBills,
   usePayUtilityBill,
   type UtilityType,
   type UtilityBill,
   type UtilityBillStatus,
-} from "@/hooks/use-utilities";
-import { utilityTypeMeta, billStatusMeta, money, formatDate } from "@/lib/utility-meta";
+} from '@/hooks/use-utilities';
+import { utilityTypeMeta, billStatusMeta, money, formatDate } from '@/lib/utility-meta';
 
 const utilityIcons: Record<UtilityType, React.ReactNode> = {
   water: <Droplets className="h-5 w-5" />,
@@ -46,33 +52,32 @@ const utilityIcons: Record<UtilityType, React.ReactNode> = {
 
 function UtilityPill({ type }: { type: UtilityType }) {
   const meta = utilityTypeMeta[type];
+  const icon = utilityIcons[type] ?? <Droplets className="h-5 w-5" />;
   return (
     <Badge className={meta.className}>
-      <span className="mr-1 inline-flex">{utilityIcons[type]}</span>
+      <span className="mr-1 inline-flex">{icon}</span>
       {meta.label}
     </Badge>
   );
 }
 
 export default function UtilityBillsPage() {
-  const [utilityType, setUtilityType] = useState<string>("all");
+  const [utilityType, setUtilityType] = useState<string>('all');
   const { data, isLoading, isError, refetch } = useMyBills({
-    utilityType: utilityType !== "all" ? (utilityType as UtilityType) : undefined,
+    utilityType: utilityType !== 'all' ? (utilityType as UtilityType) : undefined,
   });
 
   const bills = useMemo(() => {
     const all = [...(data ?? [])].sort(
-      (a, b) => new Date(b.periodEnd).getTime() - new Date(a.periodEnd).getTime()
+      (a, b) => new Date(b.periodEnd).getTime() - new Date(a.periodEnd).getTime(),
     );
     return all;
   }, [data]);
 
   const totalDue = bills
-    .filter((b) => b.status !== "paid" && b.status !== "waived")
+    .filter((b) => b.status !== 'paid' && b.status !== 'waived')
     .reduce((s, b) => s + Number(b.amountDue ?? 0), 0);
-  const unpaidCount = bills.filter(
-    (b) => b.status !== "paid" && b.status !== "waived"
-  ).length;
+  const unpaidCount = bills.filter((b) => b.status !== 'paid' && b.status !== 'waived').length;
   const maxConsumption = Math.max(1, ...bills.map((b) => Number(b.consumption ?? 0)));
 
   if (isLoading) {
@@ -183,17 +188,17 @@ export default function UtilityBillsPage() {
 function BillCard({ bill, maxConsumption }: { bill: UtilityBill; maxConsumption: number }) {
   const pay = usePayUtilityBill();
   const [payOpen, setPayOpen] = useState(false);
-  const [amount, setAmount] = useState(String(bill.amountDue ?? ""));
+  const [amount, setAmount] = useState(String(bill.amountDue ?? ''));
 
-  const isPaid = bill.status === "paid" || bill.status === "waived";
+  const isPaid = bill.status === 'paid' || bill.status === 'waived';
   const meta = utilityTypeMeta[bill.utilityType];
   const barPct = Math.min(100, (Number(bill.consumption ?? 0) / maxConsumption) * 100);
   const barColor =
-    bill.utilityType === "water"
-      ? "bg-blue-400"
-      : bill.utilityType === "electricity"
-      ? "bg-yellow-400"
-      : "bg-orange-400";
+    bill.utilityType === 'water'
+      ? 'bg-blue-400'
+      : bill.utilityType === 'electricity'
+        ? 'bg-yellow-400'
+        : 'bg-orange-400';
 
   const submitPay = async () => {
     await pay.mutateAsync({
@@ -209,7 +214,9 @@ function BillCard({ bill, maxConsumption }: { bill: UtilityBill; maxConsumption:
         <div className="flex items-stretch">
           <div className={`flex w-2 shrink-0 ${barColor}`} />
           <div className="flex flex-1 items-start gap-4 p-5">
-            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${meta.className}`}>
+            <div
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${meta.className}`}
+            >
               {utilityIcons[bill.utilityType]}
             </div>
             <div className="flex-1 min-w-0">
@@ -217,7 +224,7 @@ function BillCard({ bill, maxConsumption }: { bill: UtilityBill; maxConsumption:
                 <div className="flex items-center gap-2">
                   <UtilityPill type={bill.utilityType} />
                   <span className="font-mono text-xs text-muted-foreground">
-                    {bill.meter?.meterNumber ?? "—"}
+                    {bill.meter?.meterNumber ?? '—'}
                   </span>
                 </div>
                 <Badge className={billStatusMeta[bill.status].className}>
@@ -245,13 +252,11 @@ function BillCard({ bill, maxConsumption }: { bill: UtilityBill; maxConsumption:
               </div>
 
               <div className="mt-4 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
-                  {money(bill.rate)} / unit
-                </span>
+                <span className="text-xs text-muted-foreground">{money(bill.rate)} / unit</span>
                 {isPaid ? (
                   <span className="inline-flex items-center gap-1 text-sm font-medium text-green-700">
                     <CheckCircle2 className="h-4 w-4" />
-                    {bill.status === "waived" ? "Waived" : "Paid"}
+                    {bill.status === 'waived' ? 'Waived' : 'Paid'}
                   </span>
                 ) : (
                   <Button size="sm" onClick={() => setPayOpen(true)}>
@@ -296,7 +301,11 @@ function BillCard({ bill, maxConsumption }: { bill: UtilityBill; maxConsumption:
               Cancel
             </Button>
             <Button onClick={submitPay} disabled={pay.isPending}>
-              {pay.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CreditCard className="mr-2 h-4 w-4" />}
+              {pay.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <CreditCard className="mr-2 h-4 w-4" />
+              )}
               Confirm Payment
             </Button>
           </DialogFooter>
@@ -305,5 +314,3 @@ function BillCard({ bill, maxConsumption }: { bill: UtilityBill; maxConsumption:
     </Card>
   );
 }
-
-
