@@ -87,7 +87,7 @@ export class ServiceRequestsService {
   }
 
   async findOneServiceRequest(id: string) {
-    const request = await this.prisma.serviceRequest.findUnique({
+    let request = await this.prisma.serviceRequest.findUnique({
       where: { id },
       include: {
         workOrders: {
@@ -96,6 +96,25 @@ export class ServiceRequestsService {
         },
       },
     });
+
+    if (!request) {
+      const wo = await this.prisma.maintenanceWorkOrder.findUnique({
+        where: { id },
+        select: { serviceRequestId: true },
+      });
+      if (wo?.serviceRequestId) {
+        request = await this.prisma.serviceRequest.findUnique({
+          where: { id: wo.serviceRequestId },
+          include: {
+            workOrders: {
+              include: { vendor: true },
+              orderBy: { createdAt: 'desc' },
+            },
+          },
+        });
+      }
+    }
+
     if (!request) throw new NotFoundException('Service request not found');
     const [withRelations] = await this.attachRelations([request]);
     return withRelations;

@@ -329,6 +329,14 @@ function buildAmortization(loanAmount: number, annualRatePct: number, n: number)
  * ------------------------------------------------------------------ */
 
 async function cleanup() {
+  await prisma.apDisbursement.deleteMany().catch(() => {});
+  await prisma.apInvoice.deleteMany().catch(() => {});
+  await prisma.journalLine.deleteMany().catch(() => {});
+  await prisma.journalEntry.deleteMany().catch(() => {});
+  await prisma.financialMapping.deleteMany().catch(() => {});
+  await prisma.chartOfAccount.deleteMany().catch(() => {});
+  await prisma.sequenceCounter.deleteMany().catch(() => {});
+
   const order = [
     'notification',
     'lead',
@@ -2016,6 +2024,7 @@ async function main() {
     txType: TransactionType,
     txAmount: number,
     rule: any,
+    forcedStage?: string,
   ) => {
     const totalPct = agentsWithPct.reduce((s, a) => s + (a.commissionPercentage || 0), 0) || 1;
     const totalCalc =
@@ -2025,20 +2034,14 @@ async function main() {
           ? round2((txAmount * Number(rule.commissionValue)) / 100)
           : round2((txAmount * Number(rule.commissionValue)) / 100);
 
-    for (const awp of agentsWithPct) {
+    for (let idx = 0; idx < agentsWithPct.length; idx++) {
+      const awp = agentsWithPct[idx]!;
       const vendor = agentVendor.get(awp.agentId);
       if (!vendor) continue;
 
-      // Decide the lifecycle of this agent's share up-front.
-      const stage = pick([
-        'pending',
-        'pending',
-        'approved',
-        'approved',
-        'partially_paid',
-        'fully_paid',
-        'disputed',
-      ]) as string;
+      // Decide the lifecycle of this agent's share.
+      const stage =
+        forcedStage ?? pick(['fully_paid', 'partially_paid', 'approved', 'pending_approval']);
 
       const shareCalc = round2((totalCalc * (awp.commissionPercentage || 0)) / totalPct);
       const finalCommission = stage === 'disputed' ? round2(shareCalc * 0.5) : shareCalc;
@@ -2067,42 +2070,31 @@ async function main() {
 
       // Paid stages -> create release(s) that fully/partially pay this share.
       if (stage === 'partially_paid' || stage === 'fully_paid') {
-        const totalToPay =
-          stage === 'fully_paid'
-            ? finalCommission
-            : round2(finalCommission * faker.number.float({ min: 0.3, max: 0.8 }));
-        const numReleases = faker.number.int({ min: 1, max: 3 });
-        let remaining = totalToPay;
-        for (let r = 0; r < numReleases; r++) {
-          const isLast = r === numReleases - 1;
-          const amt = isLast ? remaining : round2(totalToPay / numReleases);
-          remaining = round2(remaining - amt);
-          const ref = `COMM-${faker.string.alphanumeric(8).toUpperCase()}`;
-          const payDate = faker.date.recent({ days: 120 });
-          await prisma.agentCommissionRelease.create({
-            data: {
-              agentTransactionId: tx.id,
-              amount: amt,
-              releaseDate: payDate,
-              releaseType: pick(['initial', 'installment', 'final_payment', 'bonus']),
-              agingBucket: 'Current',
-              paymentMethod: pick(['bank_transfer', 'check', 'gcash']),
-              paymentDate: payDate,
-              paymentReference: ref,
-              status: 'paid',
-              approvedByUserId: chance(0.85) ? admin.id : null,
-            },
-          });
-          if (invoice) {
-            await postCommissionPayment(invoice, vendor, amt, ref);
-            disbursementCount++;
-          }
-        }
-        // Mark the AP invoice paid once released.
+        const totalToPay = stage === 'fully_paid' ? finalCommission : round2(finalCommission * 0.6);
+        const ref = `COMM-${faker.string.alphanumeric(8).toUpperCase()}`;
+        const payDate = faker.date.recent({ days: 60 });
+        await prisma.agentCommissionRelease.create({
+          data: {
+            agentTransactionId: tx.id,
+            amount: totalToPay,
+            releaseDate: payDate,
+            releaseType: 'final_payment',
+            agingBucket: 'Current',
+            paymentMethod: pick(['bank_transfer', 'check', 'gcash']),
+            paymentDate: payDate,
+            paymentReference: ref,
+            status: 'paid',
+            approvedByUserId: admin.id,
+          },
+        });
         if (invoice) {
+          await postCommissionPayment(invoice, vendor, totalToPay, ref);
+          disbursementCount++;
           await prisma.apInvoice.update({
             where: { id: invoice.id },
-            data: { status: ApInvoiceStatus.paid },
+            data: {
+              status: stage === 'fully_paid' ? ApInvoiceStatus.paid : ApInvoiceStatus.approved,
+            },
           });
         }
       }
@@ -2141,8 +2133,10 @@ async function main() {
     return { txType, txAmount };
   };
 
-  // 1) Per-agent single-owner deals (baseline coverage).
-  for (const agent of agents.slice(0, 3)) {
+  // 1) Per-agent single-owner deals with deterministic stages.
+  const singleStages = ['fully_paid', 'fully_paid', 'partially_paid', 'approved'];
+  for (let i = 0; i < Math.min(4, agents.length); i++) {
+    const agent = agents[i]!;
     const { txType, txAmount } = randomTx();
     const rule = commissionRules[0]!;
     await seedCommissionDeal(
@@ -2151,10 +2145,11 @@ async function main() {
       txType,
       txAmount,
       rule,
+      singleStages[i % singleStages.length],
     );
   }
 
-  // 2) Explicit split-commission deals mirroring the two split schemes.
+  // 2) Explicit split-commission deals.
   const splitDeals = [
     {
       agentsWithPct: [
@@ -2164,6 +2159,7 @@ async function main() {
       rule: commissionRules.find((r) => r.name === 'Rental Lease Commission')!,
       txType: TransactionType.rental_lease,
       txAmount: money(15000, 120000),
+      forcedStage: 'fully_paid',
     },
   ];
   for (const deal of splitDeals) {
@@ -2173,6 +2169,7 @@ async function main() {
       deal.txType,
       deal.txAmount,
       deal.rule,
+      deal.forcedStage,
     );
   }
   console.log(
@@ -2562,11 +2559,13 @@ async function main() {
       }
     }
   }
-  for (const woItem of woInvoices) {
-    if (chance(0.25)) {
+  for (let i = 0; i < woInvoices.length; i++) {
+    const woItem = woInvoices[i]!;
+    // Cycle through states: index 0 & 1 -> paid, index 2 -> approved, others -> pending
+    if (i < 2) {
       await prisma.apInvoice.update({
         where: { id: woItem.invoice.id },
-        data: { status: ApInvoiceStatus.approved },
+        data: { status: ApInvoiceStatus.paid },
       });
       const ref = `WO-DISB-${woItem.invoice.invoiceNumber}`;
       await prisma.apDisbursement.create({
@@ -2598,6 +2597,11 @@ async function main() {
         });
       }
       disbursementCount++;
+    } else if (i === 2) {
+      await prisma.apInvoice.update({
+        where: { id: woItem.invoice.id },
+        data: { status: ApInvoiceStatus.approved },
+      });
     }
   }
   console.log('Service requests + work orders created');
