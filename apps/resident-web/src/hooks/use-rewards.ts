@@ -20,8 +20,8 @@ export function useRewardCatalog() {
   return useQuery({
     queryKey: ['rewards', 'catalog'],
     queryFn: async () => {
-      const { data } = await api.get<RewardItem[]>('/rewards/catalog');
-      return data;
+      const { data } = await api.get<any>('/rewards/catalog');
+      return data.data;
     },
   });
 }
@@ -30,8 +30,8 @@ export function useRewardBalance() {
   return useQuery({
     queryKey: ['rewards', 'balance'],
     queryFn: async () => {
-      const { data } = await api.get<{ balance: number }>('/rewards/balance');
-      return data;
+      const { data } = await api.get<any>('/rewards/balance');
+      return data.data;
     },
   });
 }
@@ -40,8 +40,8 @@ export function useRewardLedger() {
   return useQuery({
     queryKey: ['rewards', 'ledger'],
     queryFn: async () => {
-      const { data } = await api.get<RewardLedgerEntry[]>('/rewards/ledger');
-      return data;
+      const { data } = await api.get<any>('/rewards/ledger');
+      return data.data;
     },
   });
 }
@@ -51,7 +51,7 @@ export function useRedeemReward() {
   return useMutation({
     mutationFn: async (rewardItemId: string) => {
       const { data } = await api.post('/rewards/redeem', { rewardItemId });
-      return data;
+      return data.data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['rewards', 'balance'] });
