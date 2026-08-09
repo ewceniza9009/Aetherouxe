@@ -1,3 +1,4 @@
+import { formatCurrency } from '@elite-realty/shared-ui/lib/utils';
 import { useMemo, useState } from 'react';
 import {
   BarChart,
@@ -220,10 +221,10 @@ export default function UtilityBillsPage() {
                       axisLine={false}
                       tickLine={false}
                       tick={{ fontSize: 12, fill: '#6b7280' }}
-                      tickFormatter={(val) => `$${val}`}
+                      tickFormatter={(val) => formatCurrency(val)}
                     />
                     <RechartsTooltip
-                      formatter={(value: any) => [`$${Number(value).toFixed(2)}`, 'Cost']}
+                      formatter={(value: any) => [formatCurrency(value), 'Cost']}
                       contentStyle={{
                         borderRadius: '8px',
                         border: 'none',

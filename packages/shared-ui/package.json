@@ -31,6 +31,11 @@
       "import": "./dist/lib/api.js",
       "require": "./dist/lib/api.js"
     },
+    "./lib/utils": {
+      "types": "./dist/lib/utils.d.ts",
+      "import": "./dist/lib/utils.js",
+      "require": "./dist/lib/utils.js"
+    },
     "./pages": {
       "types": "./dist/pages/index.d.ts",
       "import": "./dist/pages/index.js",

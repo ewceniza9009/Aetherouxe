@@ -1,33 +1,34 @@
-import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { formatCurrency } from '@elite-realty/shared-ui/lib/utils';
+import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@elite-realty/shared-ui/components/ui';
+import { CreditCard, Download, CheckCircle2, Clock, AlertCircle, Loader2 } from 'lucide-react';
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@elite-realty/shared-ui/components/ui";
-import { CreditCard, Download, CheckCircle2, Clock, AlertCircle, Loader2 } from "lucide-react";
-import { useMyLease, useLeasePayments, useRecordPayment, type PaymentMethod } from "@/hooks/use-leases";
+  useMyLease,
+  useLeasePayments,
+  useRecordPayment,
+  type PaymentMethod,
+} from '@/hooks/use-leases';
 
 export default function PaymentsPage() {
   const navigate = useNavigate();
   const { data: lease } = useMyLease();
-  const { data: payments, isLoading, refetch } = useLeasePayments(lease?.id ?? "");
+  const { data: payments, isLoading, refetch } = useLeasePayments(lease?.id ?? '');
   const recordPayment = useRecordPayment();
 
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvv, setCvv] = useState("");
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiry, setExpiry] = useState('');
+  const [cvv, setCvv] = useState('');
 
   const list = payments ?? [];
   const unpaid = list
-    .filter((p) => p.status !== "paid")
+    .filter((p) => p.status !== 'paid')
     .sort((a, b) => new Date(a.dueDate ?? 0).getTime() - new Date(b.dueDate ?? 0).getTime());
   const nextDue = unpaid[0];
 
@@ -36,7 +37,7 @@ export default function PaymentsPage() {
     await recordPayment.mutateAsync({
       id: nextDue.id,
       amount: nextDue.amount,
-      method: "card" as PaymentMethod,
+      method: 'card' as PaymentMethod,
       paidDate: new Date().toISOString(),
     });
     refetch();
@@ -77,10 +78,11 @@ export default function PaymentsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="text-4xl font-bold text-primary">
-                    ${nextDue.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {formatCurrency(nextDue.amount)}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {nextDue.period ?? "Payment"} · Due {nextDue.dueDate ? new Date(nextDue.dueDate).toLocaleDateString() : "—"}
+                    {nextDue.period ?? 'Payment'} · Due{' '}
+                    {nextDue.dueDate ? new Date(nextDue.dueDate).toLocaleDateString() : '—'}
                   </p>
                   {nextDue.dueDate && new Date(nextDue.dueDate) < new Date() && (
                     <div className="flex items-center gap-2 text-sm text-red-600">
@@ -98,7 +100,7 @@ export default function PaymentsPage() {
                     ) : (
                       <CreditCard className="mr-2 h-4 w-4" />
                     )}
-                    Pay ${nextDue.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    Pay {formatCurrency(nextDue.amount)}
                   </Button>
                 </CardContent>
               </Card>
@@ -120,14 +122,28 @@ export default function PaymentsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="expiry">Expiry</Label>
-                      <Input id="expiry" placeholder="MM/YY" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+                      <Input
+                        id="expiry"
+                        placeholder="MM/YY"
+                        value={expiry}
+                        onChange={(e) => setExpiry(e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="cvv">CVV</Label>
-                      <Input id="cvv" placeholder="123" value={cvv} onChange={(e) => setCvv(e.target.value)} />
+                      <Input
+                        id="cvv"
+                        placeholder="123"
+                        value={cvv}
+                        onChange={(e) => setCvv(e.target.value)}
+                      />
                     </div>
                   </div>
-                  <Button className="w-full" onClick={handlePayNow} disabled={recordPayment.isPending}>
+                  <Button
+                    className="w-full"
+                    onClick={handlePayNow}
+                    disabled={recordPayment.isPending}
+                  >
                     {recordPayment.isPending ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
@@ -154,40 +170,76 @@ export default function PaymentsPage() {
                   ))}
                 </div>
               ) : list.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No payment records yet.</p>
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No payment records yet.
+                </p>
               ) : (
                 <div className="rounded-md border overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b bg-muted/50">
-                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Period</th>
-                        <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Amount</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Method</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Due Date</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Paid Date</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Status</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Receipt</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Period
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                          Amount
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Method
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Due Date
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Paid Date
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Receipt
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {list.map((inv) => (
                         <tr key={inv.id} className="border-b hover:bg-muted/30">
-                          <td className="px-4 py-3 text-sm">{inv.period ?? "—"}</td>
+                          <td className="px-4 py-3 text-sm">{inv.period ?? '—'}</td>
                           <td className="px-4 py-3 text-sm text-right">
-                            ${inv.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {formatCurrency(inv.amount)}
                           </td>
-                          <td className="px-4 py-3 text-sm">{inv.method.replace(/_/g, " ")}</td>
-                          <td className="px-4 py-3 text-sm">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : "—"}</td>
-                          <td className="px-4 py-3 text-sm">{inv.paidDate ? new Date(inv.paidDate).toLocaleDateString() : "—"}</td>
+                          <td className="px-4 py-3 text-sm">{inv.method.replace(/_/g, ' ')}</td>
                           <td className="px-4 py-3 text-sm">
-                            <Badge variant={inv.status === "paid" ? "success" : inv.status === "failed" ? "destructive" : "warning"}>
-                              {inv.status === "paid" ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <Clock className="h-3 w-3 mr-1" />}
+                            {inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            {inv.paidDate ? new Date(inv.paidDate).toLocaleDateString() : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <Badge
+                              variant={
+                                inv.status === 'paid'
+                                  ? 'success'
+                                  : inv.status === 'failed'
+                                    ? 'destructive'
+                                    : 'warning'
+                              }
+                            >
+                              {inv.status === 'paid' ? (
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                              ) : (
+                                <Clock className="h-3 w-3 mr-1" />
+                              )}
                               {inv.status}
                             </Badge>
                           </td>
                           <td className="px-4 py-3 text-sm">
-                            {inv.status === "paid" && (
-                              <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
+                            {inv.status === 'paid' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigate({ to: '/dashboard' })}
+                              >
                                 <Download className="h-4 w-4" />
                               </Button>
                             )}
@@ -205,5 +257,3 @@ export default function PaymentsPage() {
     </div>
   );
 }
-
-

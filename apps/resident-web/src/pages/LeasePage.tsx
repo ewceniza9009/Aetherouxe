@@ -1,25 +1,27 @@
-import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Separator } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { formatCurrency } from '@elite-realty/shared-ui/lib/utils';
+import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Separator } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@elite-realty/shared-ui/components/ui';
 import {
   FileText,
   Calculator,
@@ -28,18 +30,18 @@ import {
   Loader2,
   Sparkles,
   TrendingUp,
-} from "lucide-react";
-import { useMyLease, useLeasePayments } from "@/hooks/use-leases";
+} from 'lucide-react';
+import { useMyLease, useLeasePayments } from '@/hooks/use-leases';
 import {
   useMyMortgageScenarios,
   useGenerateScenario,
   type MortgageScenario,
-} from "@/hooks/use-mortgage";
+} from '@/hooks/use-mortgage';
 
 export default function LeasePage() {
   const navigate = useNavigate();
   const { data: lease, isLoading: leaseLoading } = useMyLease();
-  const { data: payments, isLoading: paymentsLoading } = useLeasePayments(lease?.id ?? "");
+  const { data: payments, isLoading: paymentsLoading } = useLeasePayments(lease?.id ?? '');
 
   const {
     data: scenariosData,
@@ -49,10 +51,10 @@ export default function LeasePage() {
   const generateScenario = useGenerateScenario();
 
   const [exploreOpen, setExploreOpen] = useState(false);
-  const [homePrice, setHomePrice] = useState("350000");
-  const [downPayment, setDownPayment] = useState("20");
-  const [interestRate, setInterestRate] = useState("6.5");
-  const [term, setTerm] = useState("360");
+  const [homePrice, setHomePrice] = useState('350000');
+  const [downPayment, setDownPayment] = useState('20');
+  const [interestRate, setInterestRate] = useState('6.5');
+  const [term, setTerm] = useState('360');
 
   const scenarios = scenariosData?.data ?? [];
 
@@ -70,14 +72,16 @@ export default function LeasePage() {
   };
 
   const nextPayment = (payments ?? [])
-    .filter((p) => p.status !== "paid")
+    .filter((p) => p.status !== 'paid')
     .sort((a, b) => new Date(a.dueDate ?? 0).getTime() - new Date(b.dueDate ?? 0).getTime())[0];
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Lease Details</h1>
-        <p className="text-muted-foreground">View your lease agreement and explore mortgage scenarios</p>
+        <p className="text-muted-foreground">
+          View your lease agreement and explore mortgage scenarios
+        </p>
       </div>
 
       <Tabs defaultValue="lease">
@@ -109,15 +113,17 @@ export default function LeasePage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Property</p>
-                      <p className="font-medium">{lease.propertyName ?? "Your residence"}</p>
+                      <p className="font-medium">{lease.propertyName ?? 'Your residence'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Lease Type</p>
-                      <p className="font-medium">{lease.leaseType.replace(/_/g, " ")}</p>
+                      <p className="font-medium">{lease.leaseType.replace(/_/g, ' ')}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Start Date</p>
-                      <p className="font-medium">{new Date(lease.startDate).toLocaleDateString()}</p>
+                      <p className="font-medium">
+                        {new Date(lease.startDate).toLocaleDateString()}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">End Date</p>
@@ -125,11 +131,11 @@ export default function LeasePage() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Monthly Rent</p>
-                      <p className="font-medium text-lg">${lease.monthlyRent.toLocaleString()}</p>
+                      <p className="font-medium text-lg">{formatCurrency(lease.monthlyRent)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Security Deposit</p>
-                      <p className="font-medium">${lease.securityDeposit?.toLocaleString() ?? "—"}</p>
+                      <p className="font-medium">{formatCurrency(lease.securityDeposit)}</p>
                     </div>
                   </div>
                   <Separator />
@@ -149,15 +155,19 @@ export default function LeasePage() {
                     <Home className="h-8 w-8 text-green-600" />
                     <div>
                       <p className="text-sm font-medium text-green-800">You may be eligible!</p>
-                      <p className="text-xs text-green-600">Based on your payment history and lease duration</p>
+                      <p className="text-xs text-green-600">
+                        Based on your payment history and lease duration
+                      </p>
                     </div>
                   </div>
                   <p className="text-sm">
                     With our Rent-to-Own program, up to 25% of your monthly rent (
-                    ${((lease.monthlyRent ?? 0) * 0.25).toLocaleString(undefined, { maximumFractionDigits: 2 })}/mo)
-                    can be credited toward your future down payment.
+                    {formatCurrency((lease.monthlyRent ?? 0) * 0.25)}/mo) can be credited toward
+                    your future down payment.
                   </p>
-                  <Button variant="default" className="w-full">Apply for RTO Program</Button>
+                  <Button variant="default" className="w-full">
+                    Apply for RTO Program
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -172,13 +182,18 @@ export default function LeasePage() {
                   ) : nextPayment ? (
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-muted-foreground">{nextPayment.period ?? "Next payment"}</p>
-                        <p className="text-2xl font-bold">${nextPayment.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {nextPayment.period ?? 'Next payment'}
+                        </p>
+                        <p className="text-2xl font-bold">{formatCurrency(nextPayment.amount)}</p>
                         <p className="text-xs text-muted-foreground">
-                          Due {nextPayment.dueDate ? new Date(nextPayment.dueDate).toLocaleDateString() : "—"}
+                          Due{' '}
+                          {nextPayment.dueDate
+                            ? new Date(nextPayment.dueDate).toLocaleDateString()
+                            : '—'}
                         </p>
                       </div>
-                      <Button onClick={() => navigate({ to: "/payments" })}>
+                      <Button onClick={() => navigate({ to: '/payments' })}>
                         Pay Now <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     </div>
@@ -199,7 +214,9 @@ export default function LeasePage() {
                   <CardTitle className="flex items-center gap-2">
                     <Calculator className="h-5 w-5" /> Mortgage Explorer
                   </CardTitle>
-                  <CardDescription>Estimate what your monthly mortgage payment could look like</CardDescription>
+                  <CardDescription>
+                    Estimate what your monthly mortgage payment could look like
+                  </CardDescription>
                 </div>
                 <Button onClick={() => setExploreOpen(true)}>
                   <Sparkles className="mr-2 h-4 w-4" /> Explore Mortgage Options
@@ -216,7 +233,8 @@ export default function LeasePage() {
                 <div className="text-center py-10 border-2 border-dashed rounded-lg border-muted-foreground/20">
                   <Calculator className="mx-auto h-8 w-8 text-muted-foreground" />
                   <p className="mt-3 text-sm text-muted-foreground">
-                    No scenarios yet. Click “Explore Mortgage Options” to generate your first estimate.
+                    No scenarios yet. Click “Explore Mortgage Options” to generate your first
+                    estimate.
                   </p>
                 </div>
               ) : (
@@ -233,15 +251,19 @@ export default function LeasePage() {
                         <CardContent className="space-y-2">
                           <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Monthly</span>
-                            <span className="font-semibold">${sc.monthlyPayment.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            <span className="font-semibold">
+                              {formatCurrency(sc.monthlyPayment)}
+                            </span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Loan</span>
-                            <span>${sc.loanAmount.toLocaleString()}</span>
+                            <span>{formatCurrency(sc.loanAmount)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Total Interest</span>
-                            <span className="text-yellow-700">${sc.totalInterest.toLocaleString()}</span>
+                            <span className="text-yellow-700">
+                              {formatCurrency(sc.totalInterest)}
+                            </span>
                           </div>
                           <Button
                             variant="outline"
@@ -266,11 +288,21 @@ export default function LeasePage() {
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="border-b bg-muted/50">
-                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Term</th>
-                                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Down %</th>
-                                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Rate</th>
-                                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Monthly</th>
-                                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Total Interest</th>
+                                <th className="px-4 py-3 text-left font-medium text-muted-foreground">
+                                  Term
+                                </th>
+                                <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                                  Down %
+                                </th>
+                                <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                                  Rate
+                                </th>
+                                <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                                  Monthly
+                                </th>
+                                <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                                  Total Interest
+                                </th>
                               </tr>
                             </thead>
                             <tbody>
@@ -280,9 +312,11 @@ export default function LeasePage() {
                                   <td className="px-4 py-2 text-right">{sc.downPaymentPercent}%</td>
                                   <td className="px-4 py-2 text-right">{sc.interestRate}%</td>
                                   <td className="px-4 py-2 text-right font-medium">
-                                    ${sc.monthlyPayment.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    {formatCurrency(sc.monthlyPayment)}
                                   </td>
-                                  <td className="px-4 py-2 text-right text-yellow-700">${sc.totalInterest.toLocaleString()}</td>
+                                  <td className="px-4 py-2 text-right text-yellow-700">
+                                    {formatCurrency(sc.totalInterest)}
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>
@@ -305,12 +339,19 @@ export default function LeasePage() {
               <CardTitle className="flex items-center gap-2">
                 <Calculator className="h-5 w-5" /> Explore Mortgage Options
               </CardTitle>
-              <CardDescription>Adjust the assumptions to see your estimated financing.</CardDescription>
+              <CardDescription>
+                Adjust the assumptions to see your estimated financing.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="homePrice">Home Price</Label>
-                <Input id="homePrice" type="number" value={homePrice} onChange={(e) => setHomePrice(e.target.value)} />
+                <Input
+                  id="homePrice"
+                  type="number"
+                  value={homePrice}
+                  onChange={(e) => setHomePrice(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -336,7 +377,13 @@ export default function LeasePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="rate">Interest Rate (%)</Label>
-                <Input id="rate" type="number" step="0.01" value={interestRate} onChange={(e) => setInterestRate(e.target.value)} />
+                <Input
+                  id="rate"
+                  type="number"
+                  step="0.01"
+                  value={interestRate}
+                  onChange={(e) => setInterestRate(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="term">Term</Label>
@@ -352,9 +399,15 @@ export default function LeasePage() {
                 </Select>
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={() => setExploreOpen(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setExploreOpen(false)}>
+                  Cancel
+                </Button>
                 <Button onClick={handleGenerate} disabled={generateScenario.isPending || !lease}>
-                  {generateScenario.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                  {generateScenario.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 h-4 w-4" />
+                  )}
                   Generate Scenario
                 </Button>
               </div>
@@ -365,5 +418,3 @@ export default function LeasePage() {
     </div>
   );
 }
-
-

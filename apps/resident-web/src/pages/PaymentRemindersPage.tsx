@@ -1,6 +1,13 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { formatCurrency } from '@elite-realty/shared-ui/lib/utils';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
 import {
   BellRing,
   Mail,
@@ -8,7 +15,7 @@ import {
   Smartphone,
   CalendarClock,
   AlertTriangle,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   useMyReminders,
   REMINDER_TYPE_LABELS,
@@ -16,7 +23,7 @@ import {
   formatDate,
   type ReminderChannel,
   type ReminderStatus,
-} from "@/hooks/use-reminders";
+} from '@/hooks/use-reminders';
 
 const channelIcon: Record<ReminderChannel, React.ReactNode> = {
   email: <Mail className="h-4 w-4" />,
@@ -27,12 +34,12 @@ const channelIcon: Record<ReminderChannel, React.ReactNode> = {
 
 const statusVariant: Record<
   ReminderStatus,
-  "default" | "secondary" | "destructive" | "outline" | "success" | "warning"
+  'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning'
 > = {
-  pending: "warning",
-  sent: "success",
-  failed: "destructive",
-  cancelled: "secondary",
+  pending: 'warning',
+  sent: 'success',
+  failed: 'destructive',
+  cancelled: 'secondary',
 };
 
 export default function PaymentRemindersPage() {
@@ -78,18 +85,16 @@ export default function PaymentRemindersPage() {
             <Card
               key={r.id}
               className={
-                r.status === "pending"
-                  ? "border-amber-200 bg-amber-50/50"
-                  : "border-white/5"
+                r.status === 'pending' ? 'border-amber-200 bg-amber-50/50' : 'border-white/5'
               }
             >
               <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3">
                   <div
                     className={`mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl ${
-                      r.status === "pending"
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-muted text-muted-foreground"
+                      r.status === 'pending'
+                        ? 'bg-amber-100 text-amber-700'
+                        : 'bg-muted text-muted-foreground'
                     }`}
                   >
                     {channelIcon[r.channel] ?? <BellRing className="h-4 w-4" />}
@@ -107,7 +112,7 @@ export default function PaymentRemindersPage() {
                       </Badge>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {r.message ?? "No additional details."}
+                      {r.message ?? 'No additional details.'}
                     </p>
                     <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                       <CalendarClock className="h-3.5 w-3.5" />
@@ -123,5 +128,3 @@ export default function PaymentRemindersPage() {
     </div>
   );
 }
-
-

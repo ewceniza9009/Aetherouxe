@@ -1,3 +1,4 @@
+import { formatCurrency } from '@elite-realty/shared-ui/lib/utils';
 import { useState, useMemo } from 'react';
 import {
   AreaChart,
@@ -69,7 +70,7 @@ const ledgerLabel: Record<string, string> = {
 };
 
 function money(n: number | null | undefined) {
-  return `$${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatCurrency(Number(n ?? 0));
 }
 
 export default function RtoPage() {
@@ -309,10 +310,10 @@ export default function RtoPage() {
                       axisLine={false}
                       tickLine={false}
                       tick={{ fontSize: 12, fill: '#6b7280' }}
-                      tickFormatter={(val) => `$${val}`}
+                      tickFormatter={(val) => formatCurrency(val)}
                     />
                     <RechartsTooltip
-                      formatter={(value: any) => [`$${Number(value).toFixed(2)}`, 'Equity Balance']}
+                      formatter={(value: any) => [formatCurrency(value), 'Equity Balance']}
                       contentStyle={{
                         borderRadius: '8px',
                         border: 'none',

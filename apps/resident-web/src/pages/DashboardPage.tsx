@@ -1,3 +1,4 @@
+import { formatCurrency } from '@elite-realty/shared-ui/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
 import { Badge } from '@elite-realty/shared-ui/components/ui';
 import { Button } from '@elite-realty/shared-ui/components/ui';
@@ -73,7 +74,6 @@ export default function ResidentDashboardPage() {
             ) : (
               <>
                 <div className="text-2xl font-bold">
-                  $
                   {(nextPayment?.amount ?? lease?.monthlyRent ?? 0).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                   })}
@@ -158,7 +158,7 @@ export default function ResidentDashboardPage() {
               ) : nextPayment ? (
                 <>
                   <div className="text-2xl font-bold text-rose-700 dark:text-rose-400">
-                    ${nextPayment.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {formatCurrency(nextPayment.amount)}
                   </div>
                   <p className="text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1">
                     <AlertCircle className="h-3 w-3" />
@@ -199,13 +199,12 @@ export default function ResidentDashboardPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">
-                  $
                   {Number(rto.accumulatedEquity ?? 0).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                   })}
                 </div>
                 <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 mt-1">
-                  Target: $
+                  Target:
                   {Number(rto.purchaseOptionPrice ?? rto.totalContractValue ?? 0).toLocaleString(
                     undefined,
                     { minimumFractionDigits: 2 },

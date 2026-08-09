@@ -1,9 +1,16 @@
-import { useMemo, useState } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
-import { Separator } from "@elite-realty/shared-ui/components/ui";
+import { formatCurrency } from '@elite-realty/shared-ui/lib/utils';
+import { useMemo, useState } from 'react';
+import { useParams, useNavigate } from '@tanstack/react-router';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
+import { Separator } from '@elite-realty/shared-ui/components/ui';
 import {
   ArrowLeft,
   Calculator,
@@ -13,13 +20,13 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
-} from "lucide-react";
-import { useMortgageScenario, type AmortizationRow } from "@/hooks/use-mortgage";
+} from 'lucide-react';
+import { useMortgageScenario, type AmortizationRow } from '@/hooks/use-mortgage';
 
 function computeSchedule(
   loanAmount: number,
   annualRate: number,
-  termMonths: number
+  termMonths: number,
 ): { monthlyPayment: number; totalInterest: number; schedule: AmortizationRow[] } {
   const monthlyRate = annualRate / 100 / 12;
   const monthlyPayment =
@@ -54,14 +61,13 @@ function computeSchedule(
 }
 
 function money(n: number | null | undefined) {
-  if (n === null || n === undefined || Number.isNaN(n)) return "—";
-  return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatCurrency(Number(n ?? 0));
 }
 
 const PAGE_SIZE = 24;
 
 export default function MortgageScenarioPage() {
-  const { scenarioId } = useParams({ from: "/protected/lease/mortgage/$scenarioId" });
+  const { scenarioId } = useParams({ from: '/protected/lease/mortgage/$scenarioId' });
   const navigate = useNavigate();
   const { data: scenario, isLoading, error } = useMortgageScenario(scenarioId);
   const [page, setPage] = useState(0);
@@ -76,7 +82,7 @@ export default function MortgageScenarioPage() {
   if (error) {
     return (
       <div className="space-y-6">
-        <Button variant="outline" size="icon" onClick={() => navigate({ to: "/lease" })}>
+        <Button variant="outline" size="icon" onClick={() => navigate({ to: '/lease' })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <Card>
@@ -106,10 +112,10 @@ export default function MortgageScenarioPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="outline" size="icon" onClick={() => navigate({ to: "/lease" })}>
+        <Button variant="outline" size="icon" onClick={() => navigate({ to: '/lease' })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <Button variant="outline" onClick={() => navigate({ to: "/lease" })}>
+        <Button variant="outline" onClick={() => navigate({ to: '/lease' })}>
           Back to Explorer
         </Button>
       </div>
@@ -119,19 +125,28 @@ export default function MortgageScenarioPage() {
           <Calculator className="h-7 w-7" /> Mortgage Amortization
         </h1>
         <p className="text-muted-foreground">
-          {computed.termMonths / 12} yr loan · {computed.downPaymentPercent}% down · {computed.interestRate}% APR
+          {computed.termMonths / 12} yr loan · {computed.downPaymentPercent}% down ·{' '}
+          {computed.interestRate}% APR
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <SummaryCard icon={<DollarSign className="h-5 w-5" />} label="Loan Amount" value={money(computed.loanAmount)} />
+        <SummaryCard
+          icon={<DollarSign className="h-5 w-5" />}
+          label="Loan Amount"
+          value={money(computed.loanAmount)}
+        />
         <SummaryCard
           icon={<Calendar className="h-5 w-5" />}
           label="Monthly Payment"
           value={money(computed.monthlyPayment)}
           highlight
         />
-        <SummaryCard icon={<TrendingUp className="h-5 w-5" />} label="Total Interest" value={money(computed.totalInterest)} />
+        <SummaryCard
+          icon={<TrendingUp className="h-5 w-5" />}
+          label="Total Interest"
+          value={money(computed.totalInterest)}
+        />
         <SummaryCard
           icon={<Calculator className="h-5 w-5" />}
           label="Total Paid"
@@ -143,7 +158,8 @@ export default function MortgageScenarioPage() {
         <CardHeader>
           <CardTitle>Amortization Schedule</CardTitle>
           <CardDescription>
-            Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, schedule.length)} of {schedule.length} payments
+            Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, schedule.length)} of{' '}
+            {schedule.length} payments
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -152,24 +168,42 @@ export default function MortgageScenarioPage() {
               <thead className="sticky top-0 bg-muted/80 backdrop-blur">
                 <tr className="border-b">
                   <th className="px-4 py-3 text-right font-medium text-muted-foreground">Period</th>
-                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">Beginning Balance</th>
-                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">Payment</th>
-                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">Principal</th>
-                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">Interest</th>
-                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">Ending Balance</th>
-                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">Cumulative Interest</th>
+                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                    Beginning Balance
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                    Payment
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                    Principal
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                    Interest
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                    Ending Balance
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                    Cumulative Interest
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {visible.map((row) => (
                   <tr key={row.period} className="border-b hover:bg-muted/30">
                     <td className="px-4 py-2 text-right font-medium">{row.period}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">{money(row.beginningBalance)}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">
+                      {money(row.beginningBalance)}
+                    </td>
                     <td className="px-4 py-2 text-right tabular-nums">{money(row.payment)}</td>
                     <td className="px-4 py-2 text-right tabular-nums">{money(row.principal)}</td>
                     <td className="px-4 py-2 text-right tabular-nums">{money(row.interest)}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">{money(row.endingBalance)}</td>
-                    <td className="px-4 py-2 text-right tabular-nums text-yellow-700">{money(row.cumulativeInterest)}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">
+                      {money(row.endingBalance)}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums text-yellow-700">
+                      {money(row.cumulativeInterest)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -181,7 +215,12 @@ export default function MortgageScenarioPage() {
               Page {page + 1} of {pageCount}
             </p>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+              >
                 <ChevronLeft className="h-4 w-4" /> Prev
               </Button>
               <Button
@@ -212,16 +251,14 @@ function SummaryCard({
   highlight?: boolean;
 }) {
   return (
-    <Card className={highlight ? "border-primary" : ""}>
+    <Card className={highlight ? 'border-primary' : ''}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-        <span className={highlight ? "text-primary" : "text-muted-foreground"}>{icon}</span>
+        <span className={highlight ? 'text-primary' : 'text-muted-foreground'}>{icon}</span>
       </CardHeader>
       <CardContent>
-        <div className={`text-2xl font-bold ${highlight ? "text-primary" : ""}`}>{value}</div>
+        <div className={`text-2xl font-bold ${highlight ? 'text-primary' : ''}`}>{value}</div>
       </CardContent>
     </Card>
   );
 }
-
-

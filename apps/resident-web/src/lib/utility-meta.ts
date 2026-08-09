@@ -1,3 +1,4 @@
+import { formatCurrency } from '@elite-realty/shared-ui/lib/utils';
 import type { UtilityType, UtilityBillStatus } from '@/hooks/use-utilities';
 
 const defaultUtilityMeta = {
