@@ -16,6 +16,7 @@ import {
   BellRing,
   Droplets,
   Search,
+  Gift,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@elite-realty/shared-ui/components/ui';
@@ -39,6 +40,7 @@ const navItems: NavItem[] = [
   { label: 'Statements', icon: <Inbox size={20} />, path: '/statements' },
   { label: 'Reminders', icon: <BellRing size={20} />, path: '/reminders' },
   { label: 'Utilities', icon: <Droplets size={20} />, path: '/utility-bills' },
+  { label: 'Rewards', icon: <Gift size={20} />, path: '/rewards' },
 ];
 
 export default function Sidebar() {

@@ -22,6 +22,7 @@ import {
   SERVICE_STATUS_STYLES,
   formatDate,
 } from '@/hooks/use-resident-portal';
+import { useMyRto } from '@/hooks/use-rto';
 
 export default function ResidentDashboardPage() {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ export default function ResidentDashboardPage() {
   const { data: payments, isLoading: paymentsLoading } = useLeasePayments(lease?.id ?? '');
   const { data: posts, isLoading: postsLoading } = useCommunityPosts();
   const { data: requests, isLoading: requestsLoading } = useMyServiceRequests();
+  const { data: rto, isLoading: rtoLoading } = useMyRto();
 
   const nextPayment = (payments ?? [])
     .filter((p) => p.status !== 'paid')
@@ -185,22 +187,58 @@ export default function ResidentDashboardPage() {
               </p>
             </CardContent>
           </Card>
-          <Card className="bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900/50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
-                Explore Ownership
-              </CardTitle>
-              <Calculator className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                See what owning could cost you via Rent-To-Own &amp; Mortgage.
-              </p>
-              <Button size="sm" className="w-full" onClick={() => navigate({ to: '/lease' })}>
-                <Calculator className="mr-2 h-4 w-4" /> Explore Scenarios
-              </Button>
-            </CardContent>
-          </Card>
+          {rtoLoading ? (
+            <Skeleton className="h-32 w-full" />
+          ) : rto && rto.status !== 'completed' && rto.status !== 'defaulted' ? (
+            <Card className="bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                  Equity Progress
+                </CardTitle>
+                <Calculator className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">
+                  $
+                  {Number(rto.accumulatedEquity ?? 0).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                  })}
+                </div>
+                <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 mt-1">
+                  Target: $
+                  {Number(rto.purchaseOptionPrice ?? rto.totalContractValue ?? 0).toLocaleString(
+                    undefined,
+                    { minimumFractionDigits: 2 },
+                  )}
+                </p>
+                <div className="h-1.5 w-full bg-amber-200 rounded-full mt-2 overflow-hidden">
+                  <div
+                    className="h-full bg-amber-500 rounded-full"
+                    style={{
+                      width: `${Math.min(100, (Number(rto.accumulatedEquity ?? 0) / Number(rto.purchaseOptionPrice ?? rto.totalContractValue ?? 1)) * 100)}%`,
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900/50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
+                  Explore Ownership
+                </CardTitle>
+                <Calculator className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                  See what owning could cost you via Rent-To-Own &amp; Mortgage.
+                </p>
+                <Button size="sm" className="w-full" onClick={() => navigate({ to: '/lease' })}>
+                  <Calculator className="mr-2 h-4 w-4" /> Explore Scenarios
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 

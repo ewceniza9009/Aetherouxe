@@ -75,6 +75,7 @@ import PnlDetailPage from './pages/PnlDetailPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import DashboardLayout from './components/layout/DashboardLayout';
 import ReservationsPage from './pages/ReservationsPage';
+import SalesReportPage from './pages/SalesReportPage';
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -432,6 +433,12 @@ const salesRoute = createRoute({
   component: SalesPage,
 });
 
+const salesReportRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: '/sales/reports',
+  component: SalesReportPage,
+});
+
 const reservationsRoute = createRoute({
   getParentRoute: () => protectedLayout,
   path: '/reservations',
@@ -594,6 +601,7 @@ const routeTree = rootRoute.addChildren([
     schemeDetailRoute,
     titleTransfersRoute,
     reservationsRoute,
+    salesReportRoute,
   ]),
 ]);
 

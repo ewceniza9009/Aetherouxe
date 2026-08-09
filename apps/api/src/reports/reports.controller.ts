@@ -14,6 +14,30 @@ export class ReportsController {
     return this.service.getPortfolioKpis(tenantId);
   }
 
+  @Get('sales/kpis')
+  @ApiOperation({ summary: 'Get sales report KPIs' })
+  getSalesKpis(@Query('tenantId') tenantId?: string) {
+    return this.service.getSalesKpis(tenantId);
+  }
+
+  @Get('sales/property-performance')
+  @ApiOperation({ summary: 'Get paginated property performance' })
+  getSalesPropertyPerformance(
+    @Query() query: import('../common/dto/list-query.dto').ListQueryDto,
+    @Query('tenantId') tenantId?: string,
+  ) {
+    return this.service.getSalesPropertyPerformance(query, tenantId);
+  }
+
+  @Get('sales/ledger')
+  @ApiOperation({ summary: 'Get paginated sales ledger' })
+  getSalesLedger(
+    @Query() query: import('../common/dto/list-query.dto').ListQueryDto,
+    @Query('tenantId') tenantId?: string,
+  ) {
+    return this.service.getSalesLedger(query, tenantId);
+  }
+
   @Get('revenue-trend')
   @ApiOperation({ summary: 'Get monthly revenue trend for the last N months' })
   getRevenueTrend(@Query() query: RevenueTrendQueryDto) {

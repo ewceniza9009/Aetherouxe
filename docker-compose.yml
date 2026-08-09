@@ -26,7 +26,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-elite123}
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-elite_realty}
     ports:
-      - '27018:27017'
+      - '37017:27017'
     volumes:
       - mongo-data:/data/db
     healthcheck:

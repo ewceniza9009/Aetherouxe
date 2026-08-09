@@ -310,6 +310,27 @@ export class SalesService {
         }
       }
 
+      // ── 5. Update Unit & Property Status ──
+      const newUnitStatus = scheme.schemeType === 'standard_rental' ? 'rented' : 'sold';
+      await tx.unit.update({
+        where: { id: unit.id },
+        data: { status: newUnitStatus },
+      });
+
+      if (newUnitStatus === 'sold') {
+        const allUnits = await tx.unit.findMany({
+          where: { propertyId: unit.propertyId! },
+          select: { id: true, status: true },
+        });
+        const allSold = allUnits.every((u) => u.id === unit.id || u.status === 'sold');
+        if (allSold) {
+          await tx.property.update({
+            where: { id: unit.propertyId! },
+            data: { status: 'sold' },
+          });
+        }
+      }
+
       return result;
     });
   }

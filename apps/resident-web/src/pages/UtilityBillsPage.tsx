@@ -1,5 +1,14 @@
 import { useMemo, useState } from 'react';
 import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from 'recharts';
+import {
   Card,
   CardContent,
   CardHeader,
@@ -73,6 +82,22 @@ export default function UtilityBillsPage() {
     );
     return all;
   }, [data]);
+
+  const chartData = useMemo(() => {
+    const grouped = new Map<string, { name: string; amount: number }>();
+    [...(data ?? [])]
+      .filter((b) => utilityType === 'all' || b.utilityType === utilityType)
+      .sort((a, b) => new Date(a.periodEnd).getTime() - new Date(b.periodEnd).getTime())
+      .forEach((bill) => {
+        const date = new Date(bill.periodEnd);
+        const name = date.toLocaleDateString('default', { month: 'short', year: '2-digit' });
+        if (!grouped.has(name)) {
+          grouped.set(name, { name, amount: 0 });
+        }
+        grouped.get(name)!.amount += Number(bill.amountDue ?? 0);
+      });
+    return Array.from(grouped.values());
+  }, [data, utilityType]);
 
   const totalDue = bills
     .filter((b) => b.status !== 'paid' && b.status !== 'waived')
@@ -175,10 +200,47 @@ export default function UtilityBillsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {bills.map((bill) => (
-            <BillCard key={bill.id} bill={bill} maxConsumption={maxConsumption} />
-          ))}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Utility Costs Over Time</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      tickFormatter={(val) => `$${val}`}
+                    />
+                    <RechartsTooltip
+                      formatter={(value: any) => [`$${Number(value).toFixed(2)}`, 'Cost']}
+                      contentStyle={{
+                        borderRadius: '8px',
+                        border: 'none',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                      }}
+                    />
+                    <Bar dataKey="amount" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+          <div className="grid gap-4 md:grid-cols-2">
+            {bills.map((bill) => (
+              <BillCard key={bill.id} bill={bill} maxConsumption={maxConsumption} />
+            ))}
+          </div>
         </div>
       )}
     </div>

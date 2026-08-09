@@ -22,6 +22,7 @@ import {
   Wrench,
   PieChart,
   BarChart3,
+  BarChart,
   UserCog,
   IdCard,
   ClipboardList,
@@ -179,7 +180,10 @@ const navGroups: NavGroup[] = [
   {
     label: 'Reports',
     icon: <BarChart3 size={16} />,
-    items: [{ label: 'Analytics', icon: <LineChart size={18} />, path: '/analytics', kind: 'txn' }],
+    items: [
+      { label: 'Analytics', icon: <LineChart size={18} />, path: '/analytics', kind: 'txn' },
+      { label: 'Sales Reports', icon: <BarChart size={18} />, path: '/sales/reports', kind: 'txn' },
+    ],
   },
   {
     label: 'Admin',

@@ -1,9 +1,24 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Separator } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { useState, useMemo } from 'react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from 'recharts';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Separator } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +26,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   KeyRound,
   Home,
@@ -24,35 +39,33 @@ import {
   Loader2,
   ShieldCheck,
   Coins,
-} from "lucide-react";
-import { useAuth } from "@elite-realty/shared-ui/hooks";
-import {
-  useMyRto,
-  useExerciseOption,
-  type RtoStatus,
-  type RtoLedgerEntry,
-} from "@/hooks/use-rto";
+} from 'lucide-react';
+import { useAuth } from '@elite-realty/shared-ui/hooks';
+import { useMyRto, useExerciseOption, type RtoStatus, type RtoLedgerEntry } from '@/hooks/use-rto';
 
-const statusVariant: Record<RtoStatus, "success" | "warning" | "destructive" | "default" | "secondary"> = {
-  active: "success",
-  grace_period: "warning",
-  defaulted: "destructive",
-  exercised: "default",
-  completed: "secondary",
+const statusVariant: Record<
+  RtoStatus,
+  'success' | 'warning' | 'destructive' | 'default' | 'secondary'
+> = {
+  active: 'success',
+  grace_period: 'warning',
+  defaulted: 'destructive',
+  exercised: 'default',
+  completed: 'secondary',
 };
 
 const statusLabel: Record<RtoStatus, string> = {
-  active: "Active",
-  grace_period: "Grace Period",
-  defaulted: "Defaulted",
-  exercised: "Exercised",
-  completed: "Completed",
+  active: 'Active',
+  grace_period: 'Grace Period',
+  defaulted: 'Defaulted',
+  exercised: 'Exercised',
+  completed: 'Completed',
 };
 
 const ledgerLabel: Record<string, string> = {
-  payment_credit: "Payment Credit",
-  forfeiture: "Forfeiture",
-  option_fee_credit: "Option Fee Credit",
+  payment_credit: 'Payment Credit',
+  forfeiture: 'Forfeiture',
+  option_fee_credit: 'Option Fee Credit',
 };
 
 function money(n: number | null | undefined) {
@@ -136,9 +149,7 @@ export default function RtoPage() {
   const totalValue = Number(contract.totalContractValue ?? 0);
   const equity = Number(contract.accumulatedEquity ?? 0);
   const target =
-    contract.purchaseOptionPrice != null
-      ? Number(contract.purchaseOptionPrice)
-      : totalValue;
+    contract.purchaseOptionPrice != null ? Number(contract.purchaseOptionPrice) : totalValue;
   const progress = target > 0 ? Math.min(100, (equity / target) * 100) : 0;
   const ledger = contract.equityLedger ?? [];
   const rentPortion = Number(contract.monthlyRentPortion ?? 0);
@@ -148,9 +159,23 @@ export default function RtoPage() {
   const equityPct = monthlyTotal > 0 ? (equityPortion / monthlyTotal) * 100 : 0;
   const canExercise =
     !contract.isOptionExercised &&
-    contract.status !== "exercised" &&
-    contract.status !== "completed" &&
-    contract.status !== "defaulted";
+    contract.status !== 'exercised' &&
+    contract.status !== 'completed' &&
+    contract.status !== 'defaulted';
+
+  const chartData = useMemo(() => {
+    // Ledger is sorted descending by API usually, let's sort ascending for chart
+    const ascending = [...ledger].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+    return ascending.map((entry) => {
+      const date = new Date(entry.createdAt);
+      return {
+        name: date.toLocaleDateString('default', { month: 'short', year: '2-digit' }),
+        balance: Number(entry.runningBalance),
+      };
+    });
+  }, [ledger]);
 
   return (
     <div className="space-y-6">
@@ -159,7 +184,7 @@ export default function RtoPage() {
           <h1 className="font-serif text-3xl font-bold tracking-tight">Rent-to-Own</h1>
           <p className="text-muted-foreground flex items-center gap-1">
             <Home className="h-4 w-4" />
-            {contract.leaseAgreement?.property?.propertyCode ?? "Your residence"}
+            {contract.leaseAgreement?.property?.propertyCode ?? 'Your residence'}
           </p>
         </div>
         <Badge variant={statusVariant[contract.status]}>{statusLabel[contract.status]}</Badge>
@@ -195,7 +220,9 @@ export default function RtoPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Rent Portion</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Monthly Rent Portion
+            </CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -205,7 +232,9 @@ export default function RtoPage() {
         </Card>
         <Card className="border-accent/30">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-amber-800">Monthly Equity Portion</CardTitle>
+            <CardTitle className="text-sm font-medium text-amber-800">
+              Monthly Equity Portion
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-amber-600" />
           </CardHeader>
           <CardContent>
@@ -226,21 +255,23 @@ export default function RtoPage() {
               className="flex items-center justify-center bg-slate-400 text-[10px] font-semibold text-white"
               style={{ width: `${rentPct}%` }}
             >
-              {rentPct >= 12 ? "Rent" : ""}
+              {rentPct >= 12 ? 'Rent' : ''}
             </div>
             <div
               className="gold-gradient flex items-center justify-center text-[10px] font-semibold text-white"
               style={{ width: `${equityPct}%` }}
             >
-              {equityPct >= 12 ? "Equity" : ""}
+              {equityPct >= 12 ? 'Equity' : ''}
             </div>
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-full bg-slate-400" /> Rent {money(rentPortion)}
+              <span className="inline-block h-2 w-2 rounded-full bg-slate-400" /> Rent{' '}
+              {money(rentPortion)}
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-full bg-amber-500" /> Equity {money(equityPortion)}
+              <span className="inline-block h-2 w-2 rounded-full bg-amber-500" /> Equity{' '}
+              {money(equityPortion)}
             </span>
           </div>
         </CardContent>
@@ -257,11 +288,54 @@ export default function RtoPage() {
               No equity activity yet. Your credits will appear here as you make payments.
             </p>
           ) : (
-            <div className="space-y-3">
-              {ledger.map((entry) => (
-                <LedgerRow key={entry.id} entry={entry} />
-              ))}
-            </div>
+            <>
+              <div className="h-48 w-full mb-6">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorEquity" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#d97706" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#d97706" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                      tickFormatter={(val) => `$${val}`}
+                    />
+                    <RechartsTooltip
+                      formatter={(value: any) => [`$${Number(value).toFixed(2)}`, 'Equity Balance']}
+                      contentStyle={{
+                        borderRadius: '8px',
+                        border: 'none',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="balance"
+                      stroke="#d97706"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorEquity)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-3">
+                {ledger.map((entry) => (
+                  <LedgerRow key={entry.id} entry={entry} />
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -275,7 +349,7 @@ export default function RtoPage() {
               <p className="text-lg font-semibold">
                 {contract.targetPurchaseDate
                   ? new Date(contract.targetPurchaseDate).toLocaleDateString()
-                  : "To be determined"}
+                  : 'To be determined'}
               </p>
             </div>
           </div>
@@ -283,8 +357,10 @@ export default function RtoPage() {
             <Button onClick={() => setExerciseOpen(true)}>
               <KeyRound className="mr-2 h-4 w-4" /> Exercise Purchase Option
             </Button>
-          ) : contract.isOptionExercised || contract.status === "exercised" ? (
-            <Badge variant="default" className="text-sm">Option Exercised</Badge>
+          ) : contract.isOptionExercised || contract.status === 'exercised' ? (
+            <Badge variant="default" className="text-sm">
+              Option Exercised
+            </Badge>
           ) : null}
         </CardContent>
       </Card>
@@ -294,9 +370,9 @@ export default function RtoPage() {
           <DialogHeader>
             <DialogTitle>Exercise Your Purchase Option</DialogTitle>
             <DialogDescription>
-              You're about to exercise your option to purchase your home. Your accumulated equity and
-              any purchase option credit will be applied. Our team will follow up to finalize the
-              details.
+              You're about to exercise your option to purchase your home. Your accumulated equity
+              and any purchase option credit will be applied. Our team will follow up to finalize
+              the details.
             </DialogDescription>
           </DialogHeader>
           <div className="rounded-lg border bg-muted/30 p-4 text-sm">
@@ -308,7 +384,7 @@ export default function RtoPage() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Purchase Option Price</span>
               <span className="font-semibold">
-                {contract.purchaseOptionPrice != null ? money(contract.purchaseOptionPrice) : "—"}
+                {contract.purchaseOptionPrice != null ? money(contract.purchaseOptionPrice) : '—'}
               </span>
             </div>
           </div>
@@ -339,11 +415,11 @@ function Benefit({ icon, title, desc }: { icon: React.ReactNode; title: string; 
 
 function LedgerRow({ entry }: { entry: RtoLedgerEntry }) {
   const amount = Number(entry.amount ?? 0);
-  const isForfeiture = entry.transactionType === "forfeiture" || amount < 0;
+  const isForfeiture = entry.transactionType === 'forfeiture' || amount < 0;
   return (
     <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
       <div className="flex items-center gap-3">
-        <span className={isForfeiture ? "text-red-600" : "text-green-600"}>
+        <span className={isForfeiture ? 'text-red-600' : 'text-green-600'}>
           {isForfeiture ? (
             <ArrowDownCircle className="h-5 w-5" />
           ) : (
@@ -352,17 +428,19 @@ function LedgerRow({ entry }: { entry: RtoLedgerEntry }) {
         </span>
         <div>
           <p className="text-sm font-medium">
-            {ledgerLabel[entry.transactionType] ?? entry.transactionType.replace(/_/g, " ")}
+            {ledgerLabel[entry.transactionType] ?? entry.transactionType.replace(/_/g, ' ')}
           </p>
           <p className="text-xs text-muted-foreground">
             {new Date(entry.createdAt).toLocaleDateString()}
-            {entry.notes ? ` · ${entry.notes}` : ""}
+            {entry.notes ? ` · ${entry.notes}` : ''}
           </p>
         </div>
       </div>
       <div className="text-right">
-        <p className={`text-sm font-semibold tabular-nums ${isForfeiture ? "text-red-600" : "text-green-700"}`}>
-          {isForfeiture ? "-" : "+"}
+        <p
+          className={`text-sm font-semibold tabular-nums ${isForfeiture ? 'text-red-600' : 'text-green-700'}`}
+        >
+          {isForfeiture ? '-' : '+'}
           {money(Math.abs(amount))}
         </p>
         <p className="text-xs text-muted-foreground tabular-nums">
@@ -372,5 +450,3 @@ function LedgerRow({ entry }: { entry: RtoLedgerEntry }) {
     </div>
   );
 }
-
-

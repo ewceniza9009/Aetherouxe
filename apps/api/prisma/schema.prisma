@@ -260,6 +260,9 @@ model Tenant {
   financialMappings FinancialMapping[]
   apInvoices        ApInvoice[]
 
+  rewardItems         RewardItem[]
+  rewardPointLedgers  RewardPointLedger[]
+
   @@map("tenants")
 }
 
@@ -310,6 +313,8 @@ model User {
   titleTransfersAsPrevOwner TitleTransfer[]        @relation("TitleTransferPreviousOwner")
   titleTransfersProcessed   TitleTransfer[]        @relation("TitleTransferProcessedBy")
   ownedProperties           Property[]
+  rewardPointLedgers        RewardPointLedger[]
+
 
   @@map("users")
 }
@@ -2071,4 +2076,38 @@ model SequenceCounter {
   updatedAt DateTime @updatedAt
 
   @@map("sequence_counters")
+}
+
+// ─────────────────────────────────────────────
+// REWARDS & PERKS
+// ─────────────────────────────────────────────
+model RewardItem {
+  id          String   @id @default(uuid())
+  tenantId    String
+  title       String
+  description String?
+  pointsCost  Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, isActive])
+  @@map("reward_items")
+}
+
+model RewardPointLedger {
+  id              String   @id @default(uuid())
+  tenantId        String
+  userId          String
+  points          Int
+  transactionType String   // 'earned' or 'redeemed'
+  notes           String?
+  createdAt       DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("reward_point_ledger")
 }

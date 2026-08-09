@@ -18,6 +18,7 @@ import ResidentDocumentsPage from './pages/DocumentsPage';
 import StatementsPage from './pages/StatementsPage';
 import PaymentRemindersPage from './pages/PaymentRemindersPage';
 import UtilityBillsPage from './pages/UtilityBillsPage';
+import RewardsPage from './pages/RewardsPage';
 import DashboardLayout from './components/layout/DashboardLayout';
 
 const rootRoute = createRootRoute({
@@ -124,6 +125,12 @@ const utilityBillsRoute = createRoute({
   component: UtilityBillsPage,
 });
 
+const rewardsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: '/rewards',
+  component: RewardsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -140,6 +147,7 @@ const routeTree = rootRoute.addChildren([
     statementsRoute,
     remindersRoute,
     utilityBillsRoute,
+    rewardsRoute,
   ]),
 ]);
 

@@ -21,6 +21,30 @@ export interface RevenueTrendPoint {
   revenue: number;
 }
 
+export interface SalesReport {
+  totalSalesVolume: number;
+  totalAccountsReceivable: number;
+  unitsSold: number;
+  totalUnits: number;
+  propertyPerformance: Array<{
+    propertyId: string;
+    propertyCode: string;
+    propertyName: string;
+    totalUnits: number;
+    unitsSold: number;
+    salesVolume: number;
+  }>;
+  recentSales: Array<{
+    id: string;
+    unitNumber: string;
+    propertyName: string;
+    buyerName: string;
+    date: string;
+    schemeType: string;
+    contractValue: number;
+  }>;
+}
+
 @Injectable()
 export class ReportsService {
   constructor(
@@ -213,5 +237,262 @@ export class ReportsService {
       ),
     );
     return headers.concat(rows).join('\n');
+  }
+
+  async getSalesKpis(tenantId?: string) {
+    const allUnits = await this.prisma.unit.findMany({
+      where: tenantId ? { property: { tenantId } } : {},
+      include: { property: true },
+    });
+
+    const totalUnits = allUnits.length;
+    const unitsSold = allUnits.filter((u) => u.status === 'sold').length;
+
+    const leases = await this.prisma.leaseAgreement.findMany({
+      where: {
+        ...(tenantId ? { property: { tenantId } } : {}),
+        schemeType: { not: 'standard_rental' },
+      },
+      include: {
+        rtoContract: true,
+        mortgageScenarios: true,
+      },
+    });
+
+    let totalSalesVolume = 0;
+    for (const l of leases) {
+      if (l.rtoContract) {
+        totalSalesVolume += Number(l.rtoContract.totalContractValue);
+      } else if (l.mortgageScenarios?.length) {
+        totalSalesVolume += Number(l.mortgageScenarios[0].propertyValueAtGeneration);
+      } else if (l.schemeType === 'spot_cash' || l.schemeType === 'installment') {
+        const invoices = await this.prisma.arInvoice.findMany({
+          where: { referenceSource: `lease:${l.id}` },
+        });
+        totalSalesVolume += invoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
+      }
+    }
+
+    const totalAccountsReceivable = await this.ledger.totalReceivable(tenantId);
+
+    return {
+      totalSalesVolume,
+      totalAccountsReceivable,
+      unitsSold,
+      totalUnits,
+    };
+  }
+
+  async getSalesPropertyPerformance(
+    query: import('../common/dto/list-query.dto').ListQueryDto,
+    tenantId?: string,
+  ) {
+    const page = Number(query.page || 1);
+    const limit = Number(query.limit || 20);
+    const search = query.search === 'undefined' ? undefined : query.search;
+    const sort = query.sort === 'undefined' ? undefined : query.sort;
+    const order = query.order || 'desc';
+    const skip = (page - 1) * limit;
+
+    const where: any = tenantId ? { tenantId } : {};
+    if (search) {
+      where.propertyCode = { contains: search, mode: 'insensitive' };
+    }
+
+    const [total, properties] = await Promise.all([
+      this.prisma.property.count({ where }),
+      this.prisma.property.findMany({
+        where,
+        // we won't sort at DB level if they want to sort by calculated fields like salesVolume
+      }),
+    ]);
+
+    const performanceMap = new Map<
+      string,
+      { total: number; sold: number; vol: number; name: string; code: string }
+    >();
+    for (const p of properties) {
+      performanceMap.set(p.id, {
+        total: 0,
+        sold: 0,
+        vol: 0,
+        name: p.propertyCode,
+        code: p.propertyCode,
+      });
+    }
+
+    const units = await this.prisma.unit.findMany({
+      where: { propertyId: { in: properties.map((p) => p.id) } },
+    });
+    for (const u of units) {
+      const pm = performanceMap.get(u.propertyId!);
+      if (pm) {
+        pm.total += 1;
+        if (u.status === 'sold') pm.sold += 1;
+      }
+    }
+
+    const leases = await this.prisma.leaseAgreement.findMany({
+      where: {
+        propertyId: { in: properties.map((p) => p.id) },
+        schemeType: { not: 'standard_rental' },
+      },
+      include: {
+        rtoContract: true,
+        mortgageScenarios: true,
+      },
+    });
+
+    for (const l of leases) {
+      let tcp = 0;
+      if (l.rtoContract) {
+        tcp = Number(l.rtoContract.totalContractValue);
+      } else if (l.mortgageScenarios?.length) {
+        tcp = Number(l.mortgageScenarios[0].propertyValueAtGeneration);
+      } else if (l.schemeType === 'spot_cash' || l.schemeType === 'installment') {
+        const invoices = await this.prisma.arInvoice.findMany({
+          where: { referenceSource: `lease:${l.id}` },
+        });
+        tcp = invoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
+      }
+
+      const pm = performanceMap.get(l.propertyId);
+      if (pm) pm.vol += tcp;
+    }
+
+    let results = Array.from(performanceMap.entries()).map(([id, val]) => ({
+      propertyId: id,
+      propertyCode: val.code,
+      propertyName: val.name,
+      totalUnits: val.total,
+      unitsSold: val.sold,
+      salesVolume: val.vol,
+    }));
+
+    if (sort) {
+      results.sort((a, b) => {
+        let valA = a[sort as keyof typeof a];
+        let valB = b[sort as keyof typeof b];
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          return order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return order === 'asc' ? valA - valB : valB - valA;
+        }
+        return 0;
+      });
+    }
+
+    results = results.slice(skip, skip + limit);
+
+    return {
+      results,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getSalesLedger(
+    query: import('../common/dto/list-query.dto').ListQueryDto,
+    tenantId?: string,
+  ) {
+    const page = Number(query.page || 1);
+    const limit = Number(query.limit || 20);
+    const search = query.search === 'undefined' ? undefined : query.search;
+    const sort = query.sort === 'undefined' ? undefined : query.sort;
+    const order = query.order || 'desc';
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      ...(tenantId ? { property: { tenantId } } : {}),
+      schemeType: { not: 'standard_rental' },
+    };
+
+    if (search) {
+      where.OR = [
+        { unitLabel: { contains: search, mode: 'insensitive' } },
+        { tenant: { firstName: { contains: search, mode: 'insensitive' } } },
+        { tenant: { lastName: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    // Determine DB sort
+    let orderBy: any = undefined;
+    if (sort === 'date') orderBy = { startDate: order };
+    else if (sort === 'unitNumber') orderBy = { unitLabel: order };
+    else if (sort === 'schemeType') orderBy = { schemeType: order };
+    // We can't DB sort on contractValue easily if it requires invoices
+
+    const [total, leases] = await Promise.all([
+      this.prisma.leaseAgreement.count({ where }),
+      this.prisma.leaseAgreement.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          unit: true,
+          property: true,
+          tenant: true,
+          rtoContract: true,
+          mortgageScenarios: true,
+        },
+      }),
+    ]);
+
+    const results = [];
+    for (const l of leases) {
+      let tcp = 0;
+      if (l.rtoContract) {
+        tcp = Number(l.rtoContract.totalContractValue);
+      } else if (l.mortgageScenarios?.length) {
+        tcp = Number(l.mortgageScenarios[0].propertyValueAtGeneration);
+      } else if (l.schemeType === 'spot_cash' || l.schemeType === 'installment') {
+        const invoices = await this.prisma.arInvoice.findMany({
+          where: { referenceSource: `lease:${l.id}` },
+        });
+        tcp = invoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
+      }
+
+      results.push({
+        id: l.id,
+        unitNumber: l.unitLabel || '',
+        propertyName: l.property?.propertyCode ?? '',
+        buyerName: l.tenant?.firstName
+          ? `${l.tenant.firstName} ${l.tenant.lastName}`
+          : (l.tenant?.email ?? ''),
+        date: l.startDate.toISOString(),
+        schemeType: l.schemeType || '',
+        contractValue: tcp,
+      });
+    }
+
+    if (sort === 'contractValue') {
+      results.sort((a, b) =>
+        order === 'asc' ? a.contractValue - b.contractValue : b.contractValue - a.contractValue,
+      );
+    } else if (sort === 'buyerName') {
+      results.sort((a, b) =>
+        order === 'asc'
+          ? a.buyerName.localeCompare(b.buyerName)
+          : b.buyerName.localeCompare(a.buyerName),
+      );
+    } else if (sort === 'propertyName') {
+      results.sort((a, b) =>
+        order === 'asc'
+          ? a.propertyName.localeCompare(b.propertyName)
+          : b.propertyName.localeCompare(a.propertyName),
+      );
+    }
+
+    return {
+      results,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 }

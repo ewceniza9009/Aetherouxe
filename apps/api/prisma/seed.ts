@@ -354,6 +354,8 @@ async function cleanup() {
     'rtoEquityLedger',
     'rtoPaymentAllocation',
     'rtoContract',
+    'rewardPointLedger',
+    'rewardItem',
     'mortgageAmortizationSchedule',
     'mortgageScenario',
     'rentalPayment',
@@ -3119,6 +3121,50 @@ async function main() {
     );
   }
   console.log('Documents, statements, reminders, collections & notifications created');
+
+  /* ── Rewards System ── */
+  console.log('Seeding Rewards...');
+  const rewardItems = await Promise.all([
+    prisma.rewardItem.create({
+      data: {
+        tenantId: tenant.id,
+        title: '$50 Rent Credit',
+        description: 'Get a $50 credit applied to your next rent payment.',
+        pointsCost: 5000,
+        isActive: true,
+      },
+    }),
+    prisma.rewardItem.create({
+      data: {
+        tenantId: tenant.id,
+        title: 'Waive Late Fee',
+        description: 'Waive one late fee on your account.',
+        pointsCost: 2000,
+        isActive: true,
+      },
+    }),
+    prisma.rewardItem.create({
+      data: {
+        tenantId: tenant.id,
+        title: 'Premium Amenity Access',
+        description: 'Free booking for a premium amenity space (e.g. Function Room).',
+        pointsCost: 3000,
+        isActive: true,
+      },
+    }),
+  ]);
+
+  for (const resident of residents) {
+    await prisma.rewardPointLedger.create({
+      data: {
+        tenantId: tenant.id,
+        userId: resident.id,
+        points: faker.number.int({ min: 1000, max: 10000 }),
+        transactionType: 'earned',
+        notes: 'Initial account bonus',
+      },
+    });
+  }
 
   /* ── Property Specs (MongoDB) ──
    * The admin/owner/resident UIs read property `description` and the

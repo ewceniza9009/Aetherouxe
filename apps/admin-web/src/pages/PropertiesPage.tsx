@@ -179,9 +179,6 @@ export default function PropertiesPage() {
                       Status{sortIndicator('status')}
                     </th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                      Building
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                       Project
                     </th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
@@ -231,7 +228,6 @@ export default function PropertiesPage() {
                           );
                         })()}
                       </td>
-                      <td className="px-4 py-3 text-sm font-medium">{p.name}</td>
                       <td className="px-4 py-3 text-sm">
                         {p.projectName ? (
                           <span className="text-muted-foreground">{p.projectName}</span>

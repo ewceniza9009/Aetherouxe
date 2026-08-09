@@ -56,6 +56,7 @@ import { RolesModule } from './roles/roles.module';
 import { CompanyOwnerModule } from './company-owner/company-owner.module';
 import { LedgerModule } from './ledger/ledger.module';
 import { SearchModule } from './search/search.module';
+import { RewardsModule } from './rewards/rewards.module';
 
 @Module({
   imports: [
@@ -118,6 +119,7 @@ import { SearchModule } from './search/search.module';
     CompanyOwnerModule,
     LedgerModule,
     SearchModule,
+    RewardsModule,
   ],
   providers: [
     {
