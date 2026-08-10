@@ -11,6 +11,7 @@ import {
 import { Button } from '@elite-realty/shared-ui/components/ui';
 import { Badge } from '@elite-realty/shared-ui/components/ui';
 import { Input } from '@elite-realty/shared-ui/components/ui';
+import { CurrencyInput } from '@/components/ui/number-input';
 import { Label } from '@elite-realty/shared-ui/components/ui';
 import { Textarea } from '@elite-realty/shared-ui/components/ui';
 import { Skeleton } from '@elite-realty/shared-ui/components/ui';
@@ -477,34 +478,25 @@ export default function EditUnitPage() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs">List Price</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
+                  <CurrencyInput
                     value={form.listPrice}
-                    onChange={(e) => setForm((p) => ({ ...p, listPrice: e.target.value }))}
+                    onChange={(raw) => setForm((p) => ({ ...p, listPrice: raw }))}
                     placeholder="Total selling price"
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Lot Value</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
+                  <CurrencyInput
                     value={form.lotValue}
-                    onChange={(e) => setForm((p) => ({ ...p, lotValue: e.target.value }))}
+                    onChange={(raw) => setForm((p) => ({ ...p, lotValue: raw }))}
                     placeholder="Land share"
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Building Value</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
+                  <CurrencyInput
                     value={form.buildingValue}
-                    onChange={(e) => setForm((p) => ({ ...p, buildingValue: e.target.value }))}
+                    onChange={(raw) => setForm((p) => ({ ...p, buildingValue: raw }))}
                     placeholder="Improvement value"
                   />
                 </div>

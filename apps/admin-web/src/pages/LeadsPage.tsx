@@ -389,7 +389,7 @@ export default function LeadsPage() {
               Cancel
             </Button>
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white bg-none"
               disabled={convertLead.isPending}
               onClick={async () => {
                 if (!convertingLead) return;

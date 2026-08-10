@@ -228,7 +228,7 @@ export default function DisbursementsPage() {
                               size="sm"
                               disabled={isProcessing}
                               onClick={() => handleApprove(invoice.id)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                              className="bg-blue-600 hover:bg-blue-700 text-white bg-none"
                             >
                               {isProcessing ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -243,7 +243,7 @@ export default function DisbursementsPage() {
                               size="sm"
                               disabled={isProcessing}
                               onClick={() => handleDisburse(invoice.id, remaining)}
-                              className="bg-gold hover:bg-gold/90 text-black font-semibold"
+                              className="bg-gold hover:bg-gold/90 text-black font-semibold bg-none"
                             >
                               {isProcessing ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -122,9 +122,13 @@ export interface RawUnit {
   unitNumber: string;
   floorId?: string | null;
   propertyId?: string | null;
-  property?: { name?: string; propertyCode?: string } | null;
+  property?: {
+    name?: string;
+    propertyCode?: string;
+    owner?: { firstName?: string | null; lastName?: string | null } | null;
+  } | null;
   buildingId?: string | null;
-  building?: { name?: string } | null;
+  building?: { name?: string; project?: { name?: string } | null } | null;
   type?: string;
   unitType?: string;
   status?: string;
@@ -139,6 +143,12 @@ export interface RawUnit {
   rentAmount?: number | null;
   createdAt: string;
   updatedAt: string;
+  titleTransfers?: Array<{
+    buyer?: { firstName?: string | null; lastName?: string | null } | null;
+  }>;
+  leaseAgreements?: Array<{
+    tenant?: { firstName?: string | null; lastName?: string | null } | null;
+  }>;
 }
 
 export interface RawLease {

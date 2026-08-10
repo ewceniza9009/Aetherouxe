@@ -12,6 +12,7 @@ import PropertyDetailPage from './pages/PropertyDetailPage';
 import NewPropertyPage from './pages/NewPropertyPage';
 import EditPropertyPage from './pages/EditPropertyPage';
 import UnitListPage from './pages/UnitListPage';
+import AllUnitsPage from './pages/AllUnitsPage';
 import NewUnitPage from './pages/NewUnitPage';
 import EditUnitPage from './pages/EditUnitPage';
 import BuildingsPage from './pages/BuildingsPage';
@@ -167,6 +168,12 @@ const buildingsRoute = createRoute({
   getParentRoute: () => protectedLayout,
   path: '/buildings',
   component: BuildingsPage,
+});
+
+const allUnitsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: '/units',
+  component: AllUnitsPage,
 });
 
 const newBuildingRoute = createRoute({
@@ -538,6 +545,7 @@ const routeTree = rootRoute.addChildren([
     propertyDetailRoute,
     newPropertyRoute,
     editPropertyRoute,
+    allUnitsRoute,
     unitListRoute,
     newUnitRoute,
     editUnitRoute,

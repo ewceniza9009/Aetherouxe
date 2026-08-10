@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@elite-realty/shared-ui/lib/api';
 import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
 import type { RawUnit } from '@/types/api';
@@ -22,7 +22,16 @@ export interface Unit {
   buildingValue?: number | null;
   createdAt: string;
   updatedAt: string;
-  property?: { id: string; name?: string | null; propertyCode?: string | null } | null;
+  property?: {
+    id: string;
+    name?: string | null;
+    propertyCode?: string | null;
+    owner?: { firstName?: string | null; lastName?: string | null } | null;
+  } | null;
+  building?: { name?: string } | null;
+  projectName?: string | null;
+  owner?: string | null;
+  tenant?: string | null;
 }
 
 export interface UnitQuery {
@@ -75,6 +84,16 @@ export function useUnits(query: UnitQuery) {
         createdAt: u.createdAt,
         updatedAt: u.updatedAt,
         property: u.property ?? null,
+        building: u.building ?? null,
+        projectName: u.building?.project?.name ?? null,
+        owner: u.titleTransfers?.[0]?.buyer
+          ? `${u.titleTransfers[0].buyer.firstName} ${u.titleTransfers[0].buyer.lastName}`
+          : u.property?.owner
+            ? `${u.property.owner.firstName} ${u.property.owner.lastName}`
+            : null,
+        tenant: u.leaseAgreements?.[0]?.tenant
+          ? `${u.leaseAgreements[0].tenant.firstName} ${u.leaseAgreements[0].tenant.lastName}`
+          : null,
       }));
       return { data: transformed, meta: data.meta } as PaginatedResult<Unit>;
     },

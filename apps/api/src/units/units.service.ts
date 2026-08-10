@@ -56,7 +56,21 @@ export class UnitsService {
       page: query.page,
       limit: query.limit,
       where,
-      include: { property: true, building: true, floor: true },
+      include: {
+        property: { include: { owner: true } },
+        building: { include: { project: true } },
+        floor: true,
+        leaseAgreements: {
+          where: { isActive: true },
+          include: { tenant: true },
+        },
+        titleTransfers: {
+          where: { status: 'completed' },
+          include: { buyer: true },
+          orderBy: { completedDate: 'desc' },
+          take: 1,
+        },
+      },
       orderBy: built.orderBy,
       allowedSortFields: this.fieldMap.sortable,
     });

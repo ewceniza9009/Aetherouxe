@@ -189,7 +189,7 @@ export default function RewardsPage() {
               Cancel
             </Button>
             <Button
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white bg-none"
               onClick={() => selectedReward && handleRedeem(selectedReward)}
               disabled={redeemReward.isPending}
             >
