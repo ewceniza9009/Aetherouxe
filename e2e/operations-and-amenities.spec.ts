@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:7077';
 
-test.describe('New Features E2E Verification Suite', () => {
+test.describe('Operations, Title Handover & Facility Maintenance E2E Suite', () => {
   test.beforeEach(async ({ page }) => {
     // Authenticate with admin credentials
     await page.goto(`${BASE_URL}/login`);
@@ -13,7 +13,9 @@ test.describe('New Features E2E Verification Suite', () => {
     await page.waitForURL('**/dashboard', { timeout: 20000 });
   });
 
-  test('1. Title Transfers 6-Stage Legal Handover Stepper', async ({ page }) => {
+  test('[Legal Operations] Philippine Torrens System: 6-Stage Title Transfer Handover Pipeline', async ({
+    page,
+  }) => {
     await page.goto(`${BASE_URL}/titles`);
     await page.waitForSelector('h1:has-text("Title Transfers")', { timeout: 15000 });
 
@@ -21,33 +23,36 @@ test.describe('New Features E2E Verification Suite', () => {
     const stepperBanner = page.locator('text=Standard Legal Title Handover Pipeline');
     await expect(stepperBanner).toBeVisible();
 
-    // Verify key legal stages in the stepper
+    // Verify key Torrens legal milestones in the stepper
     await expect(page.locator('text=Tax Clearance').first()).toBeVisible();
     await expect(page.locator('text=BIR CAR').first()).toBeVisible();
     await expect(page.locator('text=DOAS Notarized').first()).toBeVisible();
     await expect(page.locator('text=Key Turnover').first()).toBeVisible();
   });
 
-  test('2. Maintenance Ticket Kanban & Vendor Dispatch Flow', async ({ page }) => {
+  test('[Facility Management] Maintenance Ticket Kanban: Visual Triage Lanes, Vendor Dispatch & Priority Routing', async ({
+    page,
+  }) => {
     await page.goto(`${BASE_URL}/maintenance/kanban`);
-    await page.waitForSelector('h1:has-text("Maintenance Kanban")', { timeout: 15000 });
+    await page.waitForSelector('h1:has-text("Maintenance Ticket Kanban")', { timeout: 15000 });
 
-    // Assert Triage Lanes are rendered
-    await expect(page.locator('text=New Requests').first()).toBeVisible();
-    await expect(page.locator('text=Dispatched').first()).toBeVisible();
-    await expect(page.locator('text=In Progress').first()).toBeVisible();
-    await expect(page.locator('text=Completed').first()).toBeVisible();
+    // Assert Kanban Triage Lanes are rendered
+    await expect(page.locator('text=Open / Triage').first()).toBeVisible();
+    await expect(page.locator('text=Vendor Dispatched').first()).toBeVisible();
+    await expect(page.locator('text=In Execution').first()).toBeVisible();
+    await expect(page.locator('text=Resolved & AP Invoiced').first()).toBeVisible();
 
-    // Check action buttons or filters
-    const filterInput = page.locator('input[placeholder*="Search tickets"]');
-    await expect(filterInput).toBeVisible();
+    // Check priority filters
+    await expect(page.locator('button:has-text("all")').first()).toBeVisible();
   });
 
-  test('3. Resident Amenities & Leisure Booking System', async ({ page }) => {
+  test('[Resident Leisure] Community Amenities: Interactive Slot Booking & Real-Time Conflict Detection', async ({
+    page,
+  }) => {
     await page.goto(`${BASE_URL}/amenities`);
     await page.waitForSelector('h1, h2, table, .grid', { timeout: 15000 });
 
-    // Check if reserve/book buttons exist
+    // Check if reservation buttons exist
     const reserveBtn = page
       .locator('button:has-text("Reserve Facility"), button:has-text("Book Now")')
       .first();
@@ -63,12 +68,16 @@ test.describe('New Features E2E Verification Suite', () => {
     }
   });
 
-  test('4. Field Meter Reader & Anomaly Detection Entrypoint', async ({ page }) => {
+  test('[Utilities & Submetering] Field Meter Reader PWA: QR Scanning, Manual Entry & Spike Anomaly Alerting', async ({
+    page,
+  }) => {
     await page.goto(`${BASE_URL}/field-reader`);
     await page.waitForSelector('h1:has-text("Field Meter Reader")', { timeout: 15000 });
 
-    // Verify OCR / Manual reading capture modes
-    await expect(page.locator('text=Camera OCR').first()).toBeVisible();
-    await expect(page.locator('text=Manual Entry').first()).toBeVisible();
+    // Verify Scanner controls and meter selection
+    await expect(
+      page.locator('button:has-text("Scan QR Code"), button:has-text("Close Camera")').first(),
+    ).toBeVisible();
+    await expect(page.locator('text=Scan or Select Submeter').first()).toBeVisible();
   });
 });

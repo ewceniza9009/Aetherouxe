@@ -185,16 +185,21 @@ export default function ResidentAmenitiesPage() {
     },
   });
 
-  const getAmenityIcon = (type: string) => {
-    switch (type.toLowerCase()) {
+  const getAmenityIcon = (type?: string) => {
+    switch ((type || '').toLowerCase()) {
       case 'gym':
       case 'fitness':
         return <Dumbbell className="h-6 w-6 text-emerald-400" />;
       case 'pool':
+      case 'swimming':
         return <Waves className="h-6 w-6 text-sky-400" />;
       case 'park':
       case 'garden':
         return <Trees className="h-6 w-6 text-emerald-400" />;
+      case 'cinema':
+      case 'theater':
+      case 'screening_room':
+        return <Tv className="h-6 w-6 text-indigo-400" />;
       default:
         return <Sparkles className="h-6 w-6 text-amber-400" />;
     }

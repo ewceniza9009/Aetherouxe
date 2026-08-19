@@ -185,7 +185,7 @@ export default function MaintenanceKanbanPage() {
 
   const filteredTickets = tickets.filter((t) => {
     if (selectedPriority === 'all') return true;
-    return t.priority.toLowerCase() === selectedPriority.toLowerCase();
+    return (t.priority || '').toLowerCase() === (selectedPriority || '').toLowerCase();
   });
 
   const columns = [
@@ -224,7 +224,7 @@ export default function MaintenanceKanbanPage() {
   ];
 
   const getPriorityBadge = (priority: string) => {
-    switch (priority.toLowerCase()) {
+    switch ((priority || '').toLowerCase()) {
       case 'emergency':
       case 'urgent':
         return (

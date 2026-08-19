@@ -26,7 +26,7 @@ jobs:
         run: npm ci
 
       - name: Generate Prisma client
-        run: npx prisma generate
+        run: npm run prisma:generate
         working-directory: apps/api
 
       - name: Build shared packages
@@ -35,15 +35,15 @@ jobs:
           npm run build --workspace=@elite-realty/shared-ui
 
       - name: TypeCheck API
-        run: npx tsc --noEmit
+        run: npx --no-install tsc --noEmit
         working-directory: apps/api
 
       - name: TypeCheck packages
-        run: npx tsc --noEmit
+        run: npx --no-install tsc --noEmit
         working-directory: packages/shared-types
 
       - name: TypeCheck frontends
-        run: npx turbo typecheck
+        run: npx --no-install turbo typecheck
 
       - name: npm audit
         run: npm audit --audit-level=high
@@ -78,15 +78,15 @@ jobs:
         run: npm ci
 
       - name: Generate Prisma client
-        run: npx prisma generate
+        run: npm run prisma:generate
         working-directory: apps/api
 
       - name: Run migrations
-        run: npx prisma migrate deploy
+        run: npx --no-install prisma migrate deploy
         working-directory: apps/api
 
       - name: Run tests
-        run: npx jest --passWithNoTests
+        run: npx --no-install jest --passWithNoTests
         working-directory: apps/api
 
   build-frontend:
@@ -111,7 +111,7 @@ jobs:
           npm run build --workspace=@elite-realty/shared-ui
 
       - name: Build ${{ matrix.app }}
-        run: npx vite build
+        run: npm run build
         working-directory: apps/${{ matrix.app }}
 
   build-api:
@@ -132,9 +132,9 @@ jobs:
         working-directory: packages/shared-types
 
       - name: Generate Prisma client
-        run: npx prisma generate
+        run: npm run prisma:generate
         working-directory: apps/api
 
       - name: Build API
-        run: npx nest build
+        run: npm run build
         working-directory: apps/api

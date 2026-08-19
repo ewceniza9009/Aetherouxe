@@ -460,6 +460,12 @@ const reservationsRoute = createRoute({
   component: ReservationsPage,
 });
 
+const titlesAliasRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: '/titles',
+  component: TitleTransfersPage,
+});
+
 const amenitiesRoute = createRoute({
   getParentRoute: () => protectedLayout,
   path: '/amenities',
@@ -624,6 +630,7 @@ const routeTree = rootRoute.addChildren([
     schemesRoute,
     schemeDetailRoute,
     titleTransfersRoute,
+    titlesAliasRoute,
     reservationsRoute,
     salesReportRoute,
   ]),

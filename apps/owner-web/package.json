@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "clean": "npx rimraf .turbo node_modules dist"
   },
-"dependencies": {
+  "dependencies": {
     "@elite-realty/shared-types": "*",
     "@elite-realty/shared-ui": "*",
     "@tanstack/react-router": "^1.99.0",
@@ -22,7 +22,9 @@
     "lucide-react": "^0.468.0",
     "axios": "^1.7.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-is": "^19.0.0",
+    "recharts": "^3.9.2"
   },
   "devDependencies": {
     "@elite-realty/config-eslint": "*",
@@ -37,4 +39,3 @@
     "vite": "^6.0.0"
   }
 }
-

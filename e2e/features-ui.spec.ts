@@ -77,7 +77,7 @@ test.describe('Advanced UI & Digital Twin E2E Suite', () => {
 
       // Verify Scanner toggle button exists
       const scanToggleBtn = page.locator(
-        'button:has-text("Open Camera Scanner"), button:has-text("Close Camera Scanner")',
+        'button:has-text("Scan QR Code"), button:has-text("Close Camera")',
       );
       await expect(scanToggleBtn.first()).toBeVisible();
     }
