@@ -179,6 +179,12 @@ const navGroups: NavGroup[] = [
         kind: 'txn',
       },
       {
+        label: 'Maintenance Kanban',
+        icon: <HardHat size={18} />,
+        path: '/maintenance/kanban',
+        kind: 'txn',
+      },
+      {
         label: 'Payment Reminders',
         icon: <AlarmClock size={18} />,
         path: '/payment-reminders',

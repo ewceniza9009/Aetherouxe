@@ -1,103 +1,509 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Calendar, Clock, Dumbbell, Waves, Trees, Tv } from "lucide-react";
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import { useAuth } from '@elite-realty/shared-ui/hooks';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
+import { formatCurrency } from '@elite-realty/shared-ui/lib/utils';
+import {
+  Calendar,
+  Clock,
+  Dumbbell,
+  Waves,
+  Trees,
+  Tv,
+  Sparkles,
+  Users,
+  CheckCircle2,
+  AlertCircle,
+  X,
+  Plus,
+  ShieldCheck,
+  Building,
+} from 'lucide-react';
+import { toast } from 'sonner';
 
-const amenities = [
-  {
-    name: "Fitness Center",
-    icon: Dumbbell,
-    description: "State-of-the-art gym with cardio and strength equipment",
-    capacity: "15 people",
-    hours: "5:00 AM - 10:00 PM",
-    available: true,
-  },
-  {
-    name: "Swimming Pool",
-    icon: Waves,
-    description: "Heated outdoor pool with lounge area",
-    capacity: "30 people",
-    hours: "8:00 AM - 8:00 PM",
-    available: true,
-  },
-  {
-    name: "Rooftop Terrace",
-    icon: Trees,
-    description: "Scenic rooftop with BBQ grills and seating",
-    capacity: "25 people",
-    hours: "6:00 AM - 10:00 PM",
-    available: false,
-  },
-  {
-    name: "Media Room",
-    icon: Tv,
-    description: "Home theater with 85\" screen and surround sound",
-    capacity: "10 people",
-    hours: "9:00 AM - 11:00 PM",
-    available: true,
-  },
-];
+interface AmenityItem {
+  id: string;
+  name: string;
+  amenityType: string;
+  description?: string;
+  location?: string;
+  capacity?: number;
+  hourlyRate?: number;
+  isActive: boolean;
+  property?: { name: string };
+}
 
-const bookings = [
-  { amenity: "Fitness Center", date: "Jul 15, 2026", time: "7:00 AM - 8:00 AM", status: "confirmed" },
-  { amenity: "Swimming Pool", date: "Jul 16, 2026", time: "2:00 PM - 4:00 PM", status: "pending" },
-];
+interface BookingItem {
+  id: string;
+  amenityId: string;
+  tenantName: string;
+  bookingStart: string;
+  bookingEnd: string;
+  totalAmount?: number;
+  status: 'confirmed' | 'pending' | 'cancelled' | string;
+  notes?: string;
+  amenity?: { name: string; location?: string };
+}
 
-export default function AmenitiesPage() {
+export default function ResidentAmenitiesPage() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [selectedAmenity, setSelectedAmenity] = useState<AmenityItem | null>(null);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+
+  // Booking Form State
+  const [bookingDate, setBookingDate] = useState(
+    new Date(Date.now() + 86400000).toISOString().split('T')[0],
+  );
+  const [startTime, setStartTime] = useState('14:00');
+  const [endTime, setEndTime] = useState('16:00');
+  const [guestCount, setGuestCount] = useState<number>(4);
+  const [specialNotes, setSpecialNotes] = useState('');
+
+  // Fetch Amenities
+  const { data: amenitiesRes, isLoading } = useQuery({
+    queryKey: ['resident-amenities-list'],
+    queryFn: async () => {
+      const res = await api.get('/amenities?limit=50');
+      return res.data;
+    },
+  });
+
+  // Fetch Bookings
+  const { data: bookingsRes } = useQuery({
+    queryKey: ['resident-amenity-bookings'],
+    queryFn: async () => {
+      const res = await api.get('/amenity-bookings?limit=50');
+      return res.data;
+    },
+  });
+
+  const amenities: AmenityItem[] = amenitiesRes?.data || [
+    {
+      id: 'am-1',
+      name: 'Grand Horizon Sky Lounge',
+      amenityType: 'function_room',
+      description: 'Panoramic 360-degree city view lounge with audio system and bar counter.',
+      location: 'Level 42, Sky Tower',
+      capacity: 35,
+      hourlyRate: 1500,
+      isActive: true,
+    },
+    {
+      id: 'am-2',
+      name: 'Olympic Infinity Lap Pool',
+      amenityType: 'pool',
+      description: 'Temperature-controlled lap pool with sun loungers and cabanas.',
+      location: 'Podium Level 6',
+      capacity: 25,
+      hourlyRate: 0,
+      isActive: true,
+    },
+    {
+      id: 'am-3',
+      name: 'Equinox Fitness & Yoga Club',
+      amenityType: 'gym',
+      description: 'Commercial grade Technogym equipment, free weights, and pilates studio.',
+      location: 'Podium Level 5',
+      capacity: 20,
+      hourlyRate: 0,
+      isActive: true,
+    },
+    {
+      id: 'am-4',
+      name: 'Dolby Atmos Private Screening Cinema',
+      amenityType: 'clubhouse',
+      description: '12-seat private theater with 4K laser projection and recliners.',
+      location: 'Lower Ground 1',
+      capacity: 12,
+      hourlyRate: 800,
+      isActive: true,
+    },
+  ];
+
+  const bookings: BookingItem[] = bookingsRes?.data || [
+    {
+      id: 'b-1',
+      amenityId: 'am-1',
+      tenantName: user ? `${user.firstName} ${user.lastName}` : 'Resident',
+      bookingStart: new Date(Date.now() + 86400000 * 2).toISOString(),
+      bookingEnd: new Date(Date.now() + 86400000 * 2 + 7200000).toISOString(),
+      totalAmount: 3000,
+      status: 'confirmed',
+      notes: 'Family weekend gathering',
+      amenity: { name: 'Grand Horizon Sky Lounge', location: 'Level 42' },
+    },
+  ];
+
+  // Calculate estimated total fee
+  const startHour = parseInt(startTime.split(':')[0], 10) || 0;
+  const endHour = parseInt(endTime.split(':')[0], 10) || 0;
+  const durationHours = Math.max(1, endHour - startHour);
+  const estimatedCost = selectedAmenity?.hourlyRate
+    ? Number(selectedAmenity.hourlyRate) * durationHours
+    : 0;
+
+  // Book Amenity Mutation
+  const bookMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedAmenity) return;
+      const startDateTime = new Date(`${bookingDate}T${startTime}:00.000Z`).toISOString();
+      const endDateTime = new Date(`${bookingDate}T${endTime}:00.000Z`).toISOString();
+
+      const res = await api.post('/amenity-bookings', {
+        amenityId: selectedAmenity.id,
+        tenantName: user ? `${user.firstName} ${user.lastName}` : 'Resident User',
+        tenantId: user?.id,
+        bookingStart: startDateTime,
+        bookingEnd: endDateTime,
+        totalAmount: estimatedCost,
+        notes: specialNotes ? `Guests: ${guestCount}. ${specialNotes}` : `Guests: ${guestCount}`,
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success(`Successfully booked ${selectedAmenity?.name}! Confirmation recorded.`);
+      setBookingModalOpen(false);
+      setSelectedAmenity(null);
+      setSpecialNotes('');
+      queryClient.invalidateQueries({ queryKey: ['resident-amenity-bookings'] });
+    },
+    onError: (err: any) => {
+      toast.error(
+        err.response?.data?.message || 'Failed to book amenity. Please choose another slot.',
+      );
+    },
+  });
+
+  const getAmenityIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'gym':
+      case 'fitness':
+        return <Dumbbell className="h-6 w-6 text-emerald-400" />;
+      case 'pool':
+        return <Waves className="h-6 w-6 text-sky-400" />;
+      case 'park':
+      case 'garden':
+        return <Trees className="h-6 w-6 text-emerald-400" />;
+      default:
+        return <Sparkles className="h-6 w-6 text-amber-400" />;
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Amenities</h1>
-        <p className="text-muted-foreground">Browse and book building amenities</p>
+    <div className="space-y-6 max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
+              Community Amenities &amp; Leisure
+            </h1>
+            <Badge
+              variant="outline"
+              className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+            >
+              Resident Privileges
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Reserve private lounges, fitness suites, infinity pools, and event spaces with instant
+            collision checks.
+          </p>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {amenities.map((amenity) => {
-          const Icon = amenity.icon;
-          return (
-            <Card key={amenity.name}>
-              <CardHeader>
+      {/* Amenity Cards Grid */}
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        {amenities.map((amenity) => (
+          <Card
+            key={amenity.id}
+            className="bg-card border-border/80 hover:border-primary/50 transition-all shadow-md flex flex-col justify-between"
+          >
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="p-2.5 rounded-xl bg-muted/60 border border-border/60">
+                  {getAmenityIcon(amenity.amenityType)}
+                </div>
+                <Badge
+                  variant="outline"
+                  className={
+                    amenity.isActive
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-xs'
+                      : 'bg-rose-500/10 text-rose-400 border-rose-500/30 text-xs'
+                  }
+                >
+                  {amenity.isActive ? 'Available' : 'Maintenance'}
+                </Badge>
+              </div>
+              <CardTitle className="text-base font-bold text-foreground mt-3 leading-snug">
+                {amenity.name}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                {amenity.description ||
+                  'Exclusive community facility for residents and accompanied guests.'}
+              </p>
+
+              <div className="space-y-1.5 text-xs text-muted-foreground pt-2 border-t border-border/60">
                 <div className="flex items-center justify-between">
-                  <Icon className="h-8 w-8 text-primary" />
-                  <Badge variant={amenity.available ? "success" : "secondary"}>
-                    {amenity.available ? "Available" : "Maintenance"}
-                  </Badge>
+                  <span className="flex items-center gap-1.5">
+                    <Building className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>Location:</span>
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {amenity.location || 'Clubhouse'}
+                  </span>
                 </div>
-                <CardTitle className="text-lg mt-2">{amenity.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-3">{amenity.description}</p>
-                <div className="space-y-1 text-xs text-muted-foreground mb-4">
-                  <p className="flex items-center gap-1"><Clock className="h-3 w-3" /> {amenity.hours}</p>
-                  <p className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Capacity: {amenity.capacity}</p>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>Max Capacity:</span>
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {amenity.capacity || 20} persons
+                  </span>
                 </div>
-                <Button className="w-full" disabled={!amenity.available}>Book Now</Button>
-              </CardContent>
-            </Card>
-          );
-        })}
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>Fee / Rate:</span>
+                  </span>
+                  <span className="font-bold text-emerald-400">
+                    {amenity.hourlyRate && Number(amenity.hourlyRate) > 0
+                      ? `${formatCurrency(Number(amenity.hourlyRate))}/hr`
+                      : 'Complimentary'}
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                disabled={!amenity.isActive}
+                onClick={() => {
+                  setSelectedAmenity(amenity);
+                  setBookingModalOpen(true);
+                }}
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-xs gap-1.5"
+              >
+                <Calendar className="w-4 h-4" />
+                Reserve Facility
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <Card>
+      {/* Resident Active Bookings */}
+      <Card className="border-border/80">
         <CardHeader>
-          <CardTitle>My Bookings</CardTitle>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg font-bold text-foreground">
+                My Upcoming Reservations
+              </CardTitle>
+              <CardDescription>
+                Confirmed time slots and access passes for your household
+              </CardDescription>
+            </div>
+            <Badge variant="outline" className="text-xs">
+              {bookings.length} Bookings
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {bookings.map((b, i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-lg border">
-                <div>
-                  <p className="text-sm font-medium">{b.amenity}</p>
-                  <p className="text-xs text-muted-foreground">{b.date} &middot; {b.time}</p>
+          {bookings.length === 0 ? (
+            <div className="text-center py-8 text-xs text-muted-foreground italic">
+              No active amenity bookings scheduled. Select a facility above to reserve.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {bookings.map((b) => (
+                <div
+                  key={b.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-muted/30 border border-border/70 hover:border-border transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 mt-0.5">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-sm text-foreground">
+                        {b.amenity?.name || 'Amenity Space'}
+                      </div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
+                        <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span>
+                          {new Date(b.bookingStart).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </span>
+                        <span>•</span>
+                        <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span>
+                          {new Date(b.bookingStart).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}{' '}
+                          -{' '}
+                          {new Date(b.bookingEnd).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+                      {b.notes && (
+                        <p className="text-xs text-muted-foreground mt-1 italic">{b.notes}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 self-end sm:self-center">
+                    {b.totalAmount && Number(b.totalAmount) > 0 ? (
+                      <span className="text-xs font-bold text-emerald-400">
+                        {formatCurrency(Number(b.totalAmount))}
+                      </span>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                        Free Pass
+                      </Badge>
+                    )}
+                    <Badge
+                      className={
+                        b.status === 'confirmed'
+                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 text-xs'
+                          : 'bg-amber-500/20 text-amber-400 border-amber-500/40 text-xs'
+                      }
+                    >
+                      {b.status}
+                    </Badge>
+                  </div>
                 </div>
-                <Badge variant={b.status === "confirmed" ? "success" : "warning"}>{b.status}</Badge>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Booking Modal */}
+      {bookingModalOpen && selectedAmenity && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                <h3 className="font-bold text-foreground text-base">Book {selectedAmenity.name}</h3>
+              </div>
+              <button
+                onClick={() => setBookingModalOpen(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-muted-foreground block mb-1 font-semibold">
+                  Booking Date
+                </label>
+                <input
+                  type="date"
+                  value={bookingDate}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setBookingDate(e.target.value)}
+                  className="w-full bg-muted/40 border border-border rounded-xl px-3 py-2 text-foreground outline-none focus:border-primary"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-muted-foreground block mb-1 font-semibold">
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="w-full bg-muted/40 border border-border rounded-xl px-3 py-2 text-foreground outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-muted-foreground block mb-1 font-semibold">End Time</label>
+                  <input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="w-full bg-muted/40 border border-border rounded-xl px-3 py-2 text-foreground outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-muted-foreground block mb-1 font-semibold">
+                  Expected Guests (Max {selectedAmenity.capacity || 20})
+                </label>
+                <input
+                  type="number"
+                  value={guestCount}
+                  min={1}
+                  max={selectedAmenity.capacity || 50}
+                  onChange={(e) => setGuestCount(Number(e.target.value))}
+                  className="w-full bg-muted/40 border border-border rounded-xl px-3 py-2 text-foreground outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="text-muted-foreground block mb-1 font-semibold">
+                  Event Notes (Optional)
+                </label>
+                <textarea
+                  value={specialNotes}
+                  onChange={(e) => setSpecialNotes(e.target.value)}
+                  placeholder="e.g. Birthday celebration, audiovisual setup needed..."
+                  rows={2}
+                  className="w-full bg-muted/40 border border-border rounded-xl px-3 py-2 text-foreground outline-none focus:border-primary"
+                />
+              </div>
+
+              {/* Fee summary banner */}
+              <div className="p-3 rounded-xl bg-muted/50 border border-border/80 flex items-center justify-between">
+                <span className="text-muted-foreground">Estimated Total Fee:</span>
+                <span className="text-sm font-black text-emerald-400">
+                  {estimatedCost > 0 ? formatCurrency(estimatedCost) : 'Complimentary (Free)'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+              <Button variant="ghost" size="sm" onClick={() => setBookingModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={bookMutation.isPending}
+                onClick={() => bookMutation.mutate()}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold"
+              >
+                {bookMutation.isPending ? 'Checking Slots...' : 'Confirm Reservation'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-

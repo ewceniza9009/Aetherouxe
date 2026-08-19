@@ -19,6 +19,7 @@ COPY apps/admin-web/package*.json ./apps/admin-web/
 COPY apps/owner-web/package*.json ./apps/owner-web/
 COPY apps/resident-web/package*.json ./apps/resident-web/
 COPY packages/shared-types/package*.json ./packages/shared-types/
+COPY packages/shared-ui/package*.json ./packages/shared-ui/
 COPY packages/config-eslint/package*.json ./packages/config-eslint/
 COPY packages/config-tsconfig/package*.json ./packages/config-tsconfig/
 

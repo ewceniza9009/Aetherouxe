@@ -26,9 +26,10 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
   { label: 'Properties', icon: <Building2 size={20} />, path: '/properties' },
+  { label: 'Portfolio & Yield', icon: <PieChart size={20} />, path: '/portfolio' },
   { label: 'Projects', icon: <Hammer size={20} />, path: '/projects', developerOnly: true },
   { label: 'Financials', icon: <DollarSign size={20} />, path: '/financials' },
-  { label: 'P&L', icon: <PieChart size={20} />, path: '/pnl' },
+  { label: 'P&L', icon: <FileText size={20} />, path: '/pnl' },
   { label: 'Documents', icon: <FileText size={20} />, path: '/documents' },
 ];
 

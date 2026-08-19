@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateAmenityDto,
@@ -121,6 +121,33 @@ export class CommunityService {
     const amenity = await this.prisma.amenity.findUnique({ where: { id: dto.amenityId } });
     if (!amenity) throw new NotFoundException('Amenity not found');
 
+    const start = new Date(dto.bookingStart);
+    const end = new Date(dto.bookingEnd);
+
+    if (start >= end) {
+      throw new BadRequestException('Booking start time must be before end time.');
+    }
+
+    // Overlapping booking conflict check
+    const existingConflict = await this.prisma.amenityBooking.findFirst({
+      where: {
+        amenityId: dto.amenityId,
+        status: { in: ['confirmed', 'pending'] },
+        AND: [{ bookingStart: { lt: end } }, { bookingEnd: { gt: start } }],
+      },
+    });
+
+    if (existingConflict) {
+      throw new BadRequestException(
+        `This time slot (${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}) is already booked. Please choose another time.`,
+      );
+    }
+
+    // Compute fee if hourly rate exists
+    const hours = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60)));
+    const totalAmount =
+      dto.totalAmount ?? (amenity.hourlyRate ? Number(amenity.hourlyRate) * hours : 0);
+
     return this.prisma.amenityBooking.create({
       data: {
         amenityId: dto.amenityId,
@@ -128,10 +155,11 @@ export class CommunityService {
         unitId: dto.unitId,
         tenantName: dto.tenantName,
         unitLabel: dto.unitLabel,
-        bookingStart: new Date(dto.bookingStart),
-        bookingEnd: new Date(dto.bookingEnd),
-        totalAmount: dto.totalAmount,
+        bookingStart: start,
+        bookingEnd: end,
+        totalAmount,
         notes: dto.notes,
+        status: 'confirmed',
       },
     });
   }

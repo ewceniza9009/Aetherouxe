@@ -3166,6 +3166,168 @@ async function main() {
     });
   }
 
+  /* ── Utility Submeters & Consumption Readings (Commit d7b3668 & Recent) ── */
+  const seedUnits = await prisma.unit.findMany({ take: 25, include: { property: true } });
+  let meterCount = 0;
+  let readingCount = 0;
+
+  for (const u of seedUnits) {
+    // Water meter
+    const waterMeterNum = `WM-${u.unitNumber.replace(/\s+/g, '')}-${faker.string.numeric(4)}`;
+    const waterMeter = await prisma.utilityMeter.create({
+      data: {
+        tenantId: tenant.id,
+        unitId: u.id,
+        propertyId: u.propertyId,
+        utilityType: UtilityType.water,
+        meterNumber: waterMeterNum,
+        multiplier: 1,
+        isActive: true,
+        lastReadingValue: 145.5,
+      },
+    });
+    meterCount++;
+
+    // Electricity meter
+    const elecMeterNum = `EM-${u.unitNumber.replace(/\s+/g, '')}-${faker.string.numeric(4)}`;
+    const elecMeter = await prisma.utilityMeter.create({
+      data: {
+        tenantId: tenant.id,
+        unitId: u.id,
+        propertyId: u.propertyId,
+        utilityType: UtilityType.electricity,
+        meterNumber: elecMeterNum,
+        multiplier: 1,
+        isActive: true,
+        lastReadingValue: 1240.0,
+      },
+    });
+    meterCount++;
+
+    // Generate monthly readings for the past 4 months
+    for (let m = 4; m >= 1; m--) {
+      const readDate = new Date();
+      readDate.setMonth(readDate.getMonth() - m);
+
+      // Water reading
+      await prisma.consumptionReading.create({
+        data: {
+          meterId: waterMeter.id,
+          readingDate: readDate,
+          value: 100 + (4 - m) * 12 + faker.number.float({ min: 1, max: 5 }),
+          reader: 'Automated AMR / Field Reader',
+          note: m === 1 && chance(0.15) ? '[SPIKE CONFIRMED] High occupancy weekend' : undefined,
+        },
+      });
+      readingCount++;
+
+      // Electricity reading
+      await prisma.consumptionReading.create({
+        data: {
+          meterId: elecMeter.id,
+          readingDate: readDate,
+          value: 900 + (4 - m) * 85 + faker.number.float({ min: 5, max: 20 }),
+          reader: 'Automated AMR / Field Reader',
+        },
+      });
+      readingCount++;
+    }
+  }
+  console.log(`Utility submeters seeded: ${meterCount} meters, ${readingCount} readings`);
+
+  /* ── Title Transfers (Commit d7b3668 & Recent) ── */
+  const buyerUser = residents[0] || admin;
+  const prevOwnerUser = owners[0] || admin;
+  const transferUnits = seedUnits.filter((u) => !!u.propertyId).slice(0, 3);
+
+  if (transferUnits[0]) {
+    await prisma.titleTransfer.create({
+      data: {
+        tenantId: tenant.id,
+        propertyId: transferUnits[0].propertyId!,
+        unitId: transferUnits[0].id,
+        buyerUserId: buyerUser.id,
+        previousOwnerUserId: prevOwnerUser.id,
+        basis: TitleTransferBasis.spot_cash,
+        status: TitleTransferStatus.pending,
+        titleNumber: `CCT-2026-${faker.string.numeric(6)}`,
+        contractValue: 4500000,
+        amountSettled: 4500000,
+        transferFeeAmount: 67500,
+        notes: 'Tax declaration and RPT clearance verified. Awaiting BIR CAR issuance.',
+        processedByUserId: admin.id,
+      },
+    });
+  }
+
+  if (transferUnits[1]) {
+    await prisma.titleTransfer.create({
+      data: {
+        tenantId: tenant.id,
+        propertyId: transferUnits[1].propertyId!,
+        unitId: transferUnits[1].id,
+        buyerUserId: buyerUser.id,
+        previousOwnerUserId: prevOwnerUser.id,
+        basis: TitleTransferBasis.installment_paid,
+        status: TitleTransferStatus.in_progress,
+        titleNumber: `CCT-2026-${faker.string.numeric(6)}`,
+        contractValue: 6200000,
+        amountSettled: 6200000,
+        transferFeeAmount: 93000,
+        notes: 'BIR Certificate Authorizing Registration approved. Submitted to Registry of Deeds.',
+        processedByUserId: admin.id,
+      },
+    });
+  }
+
+  if (transferUnits[2]) {
+    await prisma.titleTransfer.create({
+      data: {
+        tenantId: tenant.id,
+        propertyId: transferUnits[2].propertyId!,
+        unitId: transferUnits[2].id,
+        buyerUserId: buyerUser.id,
+        previousOwnerUserId: prevOwnerUser.id,
+        basis: TitleTransferBasis.rto_exercised,
+        status: TitleTransferStatus.completed,
+        titleNumber: `CCT-2026-${faker.string.numeric(6)}`,
+        contractValue: 5800000,
+        amountSettled: 5800000,
+        transferFeeAmount: 87000,
+        notes: 'Final title release and physical key handover completed.',
+        processedByUserId: admin.id,
+      },
+    });
+  }
+  console.log(`Title transfers seeded: 3 active legal pipeline cases`);
+
+  /* ── Amenity Bookings ── */
+  const seededAmenities = await prisma.amenity.findMany({ take: 5 });
+  let bookingCount = 0;
+  for (const am of seededAmenities) {
+    const residentUser = pick(residents);
+    const start1 = new Date();
+    start1.setDate(start1.getDate() + faker.number.int({ min: 1, max: 7 }));
+    start1.setHours(14, 0, 0, 0);
+    const end1 = new Date(start1);
+    end1.setHours(17, 0, 0, 0);
+
+    await prisma.amenityBooking.create({
+      data: {
+        amenityId: am.id,
+        tenantId: tenant.id,
+        tenantName: `${residentUser.firstName} ${residentUser.lastName}`,
+        bookingStart: start1,
+        bookingEnd: end1,
+        totalAmount: Number(am.hourlyRate || 0) * 3,
+        status: BookingStatus.confirmed,
+        notes: 'Resident event reservation with approved guest list.',
+      },
+    });
+    bookingCount++;
+  }
+  console.log(`Amenity bookings seeded: ${bookingCount} confirmed reservations`);
+
   /* ── Property Specs (MongoDB) ──
    * The admin/owner/resident UIs read property `description` and the
    * "Additional Details" panel from the MongoDB `property_specs` document

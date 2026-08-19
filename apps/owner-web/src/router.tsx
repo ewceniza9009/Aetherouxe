@@ -14,6 +14,7 @@ import OwnerBudgetHealthPage from './pages/BudgetHealthPage';
 import FinancialsPage from './pages/FinancialsPage';
 import DocumentsPage from './pages/DocumentsPage';
 import PnlPage from './pages/PnlPage';
+import PortfolioAnalyticsPage from './pages/PortfolioAnalyticsPage';
 import DashboardLayout from './components/layout/DashboardLayout';
 
 const rootRoute = createRootRoute({
@@ -96,12 +97,19 @@ const documentsRoute = createRoute({
   component: DocumentsPage,
 });
 
+const portfolioRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: '/portfolio',
+  component: PortfolioAnalyticsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   protectedLayout.addChildren([
     dashboardRoute,
     propertiesRoute,
+    portfolioRoute,
     projectsRoute,
     projectDetailRoute,
     budgetHealthRoute,

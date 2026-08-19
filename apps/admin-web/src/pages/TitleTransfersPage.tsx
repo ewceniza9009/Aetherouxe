@@ -1,18 +1,24 @@
-import { useMemo, useState } from "react";
-import { EmptyState } from "@/components/ui/empty-state";
-import { useListQuery } from "@/hooks/use-list-query";
-import { GridState } from "@/components/GridToolbar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Textarea } from "@elite-realty/shared-ui/components/ui";
+import { useMemo, useState } from 'react';
+import { EmptyState } from '@/components/ui/empty-state';
+import { useListQuery } from '@/hooks/use-list-query';
+import { GridState } from '@/components/GridToolbar';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Textarea } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Table,
   TableBody,
@@ -20,17 +26,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { CurrencyInput } from "@/components/ui/number-input";
-import { Label } from "@elite-realty/shared-ui/components/ui";
-import { Tabs, TabsList, TabsTrigger } from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { CurrencyInput } from '@/components/ui/number-input';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { Tabs, TabsList, TabsTrigger } from '@elite-realty/shared-ui/components/ui';
 import {
   ScrollText,
   Plus,
@@ -42,7 +48,7 @@ import {
   FileText,
   Landmark,
   CircleDollarSign,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   useTitleTransfers,
   useCreateTitleTransfer,
@@ -55,38 +61,43 @@ import {
   type TitleTransferStatus,
   type TitleTransferBasis,
   type TitleTransferInput,
-} from "@/hooks/use-titles";
-import { useProperties } from "@/hooks/use-properties";
-import { useUsers } from "@/hooks/use-users";
-import { useUnits } from "@/hooks/use-units";
-import { formatCurrency } from "@/lib/settings-store";
-import { ListPager } from "@/components/ListPager";
+} from '@/hooks/use-titles';
+import { useProperties } from '@/hooks/use-properties';
+import { useUsers } from '@/hooks/use-users';
+import { useUnits } from '@/hooks/use-units';
+import { formatCurrency } from '@/lib/settings-store';
+import { ListPager } from '@/components/ListPager';
 
-const statusVariant: Record<TitleTransferStatus, "default" | "secondary" | "success" | "warning" | "destructive"> = {
-  pending: "secondary",
-  in_progress: "warning",
-  completed: "success",
-  cancelled: "destructive",
+const statusVariant: Record<
+  TitleTransferStatus,
+  'default' | 'secondary' | 'success' | 'warning' | 'destructive'
+> = {
+  pending: 'secondary',
+  in_progress: 'warning',
+  completed: 'success',
+  cancelled: 'destructive',
 };
 
 const STAGES: { value: string; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "pending", label: "Pending" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
+  { value: 'all', label: 'All' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
 ];
 
-function partyName(p?: { firstName?: string | null; lastName?: string | null; email?: string } | null): string {
-  if (!p) return "—";
-  const name = [p.firstName, p.lastName].filter(Boolean).join(" ").trim();
-  return name || p.email || "—";
+function partyName(
+  p?: { firstName?: string | null; lastName?: string | null; email?: string } | null,
+): string {
+  if (!p) return '—';
+  const name = [p.firstName, p.lastName].filter(Boolean).join(' ').trim();
+  return name || p.email || '—';
 }
 
 function money(v?: string | number | null): string {
-  if (v == null) return "—";
-  const n = typeof v === "string" ? Number(v) : v;
-  if (Number.isNaN(n)) return "—";
+  if (v == null) return '—';
+  const n = typeof v === 'string' ? Number(v) : v;
+  if (Number.isNaN(n)) return '—';
   return formatCurrency(n);
 }
 
@@ -105,23 +116,24 @@ interface FormState {
 }
 
 const emptyForm: FormState = {
-  propertyId: "",
-  unitId: "",
-  buyerUserId: "",
-  previousOwnerUserId: "",
-  basis: "manual",
-  status: "pending",
-  titleNumber: "",
-  contractValue: "",
-  amountSettled: "",
-  transferFeeAmount: "",
-  notes: "",
+  propertyId: '',
+  unitId: '',
+  buyerUserId: '',
+  previousOwnerUserId: '',
+  basis: 'manual',
+  status: 'pending',
+  titleNumber: '',
+  contractValue: '',
+  amountSettled: '',
+  transferFeeAmount: '',
+  notes: '',
 };
 
 export default function TitleTransfersPage() {
   const listQuery = useListQuery(20);
-  const { page, setPage, sort, setSort, order, setOrder, query, sortHeader, sortIndicator } = listQuery;
-  const [tab, setTab] = useState<string>("all");
+  const { page, setPage, sort, setSort, order, setOrder, query, sortHeader, sortIndicator } =
+    listQuery;
+  const [tab, setTab] = useState<string>('all');
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<TitleTransfer | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -129,9 +141,9 @@ export default function TitleTransfersPage() {
   const fullQuery = useMemo(
     () => ({
       ...query,
-      ...(tab !== "all" ? { status: tab as TitleTransferStatus } : {}),
+      ...(tab !== 'all' ? { status: tab as TitleTransferStatus } : {}),
     }),
-    [query, tab]
+    [query, tab],
   );
 
   const { data, isLoading, isError } = useTitleTransfers(fullQuery);
@@ -150,18 +162,30 @@ export default function TitleTransfersPage() {
   const remove = useDeleteTitleTransfer();
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: transfers.length, pending: 0, in_progress: 0, completed: 0, cancelled: 0 };
+    const c: Record<string, number> = {
+      all: transfers.length,
+      pending: 0,
+      in_progress: 0,
+      completed: 0,
+      cancelled: 0,
+    };
     for (const t of transfers) c[t.status] = (c[t.status] ?? 0) + 1;
     return c;
   }, [transfers]);
 
   const totalValue = useMemo(
-    () => transfers.filter((t) => t.status !== "cancelled").reduce((s, t) => s + (Number(t.contractValue) || 0), 0),
-    [transfers]
+    () =>
+      transfers
+        .filter((t) => t.status !== 'cancelled')
+        .reduce((s, t) => s + (Number(t.contractValue) || 0), 0),
+    [transfers],
   );
   const settledValue = useMemo(
-    () => transfers.filter((t) => t.status === "completed").reduce((s, t) => s + (Number(t.amountSettled) || Number(t.contractValue) || 0), 0),
-    [transfers]
+    () =>
+      transfers
+        .filter((t) => t.status === 'completed')
+        .reduce((s, t) => s + (Number(t.amountSettled) || Number(t.contractValue) || 0), 0),
+    [transfers],
   );
 
   function openCreate() {
@@ -172,16 +196,16 @@ export default function TitleTransfersPage() {
   function openEdit(t: TitleTransfer) {
     setForm({
       propertyId: t.propertyId,
-      unitId: t.unitId ?? "",
+      unitId: t.unitId ?? '',
       buyerUserId: t.buyerUserId,
-      previousOwnerUserId: t.previousOwnerUserId ?? "",
+      previousOwnerUserId: t.previousOwnerUserId ?? '',
       basis: t.basis,
       status: t.status,
-      titleNumber: t.titleNumber ?? "",
-      contractValue: t.contractValue ? String(t.contractValue) : "",
-      amountSettled: t.amountSettled ? String(t.amountSettled) : "",
-      transferFeeAmount: t.transferFeeAmount ? String(t.transferFeeAmount) : "",
-      notes: t.notes ?? "",
+      titleNumber: t.titleNumber ?? '',
+      contractValue: t.contractValue ? String(t.contractValue) : '',
+      amountSettled: t.amountSettled ? String(t.amountSettled) : '',
+      transferFeeAmount: t.transferFeeAmount ? String(t.transferFeeAmount) : '',
+      notes: t.notes ?? '',
     });
     setEditTarget(t);
   }
@@ -214,13 +238,16 @@ export default function TitleTransfersPage() {
 
   function handleUpdate() {
     if (!editTarget) return;
-    update.mutate({ id: editTarget.id, ...toInput(form) }, {
-      onSuccess: () => setEditTarget(null),
-    });
+    update.mutate(
+      { id: editTarget.id, ...toInput(form) },
+      {
+        onSuccess: () => setEditTarget(null),
+      },
+    );
   }
 
   function handleStart(t: TitleTransfer) {
-    update.mutate({ id: t.id, status: "in_progress" });
+    update.mutate({ id: t.id, status: 'in_progress' });
   }
 
   function handleComplete(t: TitleTransfer) {
@@ -228,22 +255,24 @@ export default function TitleTransfersPage() {
   }
 
   function handleCancel(t: TitleTransfer) {
-    update.mutate({ id: t.id, status: "cancelled" });
+    update.mutate({ id: t.id, status: 'cancelled' });
   }
 
   function handleDelete(t: TitleTransfer) {
     remove.mutate(t.id);
   }
 
-  const pending = transfers.filter((t) => t.status === "pending").length;
-  const inProgress = transfers.filter((t) => t.status === "in_progress").length;
-  const completed = transfers.filter((t) => t.status === "completed").length;
+  const pending = transfers.filter((t) => t.status === 'pending').length;
+  const inProgress = transfers.filter((t) => t.status === 'in_progress').length;
+  const completed = transfers.filter((t) => t.status === 'completed').length;
 
   return (
     <div className="space-y-6 flex flex-col ">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight font-serif gold-text">Title Transfers</h1>
+          <h1 className="text-3xl font-bold tracking-tight font-serif gold-text">
+            Title Transfers
+          </h1>
           <p className="text-muted-foreground">
             Manage ownership handover from developer / previous owner to the buyer
           </p>
@@ -254,10 +283,68 @@ export default function TitleTransfersPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <SummaryCard icon={<FileText className="h-5 w-5 text-primary" />} label="Pipeline Total" value={String(transfers.length)} hint={`${pending} pending · ${inProgress} active`} />
-        <SummaryCard icon={<PlayCircle className="h-5 w-5 text-amber-400" />} label="In Progress" value={String(inProgress)} hint="Being processed" />
-        <SummaryCard icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />} label="Completed" value={String(completed)} hint="Titles handed over" />
-        <SummaryCard icon={<Landmark className="h-5 w-5 text-primary" />} label="Contract Value" value={money(totalValue)} hint={`${money(settledValue)} settled`} />
+        <SummaryCard
+          icon={<FileText className="h-5 w-5 text-primary" />}
+          label="Pipeline Total"
+          value={String(transfers.length)}
+          hint={`${pending} pending · ${inProgress} active`}
+        />
+        <SummaryCard
+          icon={<PlayCircle className="h-5 w-5 text-amber-400" />}
+          label="In Progress"
+          value={String(inProgress)}
+          hint="Being processed"
+        />
+        <SummaryCard
+          icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />}
+          label="Completed"
+          value={String(completed)}
+          hint="Titles handed over"
+        />
+        <SummaryCard
+          icon={<Landmark className="h-5 w-5 text-primary" />}
+          label="Contract Value"
+          value={money(totalValue)}
+          hint={`${money(settledValue)} settled`}
+        />
+      </div>
+
+      {/* 6-Stage Legal Turnover Pipeline Stepper */}
+      <div className="p-4 rounded-2xl bg-card border border-border/80 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Standard Legal Title Handover Pipeline (PH Torrens System)
+          </span>
+          <Badge
+            variant="outline"
+            className="text-[10px] bg-primary/10 text-primary border-primary/20"
+          >
+            Regulated Workflow
+          </Badge>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          {[
+            { num: '1', title: 'Tax Clearance', desc: 'RPT & Dues Settled' },
+            { num: '2', title: 'BIR CAR', desc: 'Cert. Auth. Reg.' },
+            { num: '3', title: 'DOAS Notarized', desc: 'Deed of Absolute Sale' },
+            { num: '4', title: 'Transfer Tax', desc: 'Treasurer & Assessor' },
+            { num: '5', title: 'RD New Title', desc: 'CCT / TCT Released' },
+            { num: '6', title: 'Key Turnover', desc: 'Physical Handover' },
+          ].map((stage) => (
+            <div
+              key={stage.num}
+              className="p-2.5 rounded-xl bg-muted/40 border border-border/60 flex items-start gap-2 text-xs"
+            >
+              <div className="w-5 h-5 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center shrink-0 text-[11px]">
+                {stage.num}
+              </div>
+              <div>
+                <div className="font-semibold text-foreground">{stage.title}</div>
+                <div className="text-[10px] text-muted-foreground">{stage.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <Card>
@@ -284,39 +371,37 @@ export default function TitleTransfersPage() {
           </div>
         </CardHeader>
         <CardContent>
-            <GridState
-              isLoading={isLoading}
-              isError={isError}
-              isEmpty={transfers.length === 0}
-              onRetry={() => {}}
-              emptyState={
-                <EmptyState 
-                  title="No title transfers in this stage"
-                  description="Create a transfer to begin tracking ownership handover."
-                  icon={<ScrollText className="w-12 h-12 opacity-80" />}
-                />
-              }
-            >
+          <GridState
+            isLoading={isLoading}
+            isError={isError}
+            isEmpty={transfers.length === 0}
+            onRetry={() => {}}
+            emptyState={
+              <EmptyState
+                title="No title transfers in this stage"
+                description="Create a transfer to begin tracking ownership handover."
+                icon={<ScrollText className="w-12 h-12 opacity-80" />}
+              />
+            }
+          >
             <div className="rounded-md border scroll-grid overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50 text-left text-sm font-medium text-muted-foreground">
-                  <TableHead {...sortHeader("propertyId")}>
-                    Property{sortIndicator("propertyId")}
-                  </TableHead>
-                  <TableHead>Buyer</TableHead>
-                  <TableHead>Basis</TableHead>
-                  <TableHead>Title No.</TableHead>
-                  <TableHead {...sortHeader("contractValue")}>
-                    Contract Value{sortIndicator("contractValue")}
-                  </TableHead>
-                  <TableHead>Settled</TableHead>
-                  <TableHead {...sortHeader("status")}>
-                    Status{sortIndicator("status")}
-                  </TableHead>
-                  <TableHead {...sortHeader("requestedDate")}>
-                    Requested{sortIndicator("requestedDate")}
-                  </TableHead>
+                    <TableHead {...sortHeader('propertyId')}>
+                      Property{sortIndicator('propertyId')}
+                    </TableHead>
+                    <TableHead>Buyer</TableHead>
+                    <TableHead>Basis</TableHead>
+                    <TableHead>Title No.</TableHead>
+                    <TableHead {...sortHeader('contractValue')}>
+                      Contract Value{sortIndicator('contractValue')}
+                    </TableHead>
+                    <TableHead>Settled</TableHead>
+                    <TableHead {...sortHeader('status')}>Status{sortIndicator('status')}</TableHead>
+                    <TableHead {...sortHeader('requestedDate')}>
+                      Requested{sortIndicator('requestedDate')}
+                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -324,19 +409,21 @@ export default function TitleTransfersPage() {
                   {transfers.map((t) => (
                     <TableRow key={t.id} className="hover:bg-muted/30 transition-colors">
                       <TableCell className="font-mono text-xs">
-                        {t.property?.propertyCode ?? "—"}
-                        {t.unit?.unitNumber ? ` / ${t.unit.unitNumber}` : ""}
+                        {t.property?.propertyCode ?? '—'}
+                        {t.unit?.unitNumber ? ` / ${t.unit.unitNumber}` : ''}
                         <div className="text-[11px] text-muted-foreground font-sans">
-                          {t.property?.project?.name ?? "—"}
+                          {t.property?.project?.name ?? '—'}
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">{partyName(t.buyer)}</TableCell>
                       <TableCell>
                         <Badge variant="secondary">{titleTransferBasisLabels[t.basis]}</Badge>
                       </TableCell>
-                      <TableCell>{t.titleNumber ?? "—"}</TableCell>
+                      <TableCell>{t.titleNumber ?? '—'}</TableCell>
                       <TableCell className="tabular-nums">{money(t.contractValue)}</TableCell>
-                      <TableCell className="tabular-nums">{money(t.amountSettled ?? t.contractValue)}</TableCell>
+                      <TableCell className="tabular-nums">
+                        {money(t.amountSettled ?? t.contractValue)}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={statusVariant[t.status]}>
                           {titleTransferStatusLabels[t.status]}
@@ -347,25 +434,50 @@ export default function TitleTransfersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-1">
-                          {t.status === "pending" && (
-                            <Button size="icon" variant="ghost" title="Start processing" onClick={() => handleStart(t)}>
+                          {t.status === 'pending' && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              title="Start processing"
+                              onClick={() => handleStart(t)}
+                            >
                               <PlayCircle className="h-4 w-4 text-amber-400" />
                             </Button>
                           )}
-                          {t.status !== "completed" && t.status !== "cancelled" && (
-                            <Button size="icon" variant="ghost" title="Complete handover" onClick={() => handleComplete(t)}>
+                          {t.status !== 'completed' && t.status !== 'cancelled' && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              title="Complete handover"
+                              onClick={() => handleComplete(t)}
+                            >
                               <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                             </Button>
                           )}
-                          <Button size="icon" variant="ghost" title="Edit" onClick={() => openEdit(t)}>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Edit"
+                            onClick={() => openEdit(t)}
+                          >
                             <Pencil className="h-4 w-4 text-primary" />
                           </Button>
-                          {t.status !== "cancelled" && t.status !== "completed" && (
-                            <Button size="icon" variant="ghost" title="Cancel transfer" onClick={() => handleCancel(t)}>
+                          {t.status !== 'cancelled' && t.status !== 'completed' && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              title="Cancel transfer"
+                              onClick={() => handleCancel(t)}
+                            >
                               <Ban className="h-4 w-4 text-destructive" />
                             </Button>
                           )}
-                          <Button size="icon" variant="ghost" title="Delete" onClick={() => handleDelete(t)}>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            title="Delete"
+                            onClick={() => handleDelete(t)}
+                          >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
@@ -445,7 +557,13 @@ interface TransferDialogProps {
   form: FormState;
   setForm: React.Dispatch<React.SetStateAction<FormState>>;
   properties: { id: string; code: string; name: string; projectName?: string }[];
-  users: { id: string; firstName?: string | null; lastName?: string | null; email: string; userType: string }[];
+  users: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email: string;
+    userType: string;
+  }[];
   units: { id: string; unitNumber: string }[];
   onSubmit: () => void;
   submitting: boolean;
@@ -466,7 +584,7 @@ function TransferDialog({
   const basisOptions = Object.keys(titleTransferBasisLabels) as TitleTransferBasis[];
   const statusOptions = Object.keys(titleTransferStatusLabels) as TitleTransferStatus[];
   const userLabel = (u: { firstName?: string | null; lastName?: string | null; email: string }) =>
-    [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email;
+    [u.firstName, u.lastName].filter(Boolean).join(' ').trim() || u.email;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -480,8 +598,13 @@ function TransferDialog({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
               <Label>Property</Label>
-              <Select value={form.propertyId} onValueChange={(v) => setForm((f) => ({ ...f, propertyId: v, unitId: "" }))}>
-                <SelectTrigger><SelectValue placeholder="Select property" /></SelectTrigger>
+              <Select
+                value={form.propertyId}
+                onValueChange={(v) => setForm((f) => ({ ...f, propertyId: v, unitId: '' }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select property" />
+                </SelectTrigger>
                 <SelectContent>
                   {properties.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
@@ -494,11 +617,19 @@ function TransferDialog({
 
             <div className="space-y-2">
               <Label>Unit (optional)</Label>
-              <Select value={form.unitId} onValueChange={(v) => setForm((f) => ({ ...f, unitId: v }))} disabled={!form.propertyId}>
-                <SelectTrigger><SelectValue placeholder="Select unit" /></SelectTrigger>
+              <Select
+                value={form.unitId}
+                onValueChange={(v) => setForm((f) => ({ ...f, unitId: v }))}
+                disabled={!form.propertyId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select unit" />
+                </SelectTrigger>
                 <SelectContent>
                   {units.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>{u.unitNumber}</SelectItem>
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.unitNumber}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -506,11 +637,18 @@ function TransferDialog({
 
             <div className="space-y-2">
               <Label>Basis</Label>
-              <Select value={form.basis} onValueChange={(v) => setForm((f) => ({ ...f, basis: v as TitleTransferBasis }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.basis}
+                onValueChange={(v) => setForm((f) => ({ ...f, basis: v as TitleTransferBasis }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {basisOptions.map((b) => (
-                    <SelectItem key={b} value={b}>{titleTransferBasisLabels[b]}</SelectItem>
+                    <SelectItem key={b} value={b}>
+                      {titleTransferBasisLabels[b]}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -518,11 +656,18 @@ function TransferDialog({
 
             <div className="space-y-2">
               <Label>Buyer</Label>
-              <Select value={form.buyerUserId} onValueChange={(v) => setForm((f) => ({ ...f, buyerUserId: v }))}>
-                <SelectTrigger><SelectValue placeholder="Select buyer" /></SelectTrigger>
+              <Select
+                value={form.buyerUserId}
+                onValueChange={(v) => setForm((f) => ({ ...f, buyerUserId: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select buyer" />
+                </SelectTrigger>
                 <SelectContent>
                   {users.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>{userLabel(u)}</SelectItem>
+                    <SelectItem key={u.id} value={u.id}>
+                      {userLabel(u)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -530,11 +675,18 @@ function TransferDialog({
 
             <div className="space-y-2">
               <Label>Previous Owner (optional)</Label>
-              <Select value={form.previousOwnerUserId} onValueChange={(v) => setForm((f) => ({ ...f, previousOwnerUserId: v }))}>
-                <SelectTrigger><SelectValue placeholder="Select previous owner" /></SelectTrigger>
+              <Select
+                value={form.previousOwnerUserId}
+                onValueChange={(v) => setForm((f) => ({ ...f, previousOwnerUserId: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select previous owner" />
+                </SelectTrigger>
                 <SelectContent>
                   {users.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>{userLabel(u)}</SelectItem>
+                    <SelectItem key={u.id} value={u.id}>
+                      {userLabel(u)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -542,11 +694,18 @@ function TransferDialog({
 
             <div className="space-y-2">
               <Label>Status</Label>
-              <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v as TitleTransferStatus }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.status}
+                onValueChange={(v) => setForm((f) => ({ ...f, status: v as TitleTransferStatus }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {statusOptions.map((s) => (
-                    <SelectItem key={s} value={s}>{titleTransferStatusLabels[s]}</SelectItem>
+                    <SelectItem key={s} value={s}>
+                      {titleTransferStatusLabels[s]}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -554,34 +713,53 @@ function TransferDialog({
 
             <div className="space-y-2">
               <Label>Title Number</Label>
-              <Input value={form.titleNumber} onChange={(e) => setForm((f) => ({ ...f, titleNumber: e.target.value }))} placeholder="e.g. T-123456" />
+              <Input
+                value={form.titleNumber}
+                onChange={(e) => setForm((f) => ({ ...f, titleNumber: e.target.value }))}
+                placeholder="e.g. T-123456"
+              />
             </div>
 
             <div className="space-y-2">
               <Label>Contract Value</Label>
-              <CurrencyInput value={form.contractValue} onChange={(v) => setForm((f) => ({ ...f, contractValue: v }))} />
+              <CurrencyInput
+                value={form.contractValue}
+                onChange={(v) => setForm((f) => ({ ...f, contractValue: v }))}
+              />
             </div>
 
             <div className="space-y-2">
               <Label>Amount Settled</Label>
-              <CurrencyInput value={form.amountSettled} onChange={(v) => setForm((f) => ({ ...f, amountSettled: v }))} />
+              <CurrencyInput
+                value={form.amountSettled}
+                onChange={(v) => setForm((f) => ({ ...f, amountSettled: v }))}
+              />
             </div>
 
             <div className="space-y-2">
               <Label>Transfer Fee</Label>
-              <CurrencyInput value={form.transferFeeAmount} onChange={(v) => setForm((f) => ({ ...f, transferFeeAmount: v }))} />
+              <CurrencyInput
+                value={form.transferFeeAmount}
+                onChange={(v) => setForm((f) => ({ ...f, transferFeeAmount: v }))}
+              />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label>Notes</Label>
-            <Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Handover remarks, document references, etc." />
+            <Textarea
+              value={form.notes}
+              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+              placeholder="Handover remarks, document references, etc."
+            />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
             <Button className="gold-gradient text-black" onClick={onSubmit} disabled={submitting}>
-              {submitting ? "Saving…" : "Save Transfer"}
+              {submitting ? 'Saving…' : 'Save Transfer'}
             </Button>
           </div>
         </div>
@@ -589,5 +767,3 @@ function TransferDialog({
     </Dialog>
   );
 }
-
-

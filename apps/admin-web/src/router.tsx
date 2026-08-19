@@ -78,6 +78,7 @@ import DashboardLayout from './components/layout/DashboardLayout';
 import ReservationsPage from './pages/ReservationsPage';
 import SalesReportPage from './pages/SalesReportPage';
 import FieldMeterReaderPage from './pages/FieldMeterReaderPage';
+import MaintenanceKanbanPage from './pages/MaintenanceKanbanPage';
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -483,6 +484,12 @@ const serviceRequestsRoute = createRoute({
   component: ServiceRequestsPage,
 });
 
+const maintenanceKanbanRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: '/maintenance/kanban',
+  component: MaintenanceKanbanPage,
+});
+
 const serviceRequestDetailRoute = createRoute({
   getParentRoute: () => protectedLayout,
   path: '/service-requests/$id',
@@ -606,6 +613,7 @@ const routeTree = rootRoute.addChildren([
     amenityDetailRoute,
     communityPostsRoute,
     serviceRequestsRoute,
+    maintenanceKanbanRoute,
     serviceRequestDetailRoute,
     documentsRoute,
     documentDetailRoute,
