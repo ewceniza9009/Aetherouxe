@@ -15,7 +15,9 @@ import {
   Home,
   ArrowRight,
   Plus,
+  Sparkles,
 } from 'lucide-react';
+import { BuildingDigitalTwin } from '@elite-realty/shared-ui';
 import { useMyLease, useLeasePayments } from '@/hooks/use-leases';
 import {
   useCommunityPosts,
@@ -240,6 +242,29 @@ export default function ResidentDashboardPage() {
           )}
         </div>
       )}
+
+      {/* Interactive 3D Community Digital Twin */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-emerald-400" />
+            <h2 className="text-xl font-bold tracking-tight text-foreground">
+              Community 3D Digital Twin &amp; Available Units
+            </h2>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            Click any unit in 3D to view layout &amp; pricing
+          </span>
+        </div>
+        <BuildingDigitalTwin
+          building={{
+            id: lease?.propertyId || 'residence-tower',
+            name: lease?.propertyName || 'Residence Tower',
+            floorCount: 8,
+          }}
+          onReserveUnit={(_unit: any) => navigate({ to: '/lease' })}
+        />
+      </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

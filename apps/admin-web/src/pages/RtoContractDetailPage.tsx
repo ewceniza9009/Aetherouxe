@@ -1,12 +1,20 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { formatCurrency } from "@/lib/agent-meta";
-import * as Tabs from "@radix-ui/react-tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
-import { Separator } from "@elite-realty/shared-ui/components/ui";
+import { useState } from 'react';
+import { useParams, useNavigate } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
+import { formatCurrency } from '@/lib/agent-meta';
+import { api } from '@elite-realty/shared-ui/lib/api';
+import * as Tabs from '@radix-ui/react-tabs';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
+import { Separator } from '@elite-realty/shared-ui/components/ui';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +22,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   ArrowLeft,
   AlertCircle,
@@ -27,8 +35,12 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   BadgeDollarSign,
-} from "lucide-react";
-import { useAuth } from "@elite-realty/shared-ui/hooks";
+  Sparkles,
+  ShieldCheck,
+  Zap,
+  CheckCircle2,
+} from 'lucide-react';
+import { useAuth } from '@elite-realty/shared-ui/hooks';
 import {
   useRtoContract,
   useExerciseOption,
@@ -36,28 +48,31 @@ import {
   propertyDisplayName,
   type RtoStatus,
   type RtoLedgerEntry,
-} from "@/hooks/use-rto";
+} from '@/hooks/use-rto';
 
-const statusVariant: Record<RtoStatus, "success" | "warning" | "destructive" | "default" | "secondary"> = {
-  active: "success",
-  grace_period: "warning",
-  defaulted: "destructive",
-  exercised: "default",
-  completed: "secondary",
+const statusVariant: Record<
+  RtoStatus,
+  'success' | 'warning' | 'destructive' | 'default' | 'secondary'
+> = {
+  active: 'success',
+  grace_period: 'warning',
+  defaulted: 'destructive',
+  exercised: 'default',
+  completed: 'secondary',
 };
 
 const statusLabel: Record<RtoStatus, string> = {
-  active: "Active",
-  grace_period: "Grace Period",
-  defaulted: "Defaulted",
-  exercised: "Exercised",
-  completed: "Completed",
+  active: 'Active',
+  grace_period: 'Grace Period',
+  defaulted: 'Defaulted',
+  exercised: 'Exercised',
+  completed: 'Completed',
 };
 
 const ledgerLabel: Record<string, string> = {
-  payment_credit: "Payment Credit",
-  forfeiture: "Forfeiture",
-  option_fee_credit: "Option Fee Credit",
+  payment_credit: 'Payment Credit',
+  forfeiture: 'Forfeiture',
+  option_fee_credit: 'Option Fee Credit',
 };
 
 function money(n: number | null | undefined) {
@@ -65,17 +80,25 @@ function money(n: number | null | undefined) {
 }
 
 export default function RtoContractDetailPage() {
-  const { id } = useParams({ from: "/protected/rto/$id" });
+  const { id } = useParams({ from: '/protected/rto/$id' });
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: contract, isLoading, error } = useRtoContract(id);
+  const { data: aiReport } = useQuery({
+    queryKey: ['rto-ai-score', id],
+    queryFn: async () => {
+      const res = await api.get(`/ai/rto-score/${id}`);
+      return res.data;
+    },
+    enabled: !!id,
+  });
   const exercise = useExerciseOption();
   const [exerciseOpen, setExerciseOpen] = useState(false);
 
   if (error) {
     return (
-    <div className="space-y-6 flex flex-col ">
-        <Button variant="outline" size="icon" onClick={() => navigate({ to: "/rto" })}>
+      <div className="space-y-6 flex flex-col ">
+        <Button variant="outline" size="icon" onClick={() => navigate({ to: '/rto' })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
@@ -106,9 +129,9 @@ export default function RtoContractDetailPage() {
   const ledger = contract.equityLedger ?? [];
   const canExercise =
     !contract.isOptionExercised &&
-    contract.status !== "exercised" &&
-    contract.status !== "completed" &&
-    contract.status !== "defaulted";
+    contract.status !== 'exercised' &&
+    contract.status !== 'completed' &&
+    contract.status !== 'defaulted';
 
   const submitExercise = async () => {
     if (!user?.id) return;
@@ -119,7 +142,7 @@ export default function RtoContractDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="outline" size="icon" onClick={() => navigate({ to: "/rto" })}>
+        <Button variant="outline" size="icon" onClick={() => navigate({ to: '/rto' })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         {canExercise && (
@@ -137,16 +160,28 @@ export default function RtoContractDetailPage() {
                 <h1 className="font-serif text-2xl font-bold tracking-tight">
                   {tenantDisplayName(contract)}
                 </h1>
-                <Badge variant={statusVariant[contract.status]}>{statusLabel[contract.status]}</Badge>
+                <Badge variant={statusVariant[contract.status]}>
+                  {statusLabel[contract.status]}
+                </Badge>
               </div>
               <p className="text-muted-foreground flex items-center gap-1 mt-1">
                 <Home className="h-4 w-4" />
-                <Button variant="link" className="p-0 h-auto text-muted-foreground" onClick={() => navigate({ to: `/properties/${contract.leaseAgreement?.property?.id}` })}>
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-muted-foreground"
+                  onClick={() =>
+                    navigate({ to: `/properties/${contract.leaseAgreement?.property?.id}` })
+                  }
+                >
                   {propertyDisplayName(contract)}
                 </Button>
               </p>
               {contract.leaseAgreement && (
-                <Button variant="link" className="p-0 h-auto text-xs mt-1" onClick={() => navigate({ to: `/leases/${contract.leaseAgreement!.id}` })}>
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-xs mt-1"
+                  onClick={() => navigate({ to: `/leases/${contract.leaseAgreement!.id}` })}
+                >
                   View Lease →
                 </Button>
               )}
@@ -159,7 +194,7 @@ export default function RtoContractDetailPage() {
                 <p className="font-medium">
                   {contract.targetPurchaseDate
                     ? new Date(contract.targetPurchaseDate).toLocaleDateString()
-                    : "—"}
+                    : '—'}
                 </p>
               </div>
               <div>
@@ -169,7 +204,7 @@ export default function RtoContractDetailPage() {
                 <p className="font-medium">
                   {contract.exerciseDate
                     ? new Date(contract.exerciseDate).toLocaleDateString()
-                    : "—"}
+                    : '—'}
                 </p>
               </div>
             </div>
@@ -201,7 +236,7 @@ export default function RtoContractDetailPage() {
         <SummaryCard
           icon={<KeyRound className="h-5 w-5" />}
           label="Purchase Option Price"
-          value={contract.purchaseOptionPrice != null ? money(contract.purchaseOptionPrice) : "—"}
+          value={contract.purchaseOptionPrice != null ? money(contract.purchaseOptionPrice) : '—'}
         />
         <Card className="border-accent/40 bg-gradient-to-br from-yellow-50 to-amber-50 lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -211,14 +246,141 @@ export default function RtoContractDetailPage() {
           <CardContent>
             <div className="font-serif text-3xl font-bold gold-text">{money(equity)}</div>
             <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-amber-100">
-              <div className="gold-gradient h-full rounded-full transition-all" style={{ width: `${progress}%` }} />
+              <div
+                className="gold-gradient h-full rounded-full transition-all"
+                style={{ width: `${progress}%` }}
+              />
             </div>
-            <p className="mt-1 text-xs text-amber-700">
-              {progress.toFixed(1)}% of contract value
-            </p>
+            <p className="mt-1 text-xs text-amber-700">{progress.toFixed(1)}% of contract value</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Real Estate Intelligence Widget */}
+      {aiReport && (
+        <Card className="border-emerald-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/30 overflow-hidden shadow-xl">
+          <CardHeader className="border-b border-slate-800/80 pb-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-bold text-white flex items-center gap-2">
+                    AI Conversion &amp; Credit Intelligence
+                    <Badge
+                      className={`text-[10px] uppercase font-bold tracking-wider ${
+                        aiReport.delinquencyRiskTier === 'LOW'
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                          : aiReport.delinquencyRiskTier === 'MODERATE'
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                            : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                      }`}
+                    >
+                      {aiReport.delinquencyRiskTier} Risk Tier
+                    </Badge>
+                  </CardTitle>
+                  <CardDescription className="text-xs text-slate-400">
+                    Predictive analysis based on rental reliability, utility stability &amp; equity
+                    coverage
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 bg-slate-950/60 border border-slate-800 px-4 py-2 rounded-xl">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold">
+                    AI Credit Score
+                  </span>
+                  <div className="text-xl font-black text-white">
+                    {aiReport.creditScore}{' '}
+                    <span className="text-xs text-slate-400 font-normal">/ 850</span>
+                  </div>
+                </div>
+                <div className="h-8 w-px bg-slate-800" />
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold">
+                    Conversion Readiness
+                  </span>
+                  <div className="text-xl font-black text-emerald-400">
+                    {aiReport.conversionReadinessIndex}%
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-5 space-y-5">
+            {/* Factor Scores Progress */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-1.5">
+                <span className="text-xs text-slate-400 font-medium">Payment Reliability</span>
+                <div className="text-lg font-bold text-white">
+                  {aiReport.factors.paymentReliabilityScore}%
+                </div>
+                <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 rounded-full"
+                    style={{ width: `${aiReport.factors.paymentReliabilityScore}%` }}
+                  />
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-1.5">
+                <span className="text-xs text-slate-400 font-medium">Utility Stability</span>
+                <div className="text-lg font-bold text-white">
+                  {aiReport.factors.utilityStabilityScore}%
+                </div>
+                <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-sky-500 rounded-full"
+                    style={{ width: `${aiReport.factors.utilityStabilityScore}%` }}
+                  />
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-1.5">
+                <span className="text-xs text-slate-400 font-medium">Equity Progress</span>
+                <div className="text-lg font-bold text-white">
+                  {aiReport.factors.equityAccumulationScore}%
+                </div>
+                <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-amber-500 rounded-full"
+                    style={{ width: `${aiReport.factors.equityAccumulationScore}%` }}
+                  />
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-1.5">
+                <span className="text-xs text-slate-400 font-medium">AR Health Score</span>
+                <div className="text-lg font-bold text-white">
+                  {aiReport.factors.arDelinquencyScore}%
+                </div>
+                <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-indigo-500 rounded-full"
+                    style={{ width: `${aiReport.factors.arDelinquencyScore}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Recommendations */}
+            {aiReport.aiRecommendations.length > 0 && (
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+                <div className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                  AI Recommended Next Steps
+                </div>
+                <ul className="space-y-1.5 text-xs text-slate-300">
+                  {aiReport.aiRecommendations.map((rec: string, idx: number) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                      <span>{rec}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs.Root defaultValue="ledger">
         <Tabs.List className="inline-flex items-center gap-1 rounded-lg bg-muted p-1">
@@ -240,7 +402,9 @@ export default function RtoContractDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>Equity Ledger</CardTitle>
-              <CardDescription>Chronological equity transactions with running balance</CardDescription>
+              <CardDescription>
+                Chronological equity transactions with running balance
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {ledger.length === 0 ? (
@@ -274,10 +438,18 @@ export default function RtoContractDetailPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b bg-muted/50">
-                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Date</th>
-                        <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Total Paid</th>
-                        <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Rent Portion</th>
-                        <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Equity Portion</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          Date
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                          Total Paid
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                          Rent Portion
+                        </th>
+                        <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                          Equity Portion
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -311,8 +483,8 @@ export default function RtoContractDetailPage() {
           <DialogHeader>
             <DialogTitle>Exercise Purchase Option</DialogTitle>
             <DialogDescription>
-              This will mark the option as exercised for {tenantDisplayName(contract)} and credit any
-              purchase option price to the equity ledger. This action cannot be undone.
+              This will mark the option as exercised for {tenantDisplayName(contract)} and credit
+              any purchase option price to the equity ledger. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <div className="rounded-lg border bg-muted/30 p-4 text-sm">
@@ -324,7 +496,7 @@ export default function RtoContractDetailPage() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Purchase Option Price</span>
               <span className="font-semibold">
-                {contract.purchaseOptionPrice != null ? money(contract.purchaseOptionPrice) : "—"}
+                {contract.purchaseOptionPrice != null ? money(contract.purchaseOptionPrice) : '—'}
               </span>
             </div>
           </div>
@@ -367,15 +539,11 @@ function SummaryCard({
 
 function LedgerRow({ entry }: { entry: RtoLedgerEntry }) {
   const amount = Number(entry.amount ?? 0);
-  const isForfeiture = entry.transactionType === "forfeiture" || amount < 0;
+  const isForfeiture = entry.transactionType === 'forfeiture' || amount < 0;
   return (
     <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
       <div className="flex items-center gap-3">
-        <span
-          className={
-            isForfeiture ? "text-red-600" : "text-green-600"
-          }
-        >
+        <span className={isForfeiture ? 'text-red-600' : 'text-green-600'}>
           {isForfeiture ? (
             <ArrowDownCircle className="h-5 w-5" />
           ) : (
@@ -384,17 +552,19 @@ function LedgerRow({ entry }: { entry: RtoLedgerEntry }) {
         </span>
         <div>
           <p className="text-sm font-medium">
-            {ledgerLabel[entry.transactionType] ?? entry.transactionType.replace(/_/g, " ")}
+            {ledgerLabel[entry.transactionType] ?? entry.transactionType.replace(/_/g, ' ')}
           </p>
           <p className="text-xs text-muted-foreground">
             {new Date(entry.createdAt).toLocaleString()}
-            {entry.notes ? ` · ${entry.notes}` : ""}
+            {entry.notes ? ` · ${entry.notes}` : ''}
           </p>
         </div>
       </div>
       <div className="text-right">
-        <p className={`text-sm font-semibold tabular-nums ${isForfeiture ? "text-red-600" : "text-green-700"}`}>
-          {isForfeiture ? "-" : "+"}
+        <p
+          className={`text-sm font-semibold tabular-nums ${isForfeiture ? 'text-red-600' : 'text-green-700'}`}
+        >
+          {isForfeiture ? '-' : '+'}
           {money(Math.abs(amount))}
         </p>
         <p className="text-xs text-muted-foreground tabular-nums">
@@ -404,6 +574,3 @@ function LedgerRow({ entry }: { entry: RtoLedgerEntry }) {
     </div>
   );
 }
-
-
-

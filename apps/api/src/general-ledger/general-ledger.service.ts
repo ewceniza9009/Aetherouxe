@@ -219,4 +219,54 @@ export class GeneralLedgerService {
       orderBy: { accountCode: 'asc' },
     });
   }
+
+  async getTrialBalance(tenantId: string) {
+    const accounts = await this.prisma.chartOfAccount.findMany({
+      where: { tenantId },
+      include: {
+        journalLines: {
+          select: {
+            debitAmount: true,
+            creditAmount: true,
+          },
+        },
+      },
+      orderBy: { accountCode: 'asc' },
+    });
+
+    let totalDebits = 0;
+    let totalCredits = 0;
+
+    const rows = accounts.map((acc) => {
+      const debitSum = acc.journalLines.reduce((sum, l) => sum + Number(l.debitAmount), 0);
+      const creditSum = acc.journalLines.reduce((sum, l) => sum + Number(l.creditAmount), 0);
+      totalDebits += debitSum;
+      totalCredits += creditSum;
+
+      return {
+        id: acc.id,
+        accountCode: acc.accountCode,
+        name: acc.name,
+        type: acc.type,
+        totalDebit: debitSum,
+        totalCredit: creditSum,
+        netBalance:
+          acc.type === 'asset' || acc.type === 'expense'
+            ? debitSum - creditSum
+            : creditSum - debitSum,
+      };
+    });
+
+    const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01;
+
+    return {
+      rows,
+      summary: {
+        totalDebits,
+        totalCredits,
+        difference: Math.abs(totalDebits - totalCredits),
+        isBalanced,
+      },
+    };
+  }
 }

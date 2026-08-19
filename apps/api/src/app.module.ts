@@ -57,6 +57,7 @@ import { CompanyOwnerModule } from './company-owner/company-owner.module';
 import { LedgerModule } from './ledger/ledger.module';
 import { SearchModule } from './search/search.module';
 import { RewardsModule } from './rewards/rewards.module';
+import { AiIntelligenceModule } from './ai-intelligence/ai-intelligence.module';
 
 @Module({
   imports: [
@@ -120,6 +121,7 @@ import { RewardsModule } from './rewards/rewards.module';
     LedgerModule,
     SearchModule,
     RewardsModule,
+    AiIntelligenceModule,
   ],
   providers: [
     {

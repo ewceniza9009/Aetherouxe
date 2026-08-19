@@ -77,6 +77,7 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import DashboardLayout from './components/layout/DashboardLayout';
 import ReservationsPage from './pages/ReservationsPage';
 import SalesReportPage from './pages/SalesReportPage';
+import FieldMeterReaderPage from './pages/FieldMeterReaderPage';
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
@@ -428,6 +429,12 @@ const readingsRoute = createRoute({
   component: ReadingsPage,
 });
 
+const fieldReaderRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: '/field-reader',
+  component: FieldMeterReaderPage,
+});
+
 const utilityBillsRoute = createRoute({
   getParentRoute: () => protectedLayout,
   path: '/utility-bills',
@@ -592,6 +599,7 @@ const routeTree = rootRoute.addChildren([
     metersRoute,
     meterDetailRoute,
     readingsRoute,
+    fieldReaderRoute,
     utilityBillsRoute,
     salesRoute,
     amenitiesRoute,

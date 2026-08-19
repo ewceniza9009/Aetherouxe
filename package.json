@@ -12,6 +12,7 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
+    "test:e2e": "playwright test",
     "clean": "turbo clean",
     "prepare": "husky",
     "smoke": "node scripts/smoke.mjs",

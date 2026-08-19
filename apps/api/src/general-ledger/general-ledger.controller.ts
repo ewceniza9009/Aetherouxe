@@ -18,4 +18,10 @@ export class GeneralLedgerController {
     const tenantId = req.user.tenantId;
     return this.generalLedgerService.findAllAccounts(tenantId);
   }
+
+  @Get('trial-balance')
+  getTrialBalance(@Request() req: any) {
+    const tenantId = req.user.tenantId;
+    return this.generalLedgerService.getTrialBalance(tenantId);
+  }
 }

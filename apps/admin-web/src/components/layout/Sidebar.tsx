@@ -43,6 +43,8 @@ import {
   Folders,
   AlarmClock,
   Zap,
+  Camera,
+  FolderOpen,
   LineChart,
   HardHat,
   Key,
@@ -129,6 +131,12 @@ const navGroups: NavGroup[] = [
         kind: 'txn',
       },
       { label: 'Meters & Billing', icon: <Gauge size={18} />, path: '/meters', kind: 'setup' },
+      {
+        label: 'Field Meter Reader',
+        icon: <Camera size={18} />,
+        path: '/field-reader',
+        kind: 'txn',
+      },
       { label: 'Collections', icon: <BellRing size={18} />, path: '/collections', kind: 'txn' },
       {
         label: 'Collection Cases',

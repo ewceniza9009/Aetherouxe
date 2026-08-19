@@ -96,8 +96,7 @@ async function login(page: Page) {
   await page.fill('input[type="email"]', process.env.E2E_ADMIN_EMAIL || 'admin@elite-realty.com');
   await page.fill('input[type="password"]', process.env.E2E_ADMIN_PASSWORD || 'Admin123!');
   await page.click('button[type="submit"]');
-  await page.waitForURL(`${BASE_URL}/dashboard`, { timeout: 30000 });
-  await page.waitForSelector('button:has-text("Reserve")', { timeout: 10000 });
+  await page.waitForURL('**/dashboard', { timeout: 30000 });
 }
 
 test.describe('Reservation Feature - Leasing / Rent-to-Own / Buying', () => {

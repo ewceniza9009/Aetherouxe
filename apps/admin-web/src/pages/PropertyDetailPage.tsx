@@ -22,7 +22,9 @@ import {
   Upload,
   Trash2,
   ZoomIn,
+  Sparkles,
 } from 'lucide-react';
+import { BuildingDigitalTwin } from '@elite-realty/shared-ui';
 import * as Tabs from '@radix-ui/react-tabs';
 import {
   Dialog,
@@ -242,6 +244,13 @@ export default function PropertyDetailPage() {
             className="px-2 py-3 text-sm font-bold tracking-widest border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-all uppercase"
           >
             Overview
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="digital-twin"
+            className="px-2 py-3 text-sm font-bold tracking-widest border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-all uppercase flex items-center gap-2"
+          >
+            <Sparkles className="w-4 h-4 text-emerald-400" />
+            3D Digital Twin
           </Tabs.Trigger>
           <Tabs.Trigger
             value="showcase"
@@ -671,6 +680,35 @@ export default function PropertyDetailPage() {
               )}
             </CardContent>
           </Card>
+        </Tabs.Content>
+
+        <Tabs.Content
+          value="digital-twin"
+          className="flex-1 flex flex-col min-h-0 space-y-4 m-0 data-[state=inactive]:hidden"
+        >
+          <BuildingDigitalTwin
+            building={{
+              id: property.id,
+              name: (property as any).name || (property as any).propertyCode || 'Property Tower',
+              floorCount: (property as any).floorCount || 6,
+              units:
+                unitsResult?.data?.map((u: any) => ({
+                  id: u.id,
+                  unitNumber: u.unitNumber,
+                  unitType: u.type || u.unitType || 'one_br',
+                  status: u.status || 'available',
+                  floorNumber: u.floor?.floorNumber || u.floorNumber || 1,
+                  squareMeters: u.size || u.squareMeters,
+                  bedrooms: u.bedrooms,
+                  bathrooms: u.bathrooms,
+                  listPrice: u.listPrice || u.price,
+                  facingDirection: u.facingDirection || 'North-East',
+                })) || [],
+            }}
+            onSelectUnit={(unit: any) =>
+              navigate({ to: `/properties/${id}/units/${unit.id}/edit` })
+            }
+          />
         </Tabs.Content>
       </Tabs.Root>
 
