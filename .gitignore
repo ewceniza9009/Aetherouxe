@@ -58,3 +58,7 @@ Thumbs.db
 # Local / stray workspace folders
 /untracked/
 /commission-releases/
+/scratch/
+/test-results/
+/playwright-report/
+

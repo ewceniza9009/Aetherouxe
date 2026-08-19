@@ -310,66 +310,76 @@ export default function RtoContractDetailPage() {
           </CardHeader>
           <CardContent className="pt-5 space-y-5">
             {/* Factor Scores Progress */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-1.5">
-                <span className="text-xs text-slate-400 font-medium">Payment Reliability</span>
-                <div className="text-lg font-bold text-white">
-                  {aiReport.factors.paymentReliabilityScore}%
+            {(() => {
+              const factors = aiReport.factors || {
+                paymentReliabilityScore: 0,
+                utilityStabilityScore: 0,
+                equityAccumulationScore: 0,
+                arDelinquencyScore: 0,
+              };
+              return (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-1.5">
+                    <span className="text-xs text-slate-400 font-medium">Payment Reliability</span>
+                    <div className="text-lg font-bold text-white">
+                      {factors.paymentReliabilityScore ?? 0}%
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-500 rounded-full"
+                        style={{ width: `${factors.paymentReliabilityScore ?? 0}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-1.5">
+                    <span className="text-xs text-slate-400 font-medium">Utility Stability</span>
+                    <div className="text-lg font-bold text-white">
+                      {factors.utilityStabilityScore ?? 0}%
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-sky-500 rounded-full"
+                        style={{ width: `${factors.utilityStabilityScore ?? 0}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-1.5">
+                    <span className="text-xs text-slate-400 font-medium">Equity Progress</span>
+                    <div className="text-lg font-bold text-white">
+                      {factors.equityAccumulationScore ?? 0}%
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-amber-500 rounded-full"
+                        style={{ width: `${factors.equityAccumulationScore ?? 0}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-1.5">
+                    <span className="text-xs text-slate-400 font-medium">AR Health Score</span>
+                    <div className="text-lg font-bold text-white">
+                      {factors.arDelinquencyScore ?? 0}%
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-indigo-500 rounded-full"
+                        style={{ width: `${factors.arDelinquencyScore ?? 0}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500 rounded-full"
-                    style={{ width: `${aiReport.factors.paymentReliabilityScore}%` }}
-                  />
-                </div>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-1.5">
-                <span className="text-xs text-slate-400 font-medium">Utility Stability</span>
-                <div className="text-lg font-bold text-white">
-                  {aiReport.factors.utilityStabilityScore}%
-                </div>
-                <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-sky-500 rounded-full"
-                    style={{ width: `${aiReport.factors.utilityStabilityScore}%` }}
-                  />
-                </div>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-1.5">
-                <span className="text-xs text-slate-400 font-medium">Equity Progress</span>
-                <div className="text-lg font-bold text-white">
-                  {aiReport.factors.equityAccumulationScore}%
-                </div>
-                <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-amber-500 rounded-full"
-                    style={{ width: `${aiReport.factors.equityAccumulationScore}%` }}
-                  />
-                </div>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 space-y-1.5">
-                <span className="text-xs text-slate-400 font-medium">AR Health Score</span>
-                <div className="text-lg font-bold text-white">
-                  {aiReport.factors.arDelinquencyScore}%
-                </div>
-                <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-indigo-500 rounded-full"
-                    style={{ width: `${aiReport.factors.arDelinquencyScore}%` }}
-                  />
-                </div>
-              </div>
-            </div>
+              );
+            })()}
 
             {/* Recommendations */}
-            {aiReport.aiRecommendations.length > 0 && (
+            {(aiReport.aiRecommendations || []).length > 0 && (
               <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-2">
                 <div className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                   <Zap className="w-3.5 h-3.5 text-amber-400" />
                   AI Recommended Next Steps
                 </div>
                 <ul className="space-y-1.5 text-xs text-slate-300">
-                  {aiReport.aiRecommendations.map((rec: string, idx: number) => (
+                  {(aiReport.aiRecommendations || []).map((rec: string, idx: number) => (
                     <li key={idx} className="flex items-start gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       <span>{rec}</span>

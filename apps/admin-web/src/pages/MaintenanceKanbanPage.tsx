@@ -192,15 +192,13 @@ export default function MaintenanceKanbanPage() {
     {
       id: 'open',
       title: 'Open / Triage',
-      color: 'border-rose-500/40 bg-rose-500/5',
-      badge: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
+      badgeVariant: 'destructive' as const,
       tickets: filteredTickets.filter((t) => t.status === 'open'),
     },
     {
       id: 'scheduled',
       title: 'Vendor Dispatched',
-      color: 'border-amber-500/40 bg-amber-500/5',
-      badge: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+      badgeVariant: 'warning' as const,
       tickets: filteredTickets.filter(
         (t) => t.status === 'in_progress' && t.workOrders && t.workOrders.length > 0,
       ),
@@ -208,8 +206,7 @@ export default function MaintenanceKanbanPage() {
     {
       id: 'in_progress',
       title: 'In Execution',
-      color: 'border-sky-500/40 bg-sky-500/5',
-      badge: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
+      badgeVariant: 'default' as const,
       tickets: filteredTickets.filter(
         (t) => t.status === 'in_progress' && (!t.workOrders || t.workOrders.length === 0),
       ),
@@ -217,8 +214,7 @@ export default function MaintenanceKanbanPage() {
     {
       id: 'completed',
       title: 'Resolved & AP Invoiced',
-      color: 'border-emerald-500/40 bg-emerald-500/5',
-      badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      badgeVariant: 'success' as const,
       tickets: filteredTickets.filter((t) => t.status === 'completed'),
     },
   ];
@@ -228,25 +224,25 @@ export default function MaintenanceKanbanPage() {
       case 'emergency':
       case 'urgent':
         return (
-          <Badge className="bg-red-500/20 text-red-400 border-red-500/40 text-[10px] uppercase">
+          <Badge variant="destructive" className="text-[10px] uppercase">
             Emergency
           </Badge>
         );
       case 'high':
         return (
-          <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/40 text-[10px] uppercase">
+          <Badge variant="warning" className="text-[10px] uppercase">
             High
           </Badge>
         );
       case 'medium':
         return (
-          <Badge className="bg-sky-500/20 text-sky-400 border-sky-500/40 text-[10px] uppercase">
+          <Badge variant="secondary" className="text-[10px] uppercase">
             Medium
           </Badge>
         );
       default:
         return (
-          <Badge className="bg-slate-500/20 text-slate-400 border-slate-500/40 text-[10px] uppercase">
+          <Badge variant="outline" className="text-[10px] uppercase">
             Low
           </Badge>
         );
@@ -254,37 +250,35 @@ export default function MaintenanceKanbanPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-      {/* Header */}
+    <div className="space-y-6 flex flex-col animate-in fade-in-0 duration-200">
+      {/* Standard Unified Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
-              <Wrench className="w-7 h-7 text-amber-400" />
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               Maintenance Ticket Kanban
             </h1>
-            <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/30">
+            <Badge variant="outline" className="text-xs">
               Live Dispatch
             </Badge>
           </div>
-          <p className="text-sm text-slate-400 mt-1">
-            Real-time tenant work orders, contractor quotation triage, and automated AP invoice
-            generation.
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Real-time tenant work orders, contractor triage, and automated AP invoicing.
           </p>
         </div>
 
         {/* Priority Filter */}
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-slate-400" />
-          <div className="flex bg-slate-900 border border-slate-800 p-1 rounded-xl">
+          <Filter className="w-4 h-4 text-muted-foreground" />
+          <div className="flex bg-muted/60 border border-border p-1 rounded-lg">
             {['all', 'emergency', 'high', 'medium', 'low'].map((p) => (
               <button
                 key={p}
                 onClick={() => setSelectedPriority(p)}
-                className={`px-3 py-1 text-xs font-semibold rounded-lg capitalize transition-colors ${
+                className={`px-3 py-1 text-xs font-semibold rounded-md capitalize transition-colors ${
                   selectedPriority === p
-                    ? 'bg-amber-500 text-slate-950 shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {p}
@@ -295,41 +289,46 @@ export default function MaintenanceKanbanPage() {
       </div>
 
       {/* Kanban Board Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
         {columns.map((col) => (
           <div
             key={col.id}
-            className={`rounded-2xl border ${col.color} p-4 flex flex-col min-h-[500px] backdrop-blur-sm`}
+            className="rounded-xl border border-border bg-muted/30 p-3.5 flex flex-col min-h-[500px]"
           >
             {/* Column Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
-              <span className="font-bold text-sm text-white">{col.title}</span>
-              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${col.badge}`}>
+            <div className="flex items-center justify-between pb-3 border-b border-border mb-3">
+              <span className="font-semibold text-sm text-foreground">{col.title}</span>
+              <Badge variant={col.badgeVariant} className="text-xs px-2 py-0">
                 {col.tickets.length}
-              </span>
+              </Badge>
             </div>
 
             {/* Ticket Cards */}
             <div className="space-y-3 flex-1 overflow-y-auto pr-0.5">
-              {col.tickets.length === 0 ? (
-                <div className="h-32 flex flex-col items-center justify-center text-xs text-slate-500 italic">
+              {isLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-28 rounded-lg" />
+                  <Skeleton className="h-28 rounded-lg" />
+                </div>
+              ) : col.tickets.length === 0 ? (
+                <div className="h-32 flex flex-col items-center justify-center text-xs text-muted-foreground italic border border-dashed border-border rounded-lg">
                   No tickets in this stage
                 </div>
               ) : (
                 col.tickets.map((ticket) => (
                   <Card
                     key={ticket.id}
-                    className="bg-slate-900/90 border-slate-800 hover:border-slate-700 shadow-md transition-all group"
+                    className="bg-card hover:bg-muted/30 border-border shadow-sm transition-all"
                   >
-                    <CardContent className="p-4 space-y-3">
+                    <CardContent className="p-3.5 space-y-2.5">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {getPriorityBadge(ticket.priority)}
-                          <span className="text-[11px] font-semibold text-slate-400 capitalize bg-slate-800/80 px-2 py-0.5 rounded-md">
+                          <span className="text-[10px] text-muted-foreground capitalize bg-muted px-1.5 py-0.5 rounded border border-border">
                             {ticket.category.replace('_', ' ')}
                           </span>
                         </div>
-                        <span className="text-[10px] text-slate-500">
+                        <span className="text-[10px] text-muted-foreground">
                           {ticket.createdAt
                             ? new Date(ticket.createdAt).toLocaleDateString('en-US', {
                                 month: 'short',
@@ -340,31 +339,31 @@ export default function MaintenanceKanbanPage() {
                       </div>
 
                       <div>
-                        <p className="text-xs text-slate-200 font-medium line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-foreground font-medium line-clamp-2 leading-relaxed">
                           {ticket.description}
                         </p>
                       </div>
 
                       {/* Location & Tenant Info */}
-                      <div className="pt-2 border-t border-slate-800/80 text-[11px] text-slate-400 space-y-1">
-                        <div className="flex items-center gap-1.5 text-white font-semibold">
-                          <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <div className="pt-2 border-t border-border text-xs space-y-1">
+                        <div className="flex items-center gap-1.5 text-foreground font-medium">
+                          <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
                           <span>
                             {ticket.unit?.unitNumber
                               ? `Unit ${ticket.unit.unitNumber}`
-                              : 'Common Area'}
+                              : 'Common Facility'}
                           </span>
                         </div>
                         {ticket.tenant && (
-                          <div className="flex items-center gap-1.5 text-slate-400">
-                            <Users className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                          <div className="flex items-center gap-1.5 text-muted-foreground text-[11px]">
+                            <Users className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
                             <span>
                               {ticket.tenant.firstName} {ticket.tenant.lastName}
                             </span>
                           </div>
                         )}
                         {ticket.workOrders && ticket.workOrders[0] && (
-                          <div className="flex items-center gap-1.5 text-amber-400 font-medium bg-amber-500/10 px-2 py-1 rounded-md mt-1">
+                          <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-medium bg-amber-500/10 px-2 py-1 rounded text-[11px] border border-amber-500/20 mt-1">
                             <HardHat className="w-3.5 h-3.5 shrink-0" />
                             <span>{ticket.workOrders[0].vendor?.name || 'Assigned Vendor'}</span>
                           </div>
@@ -372,7 +371,7 @@ export default function MaintenanceKanbanPage() {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="pt-2 flex items-center justify-end gap-2">
+                      <div className="pt-1 flex items-center justify-end gap-2">
                         {ticket.status === 'open' && (
                           <Button
                             size="sm"
@@ -380,7 +379,7 @@ export default function MaintenanceKanbanPage() {
                               setActiveTicket(ticket);
                               setDispatchModalOpen(true);
                             }}
-                            className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs gap-1.5 h-8"
+                            className="w-full text-xs gap-1.5 h-8"
                           >
                             <Send className="w-3.5 h-3.5" />
                             Dispatch Contractor
@@ -394,11 +393,17 @@ export default function MaintenanceKanbanPage() {
                               setActualCost(ticket.workOrders?.[0]?.estimatedCost || 3500);
                               setCompleteModalOpen(true);
                             }}
-                            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs gap-1.5 h-8"
+                            className="w-full text-xs gap-1.5 h-8"
                           >
                             <FileCheck className="w-3.5 h-3.5" />
                             Complete &amp; Bill AP
                           </Button>
+                        )}
+                        {ticket.status === 'completed' && (
+                          <div className="w-full text-center text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1 py-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            AP Invoiced &amp; Settled
+                          </div>
                         )}
                       </div>
                     </CardContent>
@@ -412,16 +417,16 @@ export default function MaintenanceKanbanPage() {
 
       {/* Dispatch Vendor Modal */}
       {dispatchModalOpen && activeTicket && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-xl max-w-md w-full p-5 shadow-xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
-                <HardHat className="w-5 h-5 text-amber-400" />
-                <h3 className="font-bold text-white text-base">Dispatch Contractor</h3>
+                <HardHat className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-foreground text-base">Dispatch Contractor</h3>
               </div>
               <button
                 onClick={() => setDispatchModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -429,11 +434,13 @@ export default function MaintenanceKanbanPage() {
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="text-slate-400 block mb-1 font-semibold">Select Contractor</label>
+                <label className="text-muted-foreground block mb-1 font-medium">
+                  Select Contractor
+                </label>
                 <select
                   value={selectedVendorId}
                   onChange={(e) => setSelectedVendorId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-500"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground outline-none focus:ring-1 focus:ring-primary"
                 >
                   <option value="">-- Choose registered vendor --</option>
                   {contractors.map((c) => (
@@ -445,29 +452,31 @@ export default function MaintenanceKanbanPage() {
               </div>
 
               <div>
-                <label className="text-slate-400 block mb-1 font-semibold">
+                <label className="text-muted-foreground block mb-1 font-medium">
                   Estimated Cost (₱)
                 </label>
                 <input
                   type="number"
                   value={estimatedCost}
                   onChange={(e) => setEstimatedCost(Number(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-500"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
 
               <div>
-                <label className="text-slate-400 block mb-1 font-semibold">Scheduled Date</label>
+                <label className="text-muted-foreground block mb-1 font-medium">
+                  Scheduled Date
+                </label>
                 <input
                   type="date"
                   value={scheduledDate}
                   onChange={(e) => setScheduledDate(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-amber-500"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
               <Button variant="ghost" size="sm" onClick={() => setDispatchModalOpen(false)}>
                 Cancel
               </Button>
@@ -482,7 +491,6 @@ export default function MaintenanceKanbanPage() {
                     scheduledDate,
                   })
                 }
-                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold"
               >
                 {dispatchMutation.isPending ? 'Dispatching...' : 'Confirm Dispatch'}
               </Button>
@@ -493,25 +501,25 @@ export default function MaintenanceKanbanPage() {
 
       {/* Complete Ticket & Generate AP Modal */}
       {completeModalOpen && activeTicket && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-xl max-w-md w-full p-5 shadow-xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2">
-                <FileCheck className="w-5 h-5 text-emerald-400" />
-                <h3 className="font-bold text-white text-base">
+                <FileCheck className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-foreground text-base">
                   Complete &amp; Generate AP Invoice
                 </h3>
               </div>
               <button
                 onClick={() => setCompleteModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-300 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg text-xs text-foreground flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary shrink-0" />
               <span>
                 Marking this ticket completed will automatically generate a draft AP Invoice and
                 General Ledger journal line.
@@ -520,19 +528,19 @@ export default function MaintenanceKanbanPage() {
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="text-slate-400 block mb-1 font-semibold">
+                <label className="text-muted-foreground block mb-1 font-medium">
                   Actual Final Cost (₱)
                 </label>
                 <input
                   type="number"
                   value={actualCost}
                   onChange={(e) => setActualCost(Number(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-emerald-500"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
 
               <div>
-                <label className="text-slate-400 block mb-1 font-semibold">
+                <label className="text-muted-foreground block mb-1 font-medium">
                   Completion Notes &amp; Findings
                 </label>
                 <textarea
@@ -540,12 +548,12 @@ export default function MaintenanceKanbanPage() {
                   onChange={(e) => setCompletionNotes(e.target.value)}
                   placeholder="e.g. Replaced leaking P-trap and tested pressure..."
                   rows={3}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white outline-none focus:border-emerald-500"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-foreground outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
               <Button variant="ghost" size="sm" onClick={() => setCompleteModalOpen(false)}>
                 Cancel
               </Button>
@@ -559,7 +567,6 @@ export default function MaintenanceKanbanPage() {
                     notes: completionNotes,
                   })
                 }
-                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold"
               >
                 {completeMutation.isPending ? 'Generating AP...' : 'Finalize & Post AP'}
               </Button>
