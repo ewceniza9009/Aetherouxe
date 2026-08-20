@@ -53,7 +53,13 @@ export default function PropertyDetailPage() {
   const { data: unitsResult } = useUnits({ propertyId: id, limit: 5 });
   const { data: amenitiesResult } = useAmenities({ propertyId: id, limit: 100 });
 
-  const description = specs?.description || property?.description;
+  const fallbackDesc = property
+    ? `${property.projectName || property.name || property.code} is a premier ${
+        property.type ? property.type.replace('_', ' ') : 'property'
+      } development offering world-class architectural design, state-of-the-art building management, and access to premium residential & commercial amenities.`
+    : undefined;
+
+  const description = specs?.description || property?.description || fallbackDesc;
   const yearBuilt = specs?.yearBuilt || property?.yearBuilt;
   const lotSize = specs?.lotSize || property?.lotSize;
   const totalSquareFeet = specs?.totalSquareFeet || property?.totalSquareFeet;

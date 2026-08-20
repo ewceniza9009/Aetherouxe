@@ -9,6 +9,7 @@ export class CreateUserDto {
   @ApiPropertyOptional() @IsOptional() @IsString() lastName?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() phone?: string;
   @ApiProperty({ enum: UserType }) @IsEnum(UserType) userType: UserType;
+  @ApiPropertyOptional() @IsOptional() @IsString() roleId?: string;
 }
 
 export class UpdateUserDto {
@@ -19,6 +20,7 @@ export class UpdateUserDto {
   @ApiPropertyOptional() @IsOptional() @IsEnum(UserType) userType?: UserType;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() isActive?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsString() @MinLength(8) password?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() roleId?: string;
 }
 
 export class UserQueryDto {

@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@elite-realty/shared-ui/lib/api';
 import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
 
@@ -13,6 +13,13 @@ export interface AppUser {
   avatarUrl?: string | null;
   phone?: string | null;
   userType: AppUserType;
+  roleId?: string | null;
+  role?: {
+    id: string;
+    name: string;
+    description?: string | null;
+    permissions: string[];
+  } | null;
   isActive: boolean;
   lastLoginAt?: string | null;
   createdAt: string;
@@ -70,6 +77,7 @@ export interface CreateUserPayload {
   lastName?: string;
   phone?: string;
   userType: AppUserType;
+  roleId?: string;
 }
 
 export function useCreateUser() {

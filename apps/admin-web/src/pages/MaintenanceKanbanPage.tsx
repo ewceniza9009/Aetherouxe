@@ -250,9 +250,9 @@ export default function MaintenanceKanbanPage() {
   };
 
   return (
-    <div className="space-y-6 flex flex-col animate-in fade-in-0 duration-200">
+    <div className="space-y-6 flex flex-col flex-1 min-h-0 animate-in fade-in-0 duration-200">
       {/* Standard Unified Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
@@ -289,14 +289,14 @@ export default function MaintenanceKanbanPage() {
       </div>
 
       {/* Kanban Board Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-1 min-h-[calc(100vh-230px)]">
         {columns.map((col) => (
           <div
             key={col.id}
-            className="rounded-xl border border-border bg-muted/30 p-3.5 flex flex-col min-h-[500px]"
+            className="rounded-xl border border-border bg-muted/30 p-3.5 flex flex-col h-full min-h-[calc(100vh-230px)]"
           >
             {/* Column Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-border mb-3">
+            <div className="flex items-center justify-between pb-3 border-b border-border mb-3 shrink-0">
               <span className="font-semibold text-sm text-foreground">{col.title}</span>
               <Badge variant={col.badgeVariant} className="text-xs px-2 py-0">
                 {col.tickets.length}
@@ -304,7 +304,7 @@ export default function MaintenanceKanbanPage() {
             </div>
 
             {/* Ticket Cards */}
-            <div className="space-y-3 flex-1 overflow-y-auto pr-0.5">
+            <div className="space-y-3 flex-1 min-h-0 overflow-y-auto pr-0.5">
               {isLoading ? (
                 <div className="space-y-3">
                   <Skeleton className="h-28 rounded-lg" />

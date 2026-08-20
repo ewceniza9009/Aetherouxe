@@ -1,4 +1,4 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@elite-realty/shared-ui/lib/api';
 import type {
   ApiResponse,
@@ -100,7 +100,7 @@ export function transformProperty(p: RawProperty): Property {
     id: p.id,
     code: p.propertyCode ?? p.code ?? '',
     name: buildingRef?.name ?? p.name ?? p.propertyCode ?? 'Unnamed Property',
-    address: buildingRef?.address ?? p.address ?? '',
+    address: buildingRef?.address ?? p.address ?? p.project?.address ?? '',
     type: (p.propertyType ?? p.type ?? 'apartment') as PropertyType,
     status: (p.status ?? 'available') as PropertyStatus,
     projectId: p.projectId ?? p.project?.id,
@@ -108,7 +108,7 @@ export function transformProperty(p: RawProperty): Property {
     buildingId: p.buildingId ?? firstUnit?.buildingId ?? buildingRef?.id,
     floorId: p.floorId ?? firstUnit?.floorId ?? undefined,
     unitId: p.unitId ?? undefined,
-    description: p.description ?? undefined,
+    description: p.description ?? p.project?.description ?? undefined,
     units: p._count?.units ?? units.length,
     yearBuilt: p.yearBuilt ?? undefined,
     lotSize: p.lotSize ?? undefined,

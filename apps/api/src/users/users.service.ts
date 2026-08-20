@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto, UserQueryDto } from './dto/users.dto';
 import { buildListQuery, FieldMap } from '../common/list-query.builder';
@@ -18,6 +23,8 @@ const USER_SELECT = {
   createdAt: true,
   updatedAt: true,
   avatarUrl: true,
+  roleId: true,
+  role: { select: { id: true, name: true, description: true, permissions: true } },
   tenant: { select: { id: true, name: true, domain: true } },
 };
 
@@ -67,6 +74,7 @@ export class UsersService {
         lastName: dto.lastName,
         phone: dto.phone,
         userType: dto.userType,
+        roleId: dto.roleId ?? undefined,
       },
       select: USER_SELECT,
     });
@@ -89,6 +97,9 @@ export class UsersService {
       userType: dto.userType ?? user.userType,
       isActive: dto.isActive ?? user.isActive,
     };
+    if (dto.roleId !== undefined) {
+      data.roleId = dto.roleId;
+    }
     if (dto.password) data.passwordHash = await bcrypt.hash(dto.password, 12);
 
     return this.prisma.user.update({ where: { id }, data, select: USER_SELECT });

@@ -2,10 +2,15 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { SYSTEM_PERMISSIONS } from '../common/constants/permissions';
 
 @Injectable()
 export class RolesService {
   constructor(private readonly prisma: PrismaService) {}
+
+  getPermissions() {
+    return SYSTEM_PERMISSIONS;
+  }
 
   async create(createRoleDto: CreateRoleDto, tenantId: string) {
     const existing = await this.prisma.role.findUnique({
@@ -28,6 +33,11 @@ export class RolesService {
   async findAll(tenantId: string) {
     return this.prisma.role.findMany({
       where: { tenantId },
+      include: {
+        _count: {
+          select: { users: true },
+        },
+      },
       orderBy: { name: 'asc' },
     });
   }
@@ -35,6 +45,11 @@ export class RolesService {
   async findOne(id: string, tenantId: string) {
     const role = await this.prisma.role.findUnique({
       where: { id },
+      include: {
+        users: {
+          select: { id: true, email: true, firstName: true, lastName: true, userType: true },
+        },
+      },
     });
     if (!role || role.tenantId !== tenantId) {
       throw new NotFoundException(`Role not found`);

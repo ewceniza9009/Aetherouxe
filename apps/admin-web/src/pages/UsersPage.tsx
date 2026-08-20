@@ -24,6 +24,7 @@ import {
   DialogDescription,
 } from '@elite-realty/shared-ui/components/ui';
 import { Plus, Pencil, UserX } from 'lucide-react';
+import { api } from '@elite-realty/shared-ui/lib/api';
 import {
   useUsers,
   useCreateUser,
@@ -73,6 +74,7 @@ interface FormState {
   lastName: string;
   phone: string;
   userType: AppUserType;
+  roleId: string;
 }
 
 const EMPTY_FORM: FormState = {
@@ -82,6 +84,7 @@ const EMPTY_FORM: FormState = {
   lastName: '',
   phone: '',
   userType: 'agent',
+  roleId: '',
 };
 
 export default function UsersPage() {
@@ -107,6 +110,16 @@ export default function UsersPage() {
   const [editing, setEditing] = useState<AppUser | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [availableRoles, setAvailableRoles] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    api
+      .get('/roles')
+      .then(({ data }) => {
+        setAvailableRoles(data.data ?? data ?? []);
+      })
+      .catch(() => {});
+  }, []);
 
   const [deactivateTarget, setDeactivateTarget] = useState<AppUser | null>(null);
 
@@ -142,6 +155,7 @@ export default function UsersPage() {
       lastName: u.lastName ?? '',
       phone: u.phone ?? '',
       userType: u.userType,
+      roleId: u.roleId ?? u.role?.id ?? '',
     });
     setOpen(true);
   };
@@ -156,6 +170,7 @@ export default function UsersPage() {
         lastName: form.lastName || undefined,
         phone: form.phone || undefined,
         userType: form.userType,
+        roleId: form.roleId || undefined,
       };
       if (editing) {
         const { password, ...rest } = payload;
@@ -169,6 +184,8 @@ export default function UsersPage() {
       }
       setOpen(false);
       refetch();
+    } catch {
+      // Handled by toast in mutation
     } finally {
       setSaving(false);
     }
@@ -325,7 +342,14 @@ export default function UsersPage() {
                         </td>
                         <td className="px-4 py-3 text-sm">{u.email}</td>
                         <td className="px-4 py-3">
-                          <Badge className={roleMeta.className}>{roleMeta.label}</Badge>
+                          <div className="flex flex-col gap-1 items-start">
+                            <Badge className={roleMeta.className}>{roleMeta.label}</Badge>
+                            {u.role?.name && (
+                              <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-medium">
+                                {u.role.name}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3">
                           {u.isActive ? (
@@ -411,7 +435,7 @@ export default function UsersPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Role *</Label>
+              <Label>User Category / System Type *</Label>
               <Select
                 value={form.userType}
                 onValueChange={(v) => setForm((f) => ({ ...f, userType: v as AppUserType }))}
@@ -428,6 +452,28 @@ export default function UsersPage() {
                 </SelectContent>
               </Select>
             </div>
+            {availableRoles.length > 0 && (
+              <div className="space-y-2">
+                <Label>Custom RBAC Role</Label>
+                <Select
+                  value={form.roleId || 'none'}
+                  onValueChange={(v) => setForm((f) => ({ ...f, roleId: v === 'none' ? '' : v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Auto-assign / Inherit from User Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Auto-assign / Inherit from User Type</SelectItem>
+                    {availableRoles.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="password">
                 {editing ? 'New Password (leave blank to keep)' : 'Password *'}

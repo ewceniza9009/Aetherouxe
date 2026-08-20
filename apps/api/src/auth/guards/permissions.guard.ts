@@ -6,7 +6,10 @@ import { UserType } from '@prisma/client';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(private reflector: Reflector, private prisma: PrismaService) {}
+  constructor(
+    private reflector: Reflector,
+    private prisma: PrismaService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(PERMISSIONS_KEY, [
@@ -41,10 +44,15 @@ export class PermissionsGuard implements CanActivate {
     }
 
     const userPermissions = dbUser.role.permissions || [];
+    if (userPermissions.includes('*')) {
+      return true;
+    }
     const hasPermission = requiredPermissions.every((p) => userPermissions.includes(p));
 
     if (!hasPermission) {
-      throw new ForbiddenException('You do not have the required permissions to access this resource.');
+      throw new ForbiddenException(
+        'You do not have the required permissions to access this resource.',
+      );
     }
 
     return true;

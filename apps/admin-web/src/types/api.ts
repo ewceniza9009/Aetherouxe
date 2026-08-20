@@ -219,7 +219,12 @@ export interface RawProperty {
   type?: string;
   status?: string;
   projectId?: string;
-  project?: { id?: string; name?: string } | null;
+  project?: {
+    id?: string;
+    name?: string;
+    description?: string | null;
+    address?: string | null;
+  } | null;
   buildingId?: string | null;
   floorId?: string | null;
   unitId?: string | null;

@@ -1,4 +1,4 @@
-﻿import { EmptyState } from '@/components/ui/empty-state';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useState, useEffect } from 'react';
 import {
   Card,
@@ -13,7 +13,7 @@ import { Input } from '@elite-realty/shared-ui/components/ui';
 import { Label } from '@elite-realty/shared-ui/components/ui';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@elite-realty/shared-ui/components/ui';
-import { Loader2, Plus, Shield, ShieldCheck, ShieldAlert, Edit, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Shield, ShieldCheck, Edit, Trash2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@elite-realty/shared-ui/lib/api';
 import { getErrorMessage } from '@/lib/error';
@@ -23,30 +23,127 @@ type Role = {
   name: string;
   description: string | null;
   permissions: string[];
+  _count?: {
+    users: number;
+  };
 };
 
-const AVAILABLE_PERMISSIONS = [
-  { id: 'manage_users', label: 'Manage Users', description: 'Create, update, and delete users' },
-  { id: 'manage_roles', label: 'Manage Roles', description: 'Create and update custom RBAC roles' },
+type PermissionItem = {
+  id: string;
+  label: string;
+  description: string;
+  category: string;
+};
+
+const DEFAULT_PERMISSIONS: PermissionItem[] = [
   {
-    id: 'view_financials',
-    label: 'View Financials',
-    description: 'Read-only access to General Ledger & Invoices',
+    id: 'manage_users',
+    label: 'Manage Users',
+    description: 'Create, update, and deactivate users',
+    category: 'User Management',
   },
   {
-    id: 'approve_disbursements',
-    label: 'Approve Disbursements',
-    description: 'Approve accounts payable disbursements',
+    id: 'view_users',
+    label: 'View Users',
+    description: 'View user directory and profiles',
+    category: 'User Management',
+  },
+  {
+    id: 'manage_roles',
+    label: 'Manage Roles',
+    description: 'Create and update custom RBAC roles',
+    category: 'Access Control',
+  },
+  {
+    id: 'view_roles',
+    label: 'View Roles',
+    description: 'View custom roles and assigned permissions',
+    category: 'Access Control',
+  },
+  {
+    id: 'manage_properties',
+    label: 'Manage Properties',
+    description: 'Create, update, and manage properties',
+    category: 'Property Management',
+  },
+  {
+    id: 'view_properties',
+    label: 'View Properties',
+    description: 'View property details and inventory',
+    category: 'Property Management',
+  },
+  {
+    id: 'manage_units',
+    label: 'Manage Units',
+    description: 'Manage unit records and availability',
+    category: 'Property Management',
   },
   {
     id: 'manage_leases',
     label: 'Manage Leases',
     description: 'Create and update lease agreements',
+    category: 'Lease Management',
+  },
+  {
+    id: 'view_leases',
+    label: 'View Leases',
+    description: 'View lease contracts and terms',
+    category: 'Lease Management',
+  },
+  {
+    id: 'view_financials',
+    label: 'View Financials',
+    description: 'Read-only access to Ledger & Invoices',
+    category: 'Financials',
+  },
+  {
+    id: 'manage_invoices',
+    label: 'Manage Invoices',
+    description: 'Manage AR invoices and payments',
+    category: 'Financials',
+  },
+  {
+    id: 'approve_disbursements',
+    label: 'Approve Disbursements',
+    description: 'Approve AP disbursements',
+    category: 'Financials',
+  },
+  {
+    id: 'manage_maintenance',
+    label: 'Manage Maintenance',
+    description: 'Manage work orders & contractors',
+    category: 'Operations',
+  },
+  {
+    id: 'view_maintenance',
+    label: 'View Maintenance',
+    description: 'View service requests',
+    category: 'Operations',
+  },
+  {
+    id: 'manage_community',
+    label: 'Manage Community',
+    description: 'Manage posts and amenity bookings',
+    category: 'Community',
+  },
+  {
+    id: 'view_community',
+    label: 'View Community',
+    description: 'View community updates',
+    category: 'Community',
+  },
+  {
+    id: 'view_reports',
+    label: 'View Reports',
+    description: 'Access dashboard and analytics',
+    category: 'Reports',
   },
 ];
 
 export function RolesSettingsPage() {
   const [roles, setRoles] = useState<Role[]>([]);
+  const [availablePermissions, setAvailablePermissions] =
+    useState<PermissionItem[]>(DEFAULT_PERMISSIONS);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
@@ -58,16 +155,26 @@ export function RolesSettingsPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchRoles();
+    fetchRolesAndPermissions();
   }, []);
 
-  const fetchRoles = async () => {
+  const fetchRolesAndPermissions = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/roles');
-      setRoles(data.data ?? data);
-    } catch (e) {
-      toast.error(getErrorMessage(e, 'Failed to load roles'));
+      const [rolesRes, permsRes] = await Promise.allSettled([
+        api.get('/roles'),
+        api.get('/roles/permissions'),
+      ]);
+
+      if (rolesRes.status === 'fulfilled') {
+        setRoles(rolesRes.value.data.data ?? rolesRes.value.data);
+      } else {
+        toast.error(getErrorMessage(rolesRes.reason, 'Failed to load roles'));
+      }
+
+      if (permsRes.status === 'fulfilled' && Array.isArray(permsRes.value.data)) {
+        setAvailablePermissions(permsRes.value.data);
+      }
     } finally {
       setLoading(false);
     }
@@ -113,7 +220,7 @@ export function RolesSettingsPage() {
         toast.success('Role created successfully');
       }
       setIsCreating(false);
-      fetchRoles();
+      fetchRolesAndPermissions();
     } catch (e) {
       toast.error(getErrorMessage(e, 'Failed to save role'));
     } finally {
@@ -126,11 +233,14 @@ export function RolesSettingsPage() {
     try {
       await api.delete(`/roles/${id}`);
       toast.success('Role deleted successfully');
-      fetchRoles();
+      fetchRolesAndPermissions();
     } catch (e) {
       toast.error(getErrorMessage(e, 'Failed to delete role'));
     }
   };
+
+  // Group permissions by category
+  const categories = Array.from(new Set(availablePermissions.map((p) => p.category)));
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-5xl">
@@ -162,7 +272,7 @@ export function RolesSettingsPage() {
               <div className="space-y-2">
                 <Label>Role Name</Label>
                 <Input
-                  placeholder="e.g. Junior Finance"
+                  placeholder="e.g. Finance Operations Specialist"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
@@ -170,42 +280,76 @@ export function RolesSettingsPage() {
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Input
-                  placeholder="Optional description"
+                  placeholder="Optional description of role responsibilities"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
             </div>
 
-            <div>
-              <h3 className="text-lg font-medium mb-4 flex items-center">
-                <ShieldCheck className="w-5 h-5 mr-2 text-primary" />
-                Assign Permissions
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {AVAILABLE_PERMISSIONS.map((perm) => {
-                  const checked = selectedPerms.includes(perm.id);
-                  return (
-                    <div
-                      key={perm.id}
-                      className={`flex items-start space-x-3 p-4 rounded-xl border transition-colors cursor-pointer ${checked ? 'border-primary bg-primary/5' : 'hover:border-primary/50'}`}
-                      onClick={() => handleTogglePerm(perm.id)}
-                    >
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={() => handleTogglePerm(perm.id)}
-                        className="mt-1"
-                      />
-                      <div className="space-y-1 select-none">
-                        <Label className="font-medium cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          {perm.label}
-                        </Label>
-                        <p className="text-xs text-muted-foreground">{perm.description}</p>
-                      </div>
-                    </div>
-                  );
-                })}
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium flex items-center">
+                  <ShieldCheck className="w-5 h-5 mr-2 text-primary" />
+                  Assign Permissions
+                </h3>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedPerms(availablePermissions.map((p) => p.id))}
+                  >
+                    Select All
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedPerms([])}
+                  >
+                    Clear All
+                  </Button>
+                </div>
               </div>
+
+              {categories.map((category) => {
+                const permsInCategory = availablePermissions.filter((p) => p.category === category);
+                return (
+                  <div key={category} className="space-y-3">
+                    <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground border-b pb-1">
+                      {category}
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {permsInCategory.map((perm) => {
+                        const checked =
+                          selectedPerms.includes(perm.id) || selectedPerms.includes('*');
+                        return (
+                          <div
+                            key={perm.id}
+                            className={`flex items-start space-x-3 p-4 rounded-xl border transition-colors cursor-pointer ${
+                              checked ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
+                            }`}
+                            onClick={() => handleTogglePerm(perm.id)}
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={() => handleTogglePerm(perm.id)}
+                              className="mt-1"
+                            />
+                            <div className="space-y-1 select-none">
+                              <Label className="font-medium cursor-pointer leading-none">
+                                {perm.label}
+                              </Label>
+                              <p className="text-xs text-muted-foreground">{perm.description}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <Separator />
@@ -249,10 +393,7 @@ export function RolesSettingsPage() {
                         <Shield className="w-5 h-5 text-primary" />
                         <CardTitle className="text-lg">{role.name}</CardTitle>
                       </div>
-                      <div
-                        className="flex space-x-1 opacity-0 hover:opacity-100 transition-opacity"
-                        style={{ opacity: 1 }}
-                      >
+                      <div className="flex space-x-1">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -276,6 +417,12 @@ export function RolesSettingsPage() {
                         {role.description}
                       </CardDescription>
                     )}
+                    {role._count?.users !== undefined && (
+                      <div className="flex items-center text-xs text-muted-foreground mt-2">
+                        <Users className="w-3.5 h-3.5 mr-1" />
+                        {role._count.users} {role._count.users === 1 ? 'user' : 'users'} assigned
+                      </div>
+                    )}
                   </CardHeader>
                   <CardContent className="pt-0 flex-1">
                     <div className="flex flex-wrap gap-2 mt-2">
@@ -285,7 +432,7 @@ export function RolesSettingsPage() {
                           variant="secondary"
                           className="font-normal text-xs bg-muted/50"
                         >
-                          {perm}
+                          {availablePermissions.find((p) => p.id === perm)?.label || perm}
                         </Badge>
                       ))}
                       {role.permissions.length === 0 && (

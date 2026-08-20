@@ -393,6 +393,7 @@ async function cleanup() {
     'property',
     'project',
     'user',
+    'role',
   ] as const;
   for (const m of order) {
     // @ts-expect-error dynamic model access
@@ -460,6 +461,115 @@ async function main() {
   });
   console.log(`Tenant/Company: ${tenant.name}`);
 
+  /* ── Roles & Permissions ── */
+  console.log('Seeding default RBAC roles...');
+  const rolesMap = new Map<string, string>();
+
+  const roleDefinitions = [
+    {
+      name: 'Super Admin',
+      description: 'Full system control and unrestricted administration across all modules',
+      permissions: ['*'],
+      userType: UserType.super_admin,
+    },
+    {
+      name: 'System Administrator',
+      description: 'Full operational and administrative access',
+      permissions: [
+        'manage_users',
+        'view_users',
+        'manage_roles',
+        'view_roles',
+        'manage_properties',
+        'view_properties',
+        'manage_units',
+        'manage_leases',
+        'view_leases',
+        'view_financials',
+        'manage_invoices',
+        'approve_disbursements',
+        'manage_maintenance',
+        'view_maintenance',
+        'manage_community',
+        'view_community',
+        'view_reports',
+      ],
+      userType: UserType.admin,
+    },
+    {
+      name: 'Property Manager',
+      description: 'Manages properties, units, leases, maintenance, and community updates',
+      permissions: [
+        'view_users',
+        'manage_properties',
+        'view_properties',
+        'manage_units',
+        'manage_leases',
+        'view_leases',
+        'manage_maintenance',
+        'view_maintenance',
+        'manage_community',
+        'view_community',
+        'view_reports',
+      ],
+      userType: UserType.property_manager,
+    },
+    {
+      name: 'Finance Specialist',
+      description: 'Manages billing, invoices, collections, disbursements, and financial reports',
+      permissions: [
+        'view_users',
+        'view_leases',
+        'view_financials',
+        'manage_invoices',
+        'approve_disbursements',
+        'view_reports',
+      ],
+      userType: UserType.finance,
+    },
+    {
+      name: 'Real Estate Agent',
+      description: 'Manages prospect leads, reservations, and lease generation',
+      permissions: ['view_properties', 'view_leases', 'manage_leases', 'view_community'],
+      userType: UserType.agent,
+    },
+    {
+      name: 'Property Owner',
+      description: 'Access to owned property details, P&L statements, and SOA',
+      permissions: [
+        'view_properties',
+        'view_leases',
+        'view_financials',
+        'view_reports',
+        'view_community',
+      ],
+      userType: UserType.owner,
+    },
+    {
+      name: 'Resident / Tenant',
+      description:
+        'Access to lease details, utility bills, maintenance requests, and community announcements',
+      permissions: ['view_leases', 'view_maintenance', 'view_community'],
+      userType: UserType.tenant,
+    },
+  ];
+
+  for (const def of roleDefinitions) {
+    const role = await prisma.role.upsert({
+      where: { tenantId_name: { tenantId: tenant.id, name: def.name } },
+      update: { description: def.description, permissions: def.permissions },
+      create: {
+        tenantId: tenant.id,
+        name: def.name,
+        description: def.description,
+        permissions: def.permissions,
+      },
+    });
+    rolesMap.set(def.name, role.id);
+    rolesMap.set(def.userType, role.id);
+  }
+  console.log(`Roles: Created ${roleDefinitions.length} roles for tenant`);
+
   /* ── Company owner (developer/business) ──
    * The default owner of record for inventory that has not yet been sold or
    * transferred to a buyer. Mirrors CompanyOwnerService.getOrCreate().
@@ -474,6 +584,7 @@ async function main() {
         phone: null,
         passwordHash: 'NOLOGIN',
         userType: UserType.owner,
+        roleId: rolesMap.get(UserType.owner),
         firstName: 'Portfolio',
         lastName: tenant.name,
         isActive: true,
@@ -499,6 +610,7 @@ async function main() {
       email: 'admin@elite-realty.com',
       passwordHash: hash,
       userType: UserType.super_admin,
+      roleId: rolesMap.get(UserType.super_admin),
       firstName: 'Erwin',
       lastName: 'Ceniza',
       phone: phPhone(),
@@ -592,6 +704,7 @@ async function main() {
       email: 'pm@elite-realty.com',
       passwordHash: hash,
       userType: UserType.property_manager,
+      roleId: rolesMap.get(UserType.property_manager),
       firstName: pmP.first,
       lastName: pmP.last,
       phone: phPhone(),
@@ -605,6 +718,7 @@ async function main() {
       email: 'finance@elite-realty.com',
       passwordHash: hash,
       userType: UserType.finance,
+      roleId: rolesMap.get(UserType.finance),
       firstName: finP.first,
       lastName: finP.last,
       phone: phPhone(),
@@ -628,6 +742,7 @@ async function main() {
         email: `agent${i + 1}@elite-realty.com`,
         passwordHash: agentHash,
         userType: UserType.agent,
+        roleId: rolesMap.get(UserType.agent),
         firstName: p.first,
         lastName: p.last,
         phone: phPhone(),
@@ -678,6 +793,7 @@ async function main() {
         email: `owner${i + 1}@elite-realty.com`,
         passwordHash: ownerHash,
         userType: UserType.owner,
+        roleId: rolesMap.get(UserType.owner),
         firstName: p.first,
         lastName: p.last,
         phone: phPhone(),
@@ -696,6 +812,7 @@ async function main() {
         email: `resident${i + 1}@elite-realty.com`,
         passwordHash: residentHash,
         userType: UserType.tenant,
+        roleId: rolesMap.get(UserType.tenant),
         firstName: p.first,
         lastName: p.last,
         phone: phPhone(),
