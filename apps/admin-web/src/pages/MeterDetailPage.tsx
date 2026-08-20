@@ -216,7 +216,7 @@ export default function MeterDetailPage() {
           label="Last Reading"
           value={
             readingsSorted[0]
-              ? `${readingsSorted[0].value} · ${formatDate(readingsSorted[0].readingDate)}`
+              ? `${Number(readingsSorted[0].value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · ${formatDate(readingsSorted[0].readingDate)}`
               : '—'
           }
         />

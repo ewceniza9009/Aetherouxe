@@ -358,7 +358,12 @@ export default function FieldMeterReaderPage() {
                         <div className="text-right">
                           <span className="text-[11px] text-slate-400">Last Reading</span>
                           <p className="text-xs font-mono font-bold text-white">
-                            {meter.lastReadingValue != null ? meter.lastReadingValue : '0'}
+                            {meter.lastReadingValue != null
+                              ? Number(meter.lastReadingValue).toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })
+                              : '0.00'}
                           </p>
                         </div>
                       </button>
