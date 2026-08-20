@@ -194,7 +194,7 @@ export default function SalesPage() {
 
   return (
     <div className="space-y-6 flex flex-col ">
-      {/* â”€â”€ Header â”€â”€ */}
+      {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Sales & Schemes</h1>
@@ -202,7 +202,7 @@ export default function SalesPage() {
         </div>
       </div>
 
-      {/* â”€â”€ Step Indicator â”€â”€ */}
+      {/* ── Step Indicator ── */}
       <div className="py-2">
         <div className="flex items-center justify-center gap-0 max-w-xl mx-auto">
           {STEPS.map((s, i) => {
@@ -248,11 +248,9 @@ export default function SalesPage() {
         </div>
       </div>
 
-      {/* â”€â”€ Content â”€â”€ */}
+      {/* Content */}
       <div>
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-        {/* Step 1: Select Scheme                        */}
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* Step 1: Select Scheme */}
         {step === 0 && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -321,9 +319,7 @@ export default function SalesPage() {
           </div>
         )}
 
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-        {/* Step 2: Select Unit                          */}
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* Step 2: Select Unit */}
         {step === 1 && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -428,9 +424,7 @@ export default function SalesPage() {
           </div>
         )}
 
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-        {/* Step 3: Configure                           */}
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* Step 3: Configure */}
         {step === 2 && (
           <div className="space-y-8">
             <div className="flex items-center justify-between">
@@ -698,9 +692,7 @@ export default function SalesPage() {
           </div>
         )}
 
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-        {/* Step 4: Success                              */}
-        {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* Step 4: Success */}
         {step === 3 && result && (
           <div className="space-y-8 max-w-2xl mx-auto">
             <div className="text-center py-6">
