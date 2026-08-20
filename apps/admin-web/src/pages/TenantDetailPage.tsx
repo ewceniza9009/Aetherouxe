@@ -256,22 +256,28 @@ export default function TenantDetailPage() {
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Active Leases
+              {user?.userType === 'owner' ? 'Acquisition Status' : 'Active Leases'}
             </CardTitle>
             <div className="p-1.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               <KeyRound className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent className="space-y-1">
-            <div className="text-2xl font-bold text-foreground">{activeLeasesCount}</div>
-            <p className="text-xs text-muted-foreground">Current active agreements</p>
+            <div className="text-2xl font-bold text-foreground">
+              {user?.userType === 'owner' ? (active ? 'Active' : 'None') : activeLeasesCount}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {user?.userType === 'owner'
+                ? 'Legal property ownership'
+                : 'Current active agreements'}
+            </p>
           </CardContent>
         </Card>
 
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Monthly Dues
+              {user?.userType === 'owner' ? 'Total Contract Value' : 'Monthly Dues'}
             </CardTitle>
             <div className="p-1.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
               <TrendingUp className="h-4 w-4" />
@@ -281,7 +287,9 @@ export default function TenantDetailPage() {
             <div className="text-2xl font-bold text-foreground">
               {formatCurrency(totalMonthlyRent)}
             </div>
-            <p className="text-xs text-muted-foreground">Combined monthly rent</p>
+            <p className="text-xs text-muted-foreground">
+              {user?.userType === 'owner' ? 'Property portfolio value' : 'Combined monthly rent'}
+            </p>
           </CardContent>
         </Card>
 
@@ -291,7 +299,7 @@ export default function TenantDetailPage() {
               KYC &amp; Compliance
             </CardTitle>
             <div className="p-1.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400">
-              <Building2 className="h-4 w-4" />
+              <Calculator className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent className="space-y-1">
@@ -341,7 +349,11 @@ export default function TenantDetailPage() {
                         />
                       </div>
                       <div>
-                        <p className="font-semibold text-foreground">Unit {u.unitLabel ?? '—'}</p>
+                        <p className="font-semibold text-foreground">
+                          {u.unitLabel && u.unitLabel !== '—'
+                            ? `Unit ${u.unitLabel}`
+                            : `Property ${propertyCode}`}
+                        </p>
                         <p className="text-xs text-muted-foreground">{propertyCode}</p>
                       </div>
                     </div>
@@ -357,7 +369,8 @@ export default function TenantDetailPage() {
                   <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
                     <span>{leaseTypeLabel[u.leaseType] ?? u.leaseType}</span>
                     <span className="font-semibold text-foreground">
-                      {formatCurrency(u.monthlyRentAmount)}/mo
+                      {formatCurrency(u.monthlyRentAmount)}
+                      {user?.userType === 'owner' ? ' Value' : '/mo'}
                     </span>
                   </div>
                 </button>
@@ -459,25 +472,42 @@ function UnitDetail({
                   <KeyRound className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="text-xs text-muted-foreground">Unit</p>
-                    <p className="font-semibold">{lease.unitLabel ?? '—'}</p>
+                    <p className="font-semibold">
+                      {lease.unitLabel && lease.unitLabel !== '—'
+                        ? lease.unitLabel
+                        : 'Entire Property'}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Lease details */}
+              {/* Lease / Ownership details */}
               <div className="grid gap-4 sm:grid-cols-3">
                 <Detail
-                  label="Lease Type"
-                  value={leaseTypeLabel[lease.leaseType] ?? lease.leaseType}
+                  label={(lease as any).titleTransfer ? 'Acquisition Type' : 'Lease Type'}
+                  value={
+                    (lease as any).titleTransfer
+                      ? formatEnumLabel((lease as any).titleTransfer.basis)
+                      : (leaseTypeLabel[lease.leaseType] ?? lease.leaseType)
+                  }
                 />
                 <Detail
                   label="Status"
                   value={lease.isActive ? 'Active' : 'Closed'}
                   badge={lease.isActive ? 'success' : 'secondary'}
                 />
-                <Detail label="Monthly Rent" value={formatCurrency(lease.monthlyRentAmount)} />
-                <Detail label="Start Date" value={new Date(lease.startDate).toLocaleDateString()} />
-                <Detail label="End Date" value={new Date(lease.endDate).toLocaleDateString()} />
+                <Detail
+                  label={(lease as any).titleTransfer ? 'Contract Value' : 'Monthly Rent'}
+                  value={formatCurrency(lease.monthlyRentAmount)}
+                />
+                <Detail
+                  label={(lease as any).titleTransfer ? 'Requested Date' : 'Start Date'}
+                  value={new Date(lease.startDate).toLocaleDateString()}
+                />
+                <Detail
+                  label={(lease as any).titleTransfer ? 'Handover Date' : 'End Date'}
+                  value={new Date(lease.endDate).toLocaleDateString()}
+                />
                 {lease.schemeType && (
                   <Detail label="Scheme" value={lease.schemeType.replace(/_/g, ' ')} />
                 )}
@@ -486,9 +516,14 @@ function UnitDetail({
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => navigate({ to: `/leases/${lease.id}` })}
+                onClick={() =>
+                  (lease as any).titleTransfer
+                    ? navigate({ to: '/title-transfers' })
+                    : navigate({ to: `/leases/${lease.id}` })
+                }
               >
-                Open Full Lease <ArrowRight className="ml-2 h-4 w-4" />
+                {(lease as any).titleTransfer ? 'Open Title Transfer Contract' : 'Open Full Lease'}{' '}
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </TabsContent>
