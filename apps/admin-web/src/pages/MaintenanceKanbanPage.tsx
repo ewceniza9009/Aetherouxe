@@ -103,13 +103,8 @@ export default function MaintenanceKanbanPage() {
     },
   });
 
-  const tickets: ServiceRequestItem[] = requestsRes?.data || [];
-  const contractors: ContractorItem[] = contractorsRes?.data || [
-    { id: 'v-1', name: 'Apex Plumbing Solutions', serviceType: 'Plumbing' },
-    { id: 'v-2', name: 'Voltaic Electrical & HVAC', serviceType: 'Electrical & AC' },
-    { id: 'v-3', name: 'Prime Builders & Renovation', serviceType: 'Carpentry & Masonry' },
-    { id: 'v-4', name: 'ShieldGuard Pest Control', serviceType: 'Pest Control' },
-  ];
+  const tickets: ServiceRequestItem[] = requestsRes?.data ?? [];
+  const contractors: ContractorItem[] = contractorsRes?.data ?? [];
 
   // Dispatch Vendor Mutation (Creates Work Order)
   const dispatchMutation = useMutation({
