@@ -1285,15 +1285,8 @@ async function main() {
       const unitNo = String(pr + 1 + faker.number.int({ min: 0, max: 800 })).padStart(3, '0');
       const propertyCode = `${projCode}-${bldg.code}-${unitNo}`;
 
-      // Property status drives the unit status (a property IS its unit, normally)
-      const propStatus = pick([
-        PropertyStatus.available,
-        PropertyStatus.available,
-        PropertyStatus.reserved,
-        PropertyStatus.sold,
-        PropertyStatus.rented,
-        PropertyStatus.rto_active,
-      ]);
+      // Properties start available; leases/reservations update status dynamically.
+      const propStatus = PropertyStatus.available;
       const unitStatusFor = (s: PropertyStatus): UnitStatus => {
         switch (s) {
           case PropertyStatus.sold:
@@ -1383,12 +1376,7 @@ async function main() {
       }
 
       // Lease/RTO targets are the titled property + its primary unit
-      if (
-        primaryUnit &&
-        (propStatus === PropertyStatus.rented ||
-          propStatus === PropertyStatus.rto_active ||
-          chance(0.35))
-      ) {
+      if (primaryUnit && chance(0.55)) {
         leaseTargets.push({ property, unit: primaryUnit });
       }
     }

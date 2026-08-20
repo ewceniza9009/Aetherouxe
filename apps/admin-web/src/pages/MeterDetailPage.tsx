@@ -1,27 +1,27 @@
-import { EmptyState } from "@/components/ui/empty-state";
-import { useMemo, useState } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import * as Tabs from "@radix-ui/react-tabs";
+import { EmptyState } from '@/components/ui/empty-state';
+import { useMemo, useState } from 'react';
+import { useParams, useNavigate } from '@tanstack/react-router';
+import * as Tabs from '@radix-ui/react-tabs';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { Label } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
-import { Checkbox } from "@/components/ui/checkbox";
+} from '@elite-realty/shared-ui/components/ui';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -29,7 +29,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 import {
   Table,
   TableBody,
@@ -37,7 +37,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   ArrowLeft,
   AlertCircle,
@@ -52,7 +52,7 @@ import {
   MoreHorizontal,
   Pencil,
   User,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   useMeter,
   useMeterReadings,
@@ -63,11 +63,15 @@ import {
   useDeleteReading,
   type UtilityType,
   type UtilityMeter,
-} from "@/hooks/use-utilities";
-import { useProperties } from "@/hooks/use-properties";
-import { useUnits } from "@/hooks/use-units";
-import { AddReadingDialog, BulkReadingsDialog, EditReadingDialog } from "@/components/utilities/ReadingDialogs";
-import { utilityTypeMeta, billStatusMeta, money, formatDate } from "@/lib/utility-meta";
+} from '@/hooks/use-utilities';
+import { useProperties } from '@/hooks/use-properties';
+import { useUnits } from '@/hooks/use-units';
+import {
+  AddReadingDialog,
+  BulkReadingsDialog,
+  EditReadingDialog,
+} from '@/components/utilities/ReadingDialogs';
+import { utilityTypeMeta, billStatusMeta, money, formatDate } from '@/lib/utility-meta';
 
 const utilityIcons: Record<UtilityType, React.ReactNode> = {
   water: <Droplets className="h-4 w-4" />,
@@ -98,7 +102,7 @@ function SummaryCard({
 }
 
 export default function MeterDetailPage() {
-  const { id } = useParams({ from: "/protected/meters/$id" });
+  const { id } = useParams({ from: '/protected/meters/$id' });
   const navigate = useNavigate();
   const { data: meter, isLoading, isError } = useMeter(id);
   const { data: readings, isLoading: loadingReadings } = useMeterReadings(id);
@@ -113,16 +117,16 @@ export default function MeterDetailPage() {
 
   const readingsSorted = useMemo(
     () =>
-      [...(readings ?? [])].sort((a, b) =>
-        new Date(b.readingDate).getTime() - new Date(a.readingDate).getTime()
+      [...(readings ?? [])].sort(
+        (a, b) => new Date(b.readingDate).getTime() - new Date(a.readingDate).getTime(),
       ),
-    [readings]
+    [readings],
   );
 
   if (isError) {
     return (
-    <div className="space-y-6 flex flex-col ">
-        <Button variant="outline" size="icon" onClick={() => navigate({ to: "/meters" })}>
+      <div className="space-y-6 flex flex-col ">
+        <Button variant="outline" size="icon" onClick={() => navigate({ to: '/meters' })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <Card className="flex-1 flex flex-col justify-center items-center min-h-[400px]">
@@ -151,14 +155,12 @@ export default function MeterDetailPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="icon" onClick={() => navigate({ to: "/meters" })}>
+          <Button variant="outline" size="icon" onClick={() => navigate({ to: '/meters' })}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="font-serif text-2xl font-bold tracking-tight">
-                {meter.meterNumber}
-              </h1>
+              <h1 className="font-serif text-2xl font-bold tracking-tight">{meter.meterNumber}</h1>
               <Badge className={meta.className}>
                 <span className="mr-1 inline-flex">{utilityIcons[meter.utilityType]}</span>
                 {meta.label}
@@ -172,13 +174,14 @@ export default function MeterDetailPage() {
             <div className="flex flex-col">
               <p className="text-muted-foreground flex items-center gap-1 mt-1">
                 <Gauge className="h-4 w-4" />
-                {meter.property?.propertyCode || meter.property?.name || "Unassigned"}
-                {meter.unit?.unitNumber ? ` · ${meter.unit.unitNumber}` : ""}
+                {meter.property?.propertyCode || meter.property?.name || 'Unassigned'}
+                {meter.unit?.unitNumber ? ` · ${meter.unit.unitNumber}` : ''}
               </p>
               {meter.resident && (
                 <p className="text-muted-foreground flex items-center gap-1 mt-1">
                   <User className="h-4 w-4" />
-                  {[meter.resident.firstName, meter.resident.lastName].filter(Boolean).join(" ") || meter.resident.email}
+                  {[meter.resident.firstName, meter.resident.lastName].filter(Boolean).join(' ') ||
+                    meter.resident.email}
                 </p>
               )}
             </div>
@@ -198,7 +201,11 @@ export default function MeterDetailPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <SummaryCard icon={<Hash className="h-5 w-5" />} label="Multiplier" value={String(meter.multiplier)} />
+        <SummaryCard
+          icon={<Hash className="h-5 w-5" />}
+          label="Multiplier"
+          value={String(meter.multiplier)}
+        />
         <SummaryCard
           icon={<CalendarDays className="h-5 w-5" />}
           label="Installation Date"
@@ -210,7 +217,7 @@ export default function MeterDetailPage() {
           value={
             readingsSorted[0]
               ? `${readingsSorted[0].value} · ${formatDate(readingsSorted[0].readingDate)}`
-              : "—"
+              : '—'
           }
         />
       </div>
@@ -269,9 +276,16 @@ export default function MeterDetailPage() {
                     {readingsSorted.map((r) => (
                       <TableRow key={r.id}>
                         <TableCell>{formatDate(r.readingDate)}</TableCell>
-                        <TableCell className="text-right tabular-nums font-medium">{r.value}</TableCell>
-                        <TableCell className="text-sm">{r.reader ?? "—"}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{r.note ?? "—"}</TableCell>
+                        <TableCell className="text-right tabular-nums font-medium">
+                          {Number(r.value).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </TableCell>
+                        <TableCell className="text-sm">{r.reader ?? '—'}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {r.note ?? '—'}
+                        </TableCell>
                         <TableCell className="flex items-center gap-1">
                           <EditReadingDialog
                             reading={r}
@@ -286,7 +300,7 @@ export default function MeterDetailPage() {
                             size="icon"
                             className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
                             onClick={async () => {
-                              if (window.confirm("Are you sure you want to delete this reading?")) {
+                              if (window.confirm('Are you sure you want to delete this reading?')) {
                                 await deleteReading.mutateAsync(r.id);
                               }
                             }}
@@ -326,13 +340,19 @@ export default function MeterDetailPage() {
                   </TableHeader>
                   <TableBody>
                     {bills.map((b) => (
-                      <TableRow key={b.id} className="cursor-pointer" onClick={() => navigate({ to: "/utility-bills" })}>
+                      <TableRow
+                        key={b.id}
+                        className="cursor-pointer"
+                        onClick={() => navigate({ to: '/utility-bills' })}
+                      >
                         <TableCell className="text-sm">
                           {formatDate(b.periodStart)} – {formatDate(b.periodEnd)}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">{b.consumption}</TableCell>
                         <TableCell className="text-right tabular-nums">{money(b.rate)}</TableCell>
-                        <TableCell className="text-right tabular-nums font-semibold">{money(b.amountDue)}</TableCell>
+                        <TableCell className="text-right tabular-nums font-semibold">
+                          {money(b.amountDue)}
+                        </TableCell>
                         <TableCell>
                           <Badge className={billStatusMeta[b.status].className}>
                             {billStatusMeta[b.status].label}
@@ -365,7 +385,7 @@ export default function MeterDetailPage() {
               variant="destructive"
               onClick={async () => {
                 await deleteMeter.mutateAsync(meter.id);
-                navigate({ to: "/meters" });
+                navigate({ to: '/meters' });
               }}
               disabled={deleteMeter.isPending}
             >
@@ -384,11 +404,11 @@ function EditMeterDialog({ meter }: { meter: UtilityMeter }) {
   const [open, setOpen] = useState(false);
   const [meterNumber, setMeterNumber] = useState(meter.meterNumber);
   const [utilityType, setUtilityType] = useState<UtilityType>(meter.utilityType);
-  const [propertyId, setPropertyId] = useState(meter.propertyId || "");
-  const [unitId, setUnitId] = useState(meter.unitId || "");
+  const [propertyId, setPropertyId] = useState(meter.propertyId || '');
+  const [unitId, setUnitId] = useState(meter.unitId || '');
   const [multiplier, setMultiplier] = useState(String(meter.multiplier));
   const [installationDate, setInstallationDate] = useState(
-    meter.installationDate ? meter.installationDate.split("T")[0] : ""
+    meter.installationDate ? meter.installationDate.split('T')[0] : '',
   );
   const [isActive, setIsActive] = useState(meter.isActive);
 
@@ -446,10 +466,10 @@ function EditMeterDialog({ meter }: { meter: UtilityMeter }) {
             <div className="grid gap-2">
               <Label>Property</Label>
               <Select
-                value={propertyId || "none"}
+                value={propertyId || 'none'}
                 onValueChange={(v) => {
-                  setPropertyId(v === "none" ? "" : v);
-                  setUnitId("");
+                  setPropertyId(v === 'none' ? '' : v);
+                  setUnitId('');
                 }}
               >
                 <SelectTrigger>
@@ -468,8 +488,8 @@ function EditMeterDialog({ meter }: { meter: UtilityMeter }) {
             <div className="grid gap-2">
               <Label>Unit</Label>
               <Select
-                value={unitId || "none"}
-                onValueChange={(v) => setUnitId(v === "none" ? "" : v)}
+                value={unitId || 'none'}
+                onValueChange={(v) => setUnitId(v === 'none' ? '' : v)}
                 disabled={!propertyId}
               >
                 <SelectTrigger>
@@ -489,11 +509,20 @@ function EditMeterDialog({ meter }: { meter: UtilityMeter }) {
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label>Multiplier</Label>
-              <Input type="number" step="0.01" value={multiplier} onChange={(e) => setMultiplier(e.target.value)} />
+              <Input
+                type="number"
+                step="0.01"
+                value={multiplier}
+                onChange={(e) => setMultiplier(e.target.value)}
+              />
             </div>
             <div className="grid gap-2">
               <Label>Installation Date</Label>
-              <Input type="date" value={installationDate} onChange={(e) => setInstallationDate(e.target.value)} />
+              <Input
+                type="date"
+                value={installationDate}
+                onChange={(e) => setInstallationDate(e.target.value)}
+              />
             </div>
           </div>
           <div className="flex items-center gap-2 mt-2">
@@ -506,7 +535,9 @@ function EditMeterDialog({ meter }: { meter: UtilityMeter }) {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
           <Button onClick={submit} disabled={!canSubmit || updateMeter.isPending}>
             {updateMeter.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Save Changes
@@ -516,6 +547,3 @@ function EditMeterDialog({ meter }: { meter: UtilityMeter }) {
     </Dialog>
   );
 }
-
-
-

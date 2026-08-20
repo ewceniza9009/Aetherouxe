@@ -639,12 +639,17 @@ export default function SalesPage() {
                       <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         type="number"
-                        className="pl-10 h-11 text-sm"
+                        className="pl-10 h-11 text-sm font-semibold"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
                         placeholder="e.g. 5000000"
                       />
                     </div>
+                    {price && !isNaN(Number(price)) && Number(price) > 0 && (
+                      <p className="text-xs font-semibold text-emerald-400 pl-1 mt-1">
+                        Formatted Value: {formatCurrency(Number(price))}
+                      </p>
+                    )}
                   </div>
                 )}
 
