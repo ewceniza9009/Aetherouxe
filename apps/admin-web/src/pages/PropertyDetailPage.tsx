@@ -51,8 +51,8 @@ export default function PropertyDetailPage() {
 
   const { data: property, isLoading, error } = useProperty(id);
   const { data: specs } = usePropertySpecs(id);
-  const { data: unitsResult } = useUnits({ propertyId: id, limit: 5 });
-  const buildingId = (property as any)?.units?.[0]?.buildingId;
+  const { data: unitsResult } = useUnits({ propertyId: id, limit: 10 });
+  const buildingId = property?.buildingId;
   const { data: buildingUnitsResult } = useUnits(
     buildingId ? { buildingId, limit: 150 } : { propertyId: id, limit: 150 },
   );
