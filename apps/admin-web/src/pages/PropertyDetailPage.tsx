@@ -702,9 +702,15 @@ export default function PropertyDetailPage() {
               id: property.id,
               name:
                 (property as any).units?.[0]?.building?.name ||
-                (property as any).name ||
-                (property as any).propertyCode ||
-                'Property Tower',
+                property.name ||
+                property.code ||
+                'Property View',
+              propertyType: property.type,
+              buildingType:
+                (property as any).building?.buildingType ||
+                (property as any).units?.[0]?.building?.buildingType,
+              projectType:
+                (property as any).project?.projectType || (property as any).project?.type,
               floorCount:
                 (property as any).units?.[0]?.building?.floorCount ||
                 (property as any).floorCount ||
@@ -727,6 +733,7 @@ export default function PropertyDetailPage() {
                 };
               }),
             }}
+            highlightedUnitId={unitsResult?.data?.[0]?.id || (property as any).unitId}
             onSelectUnit={(unit: any) =>
               navigate({ to: `/properties/${id}/units/${unit.id}/edit` })
             }

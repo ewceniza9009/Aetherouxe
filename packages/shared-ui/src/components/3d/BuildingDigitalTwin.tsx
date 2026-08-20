@@ -1,9 +1,11 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
 import { formatCurrency } from '../../lib/utils';
-import { Building2, Layers, Home, X, Compass, Sparkles } from 'lucide-react';
+import { Building2, Layers, Home, X, Compass, Sparkles, Star } from 'lucide-react';
+import { TownhouseClusterView } from './TownhouseClusterView';
+import { SubdivisionMasterplanView } from './SubdivisionMasterplanView';
 
 export interface Unit3DData {
   id: string;
@@ -17,12 +19,15 @@ export interface Unit3DData {
   bathrooms?: number;
   listPrice?: number | string;
   facingDirection?: string;
+  isCurrentProperty?: boolean;
 }
 
 export interface Building3DData {
   id: string;
   name: string;
   buildingType?: string;
+  propertyType?: string;
+  projectType?: string;
   floorCount?: number;
   floors?: {
     id: string;
@@ -32,8 +37,9 @@ export interface Building3DData {
   units?: Unit3DData[];
 }
 
-interface BuildingDigitalTwinProps {
+export interface BuildingDigitalTwinProps {
   building: Building3DData;
+  highlightedUnitId?: string;
   onSelectUnit?: (unit: Unit3DData) => void;
   onReserveUnit?: (unit: Unit3DData) => void;
   isReadOnly?: boolean;
@@ -95,7 +101,7 @@ const STATUS_COLORS: Record<
 };
 
 function getStatusColor(status: string) {
-  return STATUS_COLORS[status.toLowerCase()] || STATUS_COLORS.available;
+  return STATUS_COLORS[status?.toLowerCase()] || STATUS_COLORS.available;
 }
 
 interface UnitMeshProps {
@@ -104,6 +110,7 @@ interface UnitMeshProps {
   size: [number, number, number];
   isHovered: boolean;
   isSelected: boolean;
+  isHighlighted: boolean;
   onPointerOver: (e: any) => void;
   onPointerOut: (e: any) => void;
   onClick: (e: any) => void;
@@ -115,6 +122,7 @@ const UnitMesh: React.FC<UnitMeshProps> = ({
   size,
   isHovered,
   isSelected,
+  isHighlighted,
   onPointerOver,
   onPointerOut,
   onClick,
@@ -122,10 +130,11 @@ const UnitMesh: React.FC<UnitMeshProps> = ({
   const meshRef = useRef<THREE.Mesh>(null);
   const colorInfo = useMemo(() => getStatusColor(unit.status), [unit.status]);
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     if (!meshRef.current) return;
-    if (isHovered || isSelected) {
-      meshRef.current.scale.lerp(new THREE.Vector3(1.08, 1.12, 1.08), delta * 12);
+    if (isHovered || isSelected || isHighlighted) {
+      const pulse = isHighlighted ? Math.sin(state.clock.elapsedTime * 4) * 0.05 + 1.05 : 1.08;
+      meshRef.current.scale.lerp(new THREE.Vector3(pulse, pulse * 1.05, pulse), delta * 12);
     } else {
       meshRef.current.scale.lerp(new THREE.Vector3(1, 1, 1), delta * 12);
     }
@@ -143,11 +152,15 @@ const UnitMesh: React.FC<UnitMeshProps> = ({
         onClick={onClick}
       >
         <meshStandardMaterial
-          color={isHovered || isSelected ? colorInfo.glow : colorInfo.main}
+          color={
+            isHighlighted ? '#fbbf24' : isHovered || isSelected ? colorInfo.glow : colorInfo.main
+          }
           roughness={0.2}
           metalness={0.7}
-          emissive={isHovered || isSelected ? colorInfo.main : '#0a0f1d'}
-          emissiveIntensity={isHovered || isSelected ? 0.75 : 0.15}
+          emissive={
+            isHighlighted ? '#f59e0b' : isHovered || isSelected ? colorInfo.main : '#0a0f1d'
+          }
+          emissiveIntensity={isHighlighted ? 0.95 : isHovered || isSelected ? 0.75 : 0.15}
           transparent
           opacity={0.94}
         />
@@ -156,8 +169,9 @@ const UnitMesh: React.FC<UnitMeshProps> = ({
   );
 };
 
-export const BuildingDigitalTwin: React.FC<BuildingDigitalTwinProps> = ({
+export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
   building,
+  highlightedUnitId,
   onSelectUnit,
   onReserveUnit,
 }) => {
@@ -165,6 +179,21 @@ export const BuildingDigitalTwin: React.FC<BuildingDigitalTwinProps> = ({
   const [selectedUnit, setSelectedUnit] = useState<Unit3DData | null>(null);
   const [selectedFloor, setSelectedFloor] = useState<number | 'all'>('all');
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Auto-select highlighted unit on initial load
+  useEffect(() => {
+    if (highlightedUnitId && building.units) {
+      const found = building.units.find((u) => u.id === highlightedUnitId);
+      if (found) {
+        setSelectedUnit(found);
+        const fNum =
+          typeof found.floorNumber === 'number'
+            ? found.floorNumber
+            : parseInt(String(found.floorNumber || 1), 10) || 1;
+        setSelectedFloor(fNum);
+      }
+    }
+  }, [highlightedUnitId, building.units]);
 
   // Organize floors and units
   const processedFloors = useMemo(() => {
@@ -210,61 +239,37 @@ export const BuildingDigitalTwin: React.FC<BuildingDigitalTwinProps> = ({
       className="w-full rounded-2xl overflow-hidden shadow-2xl flex flex-col select-none"
       style={{ backgroundColor: '#070b14', border: '1px solid #1e293b' }}
     >
-      {/* 1. Control Header Bar (Clean flexbox row - NO OVERLAPPING) */}
+      {/* Control Header Bar */}
       <div
         className="px-5 py-3.5 flex flex-wrap items-center justify-between gap-4"
         style={{ backgroundColor: '#0a0f1d', borderBottom: '1px solid #1e293b' }}
       >
-        {/* Left: Building Title */}
         <div className="flex items-center gap-3">
-          <div
-            className="p-2 rounded-xl text-emerald-400"
-            style={{
-              backgroundColor: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-            }}
-          >
+          <div className="p-2 rounded-xl bg-gradient-to-br from-sky-500/20 to-indigo-500/10 border border-sky-500/30 text-sky-400">
             <Building2 className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-sm tracking-wide" style={{ color: '#ffffff' }}>
-                {building.name}
-              </span>
-              <span
-                className="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.18)',
-                  color: '#6ee7b7',
-                  border: '1px solid rgba(16, 185, 129, 0.35)',
-                }}
-              >
-                3D Live Twin
+              <h3 className="text-base font-bold text-white tracking-wide">{building.name}</h3>
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/30">
+                3D Condo Tower Digital Twin
               </span>
             </div>
-            <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>
+            <p className="text-xs text-slate-400">
               {processedFloors.length} Architectural Floors • Click any unit to inspect
             </p>
           </div>
         </div>
 
-        {/* Middle: Floor Filter Buttons */}
-        <div
-          className="flex flex-wrap items-center gap-1 p-1 rounded-xl"
-          style={{ backgroundColor: '#020617', border: '1px solid #1e293b' }}
-        >
+        {/* Floor Switcher */}
+        <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
           <button
             onClick={() => setSelectedFloor('all')}
-            className="px-3 py-1.5 text-xs font-bold rounded-lg transition-all"
-            style={
+            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
               selectedFloor === 'all'
-                ? {
-                    backgroundColor: '#10b981',
-                    color: '#020617',
-                    boxShadow: '0 0 12px rgba(16, 185, 129, 0.35)',
-                  }
-                : { backgroundColor: 'transparent', color: '#94a3b8' }
-            }
+                ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
           >
             All Floors
           </button>
@@ -272,67 +277,52 @@ export const BuildingDigitalTwin: React.FC<BuildingDigitalTwinProps> = ({
             <button
               key={f.floorNumber}
               onClick={() => setSelectedFloor(f.floorNumber)}
-              className="px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all"
-              style={
+              className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
                 selectedFloor === f.floorNumber
-                  ? {
-                      backgroundColor: '#10b981',
-                      color: '#020617',
-                      boxShadow: '0 0 12px rgba(16, 185, 129, 0.35)',
-                    }
-                  : { backgroundColor: 'transparent', color: '#94a3b8' }
-              }
+                  ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
             >
               F{f.floorNumber}
             </button>
           ))}
         </div>
 
-        {/* Right: Status Color Legend */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800">
           {Object.entries(STATUS_COLORS)
             .slice(0, 5)
-            .map(([key, val]) => (
+            .map(([statusKey, cfg]) => (
               <div
-                key={key}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium"
-                style={{
-                  backgroundColor: '#0f172a',
-                  border: '1px solid #1e293b',
-                  color: '#e2e8f0',
-                }}
+                key={statusKey}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-slate-300"
               >
-                <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: val.main, boxShadow: `0 0 8px ${val.glow}` }}
-                />
-                <span className="text-[11px]" style={{ color: '#f1f5f9' }}>
-                  {val.label}
-                </span>
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.main }} />
+                <span>{cfg.label}</span>
               </div>
             ))}
         </div>
       </div>
 
-      {/* 2. Dedicated 3D Canvas Viewport */}
-      <div className="relative w-full h-[540px] bg-[#070b14] overflow-hidden">
-        <Canvas
-          camera={{ position: [11, 10, 15], fov: 42 }}
-          onPointerMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
-          className="w-full h-full cursor-grab active:cursor-grabbing"
-        >
-          <color attach="background" args={['#070b14']} />
-          <ambientLight intensity={0.95} />
-          <directionalLight position={[15, 25, 18]} intensity={2.2} color="#ffffff" />
-          <directionalLight position={[-12, 12, -12]} intensity={0.8} color="#38BDF8" />
-          <pointLight position={[0, 8, 0]} intensity={1.2} color="#34D399" />
+      {/* Main 3D Canvas */}
+      <div
+        className="relative w-full h-[520px] bg-gradient-to-b from-[#070b14] via-[#080e1e] to-[#040711] overflow-hidden"
+        onMouseMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+        }}
+      >
+        <Canvas camera={{ position: [9, 7, 13], fov: 42 }} shadows>
+          <ambientLight intensity={0.9} />
+          <directionalLight position={[12, 20, 15]} intensity={1.6} castShadow />
+          <directionalLight position={[-10, 10, -10]} intensity={0.5} />
+          <pointLight position={[0, 8, 8]} intensity={1.2} color="#38bdf8" />
 
-          {/* 3D Scene Contents */}
-          <group position={[0, -2.8, 0]}>
-            {/* Subtle Ground Grid Plate */}
-            <gridHelper args={[26, 26, '#1e293b', '#0f172a']} position={[0, 0, 0]} />
+          {/* Ground Grid */}
+          <gridHelper args={[32, 32, '#1e293b', '#0f172a']} position={[0, -0.05, 0]} />
 
-            {/* Building Floors & Unit Cubes */}
+          {/* Building Podium & Floor Plates */}
+          <group position={[0, 0, 0]}>
             {processedFloors.map((floor) => {
               const isFloorVisible = selectedFloor === 'all' || selectedFloor === floor.floorNumber;
               if (!isFloorVisible) return null;
@@ -387,6 +377,7 @@ export const BuildingDigitalTwin: React.FC<BuildingDigitalTwinProps> = ({
 
                     const isHovered = hoveredUnit?.id === unit.id;
                     const isSelected = selectedUnit?.id === unit.id;
+                    const isHighlighted = unit.id === highlightedUnitId;
 
                     return (
                       <UnitMesh
@@ -396,6 +387,7 @@ export const BuildingDigitalTwin: React.FC<BuildingDigitalTwinProps> = ({
                         size={uSize}
                         isHovered={isHovered}
                         isSelected={isSelected}
+                        isHighlighted={isHighlighted}
                         onPointerOver={(e) => {
                           e.stopPropagation();
                           setHoveredUnit(unit);
@@ -425,16 +417,10 @@ export const BuildingDigitalTwin: React.FC<BuildingDigitalTwinProps> = ({
           />
         </Canvas>
 
-        {/* Bottom Right Controls Helper */}
-        <div className="absolute bottom-3 right-3 z-10 flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800 text-[11px] text-slate-400 pointer-events-none">
-          <Compass className="w-3.5 h-3.5 text-sky-400" />
-          <span>Rotate: Left Click • Pan: Right Click • Zoom: Scroll</span>
-        </div>
-
-        {/* Live Raycasting Floating Hover Tooltip */}
+        {/* Hover Tooltip */}
         {hoveredUnit && (
           <div
-            className="fixed pointer-events-none z-50 transform -translate-x-1/2 -translate-y-full mb-3 transition-opacity duration-150"
+            className="absolute pointer-events-none z-50 transform -translate-x-1/2 -translate-y-full mb-3"
             style={{ left: mousePos.x, top: mousePos.y }}
           >
             <div className="bg-slate-900/95 backdrop-blur-2xl border border-slate-700/90 p-3.5 rounded-xl shadow-2xl text-xs space-y-1.5 min-w-[200px]">
@@ -474,91 +460,150 @@ export const BuildingDigitalTwin: React.FC<BuildingDigitalTwinProps> = ({
         {selectedUnit && (
           <div className="absolute top-0 right-0 w-84 max-w-full h-full bg-slate-950/95 backdrop-blur-2xl border-l border-slate-800 p-6 z-30 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-200">
             <div>
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                    <Home className="w-5 h-5" />
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/30">
+                    <Building2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-base font-black text-white">
-                      Unit {selectedUnit.unitNumber}
-                    </h4>
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="text-lg font-bold text-white leading-tight">
+                        Unit {selectedUnit.unitNumber}
+                      </h4>
+                      {selectedUnit.id === highlightedUnitId && (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-bold uppercase flex items-center gap-1">
+                          <Star className="w-2.5 h-2.5 fill-amber-300" /> Current
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-slate-400">
-                      Floor {selectedUnit.floorNumber || 1} • {building.name}
+                      Floor {selectedUnit.floorNumber ?? 1} •{' '}
+                      {selectedUnit.unitType.replace('_', ' ')}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setSelectedUnit(null)}
-                  className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="mt-5 space-y-4 text-xs">
-                <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Occupancy Status</span>
-                    <span
-                      className={`px-2.5 py-1 rounded-md font-bold text-[11px] uppercase ${getStatusColor(selectedUnit.status).text} ${getStatusColor(selectedUnit.status).bg} border`}
-                    >
-                      {selectedUnit.status.replace('_', ' ')}
+              <div className="space-y-3.5 text-xs">
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80">
+                  <span className="text-slate-400">Status</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${getStatusColor(selectedUnit.status).text} ${getStatusColor(selectedUnit.status).bg} border`}
+                  >
+                    {selectedUnit.status.replace('_', ' ')}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80">
+                    <span className="text-slate-400 block mb-1">Bedrooms</span>
+                    <span className="text-white font-bold text-sm">
+                      {selectedUnit.bedrooms ?? 1} BR
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Unit Layout</span>
-                    <span className="font-semibold text-white capitalize">
-                      {selectedUnit.unitType.replace('_', ' ')}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Floor Area</span>
-                    <span className="font-semibold text-white">
-                      {selectedUnit.squareMeters || '—'} sqm
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Bedrooms / Baths</span>
-                    <span className="font-semibold text-white">
-                      {selectedUnit.bedrooms || 1} Bed / {selectedUnit.bathrooms || 1} Bath
+                  <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80">
+                    <span className="text-slate-400 block mb-1">Bathrooms</span>
+                    <span className="text-white font-bold text-sm">
+                      {selectedUnit.bathrooms ?? 1} Bath
                     </span>
                   </div>
                 </div>
 
-                {selectedUnit.listPrice && (
-                  <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-800/40 space-y-1">
-                    <span className="text-[11px] text-emerald-400 uppercase font-semibold tracking-wider">
-                      Indicative Valuation
+                {selectedUnit.squareMeters && (
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80">
+                    <span className="text-slate-400">Floor Area</span>
+                    <span className="text-white font-bold text-sm">
+                      {selectedUnit.squareMeters} sqm
                     </span>
-                    <div className="text-xl font-black text-emerald-400">
+                  </div>
+                )}
+
+                {selectedUnit.listPrice && (
+                  <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 text-emerald-400 flex items-center justify-between">
+                    <span className="font-medium">List Price:</span>
+                    <span className="text-base font-black">
                       {formatCurrency(Number(selectedUnit.listPrice))}
-                    </div>
+                    </span>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-800 space-y-2">
-              {onReserveUnit && selectedUnit.status === 'available' && (
+            <div className="pt-4 border-t border-slate-800">
+              {onSelectUnit && (
                 <button
-                  onClick={() => onReserveUnit(selectedUnit)}
-                  className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2"
+                  onClick={() => onSelectUnit(selectedUnit)}
+                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-sky-500/20 transition-all flex items-center justify-center gap-2"
                 >
                   <Sparkles className="w-4 h-4" />
-                  Reserve Unit Now
+                  View Unit Details
                 </button>
               )}
-              <button
-                onClick={() => setSelectedUnit(null)}
-                className="w-full py-2 px-4 rounded-xl font-semibold text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-              >
-                Close Details
-              </button>
             </div>
           </div>
         )}
       </div>
     </div>
+  );
+};
+
+export const BuildingDigitalTwin: React.FC<BuildingDigitalTwinProps> = ({
+  building,
+  highlightedUnitId,
+  onSelectUnit,
+  onReserveUnit,
+  isReadOnly,
+}) => {
+  const pType = (building.propertyType || '').toLowerCase();
+  const bType = (building.buildingType || '').toLowerCase();
+  const projType = (building.projectType || '').toLowerCase();
+
+  // 1. If Townhouse / Cluster -> render Townhouse Row Cluster View
+  if (pType === 'townhouse' || bType === 'cluster') {
+    return (
+      <TownhouseClusterView
+        cluster={{
+          id: building.id,
+          name: building.name,
+          units: building.units || [],
+          activeUnitId: highlightedUnitId,
+        }}
+        onSelectUnit={onSelectUnit}
+        onReserveUnit={onReserveUnit}
+      />
+    );
+  }
+
+  // 2. If House & Lot / Village / Subdivision Block -> render Subdivision Masterplan View
+  if (pType === 'house_and_lot' || bType === 'block' || projType === 'village') {
+    return (
+      <SubdivisionMasterplanView
+        subdivision={{
+          id: building.id,
+          name: building.name,
+          units: building.units || [],
+          activeUnitId: highlightedUnitId,
+        }}
+        onSelectUnit={onSelectUnit}
+        onReserveUnit={onReserveUnit}
+      />
+    );
+  }
+
+  // 3. Otherwise -> render 3D High-Rise Condo Tower View
+  return (
+    <CondoTowerTwinView
+      building={building}
+      highlightedUnitId={highlightedUnitId}
+      onSelectUnit={onSelectUnit}
+      onReserveUnit={onReserveUnit}
+      isReadOnly={isReadOnly}
+    />
   );
 };
