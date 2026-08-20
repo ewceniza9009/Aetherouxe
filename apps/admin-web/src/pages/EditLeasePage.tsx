@@ -1,48 +1,49 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
-import { Separator } from "@elite-realty/shared-ui/components/ui";
-import { Skeleton } from "@elite-realty/shared-ui/components/ui";
+import { useState } from 'react';
+import { useParams, useNavigate } from '@tanstack/react-router';
+import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { CurrencyInput, NumberInput, QuantityInput } from '@/components/ui/number-input';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { Separator } from '@elite-realty/shared-ui/components/ui';
+import { Skeleton } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
-import { ArrowLeft, Loader2, Save, AlertCircle } from "lucide-react";
-import { LeaseType } from "@elite-realty/shared-types";
-import { useProperties } from "@/hooks/use-properties";
-import { useUsers } from "@/hooks/use-users";
-import { useLease, useUpdateLease, type Lease } from "@/hooks/use-leases";
+} from '@elite-realty/shared-ui/components/ui';
+import { ArrowLeft, Loader2, Save, AlertCircle } from 'lucide-react';
+import { LeaseType } from '@elite-realty/shared-types';
+import { useProperties } from '@/hooks/use-properties';
+import { useUsers } from '@/hooks/use-users';
+import { useLease, useUpdateLease, type Lease } from '@/hooks/use-leases';
 
 export default function EditLeasePage() {
-  const { id } = useParams({ from: "/protected/leases/$id/edit" });
+  const { id } = useParams({ from: '/protected/leases/$id/edit' });
   const navigate = useNavigate();
   const { data: lease, isLoading, error } = useLease(id);
   const { data: propertiesData, isLoading: loadingProps } = useProperties({ limit: 100 });
-  const { data: usersData, isLoading: loadingUsers } = useUsers({ userType: "tenant", limit: 500 });
+  const { data: usersData, isLoading: loadingUsers } = useUsers({ userType: 'tenant', limit: 500 });
   const updateLease = useUpdateLease();
 
-  const [tenantUserId, setTenantUserId] = useState("");
-  const [propertyId, setPropertyId] = useState("");
+  const [tenantUserId, setTenantUserId] = useState('');
+  const [propertyId, setPropertyId] = useState('');
   const [leaseType, setLeaseType] = useState<LeaseType>(LeaseType.StandardRental);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [monthlyRent, setMonthlyRent] = useState("");
-  const [deposit, setDeposit] = useState("");
-  const [penalty, setPenalty] = useState("");
-  const [graceDays, setGraceDays] = useState("");
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [monthlyRent, setMonthlyRent] = useState('');
+  const [deposit, setDeposit] = useState('');
+  const [penalty, setPenalty] = useState('');
+  const [graceDays, setGraceDays] = useState('');
 
   const properties = propertiesData?.data ?? [];
-  const residents = (usersData?.data ?? []).filter((u) => u.userType === "tenant");
+  const residents = (usersData?.data ?? []).filter((u) => u.userType === 'tenant');
 
   if (isLoading || !lease) {
     return (
-    <div className="space-y-6 flex flex-col ">
+      <div className="space-y-6 flex flex-col ">
         <Skeleton className="h-10 w-40" />
         <Skeleton className="h-96 w-full" />
       </div>
@@ -67,15 +68,15 @@ export default function EditLeasePage() {
 
   const initializeOnce = () => {
     if (tenantUserId || startDate || endDate || monthlyRent) return;
-    setTenantUserId(lease.tenantUserId ?? "");
-    setPropertyId(lease.propertyId ?? "");
+    setTenantUserId(lease.tenantUserId ?? '');
+    setPropertyId(lease.propertyId ?? '');
     setLeaseType(lease.leaseType);
     setStartDate(lease.startDate?.slice(0, 10));
     setEndDate(lease.endDate?.slice(0, 10));
     setMonthlyRent(String(lease.monthlyRent));
-    setDeposit(lease.securityDeposit != null ? String(lease.securityDeposit) : "");
-    setPenalty(lease.penaltyPercent != null ? String(lease.penaltyPercent) : "");
-    setGraceDays(lease.graceDays != null ? String(lease.graceDays) : "");
+    setDeposit(lease.securityDeposit != null ? String(lease.securityDeposit) : '');
+    setPenalty(lease.penaltyPercent != null ? String(lease.penaltyPercent) : '');
+    setGraceDays(lease.graceDays != null ? String(lease.graceDays) : '');
   };
   initializeOnce();
 
@@ -120,12 +121,14 @@ export default function EditLeasePage() {
               <Label htmlFor="tenant">Tenant</Label>
               <Select value={tenantUserId} onValueChange={setTenantUserId}>
                 <SelectTrigger>
-                  <SelectValue placeholder={loadingUsers ? "Loading residents..." : "Select resident"} />
+                  <SelectValue
+                    placeholder={loadingUsers ? 'Loading residents...' : 'Select resident'}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {residents.map((u) => (
                     <SelectItem key={u.id} value={u.id}>
-                      {[u.firstName, u.lastName].filter(Boolean).join(" ") || u.email}
+                      {[u.firstName, u.lastName].filter(Boolean).join(' ') || u.email}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -135,7 +138,9 @@ export default function EditLeasePage() {
               <Label htmlFor="property">Property</Label>
               <Select value={propertyId} onValueChange={setPropertyId}>
                 <SelectTrigger>
-                  <SelectValue placeholder={loadingProps ? "Loading properties..." : "Select property"} />
+                  <SelectValue
+                    placeholder={loadingProps ? 'Loading properties...' : 'Select property'}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {properties.map((p) => (
@@ -162,15 +167,30 @@ export default function EditLeasePage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="start">Start Date</Label>
-              <Input id="start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <Input
+                id="start"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="end">End Date</Label>
-              <Input id="end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              <Input
+                id="end"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="rent">Monthly Rent</Label>
-              <Input id="rent" type="number" step="0.01" value={monthlyRent} onChange={(e) => setMonthlyRent(e.target.value)} />
+              <CurrencyInput
+                id="rent"
+                value={monthlyRent}
+                onChange={setMonthlyRent}
+                placeholder="e.g. 25,000"
+              />
             </div>
           </div>
 
@@ -179,15 +199,26 @@ export default function EditLeasePage() {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="deposit">Security Deposit</Label>
-              <Input id="deposit" type="number" step="0.01" value={deposit} onChange={(e) => setDeposit(e.target.value)} />
+              <CurrencyInput
+                id="deposit"
+                value={deposit}
+                onChange={setDeposit}
+                placeholder="e.g. 50,000"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="penalty">Penalty %</Label>
-              <Input id="penalty" type="number" step="0.1" value={penalty} onChange={(e) => setPenalty(e.target.value)} />
+              <NumberInput
+                id="penalty"
+                decimals={1}
+                value={penalty}
+                onChange={setPenalty}
+                placeholder="5"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="grace">Grace Days</Label>
-              <Input id="grace" type="number" value={graceDays} onChange={(e) => setGraceDays(e.target.value)} />
+              <QuantityInput id="grace" value={graceDays} onChange={setGraceDays} placeholder="5" />
             </div>
           </div>
 
@@ -196,7 +227,11 @@ export default function EditLeasePage() {
               Cancel
             </Button>
             <Button onClick={handleSubmit} disabled={!canSubmit}>
-              {updateLease.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {updateLease.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
               Save Changes
             </Button>
           </div>
@@ -205,5 +240,3 @@ export default function EditLeasePage() {
     </div>
   );
 }
-
-

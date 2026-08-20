@@ -1,41 +1,42 @@
-import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Input } from "@elite-realty/shared-ui/components/ui";
-import { Label } from "@elite-realty/shared-ui/components/ui";
-import { Separator } from "@elite-realty/shared-ui/components/ui";
+import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Input } from '@elite-realty/shared-ui/components/ui';
+import { CurrencyInput, NumberInput, QuantityInput } from '@/components/ui/number-input';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { Separator } from '@elite-realty/shared-ui/components/ui';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@elite-realty/shared-ui/components/ui";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
-import { LeaseType } from "@elite-realty/shared-types";
-import { useProperties } from "@/hooks/use-properties";
-import { useUsers } from "@/hooks/use-users";
-import { useCreateLease, type Lease } from "@/hooks/use-leases";
+} from '@elite-realty/shared-ui/components/ui';
+import { ArrowLeft, Loader2, Save } from 'lucide-react';
+import { LeaseType } from '@elite-realty/shared-types';
+import { useProperties } from '@/hooks/use-properties';
+import { useUsers } from '@/hooks/use-users';
+import { useCreateLease, type Lease } from '@/hooks/use-leases';
 
 export default function NewLeasePage() {
   const navigate = useNavigate();
   const { data: propertiesData, isLoading: loadingProps } = useProperties({ limit: 100 });
-  const { data: usersData, isLoading: loadingUsers } = useUsers({ userType: "tenant", limit: 500 });
+  const { data: usersData, isLoading: loadingUsers } = useUsers({ userType: 'tenant', limit: 500 });
   const createLease = useCreateLease();
 
-  const [tenantUserId, setTenantUserId] = useState("");
-  const [propertyId, setPropertyId] = useState("");
+  const [tenantUserId, setTenantUserId] = useState('');
+  const [propertyId, setPropertyId] = useState('');
   const [leaseType, setLeaseType] = useState<LeaseType>(LeaseType.StandardRental);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [monthlyRent, setMonthlyRent] = useState("");
-  const [deposit, setDeposit] = useState("");
-  const [penalty, setPenalty] = useState("");
-  const [graceDays, setGraceDays] = useState("");
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [monthlyRent, setMonthlyRent] = useState('');
+  const [deposit, setDeposit] = useState('');
+  const [penalty, setPenalty] = useState('');
+  const [graceDays, setGraceDays] = useState('');
 
   const properties = propertiesData?.data ?? [];
-  const residents = (usersData?.data ?? []).filter((u) => u.userType === "tenant");
+  const residents = (usersData?.data ?? []).filter((u) => u.userType === 'tenant');
 
   const handleSubmit = async () => {
     const payload: Partial<Lease> = {
@@ -58,7 +59,7 @@ export default function NewLeasePage() {
   return (
     <div className="space-y-6 flex flex-col ">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigate({ to: "/leases" })}>
+        <Button variant="outline" size="icon" onClick={() => navigate({ to: '/leases' })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
@@ -77,12 +78,14 @@ export default function NewLeasePage() {
               <Label htmlFor="tenant">Tenant</Label>
               <Select value={tenantUserId} onValueChange={setTenantUserId}>
                 <SelectTrigger>
-                  <SelectValue placeholder={loadingUsers ? "Loading residents..." : "Select resident"} />
+                  <SelectValue
+                    placeholder={loadingUsers ? 'Loading residents...' : 'Select resident'}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {residents.map((u) => (
                     <SelectItem key={u.id} value={u.id}>
-                      {[u.firstName, u.lastName].filter(Boolean).join(" ") || u.email}
+                      {[u.firstName, u.lastName].filter(Boolean).join(' ') || u.email}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -92,7 +95,9 @@ export default function NewLeasePage() {
               <Label htmlFor="property">Property</Label>
               <Select value={propertyId} onValueChange={setPropertyId}>
                 <SelectTrigger>
-                  <SelectValue placeholder={loadingProps ? "Loading properties..." : "Select property"} />
+                  <SelectValue
+                    placeholder={loadingProps ? 'Loading properties...' : 'Select property'}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {properties.map((p) => (
@@ -119,15 +124,30 @@ export default function NewLeasePage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="start">Start Date</Label>
-              <Input id="start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <Input
+                id="start"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="end">End Date</Label>
-              <Input id="end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              <Input
+                id="end"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="rent">Monthly Rent</Label>
-              <Input id="rent" type="number" step="0.01" value={monthlyRent} onChange={(e) => setMonthlyRent(e.target.value)} placeholder="2450.00" />
+              <CurrencyInput
+                id="rent"
+                value={monthlyRent}
+                onChange={setMonthlyRent}
+                placeholder="e.g. 25,000"
+              />
             </div>
           </div>
 
@@ -136,24 +156,39 @@ export default function NewLeasePage() {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="deposit">Security Deposit</Label>
-              <Input id="deposit" type="number" step="0.01" value={deposit} onChange={(e) => setDeposit(e.target.value)} placeholder="2450.00" />
+              <CurrencyInput
+                id="deposit"
+                value={deposit}
+                onChange={setDeposit}
+                placeholder="e.g. 50,000"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="penalty">Penalty %</Label>
-              <Input id="penalty" type="number" step="0.1" value={penalty} onChange={(e) => setPenalty(e.target.value)} placeholder="5" />
+              <NumberInput
+                id="penalty"
+                decimals={1}
+                value={penalty}
+                onChange={setPenalty}
+                placeholder="5"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="grace">Grace Days</Label>
-              <Input id="grace" type="number" value={graceDays} onChange={(e) => setGraceDays(e.target.value)} placeholder="5" />
+              <QuantityInput id="grace" value={graceDays} onChange={setGraceDays} placeholder="5" />
             </div>
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => navigate({ to: "/leases" })}>
+            <Button variant="outline" onClick={() => navigate({ to: '/leases' })}>
               Cancel
             </Button>
             <Button onClick={handleSubmit} disabled={!canSubmit}>
-              {createLease.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {createLease.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
               Create Lease
             </Button>
           </div>
@@ -162,5 +197,3 @@ export default function NewLeasePage() {
     </div>
   );
 }
-
-

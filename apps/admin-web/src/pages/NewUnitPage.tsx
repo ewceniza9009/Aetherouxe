@@ -3,9 +3,9 @@ import { useParams, useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
 import { Button } from '@elite-realty/shared-ui/components/ui';
 import { Input } from '@elite-realty/shared-ui/components/ui';
-import { Label } from '@elite-realty/shared-ui/components/ui';
 import { Textarea } from '@elite-realty/shared-ui/components/ui';
-import { CurrencyInput } from '@/components/ui/number-input';
+import { Label } from '@elite-realty/shared-ui/components/ui';
+import { CurrencyInput, NumberInput, QuantityInput } from '@/components/ui/number-input';
 import {
   Select,
   SelectContent,
@@ -134,32 +134,29 @@ export default function NewUnitPage() {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Size (sq ft)</Label>
-                <Input
-                  type="number"
-                  min="0"
+                <Label>Size (sqm)</Label>
+                <NumberInput
+                  decimals={2}
                   value={form.size}
-                  onChange={(e) => setForm((p) => ({ ...p, size: e.target.value }))}
+                  onChange={(raw) => setForm((p) => ({ ...p, size: raw }))}
                   placeholder="e.g. 500"
                 />
               </div>
               <div className="space-y-2">
                 <Label>Bedrooms</Label>
-                <Input
-                  type="number"
-                  min="0"
+                <QuantityInput
                   value={form.bedrooms}
-                  onChange={(e) => setForm((p) => ({ ...p, bedrooms: e.target.value }))}
+                  onChange={(raw) => setForm((p) => ({ ...p, bedrooms: raw }))}
+                  placeholder="e.g. 2"
                 />
               </div>
               <div className="space-y-2">
                 <Label>Bathrooms</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.5"
+                <NumberInput
+                  decimals={1}
                   value={form.bathrooms}
-                  onChange={(e) => setForm((p) => ({ ...p, bathrooms: e.target.value }))}
+                  onChange={(raw) => setForm((p) => ({ ...p, bathrooms: raw }))}
+                  placeholder="e.g. 1"
                 />
               </div>
             </div>

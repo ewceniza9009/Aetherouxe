@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-u
 import { Button } from '@elite-realty/shared-ui/components/ui';
 import { Badge } from '@elite-realty/shared-ui/components/ui';
 import { Input } from '@elite-realty/shared-ui/components/ui';
+import { CurrencyInput } from '@/components/ui/number-input';
 import { Label } from '@elite-realty/shared-ui/components/ui';
 import { Separator } from '@elite-realty/shared-ui/components/ui';
 import {
@@ -898,33 +899,23 @@ export default function SalesPage() {
                 {needsValue && (
                   <div className="space-y-2 max-w-sm">
                     <Label className="text-sm">Total Contract Value *</Label>
-                    <div className="relative">
-                      <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="number"
-                        className="pl-10 h-11 text-sm font-semibold"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                        placeholder="e.g. 5000000"
-                      />
-                    </div>
-                    {price && !isNaN(Number(price)) && Number(price) > 0 && (
-                      <p className="text-xs font-semibold text-emerald-400 pl-1 mt-1">
-                        Formatted Value: {formatCurrency(Number(price))}
-                      </p>
-                    )}
+                    <CurrencyInput
+                      value={price}
+                      onChange={setPrice}
+                      placeholder="e.g. 5,000,000"
+                      className="h-11 text-sm font-semibold"
+                    />
                   </div>
                 )}
 
                 {isRto && (
                   <div className="space-y-2 max-w-sm">
                     <Label className="text-sm">Monthly Rent *</Label>
-                    <Input
-                      type="number"
-                      className="h-11 text-sm"
+                    <CurrencyInput
                       value={monthlyRent}
-                      onChange={(e) => setMonthlyRent(e.target.value)}
-                      placeholder="e.g. 25000"
+                      onChange={setMonthlyRent}
+                      placeholder="e.g. 25,000"
+                      className="h-11 text-sm"
                     />
                   </div>
                 )}

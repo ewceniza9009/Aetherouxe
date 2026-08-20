@@ -11,7 +11,7 @@ import {
 import { Button } from '@elite-realty/shared-ui/components/ui';
 import { Badge } from '@elite-realty/shared-ui/components/ui';
 import { Input } from '@elite-realty/shared-ui/components/ui';
-import { CurrencyInput } from '@/components/ui/number-input';
+import { CurrencyInput, NumberInput, QuantityInput } from '@/components/ui/number-input';
 import { Label } from '@elite-realty/shared-ui/components/ui';
 import { Textarea } from '@elite-realty/shared-ui/components/ui';
 import { Skeleton } from '@elite-realty/shared-ui/components/ui';
@@ -409,35 +409,32 @@ export default function EditUnitPage() {
                   <Label className="text-xs flex items-center gap-1.5">
                     <Maximize className="h-3 w-3" /> Size (sqm)
                   </Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
+                  <NumberInput
+                    decimals={2}
                     value={form.size}
-                    onChange={(e) => setForm((p) => ({ ...p, size: e.target.value }))}
+                    onChange={(raw) => setForm((p) => ({ ...p, size: raw }))}
+                    placeholder="e.g. 169"
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs flex items-center gap-1.5">
                     <Bed className="h-3 w-3" /> Bedrooms
                   </Label>
-                  <Input
-                    type="number"
-                    min="0"
+                  <QuantityInput
                     value={form.bedrooms}
-                    onChange={(e) => setForm((p) => ({ ...p, bedrooms: e.target.value }))}
+                    onChange={(raw) => setForm((p) => ({ ...p, bedrooms: raw }))}
+                    placeholder="e.g. 3"
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs flex items-center gap-1.5">
                     <Bath className="h-3 w-3" /> Bathrooms
                   </Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.5"
+                  <NumberInput
+                    decimals={1}
                     value={form.bathrooms}
-                    onChange={(e) => setForm((p) => ({ ...p, bathrooms: e.target.value }))}
+                    onChange={(raw) => setForm((p) => ({ ...p, bathrooms: raw }))}
+                    placeholder="e.g. 2"
                   />
                 </div>
               </div>
