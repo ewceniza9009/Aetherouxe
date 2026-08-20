@@ -88,62 +88,8 @@ export default function ResidentAmenitiesPage() {
     },
   });
 
-  const amenities: AmenityItem[] = amenitiesRes?.data || [
-    {
-      id: 'am-1',
-      name: 'Grand Horizon Sky Lounge',
-      amenityType: 'function_room',
-      description: 'Panoramic 360-degree city view lounge with audio system and bar counter.',
-      location: 'Level 42, Sky Tower',
-      capacity: 35,
-      hourlyRate: 1500,
-      isActive: true,
-    },
-    {
-      id: 'am-2',
-      name: 'Olympic Infinity Lap Pool',
-      amenityType: 'pool',
-      description: 'Temperature-controlled lap pool with sun loungers and cabanas.',
-      location: 'Podium Level 6',
-      capacity: 25,
-      hourlyRate: 0,
-      isActive: true,
-    },
-    {
-      id: 'am-3',
-      name: 'Equinox Fitness & Yoga Club',
-      amenityType: 'gym',
-      description: 'Commercial grade Technogym equipment, free weights, and pilates studio.',
-      location: 'Podium Level 5',
-      capacity: 20,
-      hourlyRate: 0,
-      isActive: true,
-    },
-    {
-      id: 'am-4',
-      name: 'Dolby Atmos Private Screening Cinema',
-      amenityType: 'clubhouse',
-      description: '12-seat private theater with 4K laser projection and recliners.',
-      location: 'Lower Ground 1',
-      capacity: 12,
-      hourlyRate: 800,
-      isActive: true,
-    },
-  ];
-
-  const bookings: BookingItem[] = bookingsRes?.data || [
-    {
-      id: 'b-1',
-      amenityId: 'am-1',
-      tenantName: user ? `${user.firstName} ${user.lastName}` : 'Resident',
-      bookingStart: new Date(Date.now() + 86400000 * 2).toISOString(),
-      bookingEnd: new Date(Date.now() + 86400000 * 2 + 7200000).toISOString(),
-      totalAmount: 3000,
-      status: 'confirmed',
-      notes: 'Family weekend gathering',
-      amenity: { name: 'Grand Horizon Sky Lounge', location: 'Level 42' },
-    },
-  ];
+  const amenities: AmenityItem[] = amenitiesRes?.data ?? [];
+  const bookings: BookingItem[] = bookingsRes?.data ?? [];
 
   // Calculate estimated total fee
   const startHour = parseInt(startTime.split(':')[0], 10) || 0;

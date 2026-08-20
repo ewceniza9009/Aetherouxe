@@ -57,85 +57,22 @@ export default function PortfolioAnalyticsPage() {
     enabled: !!ownerId,
   });
 
-  const metrics = portfolioData?.metrics || {
-    totalAssetValue: 18500000,
-    totalUnits: 4,
-    occupiedUnits: 3,
-    occupancyRate: 75,
-    monthlyRentalIncome: 145000,
-    annualGrossRent: 1740000,
-    grossYieldPct: 9.4,
-    capRatePct: 7.8,
-    totalHistoricalGross: 520000,
-    totalHistoricalExpenses: 84000,
-    totalHistoricalNet: 436000,
+  const metrics = portfolioData?.metrics ?? {
+    totalAssetValue: 0,
+    totalUnits: 0,
+    occupiedUnits: 0,
+    occupancyRate: 0,
+    monthlyRentalIncome: 0,
+    annualGrossRent: 0,
+    grossYieldPct: 0,
+    capRatePct: 0,
+    totalHistoricalGross: 0,
+    totalHistoricalExpenses: 0,
+    totalHistoricalNet: 0,
   };
 
-  const cashflowChartData =
-    portfolioData?.cashflowHistory && portfolioData.cashflowHistory.length > 0
-      ? portfolioData.cashflowHistory
-      : [
-          { period: 'Jan 2026', grossIncome: 145000, expenses: 22000, netIncome: 123000 },
-          { period: 'Feb 2026', grossIncome: 145000, expenses: 18500, netIncome: 126500 },
-          { period: 'Mar 2026', grossIncome: 155000, expenses: 25000, netIncome: 130000 },
-          { period: 'Apr 2026', grossIncome: 145000, expenses: 19000, netIncome: 126000 },
-          { period: 'May 2026', grossIncome: 150000, expenses: 21000, netIncome: 129000 },
-          { period: 'Jun 2026', grossIncome: 145000, expenses: 19500, netIncome: 125500 },
-        ];
-
-  const unitsList = portfolioData?.units || [
-    {
-      id: 'u-101',
-      unitNumber: 'Tower 1 - 1402',
-      propertyName: 'The Aetherouxe Grand Tower',
-      unitType: 'two_br',
-      status: 'occupied',
-      listPrice: 5800000,
-      activeLease: {
-        tenantName: 'Dr. Maria Santos',
-        monthlyRent: 48000,
-        startDate: '2025-08-01',
-        endDate: '2026-07-31',
-      },
-    },
-    {
-      id: 'u-102',
-      unitNumber: 'Tower 1 - 1805',
-      propertyName: 'The Aetherouxe Grand Tower',
-      unitType: 'one_br',
-      status: 'occupied',
-      listPrice: 4200000,
-      activeLease: {
-        tenantName: 'Engr. Carlos Mendoza',
-        monthlyRent: 35000,
-        startDate: '2025-10-01',
-        endDate: '2026-09-30',
-      },
-    },
-    {
-      id: 'u-103',
-      unitNumber: 'Tower 2 - 0812',
-      propertyName: 'Aetherouxe Sky Suites',
-      unitType: 'studio',
-      status: 'available',
-      listPrice: 3500000,
-      activeLease: null,
-    },
-    {
-      id: 'u-104',
-      unitNumber: 'Tower 2 - 2201',
-      propertyName: 'Aetherouxe Sky Suites',
-      unitType: 'penthouse',
-      status: 'occupied',
-      listPrice: 12000000,
-      activeLease: {
-        tenantName: 'Juan Dela Cruz',
-        monthlyRent: 62000,
-        startDate: '2026-01-01',
-        endDate: '2026-12-31',
-      },
-    },
-  ];
+  const cashflowChartData = portfolioData?.cashflowHistory ?? [];
+  const unitsList = portfolioData?.units ?? [];
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
