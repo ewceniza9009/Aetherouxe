@@ -75,7 +75,6 @@ export default function SalesPage() {
   const { search: schemeSearch, setSearch: setSchemeSearch } = schemeListQuery;
   const { search: unitSearch, setSearch: setUnitSearch } = unitListQuery;
   const { data: unitsData, isLoading: unitsLoading } = useUnits({
-    status: 'available',
     limit: 500,
   });
   const { data: residentsData } = useUsers({ limit: 500 });
@@ -119,7 +118,9 @@ export default function SalesPage() {
   const debouncedUnitSearch = unitListQuery.debouncedSearch;
   const availableUnits = useMemo(() => {
     return units.filter((u: any) => {
-      if (u.status && u.status !== 'available') return false;
+      // Exclude units that are currently occupied, rented, or RTO active
+      const isOccupied = ['occupied', 'rented', 'rto_active'].includes(u.status);
+      if (isOccupied) return false;
       if (!debouncedUnitSearch) return true;
       const q = debouncedUnitSearch.toLowerCase();
       return (
