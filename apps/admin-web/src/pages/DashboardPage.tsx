@@ -1,8 +1,14 @@
-﻿import { EmptyState } from '@/components/ui/empty-state';
-import { Card, CardContent, CardHeader, CardTitle } from '@elite-realty/shared-ui/components/ui';
-import { Button } from '@elite-realty/shared-ui/components/ui';
-import { Skeleton } from '@elite-realty/shared-ui/components/ui';
-import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { EmptyState } from '@/components/ui/empty-state';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Button,
+  Skeleton,
+  Badge,
+} from '@elite-realty/shared-ui/components/ui';
+import { formatCurrency, formatEnumLabel } from '@elite-realty/shared-ui';
 import {
   Building2,
   Users,
@@ -41,7 +47,6 @@ import { useServiceRequests } from '@/hooks/use-service-requests';
 import { useDocuments } from '@/hooks/use-documents';
 import { usePortfolioKpis, useRevenueTrend } from '@/hooks/use-reports';
 import type { PortfolioKpis } from '@/hooks/use-reports';
-import { formatCurrency } from '@/lib/agent-meta';
 import { api } from '@elite-realty/shared-ui/lib/api';
 import type { ApiResponse, PaginationMeta } from '@elite-realty/shared-types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
@@ -511,7 +516,7 @@ export default function DashboardPage() {
                         <p className="text-xs text-muted-foreground truncate">{prop.address}</p>
                       </div>
                       <span className="text-xs text-muted-foreground shrink-0">
-                        {prop.type.replace(/_/g, ' ')}
+                        {formatEnumLabel(prop.type)}
                       </span>
                     </div>
                   ))

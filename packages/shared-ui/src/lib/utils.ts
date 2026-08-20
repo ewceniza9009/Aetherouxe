@@ -47,8 +47,8 @@ export function formatEnumLabel(value?: string | null): string {
   return value
     .split(/[_-\s]+/)
     .map((word) => {
-      // Preserve uppercase acronyms like AP, SMS, ID, PNL
-      if (['ap', 'sms', 'id', 'pnl', 'rto', 'ac', 'po'].includes(word.toLowerCase())) {
+      // Preserve uppercase acronyms like AP, SMS, ID, PNL, BR, RTO
+      if (['ap', 'sms', 'id', 'pnl', 'rto', 'ac', 'po', 'br'].includes(word.toLowerCase())) {
         return word.toUpperCase();
       }
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();

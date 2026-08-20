@@ -1,15 +1,16 @@
-import { useMemo, useState, useCallback } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { useListQuery } from "@/hooks/use-list-query";
-import { GridToolbar, GridState } from "@/components/GridToolbar";
-import { ListPager } from "@/components/ListPager";
-import { Card, CardContent } from "@elite-realty/shared-ui/components/ui";
-import { Button } from "@elite-realty/shared-ui/components/ui";
-import { Badge } from "@elite-realty/shared-ui/components/ui";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Phone, Mail, Pencil, Trash2 } from "lucide-react";
-import { useUsers, useDeleteUser } from "@/hooks/use-users";
-import { useLeases } from "@/hooks/use-leases";
+import { useMemo, useState, useCallback } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useListQuery } from '@/hooks/use-list-query';
+import { GridToolbar, GridState } from '@/components/GridToolbar';
+import { ListPager } from '@/components/ListPager';
+import { Card, CardContent } from '@elite-realty/shared-ui/components/ui';
+import { Button } from '@elite-realty/shared-ui/components/ui';
+import { Badge } from '@elite-realty/shared-ui/components/ui';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Plus, Phone, Mail, Pencil, Trash2 } from 'lucide-react';
+import { formatEnumLabel } from '@elite-realty/shared-ui';
+import { useUsers, useDeleteUser } from '@/hooks/use-users';
+import { useLeases } from '@/hooks/use-leases';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +18,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@elite-realty/shared-ui/components/ui";
+} from '@elite-realty/shared-ui/components/ui';
 
 interface TenantRow {
   id: string;
@@ -41,7 +42,7 @@ export default function TenantsPage() {
 
   const { data: usersResult, isLoading } = useUsers({
     ...query,
-    userType: "tenant",
+    userType: 'tenant',
   });
 
   const { data: leasesData } = useLeases({ limit: 500 });
@@ -55,11 +56,11 @@ export default function TenantsPage() {
     const users = usersResult?.data ?? [];
     return users.map((u) => {
       const lease = leasesByUser.get(u.id);
-      const name = [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email;
+      const name = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email;
       const initials = name
-        .split(" ")
+        .split(' ')
         .map((n) => n[0])
-        .join("")
+        .join('')
         .slice(0, 2)
         .toUpperCase();
       return {
@@ -68,10 +69,10 @@ export default function TenantsPage() {
         initials,
         email: u.email,
         phone: u.phone,
-        property: lease?.propertyName ?? "—",
-        unit: lease?.unitLabel ?? "—",
-        leaseEnd: lease?.endDate ? new Date(lease.endDate).toLocaleDateString() : "—",
-        status: !lease ? "no lease" : lease.status,
+        property: lease?.propertyName ?? '—',
+        unit: lease?.unitLabel ?? '—',
+        leaseEnd: lease?.endDate ? new Date(lease.endDate).toLocaleDateString() : '—',
+        status: !lease ? 'no lease' : lease.status,
         avatarUrl: u.avatarUrl,
       } as TenantRow;
     });
@@ -98,11 +99,7 @@ export default function TenantsPage() {
         </Button>
       </div>
 
-      <GridToolbar
-        search={search}
-        onSearchChange={setSearch}
-        placeholder="Search tenants..."
-      />
+      <GridToolbar search={search} onSearchChange={setSearch} placeholder="Search tenants..." />
 
       <Card>
         <CardContent className="pt-6">
@@ -115,31 +112,58 @@ export default function TenantsPage() {
             <div
               className="rounded-md border scroll-grid cursor-pointer"
               onClick={(e) => {
-                const row = (e.target as HTMLElement).closest("[data-tenant-id]");
-                if (row) navigate({ to: `/tenants/${row.getAttribute("data-tenant-id")}` });
+                const row = (e.target as HTMLElement).closest('[data-tenant-id]');
+                if (row) navigate({ to: `/tenants/${row.getAttribute('data-tenant-id')}` });
               }}
             >
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">
-                    <th {...sortHeader("firstName", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Tenant{sortIndicator("firstName")}
+                    <th
+                      {...sortHeader(
+                        'firstName',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Tenant{sortIndicator('firstName')}
                     </th>
-                    <th {...sortHeader("email", "px-4 py-3 text-left text-sm font-medium text-muted-foreground")}>
-                      Contact{sortIndicator("email")}
+                    <th
+                      {...sortHeader(
+                        'email',
+                        'px-4 py-3 text-left text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Contact{sortIndicator('email')}
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Property</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Unit</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Lease Until</th>
-                    <th {...sortHeader("isActive", "px-4 py-3 text-right text-sm font-medium text-muted-foreground")}>
-                      Status{sortIndicator("isActive")}
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      Property
                     </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      Unit
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                      Lease Until
+                    </th>
+                    <th
+                      {...sortHeader(
+                        'isActive',
+                        'px-4 py-3 text-right text-sm font-medium text-muted-foreground',
+                      )}
+                    >
+                      Status{sortIndicator('isActive')}
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {tenants.map((tenant) => (
-                    <tr key={tenant.id} data-tenant-id={tenant.id} className="border-b hover:bg-muted/30 transition-colors cursor-pointer">
+                    <tr
+                      key={tenant.id}
+                      data-tenant-id={tenant.id}
+                      className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+                    >
                       <td className="px-4 py-3 font-medium">
                         <span className="flex items-center gap-3">
                           <Avatar className="h-7 w-7">
@@ -167,17 +191,16 @@ export default function TenantsPage() {
                       <td className="px-4 py-3 text-right">
                         <Badge
                           variant={
-                            tenant.status === "active"
-                              ? "success"
-                              : tenant.status === "late" ||
-                                tenant.status === "rto_delinquent"
-                              ? "destructive"
-                              : tenant.status === "no lease"
-                              ? "secondary"
-                              : "warning"
+                            tenant.status === 'active'
+                              ? 'success'
+                              : tenant.status === 'late' || tenant.status === 'rto_delinquent'
+                                ? 'destructive'
+                                : tenant.status === 'no lease'
+                                  ? 'secondary'
+                                  : 'warning'
                           }
                         >
-                          {tenant.status}
+                          {formatEnumLabel(tenant.status)}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -221,9 +244,11 @@ export default function TenantsPage() {
             <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleteUser.isPending}>
-              {deleteUser.isPending ? "Deleting..." : "Delete"}
+              {deleteUser.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -231,5 +256,3 @@ export default function TenantsPage() {
     </div>
   );
 }
-
-

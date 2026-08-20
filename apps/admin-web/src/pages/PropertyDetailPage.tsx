@@ -8,6 +8,7 @@ import { Badge } from '@elite-realty/shared-ui/components/ui';
 import { Separator } from '@elite-realty/shared-ui/components/ui';
 import { Skeleton } from '@elite-realty/shared-ui/components/ui';
 import { Avatar } from '@elite-realty/shared-ui/components/ui';
+import { formatEnumLabel } from '@elite-realty/shared-ui';
 import {
   ArrowLeft,
   Edit,
@@ -207,8 +208,8 @@ export default function PropertyDetailPage() {
               <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                 Type
               </span>
-              <span className="text-lg font-bold text-foreground capitalize truncate">
-                {property.type.replace(/_/g, ' ')}
+              <span className="text-lg font-bold text-foreground truncate">
+                {formatEnumLabel(property.type)}
               </span>
             </div>
             <div className="px-6 py-4 flex flex-col justify-center gap-1 flex-1 min-w-[120px]">
@@ -570,8 +571,8 @@ export default function PropertyDetailPage() {
                               {unit.unitNumber}
                             </td>
                             <td className="px-4 py-2">
-                              <span className="text-muted-foreground capitalize font-medium">
-                                {unit.type || unit.unitType || '--'}
+                              <span className="text-muted-foreground font-medium">
+                                {formatEnumLabel(unit.type || unit.unitType) || '--'}
                               </span>
                             </td>
                             <td className="px-4 py-2 text-muted-foreground">
