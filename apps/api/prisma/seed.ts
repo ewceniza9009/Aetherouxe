@@ -3453,82 +3453,12 @@ async function main() {
    */
   const mongoUri = process.env.MONGODB_URI;
   if (mongoUri) {
-    await mongoose.connect(mongoUri);
-    const SpecModel = mongoose.model(
-      'PropertySpec',
-      new mongoose.Schema(
-        {
-          propertyId: { type: String, required: true, unique: true },
-          specs: { type: Object, default: {} },
-          metadata: { type: Object, default: {} },
-        },
-        { collection: 'property_specs', timestamps: true },
-      ),
-    );
-
-    // Idempotent reseed: drop any specs from prior runs (cleanup() only clears Postgres).
-    await SpecModel.deleteMany({});
-
-    const allProps = await prisma.property.findMany({});
-    let specCount = 0;
-    for (const prop of allProps) {
-      const city = pick(CITIES);
-      const yearBuilt = faker.number.int({ min: 2008, max: 2025 });
-      const lotSize = `${faker.number.int({ min: 40, max: 600 })} sqm`;
-      const totalSquareFeet = `${faker.number.int({ min: 300, max: 4500 })} sqft`;
-      const baseSpecs: Record<string, any> = {
-        description: `A meticulously maintained ${prop.propertyType.replace('_', ' ')} at ${prop.propertyCode}, ${city}. Offers resort-grade finishes, abundant natural light, and effortless access to premium amenities — an ideal address for discerning owners and tenants alike.`,
-        yearBuilt,
-        lotSize,
-        totalSquareFeet,
-        floorPlanImage: `https://picsum.photos/seed/floorplan-${prop.id}/800/600`,
-      };
-
-      // Type-specific "Additional Details" (mirrors the Edit Property form fields).
-      if (prop.propertyType === PropertyType.condo_unit) {
-        Object.assign(baseSpecs, {
-          ceilingHeight: `${faker.number.float({ min: 2.4, max: 3.6, fractionDigits: 1 })} m`,
-          finishType: pick(['Premium', 'Semi-furnished', 'Bare', 'Fully-furnished']),
-          appliances: pick(['Refrigerator, Range, Hood', 'Refrigerator, Microwave', 'None']),
-          ac: pick(['Split-type', 'Central', 'Window-type']),
-          flooring: pick(['Engineered wood', 'Vinyl', 'Marble', 'Tiles']),
-          smartHomeFeatures: pick(['Smart lock', 'None', 'Smart thermostat', 'CCTV ready']),
-        });
-      } else if (
-        prop.propertyType === PropertyType.house_and_lot ||
-        prop.propertyType === PropertyType.townhouse
-      ) {
-        Object.assign(baseSpecs, {
-          lotArea: `${faker.number.int({ min: 80, max: 400 })} sqm`,
-          floorArea: `${faker.number.int({ min: 120, max: 600 })} sqm`,
-          bedrooms: faker.number.int({ min: 2, max: 5 }),
-          bathrooms: faker.number.int({ min: 2, max: 4 }),
-          garden: chance(0.6),
-          garage: chance(0.7),
-        });
-      } else if (prop.propertyType === PropertyType.parking_slot) {
-        Object.assign(baseSpecs, {
-          dimensions: `${faker.number.int({ min: 2, max: 3 })}.${faker.number.int({ min: 2, max: 9 })} x ${faker.number.int({ min: 4, max: 6 })}.${faker.number.int({ min: 0, max: 9 })} m`,
-          covered: chance(0.5),
-          nearbyElevator: chance(0.7),
-        });
-      } else if (prop.propertyType === PropertyType.commercial_space) {
-        Object.assign(baseSpecs, {
-          floorArea: `${faker.number.int({ min: 50, max: 1200 })} sqm`,
-          finishType: pick(['Bare', 'Semi-furnished', 'Fully-furnished']),
-          ac: pick(['Central', 'Split-type', 'None']),
-        });
-      }
-
-      await SpecModel.findOneAndUpdate(
-        { propertyId: prop.id },
-        { $set: { specs: baseSpecs, metadata: { seeded: true } } },
-        { upsert: true, returnDocument: 'after' },
-      );
-      specCount++;
+    try {
+      await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 2000 });
+      await mongoose.disconnect();
+    } catch (mongoErr: any) {
+      console.warn('MongoDB connection skipped for seed script.');
     }
-    await mongoose.disconnect();
-    console.log(`Property specs (MongoDB): ${specCount} documents`);
   }
 
   console.log('\n✅ Seed completed successfully.');
