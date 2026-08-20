@@ -353,11 +353,37 @@ export const BuildingDigitalTwin: React.FC<BuildingDigitalTwinProps> = ({
 
                   {/* Units Matrix on this floor */}
                   {floor.units.map((unit, uIdx) => {
-                    const cols = 2;
-                    const row = Math.floor(uIdx / cols);
-                    const col = uIdx % cols;
-                    const x = (col - 0.5) * 1.9;
-                    const z = (row - 0.5) * 1.9;
+                    const count = floor.units.length;
+                    let x = 0;
+                    let z = 0;
+                    let uSize: [number, number, number] = [1.65, 1.0, 1.65];
+
+                    if (count === 1) {
+                      x = 0;
+                      z = 0;
+                      uSize = [2.4, 1.0, 2.4];
+                    } else if (count === 2) {
+                      x = (uIdx - 0.5) * 2.0;
+                      z = 0;
+                      uSize = [1.8, 1.0, 2.0];
+                    } else if (count <= 4) {
+                      const cols = 2;
+                      const row = Math.floor(uIdx / cols);
+                      const col = uIdx % cols;
+                      x = (col - 0.5) * 1.9;
+                      z = (row - 0.5) * 1.9;
+                      uSize = [1.65, 1.0, 1.65];
+                    } else {
+                      const cols = Math.ceil(Math.sqrt(count));
+                      const rows = Math.ceil(count / cols);
+                      const row = Math.floor(uIdx / cols);
+                      const col = uIdx % cols;
+                      const stepX = 3.8 / cols;
+                      const stepZ = 3.8 / rows;
+                      x = (col - (cols - 1) / 2) * stepX;
+                      z = (row - (rows - 1) / 2) * stepZ;
+                      uSize = [Math.max(0.7, stepX * 0.85), 1.0, Math.max(0.7, stepZ * 0.85)];
+                    }
 
                     const isHovered = hoveredUnit?.id === unit.id;
                     const isSelected = selectedUnit?.id === unit.id;
@@ -367,7 +393,7 @@ export const BuildingDigitalTwin: React.FC<BuildingDigitalTwinProps> = ({
                         key={unit.id}
                         unit={unit}
                         position={[x, 0, z]}
-                        size={[1.65, 1.0, 1.65]}
+                        size={uSize}
                         isHovered={isHovered}
                         isSelected={isSelected}
                         onPointerOver={(e) => {

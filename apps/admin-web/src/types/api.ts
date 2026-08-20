@@ -129,6 +129,8 @@ export interface RawUnit {
   } | null;
   buildingId?: string | null;
   building?: { name?: string; project?: { name?: string } | null } | null;
+  floorId?: string | null;
+  floor?: { id: string; floorNumber: string; sortOrder?: number } | null;
   type?: string;
   unitType?: string;
   status?: string;

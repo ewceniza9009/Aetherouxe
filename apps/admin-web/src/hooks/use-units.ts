@@ -29,6 +29,8 @@ export interface Unit {
     owner?: { firstName?: string | null; lastName?: string | null } | null;
   } | null;
   building?: { name?: string } | null;
+  floor?: { id: string; floorNumber: string; sortOrder?: number } | null;
+  floorNumber?: number | null;
   projectName?: string | null;
   owner?: string | null;
   tenant?: string | null;
@@ -100,6 +102,11 @@ export function useUnits(query: UnitQuery) {
         updatedAt: u.updatedAt,
         property: u.property ?? null,
         building: u.building ?? null,
+        floor: u.floor ?? null,
+        floorNumber:
+          u.floor?.floorNumber === 'G' || u.floor?.floorNumber === 'g'
+            ? 1
+            : parseInt(String(u.floor?.floorNumber || u.floor?.sortOrder || 1), 10) || 1,
         projectName: u.building?.project?.name ?? null,
         owner: u.titleTransfers?.[0]?.buyer
           ? `${u.titleTransfers[0].buyer.firstName} ${u.titleTransfers[0].buyer.lastName}`
