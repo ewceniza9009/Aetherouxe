@@ -147,7 +147,15 @@ export interface RawUnit {
     buyer?: { firstName?: string | null; lastName?: string | null } | null;
   }>;
   leaseAgreements?: Array<{
-    tenant?: { firstName?: string | null; lastName?: string | null } | null;
+    tenant?: { firstName?: string | null; lastName?: string | null; email?: string | null } | null;
+  }>;
+  reservations?: Array<{
+    prospectName?: string | null;
+    buyerUser?: {
+      firstName?: string | null;
+      lastName?: string | null;
+      email?: string | null;
+    } | null;
   }>;
 }
 

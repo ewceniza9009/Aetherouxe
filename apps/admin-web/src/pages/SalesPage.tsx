@@ -16,6 +16,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from '@elite-realty/shared-ui/components/ui';
 import {
   ArrowLeft,
@@ -148,6 +154,7 @@ export default function SalesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState('');
+  const [confirmModalUnit, setConfirmModalUnit] = useState<any | null>(null);
 
   const debouncedSchemeSearch = schemeListQuery.debouncedSearch;
   const filteredTemplates = useMemo(() => {
@@ -217,6 +224,31 @@ export default function SalesPage() {
     setSelectedUnit(u);
     if (u.listPrice) setPrice(String(u.listPrice));
     goNext();
+  };
+
+  const handleSelectUnitClick = (u: any) => {
+    const statusKey = (u.status || '').toLowerCase();
+    const isOccupied = ['occupied', 'rented', 'rto_active', 'sold'].includes(statusKey);
+    const isMaintenance = statusKey === 'under_maintenance' || statusKey === 'maintenance';
+
+    if (isOccupied || isMaintenance) {
+      toast.error(`Unit ${u.unitNumber} is ${statusKey.replace('_', ' ')} and cannot be selected.`);
+      return;
+    }
+
+    if (statusKey === 'reserved') {
+      setConfirmModalUnit(u);
+      return;
+    }
+
+    selectUnit(u);
+  };
+
+  const confirmReservedSelection = () => {
+    if (confirmModalUnit) {
+      selectUnit(confirmModalUnit);
+      setConfirmModalUnit(null);
+    }
   };
 
   const submit = async () => {
@@ -532,6 +564,8 @@ export default function SalesPage() {
                         const isOccupied = ['occupied', 'rented', 'rto_active', 'sold'].includes(
                           statusKey,
                         );
+                        const isMaintenance =
+                          statusKey === 'under_maintenance' || statusKey === 'maintenance';
 
                         return (
                           <tr
@@ -587,23 +621,30 @@ export default function SalesPage() {
                               {u.listPrice ? formatCurrency(u.listPrice) : '—'}
                             </td>
                             <td className="px-5 py-4 text-right">
-                              <Button
-                                size="default"
-                                variant={
-                                  isOccupied ? 'outline' : isReserved ? 'secondary' : 'default'
-                                }
-                                className={`h-9 px-3.5 text-xs font-semibold ${
-                                  isOccupied
-                                    ? 'border-sky-500/30 text-sky-400 hover:bg-sky-500/10'
-                                    : isReserved
-                                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20'
+                              {isOccupied || isMaintenance ? (
+                                <Button
+                                  size="default"
+                                  disabled
+                                  variant="outline"
+                                  className="h-9 px-3.5 text-xs font-semibold opacity-40 cursor-not-allowed border-border text-muted-foreground"
+                                >
+                                  {isOccupied ? 'Occupied' : 'Maintenance'}
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="default"
+                                  variant={isReserved ? 'secondary' : 'default'}
+                                  className={`h-9 px-3.5 text-xs font-semibold ${
+                                    isReserved
+                                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20'
                                       : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                                }`}
-                                onClick={() => selectUnit(u)}
-                              >
-                                {isOccupied ? 'Select' : isReserved ? 'Select' : 'Select'}
-                                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                              </Button>
+                                  }`}
+                                  onClick={() => handleSelectUnitClick(u)}
+                                >
+                                  {isReserved ? 'Select (Reserved)' : 'Select'}
+                                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                                </Button>
+                              )}
                             </td>
                           </tr>
                         );
@@ -994,6 +1035,47 @@ export default function SalesPage() {
           </div>
         )}
       </div>
+
+      {/* Reserved Unit Confirmation Modal */}
+      <Dialog open={!!confirmModalUnit} onOpenChange={() => setConfirmModalUnit(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 text-amber-400 mb-1">
+              <AlertCircle className="h-6 w-6" />
+              <DialogTitle className="text-lg">Unit Currently Reserved</DialogTitle>
+            </div>
+            <DialogDescription className="text-sm pt-2 text-muted-foreground">
+              Unit <span className="font-bold text-foreground">{confirmModalUnit?.unitNumber}</span>{' '}
+              ({confirmModalUnit?.property?.propertyCode}) is currently marked as{' '}
+              <span className="font-semibold text-amber-400">Reserved</span>
+              {confirmModalUnit?.reserver ? (
+                <>
+                  {' '}
+                  by{' '}
+                  <span className="font-semibold text-foreground">{confirmModalUnit.reserver}</span>
+                  .
+                </>
+              ) : (
+                '.'
+              )}
+              <br />
+              <br />
+              Applying a new sales scheme will override this reservation. Do you wish to proceed?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button variant="outline" onClick={() => setConfirmModalUnit(null)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-amber-600 hover:bg-amber-500 text-white font-semibold"
+              onClick={confirmReservedSelection}
+            >
+              Proceed with Selection
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
