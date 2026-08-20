@@ -29,6 +29,17 @@ const parts = [
   "",
 ];
 
+const labelFor = (value) =>
+  value
+    .split(/[_-\s]+/)
+    .map((word) => {
+      if (['ap', 'sms', 'id', 'pnl', 'rto', 'ac', 'po', 'br'].includes(word.toLowerCase())) {
+        return word.toUpperCase();
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+
 for (const block of blocks) {
   const name = block[1];
   const values = block[2]
@@ -41,7 +52,15 @@ for (const block of blocks) {
     parts.push(`  ${keyFor(value)} = "${value}",`);
   }
   parts.push("}", "");
+
+  const mapName = name.charAt(0).toLowerCase() + name.slice(1) + "Labels";
+  parts.push(`export const ${mapName}: Record<${name}, string> = {`);
+  for (const value of values) {
+    const k = keyFor(value);
+    parts.push(`  [${name}.${k}]: "${labelFor(value)}",`);
+  }
+  parts.push("};", "");
 }
 
 writeFileSync(outPath, parts.join("\n") + "\n", "utf8");
-console.log(`Generated ${blocks.length} enums -> ${outPath}`);
+console.log(`Generated ${blocks.length} enums & label maps -> ${outPath}`);

@@ -3,3 +3,4 @@ export * from './components/notifications';
 export * from './components/3d';
 export * from './hooks';
 export * from './pages';
+export * from './lib/utils';
