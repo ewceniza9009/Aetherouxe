@@ -32,6 +32,7 @@ export interface Unit {
   projectName?: string | null;
   owner?: string | null;
   tenant?: string | null;
+  reserver?: string | null;
 }
 
 export interface UnitQuery {
@@ -92,8 +93,15 @@ export function useUnits(query: UnitQuery) {
             ? `${u.property.owner.firstName} ${u.property.owner.lastName}`
             : null,
         tenant: u.leaseAgreements?.[0]?.tenant
-          ? `${u.leaseAgreements[0].tenant.firstName} ${u.leaseAgreements[0].tenant.lastName}`
+          ? `${u.leaseAgreements[0].tenant.firstName || ''} ${u.leaseAgreements[0].tenant.lastName || ''}`.trim() ||
+            u.leaseAgreements[0].tenant.email
           : null,
+        reserver: u.reservations?.[0]?.prospectName
+          ? u.reservations[0].prospectName
+          : u.reservations?.[0]?.buyerUser
+            ? `${u.reservations[0].buyerUser.firstName || ''} ${u.reservations[0].buyerUser.lastName || ''}`.trim() ||
+              u.reservations[0].buyerUser.email
+            : null,
       }));
       return { data: transformed, meta: data.meta } as PaginatedResult<Unit>;
     },

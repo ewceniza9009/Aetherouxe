@@ -28,6 +28,14 @@ import {
   Users,
   FileText,
   Loader2,
+  User,
+  UserCheck,
+  Clock,
+  Building2,
+  AlertCircle,
+  Filter,
+  Tag,
+  Sparkles,
 } from 'lucide-react';
 import { useUnits } from '@/hooks/use-units';
 import { useUsers } from '@/hooks/use-users';
@@ -36,6 +44,44 @@ import { useSchemes } from '@/hooks/use-schemes';
 import { formatCurrency } from '@/lib/agent-meta';
 import { api } from '@elite-realty/shared-ui/lib/api';
 import { getErrorMessage } from '@/lib/error';
+
+const UNIT_STATUS_BADGE: Record<string, { label: string; cls: string; icon: any }> = {
+  available: {
+    label: 'Available',
+    cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+    icon: CheckCircle2,
+  },
+  reserved: {
+    label: 'Reserved',
+    cls: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+    icon: Clock,
+  },
+  occupied: {
+    label: 'Occupied',
+    cls: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
+    icon: UserCheck,
+  },
+  rented: {
+    label: 'Rented',
+    cls: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
+    icon: UserCheck,
+  },
+  rto_active: {
+    label: 'RTO Active',
+    cls: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
+    icon: Sparkles,
+  },
+  under_maintenance: {
+    label: 'Maintenance',
+    cls: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
+    icon: AlertCircle,
+  },
+  sold: {
+    label: 'Sold',
+    cls: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+    icon: Tag,
+  },
+};
 
 const TYPE_BADGE: Record<string, { label: string; cls: string }> = {
   standard_rental: {
@@ -115,20 +161,44 @@ export default function SalesPage() {
     );
   }, [templates, debouncedSchemeSearch]);
 
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'available' | 'reserved' | 'occupied' | 'under_maintenance'
+  >('all');
+
+  const unitCounts = useMemo(() => {
+    const counts = { all: units.length, available: 0, reserved: 0, occupied: 0, maintenance: 0 };
+    units.forEach((u: any) => {
+      const s = (u.status || '').toLowerCase();
+      if (s === 'available') counts.available++;
+      else if (s === 'reserved') counts.reserved++;
+      else if (['occupied', 'rented', 'rto_active', 'sold'].includes(s)) counts.occupied++;
+      else if (s === 'under_maintenance' || s === 'maintenance') counts.maintenance++;
+    });
+    return counts;
+  }, [units]);
+
   const debouncedUnitSearch = unitListQuery.debouncedSearch;
-  const availableUnits = useMemo(() => {
+  const filteredUnits = useMemo(() => {
     return units.filter((u: any) => {
-      // Exclude units that are currently occupied, rented, or RTO active
-      const isOccupied = ['occupied', 'rented', 'rto_active'].includes(u.status);
-      if (isOccupied) return false;
+      const s = (u.status || '').toLowerCase();
+      if (statusFilter === 'available' && s !== 'available') return false;
+      if (statusFilter === 'reserved' && s !== 'reserved') return false;
+      if (statusFilter === 'occupied' && !['occupied', 'rented', 'rto_active', 'sold'].includes(s))
+        return false;
+      if (statusFilter === 'under_maintenance' && s !== 'under_maintenance' && s !== 'maintenance')
+        return false;
+
       if (!debouncedUnitSearch) return true;
       const q = debouncedUnitSearch.toLowerCase();
+      const occupant = (u.tenant || u.reserver || u.owner || '').toLowerCase();
       return (
         u.unitNumber?.toLowerCase().includes(q) ||
-        u.property?.propertyCode?.toLowerCase().includes(q)
+        u.property?.propertyCode?.toLowerCase().includes(q) ||
+        (u.type ?? u.unitType ?? '').toLowerCase().includes(q) ||
+        occupant.includes(q)
       );
     });
-  }, [units, debouncedUnitSearch]);
+  }, [units, statusFilter, debouncedUnitSearch]);
 
   const isRto = selectedTemplate?.schemeType === 'rent_to_own';
   const needsValue = selectedTemplate && !['standard_rental'].includes(selectedTemplate.schemeType);
@@ -342,80 +412,202 @@ export default function SalesPage() {
               </Button>
             </div>
 
+            {/* Status Filter Tabs */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant={statusFilter === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('all')}
+                  className="h-8 text-xs font-semibold"
+                >
+                  All Units ({unitCounts.all})
+                </Button>
+                <Button
+                  variant={statusFilter === 'available' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('available')}
+                  className={`h-8 text-xs font-semibold ${
+                    statusFilter === 'available'
+                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                      : 'text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10'
+                  }`}
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                  Available ({unitCounts.available})
+                </Button>
+                <Button
+                  variant={statusFilter === 'reserved' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('reserved')}
+                  className={`h-8 text-xs font-semibold ${
+                    statusFilter === 'reserved'
+                      ? 'bg-amber-600 hover:bg-amber-500 text-white'
+                      : 'text-amber-400 border-amber-500/30 hover:bg-amber-500/10'
+                  }`}
+                >
+                  <Clock className="h-3.5 w-3.5 mr-1.5" />
+                  Reserved ({unitCounts.reserved})
+                </Button>
+                <Button
+                  variant={statusFilter === 'occupied' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('occupied')}
+                  className={`h-8 text-xs font-semibold ${
+                    statusFilter === 'occupied'
+                      ? 'bg-sky-600 hover:bg-sky-500 text-white'
+                      : 'text-sky-400 border-sky-500/30 hover:bg-sky-500/10'
+                  }`}
+                >
+                  <UserCheck className="h-3.5 w-3.5 mr-1.5" />
+                  Occupied / Leased ({unitCounts.occupied})
+                </Button>
+                {unitCounts.maintenance > 0 && (
+                  <Button
+                    variant={statusFilter === 'under_maintenance' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setStatusFilter('under_maintenance')}
+                    className={`h-8 text-xs font-semibold ${
+                      statusFilter === 'under_maintenance'
+                        ? 'bg-yellow-600 hover:bg-yellow-500 text-white'
+                        : 'text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/10'
+                    }`}
+                  >
+                    <AlertCircle className="h-3.5 w-3.5 mr-1.5" />
+                    Maintenance ({unitCounts.maintenance})
+                  </Button>
+                )}
+              </div>
+            </div>
+
             <GridToolbar
               search={unitSearch}
               onSearchChange={setUnitSearch}
-              placeholder="Search units by block, lot, or code..."
+              placeholder="Search by unit no, property code, type, or tenant..."
             />
 
             <div className="rounded-2xl border border-border/60 overflow-hidden">
               <GridState
                 isLoading={unitsLoading}
                 isError={false}
-                isEmpty={availableUnits.length === 0}
+                isEmpty={filteredUnits.length === 0}
                 onRetry={() => {}}
                 emptyState={
                   <div className="py-20 text-center">
                     <Home className="mx-auto h-10 w-10 text-muted-foreground/30" />
                     <p className="mt-4 text-base text-muted-foreground">
                       {unitSearch
-                        ? 'No units match your search.'
-                        : 'All units are occupied or reserved.'}
+                        ? 'No units match your search criteria.'
+                        : 'No units found for the selected status filter.'}
                     </p>
                   </div>
                 }
               >
-                <div className="scroll-grid max-h-[calc(100vh-300px)]">
+                <div className="scroll-grid max-h-[calc(100vh-320px)]">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border/60 text-xs uppercase tracking-wider text-muted-foreground bg-muted/30">
-                        <th className="px-6 py-4 text-left font-semibold">Unit</th>
-                        <th className="px-6 py-4 text-left font-semibold">Property</th>
-                        <th className="px-6 py-4 text-left font-semibold">Type</th>
-                        <th className="px-6 py-4 text-right font-semibold">Size</th>
-                        <th className="px-6 py-4 text-center font-semibold">Beds</th>
-                        <th className="px-6 py-4 text-center font-semibold">Baths</th>
-                        <th className="px-6 py-4 text-right font-semibold">List Price</th>
-                        <th className="px-6 py-4 text-right w-32"></th>
+                        <th className="px-5 py-4 text-left font-semibold">Unit</th>
+                        <th className="px-5 py-4 text-left font-semibold">Property</th>
+                        <th className="px-5 py-4 text-left font-semibold">Status</th>
+                        <th className="px-5 py-4 text-left font-semibold">Occupant / Tenant</th>
+                        <th className="px-5 py-4 text-left font-semibold">Type</th>
+                        <th className="px-5 py-4 text-right font-semibold">Size</th>
+                        <th className="px-5 py-4 text-center font-semibold">Beds / Baths</th>
+                        <th className="px-5 py-4 text-right font-semibold">List Price</th>
+                        <th className="px-5 py-4 text-right w-36">Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {availableUnits.map((u: any) => (
-                        <tr
-                          key={u.id}
-                          className="border-b border-border/30 hover:bg-muted/20 transition-colors"
-                        >
-                          <td className="px-6 py-4 font-semibold text-sm">{u.unitNumber ?? '—'}</td>
-                          <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
-                            {u.property?.propertyCode ?? '—'}
-                          </td>
-                          <td className="px-6 py-4 text-sm capitalize">
-                            {(u.type ?? u.unitType ?? '—').replace(/_/g, ' ')}
-                          </td>
-                          <td className="px-6 py-4 text-right tabular-nums text-xs text-muted-foreground">
-                            {u.size ? `${u.size}m²` : '—'}
-                          </td>
-                          <td className="px-6 py-4 text-center text-xs tabular-nums">
-                            {u.bedrooms ?? 0}
-                          </td>
-                          <td className="px-6 py-4 text-center text-xs tabular-nums">
-                            {u.bathrooms ?? 0}
-                          </td>
-                          <td className="px-6 py-4 text-right font-semibold text-sm tabular-nums">
-                            {u.listPrice ? formatCurrency(u.listPrice) : '—'}
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <Button
-                              size="default"
-                              className="h-9 px-5 text-sm"
-                              onClick={() => selectUnit(u)}
-                            >
-                              Select
-                              <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
+                      {filteredUnits.map((u: any) => {
+                        const statusKey = (u.status || 'available').toLowerCase();
+                        const statusConfig = UNIT_STATUS_BADGE[statusKey] ?? {
+                          label: u.status || 'Unknown',
+                          cls: 'bg-muted text-muted-foreground border-border',
+                          icon: Home,
+                        };
+                        const StatusIcon = statusConfig.icon || Home;
+                        const occupant = u.tenant || u.reserver || u.owner;
+                        const isReserved = statusKey === 'reserved';
+                        const isOccupied = ['occupied', 'rented', 'rto_active', 'sold'].includes(
+                          statusKey,
+                        );
+
+                        return (
+                          <tr
+                            key={u.id}
+                            className="border-b border-border/30 hover:bg-muted/20 transition-colors"
+                          >
+                            <td className="px-5 py-4 font-semibold text-sm">
+                              {u.unitNumber ?? '—'}
+                            </td>
+                            <td className="px-5 py-4 font-mono text-xs text-muted-foreground">
+                              {u.property?.propertyCode ?? '—'}
+                            </td>
+                            <td className="px-5 py-4">
+                              <Badge
+                                variant="outline"
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-medium ${statusConfig.cls}`}
+                              >
+                                <StatusIcon className="h-3 w-3" />
+                                {statusConfig.label}
+                              </Badge>
+                            </td>
+                            <td className="px-5 py-4 text-sm">
+                              {occupant ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">
+                                    {occupant.charAt(0).toUpperCase()}
+                                  </div>
+                                  <span className="font-medium text-foreground">
+                                    {occupant}
+                                    {u.reserver && !u.tenant && (
+                                      <span className="text-[10px] text-amber-400 font-normal ml-1.5">
+                                        (Reserved)
+                                      </span>
+                                    )}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground/40 font-normal text-xs">
+                                  Vacant
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-5 py-4 text-sm capitalize">
+                              {(u.type ?? u.unitType ?? '—').replace(/_/g, ' ')}
+                            </td>
+                            <td className="px-5 py-4 text-right tabular-nums text-xs text-muted-foreground">
+                              {u.size ? `${u.size}m²` : '—'}
+                            </td>
+                            <td className="px-5 py-4 text-center text-xs tabular-nums">
+                              {u.bedrooms ?? 0} bd / {u.bathrooms ?? 0} ba
+                            </td>
+                            <td className="px-5 py-4 text-right font-semibold text-sm tabular-nums">
+                              {u.listPrice ? formatCurrency(u.listPrice) : '—'}
+                            </td>
+                            <td className="px-5 py-4 text-right">
+                              <Button
+                                size="default"
+                                variant={
+                                  isOccupied ? 'outline' : isReserved ? 'secondary' : 'default'
+                                }
+                                className={`h-9 px-3.5 text-xs font-semibold ${
+                                  isOccupied
+                                    ? 'border-sky-500/30 text-sky-400 hover:bg-sky-500/10'
+                                    : isReserved
+                                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20'
+                                      : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                                }`}
+                                onClick={() => selectUnit(u)}
+                              >
+                                {isOccupied ? 'Select' : isReserved ? 'Select' : 'Select'}
+                                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -524,7 +716,7 @@ export default function SalesPage() {
                   <CardTitle className="text-sm font-semibold">Unit Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground block text-xs mb-1">Unit</span>
                       <span className="font-semibold">{selectedUnit?.unitNumber}</span>
@@ -545,6 +737,37 @@ export default function SalesPage() {
                       <span className="text-muted-foreground block text-xs mb-1">Size</span>
                       <span className="font-semibold">
                         {selectedUnit?.size ? `${selectedUnit.size}m²` : '—'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-xs mb-1">Status</span>
+                      {(() => {
+                        const statusKey = (selectedUnit?.status || 'available').toLowerCase();
+                        const statusConfig = UNIT_STATUS_BADGE[statusKey] ?? {
+                          label: selectedUnit?.status || 'Unknown',
+                          cls: 'bg-muted text-muted-foreground border-border',
+                          icon: Home,
+                        };
+                        const StatusIcon = statusConfig.icon || Home;
+                        return (
+                          <Badge
+                            variant="outline"
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-medium ${statusConfig.cls}`}
+                          >
+                            <StatusIcon className="h-3 w-3" />
+                            {statusConfig.label}
+                          </Badge>
+                        );
+                      })()}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-xs mb-1">
+                        Occupant / Tenant
+                      </span>
+                      <span className="font-semibold">
+                        {selectedUnit?.tenant || selectedUnit?.reserver || selectedUnit?.owner || (
+                          <span className="text-muted-foreground/40 font-normal">Vacant</span>
+                        )}
                       </span>
                     </div>
                   </div>

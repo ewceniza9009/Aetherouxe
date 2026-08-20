@@ -70,6 +70,12 @@ export class UnitsService {
           orderBy: { completedDate: 'desc' },
           take: 1,
         },
+        reservations: {
+          where: { stage: { in: ['reserved', 'contract_prep', 'payment_pending'] } },
+          include: { buyerUser: true },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
       },
       orderBy: built.orderBy,
       allowedSortFields: this.fieldMap.sortable,
