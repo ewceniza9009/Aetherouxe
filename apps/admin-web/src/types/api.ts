@@ -120,7 +120,6 @@ export interface RawFloor {
 export interface RawUnit {
   id: string;
   unitNumber: string;
-  floorId?: string | null;
   propertyId?: string | null;
   property?: {
     name?: string;
