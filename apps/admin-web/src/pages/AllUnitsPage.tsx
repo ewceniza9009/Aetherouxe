@@ -24,6 +24,7 @@ import {
 import { Eye, Trash2 } from 'lucide-react';
 import { useUnits, useDeleteUnit, type Unit } from '@/hooks/use-units';
 import { formatCurrency } from '@/lib/agent-meta';
+import { formatEnumLabel } from '@elite-realty/shared-ui';
 
 export default function AllUnitsPage() {
   const navigate = useNavigate();
@@ -155,7 +156,7 @@ export default function AllUnitsPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant="secondary">{u.type || '--'}</Badge>
+                          <Badge variant="secondary">{formatEnumLabel(u.type) || '--'}</Badge>
                         </td>
                         <td className="px-4 py-3">
                           {u.listPrice ? (
@@ -165,7 +166,9 @@ export default function AllUnitsPage() {
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant={variant as any}>{status || 'unknown'}</Badge>
+                          <Badge variant={variant as any}>
+                            {formatEnumLabel(status) || 'Unknown'}
+                          </Badge>
                         </td>
                         <td className="px-4 py-3">
                           {u.owner ? (
