@@ -134,7 +134,11 @@ export default function SalesPage() {
   const { data: schemeTemplatesResult, isLoading: schemesLoading } = useSchemes();
   const schemeTemplates = schemeTemplatesResult?.data;
 
-  const units = unitsData?.data ?? [];
+  const units = Array.isArray(unitsData?.data)
+    ? unitsData.data
+    : Array.isArray(unitsData)
+      ? unitsData
+      : [];
   const residents = residentsData?.data ?? [];
   const agents = agentsData?.data ?? [];
   const templates = useMemo(

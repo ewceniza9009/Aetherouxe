@@ -64,8 +64,18 @@ export function useUnits(query: UnitQuery) {
       if (query.search) params.set('search', query.search);
       if (query.sort) params.set('sort', query.sort);
       if (query.order) params.set('order', query.order);
-      const { data } = await api.get<ApiResponse<RawUnit[]>>(`/units?${params}`);
-      const transformed = (data.data ?? []).map((u: RawUnit) => ({
+      const { data: resData } = await api.get<any>(`/units?${params}`);
+      const rawUnits: RawUnit[] = Array.isArray(resData)
+        ? resData
+        : Array.isArray(resData?.data)
+          ? resData.data
+          : Array.isArray(resData?.data?.data)
+            ? resData.data.data
+            : [];
+      const meta = resData?.meta ||
+        resData?.data?.meta || { page: 1, limit: 500, total: rawUnits.length, totalPages: 1 };
+
+      const transformed = rawUnits.map((u: RawUnit) => ({
         id: u.id,
         propertyId: u.propertyId,
         buildingId: u.buildingId,
@@ -103,7 +113,7 @@ export function useUnits(query: UnitQuery) {
               u.reservations[0].buyerUser.email
             : null,
       }));
-      return { data: transformed, meta: data.meta } as PaginatedResult<Unit>;
+      return { data: transformed, meta } as PaginatedResult<Unit>;
     },
   });
 }
