@@ -34,6 +34,9 @@ import {
 import { useTenantLeases, type TenantLease } from '@/hooks/use-leases';
 import { useMortgageScenario } from '@/hooks/use-mortgage';
 import { useRtoContract, useRtoLedger } from '@/hooks/use-rto';
+import { useTitleTransfers } from '@/hooks/use-titles';
+import { useUnits } from '@/hooks/use-units';
+import { formatEnumLabel } from '@elite-realty/shared-ui';
 
 const leaseTypeLabel: Record<string, string> = {
   standard_rental: 'Standard Rental',
@@ -65,9 +68,70 @@ export default function TenantDetailPage() {
   const deleteUser = useDeleteUser();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { data: leases, isLoading: loadingLeases } = useTenantLeases(id);
+  const { data: titlesData, isLoading: loadingTitles } = useTitleTransfers({ buyerUserId: id });
+  const { data: unitsData, isLoading: loadingUnits } = useUnits({ limit: 500 });
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
 
-  const units = useMemo(() => (leases ? groupByUnit(leases) : []), [leases]);
+  const units = useMemo(() => {
+    const leaseUnits = leases ? groupByUnit(leases) : [];
+    if (leaseUnits.length > 0) return leaseUnits;
+
+    const titleUnits = (titlesData?.data ?? []).map((t) => ({
+      id: t.id,
+      unitId: t.unitId || t.id,
+      unitLabel: t.unit?.unitNumber ?? '—',
+      property: {
+        id: t.propertyId,
+        propertyCode: t.property?.propertyCode ?? t.property?.project?.name ?? '—',
+        propertyType: 'Condo Unit',
+      },
+      leaseType: t.basis ? formatEnumLabel(t.basis) : 'Ownership Transfer',
+      monthlyRentAmount: Number(t.contractValue ?? 0),
+      startDate: t.requestedDate || new Date().toISOString(),
+      endDate: t.completedDate || new Date().toISOString(),
+      isActive: true,
+      status: t.status,
+      titleTransfer: t,
+    }));
+
+    if (titleUnits.length > 0) return titleUnits as any[];
+
+    if (user) {
+      const fullName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim().toLowerCase();
+      const owned = (unitsData?.data ?? [])
+        .filter((u) => {
+          if (u.owner && u.owner.toLowerCase() === fullName) return true;
+          if (
+            u.property?.owner &&
+            `${u.property.owner.firstName ?? ''} ${u.property.owner.lastName ?? ''}`
+              .trim()
+              .toLowerCase() === fullName
+          )
+            return true;
+          return false;
+        })
+        .map((u) => ({
+          id: u.id,
+          unitId: u.id,
+          unitLabel: u.unitNumber,
+          property: {
+            id: u.propertyId,
+            propertyCode: u.property?.propertyCode ?? u.property?.name ?? '—',
+            propertyType: u.type,
+          },
+          leaseType: 'Owned Unit',
+          monthlyRentAmount: Number(u.listPrice ?? 0),
+          startDate: u.createdAt,
+          endDate: u.updatedAt,
+          isActive: true,
+          status: u.status,
+        }));
+      if (owned.length > 0) return owned as any[];
+    }
+
+    return [];
+  }, [leases, titlesData, unitsData, user]);
+
   const active = units.find((u) => u.id === selectedUnit) ?? units[0] ?? null;
 
   const initials =
@@ -82,7 +146,7 @@ export default function TenantDetailPage() {
           .toUpperCase()
       : (user?.email?.slice(0, 2).toUpperCase() ?? '—');
 
-  const isLoading = loadingUser || loadingLeases;
+  const isLoading = loadingUser || loadingLeases || loadingTitles || loadingUnits;
 
   const handleDelete = async () => {
     await deleteUser.mutateAsync(id);
@@ -120,9 +184,23 @@ export default function TenantDetailPage() {
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
                   {user
                     ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
-                    : 'Tenant Profile'}
+                    : 'User Profile'}
                 </h1>
-                <Badge variant="success">Verified Resident</Badge>
+                <Badge
+                  variant={
+                    user?.userType === 'owner'
+                      ? 'warning'
+                      : user?.userType === 'agent'
+                        ? 'default'
+                        : 'success'
+                  }
+                >
+                  {user?.userType === 'owner'
+                    ? 'Property Owner'
+                    : user?.userType === 'agent'
+                      ? 'Real Estate Agent'
+                      : 'Verified Resident'}
+                </Badge>
               </div>
               <p className="text-xs text-muted-foreground flex flex-wrap items-center gap-3 mt-0.5">
                 {user?.email && (
@@ -149,7 +227,11 @@ export default function TenantDetailPage() {
             className="gap-1.5"
           >
             <Trash2 className="h-4 w-4" />
-            <span>{deleteUser.isPending ? 'Deleting...' : 'Delete Tenant'}</span>
+            <span>
+              {deleteUser.isPending
+                ? 'Deleting...'
+                : `Delete ${user?.userType === 'owner' ? 'Owner' : user?.userType === 'agent' ? 'Agent' : 'Tenant'}`}
+            </span>
           </Button>
         </div>
       </div>
@@ -295,7 +377,14 @@ export default function TenantDetailPage() {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Tenant</DialogTitle>
+            <DialogTitle>
+              Delete{' '}
+              {user?.userType === 'owner'
+                ? 'Owner'
+                : user?.userType === 'agent'
+                  ? 'Agent'
+                  : 'Tenant'}
+            </DialogTitle>
             <DialogDescription>Are you sure? This cannot be undone.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
