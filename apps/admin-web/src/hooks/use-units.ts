@@ -42,6 +42,8 @@ export interface UnitQuery {
   sort?: string;
   order?: string;
   propertyId?: string;
+  buildingId?: string;
+  projectId?: string;
   type?: string;
   status?: string;
 }
@@ -59,6 +61,8 @@ export function useUnits(query: UnitQuery) {
       if (query.page) params.set('page', String(query.page));
       if (query.limit) params.set('limit', String(query.limit));
       if (query.propertyId) params.set('propertyId', query.propertyId);
+      if (query.buildingId) params.set('buildingId', query.buildingId);
+      if (query.projectId) params.set('projectId', query.projectId);
       if (query.type) params.set('type', query.type);
       if (query.status) params.set('status', query.status);
       if (query.search) params.set('search', query.search);
