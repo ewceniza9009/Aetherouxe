@@ -52,6 +52,10 @@ export default function PropertyDetailPage() {
   const { data: property, isLoading, error } = useProperty(id);
   const { data: specs } = usePropertySpecs(id);
   const { data: unitsResult } = useUnits({ propertyId: id, limit: 5 });
+  const buildingId = (property as any)?.units?.[0]?.buildingId;
+  const { data: buildingUnitsResult } = useUnits(
+    buildingId ? { buildingId, limit: 150 } : { propertyId: id, limit: 150 },
+  );
   const { data: amenitiesResult } = useAmenities({ propertyId: id, limit: 100 });
 
   const fallbackDesc = property
@@ -696,21 +700,32 @@ export default function PropertyDetailPage() {
           <BuildingDigitalTwin
             building={{
               id: property.id,
-              name: (property as any).name || (property as any).propertyCode || 'Property Tower',
-              floorCount: (property as any).floorCount || 6,
-              units:
-                unitsResult?.data?.map((u: any) => ({
+              name:
+                (property as any).units?.[0]?.building?.name ||
+                (property as any).name ||
+                (property as any).propertyCode ||
+                'Property Tower',
+              floorCount:
+                (property as any).units?.[0]?.building?.floorCount ||
+                (property as any).floorCount ||
+                6,
+              units: (buildingUnitsResult?.data || unitsResult?.data || []).map((u: any) => {
+                const rawFloor = u.floor?.floorNumber || u.floorNumber || u.floor?.sortOrder || 1;
+                const fNum =
+                  rawFloor === 'G' || rawFloor === 'g' ? 1 : parseInt(String(rawFloor), 10) || 1;
+                return {
                   id: u.id,
                   unitNumber: u.unitNumber,
                   unitType: u.type || u.unitType || 'one_br',
                   status: u.status || 'available',
-                  floorNumber: u.floor?.floorNumber || u.floorNumber || 1,
+                  floorNumber: fNum,
                   squareMeters: u.size || u.squareMeters,
                   bedrooms: u.bedrooms,
                   bathrooms: u.bathrooms,
                   listPrice: u.listPrice || u.price,
                   facingDirection: u.facingDirection || 'North-East',
-                })) || [],
+                };
+              }),
             }}
             onSelectUnit={(unit: any) =>
               navigate({ to: `/properties/${id}/units/${unit.id}/edit` })
