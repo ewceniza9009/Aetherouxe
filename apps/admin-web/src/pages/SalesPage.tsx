@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useListQuery } from '@/hooks/use-list-query';
 import { GridToolbar, GridState } from '@/components/GridToolbar';
@@ -68,11 +69,15 @@ const STEPS = [
 
 export default function SalesPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const schemeListQuery = useListQuery(500);
   const unitListQuery = useListQuery(500);
   const { search: schemeSearch, setSearch: setSchemeSearch } = schemeListQuery;
   const { search: unitSearch, setSearch: setUnitSearch } = unitListQuery;
-  const { data: unitsData, isLoading: unitsLoading } = useUnits({ limit: 500 });
+  const { data: unitsData, isLoading: unitsLoading } = useUnits({
+    status: 'available',
+    limit: 500,
+  });
   const { data: residentsData } = useUsers({ limit: 500 });
   const { data: agentsData, isLoading: agentsLoading } = useAgents({ limit: 500 });
   const { data: schemeTemplatesResult, isLoading: schemesLoading } = useSchemes();
@@ -158,6 +163,13 @@ export default function SalesPage() {
       if (isRto && monthlyRent) payload.monthlyRentAmount = Number(monthlyRent);
       const { data } = await api.post('/sales/apply-scheme', payload);
       setResult(data.data ?? data);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['units'] }),
+        queryClient.invalidateQueries({ queryKey: ['leases'] }),
+        queryClient.invalidateQueries({ queryKey: ['titles'] }),
+        queryClient.invalidateQueries({ queryKey: ['rto'] }),
+        queryClient.invalidateQueries({ queryKey: ['properties'] }),
+      ]);
       toast.success('Scheme applied successfully');
       setStep(3);
     } catch (e) {
