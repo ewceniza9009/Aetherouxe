@@ -1,9 +1,22 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, RoundedBox } from '@react-three/drei';
+import { OrbitControls, RoundedBox, Cylinder } from '@react-three/drei';
 import * as THREE from 'three';
 import { formatCurrency } from '../../lib/utils';
-import { Building2, Layers, Home, X, Compass, Sparkles, Star } from 'lucide-react';
+import {
+  Building2,
+  Layers,
+  Home,
+  X,
+  Compass,
+  Sparkles,
+  Star,
+  Sun,
+  Moon,
+  Eye,
+  Car,
+  Trees,
+} from 'lucide-react';
 import { TownhouseClusterView } from './TownhouseClusterView';
 import { SubdivisionMasterplanView } from './SubdivisionMasterplanView';
 
@@ -104,6 +117,95 @@ function getStatusColor(status: string) {
   return STATUS_COLORS[status?.toLowerCase()] || STATUS_COLORS.available;
 }
 
+/* ── Floating Sims-Style Plumbob Diamond ── */
+const TowerPlumbob: React.FC<{ color?: string }> = ({ color = '#fbbf24' }) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    if (!meshRef.current) return;
+    meshRef.current.rotation.y += 0.04;
+    meshRef.current.position.y = 1.3 + Math.sin(state.clock.elapsedTime * 3) * 0.08;
+  });
+
+  return (
+    <mesh ref={meshRef} position={[0, 1.3, 0]}>
+      <octahedronGeometry args={[0.22, 0]} />
+      <meshStandardMaterial
+        color={color}
+        emissive={color}
+        emissiveIntensity={0.9}
+        roughness={0.1}
+        metalness={0.8}
+      />
+    </mesh>
+  );
+};
+
+/* ── Stylized Low-Poly Tree ── */
+const TowerTree: React.FC<{ position: [number, number, number] }> = ({ position }) => (
+  <group position={position}>
+    <Cylinder args={[0.08, 0.12, 0.7, 6]} position={[0, 0.35, 0]}>
+      <meshStandardMaterial color="#78350f" roughness={0.9} />
+    </Cylinder>
+    <mesh position={[0, 0.9, 0]}>
+      <dodecahedronGeometry args={[0.45, 1]} />
+      <meshStandardMaterial color="#15803d" roughness={0.6} />
+    </mesh>
+    <mesh position={[0, 1.3, 0]}>
+      <dodecahedronGeometry args={[0.32, 1]} />
+      <meshStandardMaterial color="#16a34a" roughness={0.6} />
+    </mesh>
+  </group>
+);
+
+/* ── Stylized Street Lamp ── */
+const TowerStreetLamp: React.FC<{ position: [number, number, number]; isNight: boolean }> = ({
+  position,
+  isNight,
+}) => (
+  <group position={position}>
+    <Cylinder args={[0.04, 0.06, 1.8, 8]} position={[0, 0.9, 0]}>
+      <meshStandardMaterial color="#1e293b" metalness={0.9} roughness={0.3} />
+    </Cylinder>
+    <mesh position={[0, 1.85, 0]}>
+      <sphereGeometry args={[0.12, 8, 8]} />
+      <meshStandardMaterial
+        color={isNight ? '#fef08a' : '#94a3b8'}
+        emissive={isNight ? '#facc15' : '#000000'}
+        emissiveIntensity={isNight ? 1.5 : 0}
+      />
+    </mesh>
+    {isNight && <pointLight position={[0, 1.85, 0]} intensity={1.8} color="#fef08a" distance={5} />}
+  </group>
+);
+
+/* ── Stylized Miniature Car ── */
+const TowerCar: React.FC<{
+  position: [number, number, number];
+  rotation?: [number, number, number];
+  color?: string;
+}> = ({ position, rotation = [0, 0, 0], color = '#3b82f6' }) => (
+  <group position={position} rotation={rotation}>
+    {/* Body */}
+    <RoundedBox args={[0.8, 0.3, 1.5]} radius={0.05} position={[0, 0.15, 0]}>
+      <meshStandardMaterial color={color} metalness={0.8} roughness={0.2} />
+    </RoundedBox>
+    {/* Cabin */}
+    <RoundedBox args={[0.68, 0.24, 0.8]} radius={0.03} position={[0, 0.36, -0.08]}>
+      <meshStandardMaterial color="#0f172a" metalness={0.9} roughness={0.1} />
+    </RoundedBox>
+    {/* Wheels */}
+    {[-0.4, 0.4].map((x) =>
+      [-0.4, 0.4].map((z) => (
+        <mesh key={`${x}-${z}`} position={[x, 0.09, z]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.09, 0.09, 0.07, 10]} />
+          <meshStandardMaterial color="#1e293b" roughness={0.8} />
+        </mesh>
+      )),
+    )}
+  </group>
+);
+
 interface UnitMeshProps {
   unit: Unit3DData;
   position: [number, number, number];
@@ -111,6 +213,7 @@ interface UnitMeshProps {
   isHovered: boolean;
   isSelected: boolean;
   isHighlighted: boolean;
+  isNight: boolean;
   onPointerOver: (e: any) => void;
   onPointerOut: (e: any) => void;
   onClick: (e: any) => void;
@@ -123,6 +226,7 @@ const UnitMesh: React.FC<UnitMeshProps> = ({
   isHovered,
   isSelected,
   isHighlighted,
+  isNight,
   onPointerOver,
   onPointerOut,
   onClick,
@@ -142,6 +246,9 @@ const UnitMesh: React.FC<UnitMeshProps> = ({
 
   return (
     <group position={position}>
+      {(isHighlighted || isSelected) && (
+        <TowerPlumbob color={isHighlighted ? '#fbbf24' : '#38bdf8'} />
+      )}
       <RoundedBox
         ref={meshRef}
         args={size}
@@ -158,9 +265,17 @@ const UnitMesh: React.FC<UnitMeshProps> = ({
           roughness={0.2}
           metalness={0.7}
           emissive={
-            isHighlighted ? '#f59e0b' : isHovered || isSelected ? colorInfo.main : '#0a0f1d'
+            isNight
+              ? '#fbbf24'
+              : isHighlighted
+                ? '#f59e0b'
+                : isHovered || isSelected
+                  ? colorInfo.main
+                  : '#0a0f1d'
           }
-          emissiveIntensity={isHighlighted ? 0.95 : isHovered || isSelected ? 0.75 : 0.15}
+          emissiveIntensity={
+            isNight ? 0.5 : isHighlighted ? 0.95 : isHovered || isSelected ? 0.75 : 0.15
+          }
           transparent
           opacity={0.94}
         />
@@ -178,19 +293,15 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
   const [hoveredUnit, setHoveredUnit] = useState<Unit3DData | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<Unit3DData | null>(null);
   const [selectedFloor, setSelectedFloor] = useState<number | 'all'>('all');
+  const [timeOfDay, setTimeOfDay] = useState<'day' | 'sunset' | 'night'>('day');
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Auto-select highlighted unit on initial load
+  // Auto-select highlighted unit on initial load without hiding the tower
   useEffect(() => {
     if (highlightedUnitId && building.units) {
       const found = building.units.find((u) => u.id === highlightedUnitId);
       if (found) {
         setSelectedUnit(found);
-        const fNum =
-          typeof found.floorNumber === 'number'
-            ? found.floorNumber
-            : parseInt(String(found.floorNumber || 1), 10) || 1;
-        setSelectedFloor(fNum);
       }
     }
   }, [highlightedUnitId, building.units]);
@@ -219,7 +330,11 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
     }
 
     const actualMaxFloor = Array.from(floorsMap.keys()).reduce((max, f) => Math.max(max, f), 1);
-    const totalFloorCount = building.floorCount || building.floors?.length || actualMaxFloor;
+    const totalFloorCount = Math.max(
+      actualMaxFloor,
+      building.floorCount || 1,
+      building.floors?.length || 1,
+    );
 
     const result: { floorNumber: number; units: Unit3DData[] }[] = [];
     for (let f = 1; f <= totalFloorCount; f++) {
@@ -234,12 +349,14 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
     if (onSelectUnit) onSelectUnit(unit);
   };
 
+  const towerHeight = processedFloors.length * 1.35;
+
   return (
     <div
       className="w-full rounded-2xl overflow-hidden shadow-2xl flex flex-col select-none"
       style={{ backgroundColor: '#070b14', border: '1px solid #1e293b' }}
     >
-      {/* Control Header Bar */}
+      {/* 1. Control Header Bar */}
       <div
         className="px-5 py-3.5 flex flex-wrap items-center justify-between gap-4"
         style={{ backgroundColor: '#0a0f1d', borderBottom: '1px solid #1e293b' }}
@@ -252,40 +369,80 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
             <div className="flex items-center gap-2">
               <h3 className="text-base font-bold text-white tracking-wide">{building.name}</h3>
               <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/30">
-                3D Condo Tower Digital Twin
+                The Sims 3D Tower & Estate
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              {processedFloors.length} Architectural Floors • Click any unit to inspect
+              {processedFloors.length} Floors • Podium Amenity Deck, Driveways, Cars & Trees
             </p>
           </div>
         </div>
 
-        {/* Floor Switcher */}
-        <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
-          <button
-            onClick={() => setSelectedFloor('all')}
-            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-              selectedFloor === 'all'
-                ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            All Floors
-          </button>
-          {processedFloors.map((f) => (
+        {/* Floor Switcher & Time of Day Controls */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Time of Day */}
+          <div className="flex items-center bg-slate-900 rounded-lg p-0.5 border border-slate-800">
             <button
-              key={f.floorNumber}
-              onClick={() => setSelectedFloor(f.floorNumber)}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
-                selectedFloor === f.floorNumber
+              onClick={() => setTimeOfDay('day')}
+              className={`p-1.5 rounded-md transition-all ${
+                timeOfDay === 'day'
+                  ? 'bg-amber-500/20 text-amber-400'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Daylight"
+            >
+              <Sun className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setTimeOfDay('sunset')}
+              className={`p-1.5 rounded-md transition-all ${
+                timeOfDay === 'sunset'
+                  ? 'bg-orange-500/20 text-orange-400'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Golden Hour Sunset"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setTimeOfDay('night')}
+              className={`p-1.5 rounded-md transition-all ${
+                timeOfDay === 'night'
+                  ? 'bg-indigo-500/20 text-indigo-400'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Night Mode"
+            >
+              <Moon className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Floors */}
+          <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+            <button
+              onClick={() => setSelectedFloor('all')}
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+                selectedFloor === 'all'
                   ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
             >
-              F{f.floorNumber}
+              All Floors
             </button>
-          ))}
+            {processedFloors.map((f) => (
+              <button
+                key={f.floorNumber}
+                onClick={() => setSelectedFloor(f.floorNumber)}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
+                  selectedFloor === f.floorNumber
+                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                F{f.floorNumber}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Legend */}
@@ -304,7 +461,7 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
         </div>
       </div>
 
-      {/* Main 3D Canvas */}
+      {/* 2. Main 3D Canvas Diorama */}
       <div
         className="relative w-full h-[520px] bg-gradient-to-b from-[#070b14] via-[#080e1e] to-[#040711] overflow-hidden"
         onMouseMove={(e) => {
@@ -312,25 +469,98 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
           setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
         }}
       >
-        <Canvas camera={{ position: [9, 7, 13], fov: 42 }} shadows>
-          <ambientLight intensity={0.9} />
-          <directionalLight position={[12, 20, 15]} intensity={1.6} castShadow />
-          <directionalLight position={[-10, 10, -10]} intensity={0.5} />
-          <pointLight position={[0, 8, 8]} intensity={1.2} color="#38bdf8" />
+        <Canvas camera={{ position: [11, 10, 15], fov: 40 }} shadows>
+          {/* Lighting */}
+          <ambientLight
+            intensity={timeOfDay === 'night' ? 0.35 : timeOfDay === 'sunset' ? 0.7 : 0.95}
+          />
+          <directionalLight
+            position={[14, 24, 18]}
+            intensity={timeOfDay === 'night' ? 0.4 : timeOfDay === 'sunset' ? 2.4 : 1.8}
+            color={
+              timeOfDay === 'sunset' ? '#fed7aa' : timeOfDay === 'night' ? '#93c5fd' : '#ffffff'
+            }
+            castShadow
+          />
+          <pointLight
+            position={[0, 10, 8]}
+            intensity={timeOfDay === 'night' ? 1.6 : 0.9}
+            color="#38bdf8"
+          />
 
-          {/* Ground Grid */}
-          <gridHelper args={[32, 32, '#1e293b', '#0f172a']} position={[0, -0.05, 0]} />
+          {/* Living Estate Environment: Ground Lawn, Trees, Street & Cars */}
+          <group position={[0, 0, 0]}>
+            {/* Grand Landscape Base */}
+            <RoundedBox args={[22, 0.25, 22]} radius={0.1} position={[0, -0.15, 0]}>
+              <meshStandardMaterial color="#064e3b" roughness={0.7} metalness={0.2} />
+            </RoundedBox>
+
+            {/* Front Access Avenue & Roundabout */}
+            <mesh position={[0, -0.01, 7.5]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[22, 5]} />
+              <meshStandardMaterial color="#0b1120" roughness={0.9} />
+            </mesh>
+            <mesh position={[0, 0.01, 7.5]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[20, 0.12]} />
+              <meshStandardMaterial color="#f59e0b" roughness={0.5} />
+            </mesh>
+
+            {/* Grand Arrival Podium / Driveway Apron */}
+            <RoundedBox args={[12, 0.12, 8]} radius={0.08} position={[0, 0.02, 3.5]}>
+              <meshStandardMaterial color="#1e293b" roughness={0.6} />
+            </RoundedBox>
+
+            {/* Amenity Deck Swimming Pool */}
+            <group position={[-5.5, 0.06, 0]}>
+              {/* Pool Coping */}
+              <RoundedBox args={[3.6, 0.12, 5.5]} radius={0.04} position={[0, 0, 0]}>
+                <meshStandardMaterial color="#cbd5e1" roughness={0.4} />
+              </RoundedBox>
+              {/* Water Surface */}
+              <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[3.2, 5.0]} />
+                <meshStandardMaterial
+                  color="#0284c7"
+                  emissive="#0284c7"
+                  emissiveIntensity={timeOfDay === 'night' ? 0.6 : 0.2}
+                  roughness={0.05}
+                  metalness={0.9}
+                  transparent
+                  opacity={0.85}
+                />
+              </mesh>
+            </group>
+
+            {/* Landscaping Trees */}
+            <TowerTree position={[-8, 0, 4]} />
+            <TowerTree position={[-8, 0, 7]} />
+            <TowerTree position={[-8, 0, -4]} />
+            <TowerTree position={[8, 0, 4]} />
+            <TowerTree position={[8, 0, 7]} />
+            <TowerTree position={[8, 0, -4]} />
+            <TowerTree position={[0, 0, -7]} />
+            <TowerTree position={[4, 0, -7]} />
+            <TowerTree position={[-4, 0, -7]} />
+
+            {/* Modern Street Lamps */}
+            <TowerStreetLamp position={[-6.5, 0, 6.2]} isNight={timeOfDay === 'night'} />
+            <TowerStreetLamp position={[6.5, 0, 6.2]} isNight={timeOfDay === 'night'} />
+            <TowerStreetLamp position={[0, 0, 6.2]} isNight={timeOfDay === 'night'} />
+
+            {/* Parked & Arriving Cars in Driveway */}
+            <TowerCar position={[-3, 0.08, 4.5]} color="#38bdf8" />
+            <TowerCar position={[3, 0.08, 4.5]} color="#e11d48" />
+            <TowerCar position={[0, 0.08, 8.5]} rotation={[0, Math.PI / 2, 0]} color="#f59e0b" />
+          </group>
 
           {/* Building Podium & Floor Plates */}
           <group position={[0, 0, 0]}>
             {processedFloors.map((floor) => {
               const isFloorVisible = selectedFloor === 'all' || selectedFloor === floor.floorNumber;
-              if (!isFloorVisible) return null;
-
               const yPos = (floor.floorNumber - 1) * 1.35 + 0.7;
 
               return (
-                <group key={floor.floorNumber} position={[0, yPos, 0]}>
+                <group key={floor.floorNumber} position={[0, yPos, 0]} visible={isFloorVisible}>
                   {/* Floor Slab Plate */}
                   <RoundedBox
                     args={[4.6, 0.12, 4.6]}
@@ -388,6 +618,7 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
                         isHovered={isHovered}
                         isSelected={isSelected}
                         isHighlighted={isHighlighted}
+                        isNight={timeOfDay === 'night'}
                         onPointerOver={(e) => {
                           e.stopPropagation();
                           setHoveredUnit(unit);
@@ -411,8 +642,8 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
           <OrbitControls
             enableDamping
             dampingFactor={0.06}
-            minDistance={6}
-            maxDistance={32}
+            minDistance={7}
+            maxDistance={35}
             maxPolarAngle={Math.PI / 2 - 0.05}
           />
         </Canvas>
@@ -596,7 +827,7 @@ export const BuildingDigitalTwin: React.FC<BuildingDigitalTwinProps> = ({
     );
   }
 
-  // 3. Otherwise -> render 3D High-Rise Condo Tower View
+  // 3. Otherwise -> render 3D High-Rise Condo Tower View with full Sims Environment
   return (
     <CondoTowerTwinView
       building={building}
