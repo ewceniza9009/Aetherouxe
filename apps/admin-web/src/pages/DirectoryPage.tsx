@@ -18,6 +18,10 @@ import {
   SelectValue,
 } from '@elite-realty/shared-ui/components/ui';
 import { useLeases } from '@/hooks/use-leases';
+import { useTitleTransfers } from '@/hooks/use-titles';
+import { useRtoContracts } from '@/hooks/use-rto';
+import { useUnits } from '@/hooks/use-units';
+import { formatEnumLabel } from '@elite-realty/shared-ui';
 import {
   Dialog,
   DialogContent,
@@ -78,23 +82,79 @@ export default function DirectoryPage() {
   });
 
   const { data: leasesData } = useLeases({ limit: 500 });
+  const { data: titlesData } = useTitleTransfers({ limit: 500 });
+  const { data: rtoData } = useRtoContracts({ limit: 500 });
+  const { data: unitsData } = useUnits({ limit: 500 });
   const deleteUser = useDeleteUser();
 
   const rows = useMemo<DirectoryRow[]>(() => {
     const leasesByUser = new Map<string, any>();
-    (leasesData?.data ?? []).forEach((l) => {
+    (leasesData?.data ?? []).forEach((l: any) => {
       if (l.tenantUserId) leasesByUser.set(l.tenantUserId, l);
+      if (l.tenantId) leasesByUser.set(l.tenantId, l);
     });
+
+    const titlesByUser = new Map<string, any>();
+    (titlesData?.data ?? []).forEach((t) => {
+      if (t.buyerUserId) titlesByUser.set(t.buyerUserId, t);
+      if (t.buyer?.id) titlesByUser.set(t.buyer.id, t);
+    });
+
+    const rtoByUser = new Map<string, any>();
+    (rtoData?.data ?? []).forEach((r) => {
+      const tenantId = r.leaseAgreement?.tenant?.id;
+      if (tenantId) rtoByUser.set(tenantId, r);
+    });
+
+    const unitsByOwnerName = new Map<string, any>();
+    (unitsData?.data ?? []).forEach((u) => {
+      if (u.owner) unitsByOwnerName.set(u.owner.toLowerCase(), u);
+      if (u.property?.owner?.firstName) {
+        const ownerFullName = `${u.property.owner.firstName} ${u.property.owner.lastName ?? ''}`
+          .trim()
+          .toLowerCase();
+        unitsByOwnerName.set(ownerFullName, u);
+      }
+    });
+
     const users = usersResult?.data ?? [];
     return users.map((u) => {
-      const lease = leasesByUser.get(u.id);
       const name = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email;
+      const nameLower = name.toLowerCase();
+
+      const lease = leasesByUser.get(u.id);
+      const title = titlesByUser.get(u.id);
+      const rto = rtoByUser.get(u.id);
+      const unit = unitsByOwnerName.get(nameLower);
+
+      const property =
+        lease?.propertyName ||
+        title?.property?.project?.name ||
+        title?.property?.propertyCode ||
+        unit?.property?.name ||
+        unit?.projectName ||
+        '—';
+
+      const unitNum = lease?.unitLabel || title?.unit?.unitNumber || unit?.unitNumber || '—';
+
+      const leaseEnd = lease?.endDate
+        ? new Date(lease.endDate).toLocaleDateString()
+        : title?.completedDate
+          ? new Date(title.completedDate).toLocaleDateString()
+          : rto?.targetPurchaseDate
+            ? new Date(rto.targetPurchaseDate).toLocaleDateString()
+            : '—';
+
+      const rawStatus =
+        lease?.status || title?.status || rto?.status || (u.isActive ? 'active' : 'inactive');
+
       const initials = name
         .split(' ')
         .map((n) => n[0])
         .join('')
         .slice(0, 2)
         .toUpperCase();
+
       return {
         id: u.id,
         name,
@@ -103,14 +163,14 @@ export default function DirectoryPage() {
         phone: u.phone,
         role: roleLabel[u.userType] ?? u.userType,
         userType: u.userType,
-        property: lease?.propertyName ?? '—',
-        unit: lease?.unitLabel ?? '—',
-        leaseEnd: lease?.endDate ? new Date(lease.endDate).toLocaleDateString() : '—',
-        leaseStatus: !lease ? '—' : lease.status,
+        property,
+        unit: unitNum,
+        leaseEnd,
+        leaseStatus: rawStatus,
         avatarUrl: u.avatarUrl,
       } as DirectoryRow;
     });
-  }, [usersResult, leasesData]);
+  }, [usersResult, leasesData, titlesData, rtoData, unitsData]);
 
   const filteredRows = useMemo(
     () => (roleFilter === 'all' ? rows : rows.filter((r) => r.userType === roleFilter)),
@@ -273,7 +333,7 @@ export default function DirectoryPage() {
                                   : 'warning'
                           }
                         >
-                          {row.leaseStatus}
+                          {formatEnumLabel(row.leaseStatus)}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-right">
