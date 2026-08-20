@@ -71,8 +71,7 @@ export class UnitsService {
           take: 1,
         },
         reservations: {
-          where: { stage: { in: ['reserved', 'contract_prep', 'payment_pending'] } },
-          include: { buyerUser: true },
+          where: { status: 'reserved' },
           orderBy: { createdAt: 'desc' },
           take: 1,
         },

@@ -106,12 +106,7 @@ export function useUnits(query: UnitQuery) {
           ? `${u.leaseAgreements[0].tenant.firstName || ''} ${u.leaseAgreements[0].tenant.lastName || ''}`.trim() ||
             u.leaseAgreements[0].tenant.email
           : null,
-        reserver: u.reservations?.[0]?.prospectName
-          ? u.reservations[0].prospectName
-          : u.reservations?.[0]?.buyerUser
-            ? `${u.reservations[0].buyerUser.firstName || ''} ${u.reservations[0].buyerUser.lastName || ''}`.trim() ||
-              u.reservations[0].buyerUser.email
-            : null,
+        reserver: u.reservations?.[0]?.prospectName || null,
       }));
       return { data: transformed, meta } as PaginatedResult<Unit>;
     },
