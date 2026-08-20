@@ -463,94 +463,104 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
 
       {/* 2. Main 3D Canvas Diorama */}
       <div
-        className="relative w-full h-[520px] bg-gradient-to-b from-[#070b14] via-[#080e1e] to-[#040711] overflow-hidden"
+        className="relative w-full h-[540px] bg-gradient-to-b from-[#0f172a] via-[#1e293b] to-[#0b1120] overflow-hidden"
         onMouseMove={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
         }}
       >
-        <Canvas camera={{ position: [11, 10, 15], fov: 40 }} shadows>
-          {/* Lighting */}
+        <Canvas camera={{ position: [13, 11, 17], fov: 38 }} shadows>
+          {/* High-Key Architectural Studio Lighting */}
           <ambientLight
-            intensity={timeOfDay === 'night' ? 0.35 : timeOfDay === 'sunset' ? 0.7 : 0.95}
+            intensity={timeOfDay === 'night' ? 0.7 : timeOfDay === 'sunset' ? 1.4 : 1.8}
           />
           <directionalLight
-            position={[14, 24, 18]}
-            intensity={timeOfDay === 'night' ? 0.4 : timeOfDay === 'sunset' ? 2.4 : 1.8}
+            position={[16, 28, 20]}
+            intensity={timeOfDay === 'night' ? 0.8 : timeOfDay === 'sunset' ? 3.0 : 2.6}
             color={
-              timeOfDay === 'sunset' ? '#fed7aa' : timeOfDay === 'night' ? '#93c5fd' : '#ffffff'
+              timeOfDay === 'sunset' ? '#fed7aa' : timeOfDay === 'night' ? '#bfdbfe' : '#ffffff'
             }
             castShadow
           />
+          {/* Opposite Fill Light so no side is dark */}
+          <directionalLight
+            position={[-16, 18, -14]}
+            intensity={timeOfDay === 'night' ? 0.5 : 1.4}
+            color="#bae6fd"
+          />
           <pointLight
-            position={[0, 10, 8]}
-            intensity={timeOfDay === 'night' ? 1.6 : 0.9}
+            position={[0, 12, 10]}
+            intensity={timeOfDay === 'night' ? 2.2 : 1.2}
             color="#38bdf8"
           />
 
           {/* Living Estate Environment: Ground Lawn, Trees, Street & Cars */}
           <group position={[0, 0, 0]}>
             {/* Grand Landscape Base */}
-            <RoundedBox args={[22, 0.25, 22]} radius={0.1} position={[0, -0.15, 0]}>
-              <meshStandardMaterial color="#064e3b" roughness={0.7} metalness={0.2} />
+            <RoundedBox args={[24, 0.3, 24]} radius={0.15} position={[0, -0.15, 0]}>
+              <meshStandardMaterial
+                color={timeOfDay === 'night' ? '#064e3b' : '#15803d'}
+                roughness={0.6}
+                metalness={0.1}
+              />
             </RoundedBox>
 
             {/* Front Access Avenue & Roundabout */}
-            <mesh position={[0, -0.01, 7.5]} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[22, 5]} />
-              <meshStandardMaterial color="#0b1120" roughness={0.9} />
+            <mesh position={[0, 0.02, 8.5]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[24, 5.5]} />
+              <meshStandardMaterial color="#334155" roughness={0.8} />
             </mesh>
-            <mesh position={[0, 0.01, 7.5]} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[20, 0.12]} />
-              <meshStandardMaterial color="#f59e0b" roughness={0.5} />
+            <mesh position={[0, 0.03, 8.5]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[22, 0.15]} />
+              <meshStandardMaterial color="#facc15" roughness={0.4} />
             </mesh>
 
             {/* Grand Arrival Podium / Driveway Apron */}
-            <RoundedBox args={[12, 0.12, 8]} radius={0.08} position={[0, 0.02, 3.5]}>
-              <meshStandardMaterial color="#1e293b" roughness={0.6} />
+            <RoundedBox args={[14, 0.15, 9]} radius={0.1} position={[0, 0.04, 4.0]}>
+              <meshStandardMaterial color="#475569" roughness={0.5} />
             </RoundedBox>
 
             {/* Amenity Deck Swimming Pool */}
-            <group position={[-5.5, 0.06, 0]}>
+            <group position={[-6.5, 0.1, 0]}>
               {/* Pool Coping */}
-              <RoundedBox args={[3.6, 0.12, 5.5]} radius={0.04} position={[0, 0, 0]}>
-                <meshStandardMaterial color="#cbd5e1" roughness={0.4} />
+              <RoundedBox args={[4.2, 0.18, 6.5]} radius={0.06} position={[0, 0, 0]}>
+                <meshStandardMaterial color="#f1f5f9" roughness={0.3} />
               </RoundedBox>
               {/* Water Surface */}
-              <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <planeGeometry args={[3.2, 5.0]} />
+              <mesh position={[0, 0.12, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[3.8, 6.0]} />
                 <meshStandardMaterial
-                  color="#0284c7"
-                  emissive="#0284c7"
-                  emissiveIntensity={timeOfDay === 'night' ? 0.6 : 0.2}
-                  roughness={0.05}
-                  metalness={0.9}
+                  color="#06b6d4"
+                  emissive="#0891b2"
+                  emissiveIntensity={timeOfDay === 'night' ? 0.8 : 0.4}
+                  roughness={0.02}
+                  metalness={0.8}
                   transparent
-                  opacity={0.85}
+                  opacity={0.9}
                 />
               </mesh>
             </group>
 
             {/* Landscaping Trees */}
-            <TowerTree position={[-8, 0, 4]} />
-            <TowerTree position={[-8, 0, 7]} />
-            <TowerTree position={[-8, 0, -4]} />
-            <TowerTree position={[8, 0, 4]} />
-            <TowerTree position={[8, 0, 7]} />
-            <TowerTree position={[8, 0, -4]} />
-            <TowerTree position={[0, 0, -7]} />
-            <TowerTree position={[4, 0, -7]} />
-            <TowerTree position={[-4, 0, -7]} />
+            <TowerTree position={[-9, 0, 4]} />
+            <TowerTree position={[-9, 0, 7.5]} />
+            <TowerTree position={[-9, 0, -4]} />
+            <TowerTree position={[9, 0, 4]} />
+            <TowerTree position={[9, 0, 7.5]} />
+            <TowerTree position={[9, 0, -4]} />
+            <TowerTree position={[0, 0, -8]} />
+            <TowerTree position={[5, 0, -8]} />
+            <TowerTree position={[-5, 0, -8]} />
 
             {/* Modern Street Lamps */}
-            <TowerStreetLamp position={[-6.5, 0, 6.2]} isNight={timeOfDay === 'night'} />
-            <TowerStreetLamp position={[6.5, 0, 6.2]} isNight={timeOfDay === 'night'} />
-            <TowerStreetLamp position={[0, 0, 6.2]} isNight={timeOfDay === 'night'} />
+            <TowerStreetLamp position={[-7.5, 0, 7]} isNight={timeOfDay === 'night'} />
+            <TowerStreetLamp position={[7.5, 0, 7]} isNight={timeOfDay === 'night'} />
+            <TowerStreetLamp position={[0, 0, 7]} isNight={timeOfDay === 'night'} />
 
             {/* Parked & Arriving Cars in Driveway */}
-            <TowerCar position={[-3, 0.08, 4.5]} color="#38bdf8" />
-            <TowerCar position={[3, 0.08, 4.5]} color="#e11d48" />
-            <TowerCar position={[0, 0.08, 8.5]} rotation={[0, Math.PI / 2, 0]} color="#f59e0b" />
+            <TowerCar position={[-3.5, 0.12, 5.0]} color="#38bdf8" />
+            <TowerCar position={[3.5, 0.12, 5.0]} color="#f43f5e" />
+            <TowerCar position={[0, 0.12, 9.5]} rotation={[0, Math.PI / 2, 0]} color="#fbbf24" />
           </group>
 
           {/* Building Podium & Floor Plates */}
@@ -561,14 +571,20 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
 
               return (
                 <group key={floor.floorNumber} position={[0, yPos, 0]} visible={isFloorVisible}>
-                  {/* Floor Slab Plate */}
+                  {/* Floor Slab Plate - Sleek Bright Concrete & Frosted Glass Edge */}
                   <RoundedBox
-                    args={[4.6, 0.12, 4.6]}
-                    radius={0.04}
+                    args={[4.8, 0.14, 4.8]}
+                    radius={0.05}
                     smoothness={3}
                     position={[0, -0.6, 0]}
                   >
-                    <meshStandardMaterial color="#0f172a" metalness={0.9} roughness={0.2} />
+                    <meshStandardMaterial
+                      color="#334155"
+                      metalness={0.7}
+                      roughness={0.3}
+                      emissive="#1e293b"
+                      emissiveIntensity={0.2}
+                    />
                   </RoundedBox>
 
                   {/* Units Matrix on this floor */}
