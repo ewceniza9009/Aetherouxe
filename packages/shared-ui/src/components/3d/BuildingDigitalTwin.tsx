@@ -296,6 +296,21 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
   const [timeOfDay, setTimeOfDay] = useState<'day' | 'sunset' | 'night'>('day');
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
+  // Separate residential units from dedicated parking slots
+  const { residentialUnits, parkingUnits } = useMemo(() => {
+    const all = building.units || [];
+    const res: Unit3DData[] = [];
+    const park: Unit3DData[] = [];
+    all.forEach((u) => {
+      if (u.unitType?.toLowerCase() === 'parking' || u.unitNumber.startsWith('P-')) {
+        park.push(u);
+      } else {
+        res.push(u);
+      }
+    });
+    return { residentialUnits: res, parkingUnits: park };
+  }, [building.units]);
+
   // Auto-select highlighted unit on initial load without hiding the tower
   useEffect(() => {
     if (highlightedUnitId && building.units) {
@@ -306,12 +321,12 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
     }
   }, [highlightedUnitId, building.units]);
 
-  // Organize floors and units
+  // Organize floors and residential units
   const processedFloors = useMemo(() => {
     const floorsMap = new Map<number, Unit3DData[]>();
 
-    if (building.units && building.units.length > 0) {
-      building.units.forEach((u) => {
+    if (residentialUnits.length > 0) {
+      residentialUnits.forEach((u) => {
         const fNum =
           typeof u.floorNumber === 'number'
             ? u.floorNumber
@@ -325,7 +340,10 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
           typeof f.floorNumber === 'number'
             ? f.floorNumber
             : parseInt(String(f.floorNumber || idx + 1), 10) || idx + 1;
-        floorsMap.set(fNum, f.units || []);
+        floorsMap.set(
+          fNum,
+          (f.units || []).filter((u) => u.unitType?.toLowerCase() !== 'parking'),
+        );
       });
     }
 
@@ -342,7 +360,7 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
       result.push({ floorNumber: f, units: unitsOnFloor });
     }
     return result;
-  }, [building]);
+  }, [residentialUnits, building]);
 
   const handleUnitClick = (unit: Unit3DData) => {
     setSelectedUnit(unit);
@@ -557,10 +575,76 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
             <TowerStreetLamp position={[7.5, 0, 7]} isNight={timeOfDay === 'night'} />
             <TowerStreetLamp position={[0, 0, 7]} isNight={timeOfDay === 'night'} />
 
-            {/* Parked & Arriving Cars in Driveway */}
-            <TowerCar position={[-3.5, 0.12, 5.0]} color="#38bdf8" />
-            <TowerCar position={[3.5, 0.12, 5.0]} color="#f43f5e" />
-            <TowerCar position={[0, 0.12, 9.5]} rotation={[0, Math.PI / 2, 0]} color="#fbbf24" />
+            {/* Dedicated Ground / Basement Parking Bay Strip */}
+            {parkingUnits.length > 0 && (
+              <group position={[0, 0.05, 4.2]}>
+                {parkingUnits.map((pUnit, pIdx) => {
+                  const pCount = parkingUnits.length;
+                  const pX = (pIdx - (pCount - 1) / 2) * 2.2;
+                  const isHovered = hoveredUnit?.id === pUnit.id;
+                  const isSelected = selectedUnit?.id === pUnit.id;
+                  const isHighlighted = pUnit.id === highlightedUnitId;
+
+                  return (
+                    <group
+                      key={pUnit.id}
+                      position={[pX, 0, 0]}
+                      onPointerOver={(e) => {
+                        e.stopPropagation();
+                        setHoveredUnit(pUnit);
+                      }}
+                      onPointerOut={(e) => {
+                        e.stopPropagation();
+                        setHoveredUnit((prev) => (prev?.id === pUnit.id ? null : prev));
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUnitClick(pUnit);
+                      }}
+                    >
+                      {/* Parking Stall Boundary Plate */}
+                      <RoundedBox args={[1.9, 0.04, 3.2]} radius={0.02} position={[0, 0.02, 0]}>
+                        <meshStandardMaterial
+                          color={
+                            isHighlighted
+                              ? '#f59e0b'
+                              : isSelected || isHovered
+                                ? '#38bdf8'
+                                : '#1e293b'
+                          }
+                          roughness={0.6}
+                          metalness={0.4}
+                          emissive={isHighlighted ? '#f59e0b' : '#000000'}
+                          emissiveIntensity={isHighlighted ? 0.8 : 0}
+                        />
+                      </RoundedBox>
+                      {/* Parked Vehicle */}
+                      <TowerCar
+                        position={[0, 0.06, 0]}
+                        color={isHighlighted ? '#fbbf24' : pIdx % 2 === 0 ? '#38bdf8' : '#f43f5e'}
+                      />
+                      {/* Floating Plumbob Diamond on Active Parking */}
+                      {(isHighlighted || isSelected) && (
+                        <TowerPlumbob color={isHighlighted ? '#fbbf24' : '#38bdf8'} />
+                      )}
+                    </group>
+                  );
+                })}
+              </group>
+            )}
+
+            {/* General Driveway Cars (when no specific parking units) */}
+            {parkingUnits.length === 0 && (
+              <>
+                <TowerCar position={[-3.5, 0.12, 5.0]} color="#38bdf8" />
+                <TowerCar position={[3.5, 0.12, 5.0]} color="#f43f5e" />
+                <TowerCar
+                  position={[0, 0.12, 9.5]}
+                  rotation={[0, Math.PI / 2, 0]}
+                  color="#fbbf24"
+                />
+              </>
+            )}
           </group>
 
           {/* Building Podium & Floor Plates */}
@@ -587,69 +671,96 @@ export const CondoTowerTwinView: React.FC<BuildingDigitalTwinProps> = ({
                     />
                   </RoundedBox>
 
-                  {/* Units Matrix on this floor */}
-                  {floor.units.map((unit, uIdx) => {
-                    const count = floor.units.length;
-                    let x = 0;
-                    let z = 0;
-                    let uSize: [number, number, number] = [1.65, 1.0, 1.65];
+                  {/* If floor has no individual units, render a solid architectural glass facade */}
+                  {floor.units.length === 0 ? (
+                    <group position={[0, 0, 0]}>
+                      <RoundedBox
+                        args={[4.4, 1.05, 4.4]}
+                        radius={0.04}
+                        smoothness={3}
+                        position={[0, 0, 0]}
+                      >
+                        <meshStandardMaterial
+                          color="#38bdf8"
+                          roughness={0.15}
+                          metalness={0.85}
+                          transparent
+                          opacity={0.35}
+                          emissive={timeOfDay === 'night' ? '#fbbf24' : '#0369a1'}
+                          emissiveIntensity={timeOfDay === 'night' ? 0.35 : 0.1}
+                        />
+                      </RoundedBox>
+                      {/* Floor mullion vertical lines */}
+                      {[-1.5, 0, 1.5].map((mx) => (
+                        <RoundedBox key={mx} args={[0.06, 1.05, 4.42]} position={[mx, 0, 0]}>
+                          <meshStandardMaterial color="#1e293b" metalness={0.9} roughness={0.3} />
+                        </RoundedBox>
+                      ))}
+                    </group>
+                  ) : (
+                    floor.units.map((unit, uIdx) => {
+                      const count = floor.units.length;
+                      let x = 0;
+                      let z = 0;
+                      let uSize: [number, number, number] = [1.65, 1.0, 1.65];
 
-                    if (count === 1) {
-                      x = 0;
-                      z = 0;
-                      uSize = [2.4, 1.0, 2.4];
-                    } else if (count === 2) {
-                      x = (uIdx - 0.5) * 2.0;
-                      z = 0;
-                      uSize = [1.8, 1.0, 2.0];
-                    } else if (count <= 4) {
-                      const cols = 2;
-                      const row = Math.floor(uIdx / cols);
-                      const col = uIdx % cols;
-                      x = (col - 0.5) * 1.9;
-                      z = (row - 0.5) * 1.9;
-                      uSize = [1.65, 1.0, 1.65];
-                    } else {
-                      const cols = Math.ceil(Math.sqrt(count));
-                      const rows = Math.ceil(count / cols);
-                      const row = Math.floor(uIdx / cols);
-                      const col = uIdx % cols;
-                      const stepX = 3.8 / cols;
-                      const stepZ = 3.8 / rows;
-                      x = (col - (cols - 1) / 2) * stepX;
-                      z = (row - (rows - 1) / 2) * stepZ;
-                      uSize = [Math.max(0.7, stepX * 0.85), 1.0, Math.max(0.7, stepZ * 0.85)];
-                    }
+                      if (count === 1) {
+                        x = 0;
+                        z = 0;
+                        uSize = [2.4, 1.0, 2.4];
+                      } else if (count === 2) {
+                        x = (uIdx - 0.5) * 2.0;
+                        z = 0;
+                        uSize = [1.8, 1.0, 2.0];
+                      } else if (count <= 4) {
+                        const cols = 2;
+                        const row = Math.floor(uIdx / cols);
+                        const col = uIdx % cols;
+                        x = (col - 0.5) * 1.9;
+                        z = (row - 0.5) * 1.9;
+                        uSize = [1.65, 1.0, 1.65];
+                      } else {
+                        const cols = Math.ceil(Math.sqrt(count));
+                        const rows = Math.ceil(count / cols);
+                        const row = Math.floor(uIdx / cols);
+                        const col = uIdx % cols;
+                        const stepX = 3.8 / cols;
+                        const stepZ = 3.8 / rows;
+                        x = (col - (cols - 1) / 2) * stepX;
+                        z = (row - (rows - 1) / 2) * stepZ;
+                        uSize = [Math.max(0.7, stepX * 0.85), 1.0, Math.max(0.7, stepZ * 0.85)];
+                      }
 
-                    const isHovered = hoveredUnit?.id === unit.id;
-                    const isSelected = selectedUnit?.id === unit.id;
-                    const isHighlighted = unit.id === highlightedUnitId;
+                      const isHovered = hoveredUnit?.id === unit.id;
+                      const isSelected = selectedUnit?.id === unit.id;
+                      const isHighlighted = unit.id === highlightedUnitId;
 
-                    return (
-                      <UnitMesh
-                        key={unit.id}
-                        unit={unit}
-                        position={[x, 0, z]}
-                        size={uSize}
-                        isHovered={isHovered}
-                        isSelected={isSelected}
-                        isHighlighted={isHighlighted}
-                        isNight={timeOfDay === 'night'}
-                        onPointerOver={(e) => {
-                          e.stopPropagation();
-                          setHoveredUnit(unit);
-                        }}
-                        onPointerOut={(e) => {
-                          e.stopPropagation();
-                          setHoveredUnit((prev) => (prev?.id === unit.id ? null : prev));
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleUnitClick(unit);
-                        }}
-                      />
-                    );
-                  })}
+                      return (
+                        <UnitMesh
+                          key={unit.id}
+                          unit={unit}
+                          position={[x, 0, z]}
+                          size={uSize}
+                          isHovered={isHovered}
+                          isSelected={isSelected}
+                          isHighlighted={isHighlighted}
+                          isNight={timeOfDay === 'night'}
+                          onPointerOver={(e) => {
+                            e.stopPropagation();
+                            setHoveredUnit(unit);
+                          }}
+                          onPointerOut={(e) => {
+                            e.stopPropagation();
+                            setHoveredUnit((prev) => (prev?.id === unit.id ? null : prev));
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleUnitClick(unit);
+                          }}
+                        />
+                      );
+                    })
+                  )}
                 </group>
               );
             })}
