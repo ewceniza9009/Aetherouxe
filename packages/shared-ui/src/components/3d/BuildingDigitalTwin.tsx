@@ -169,7 +169,6 @@ export const BuildingDigitalTwin: React.FC<BuildingDigitalTwinProps> = ({
   // Organize floors and units
   const processedFloors = useMemo(() => {
     const floorsMap = new Map<number, Unit3DData[]>();
-    const totalFloorCount = Math.max(building.floorCount || 8, 4);
 
     if (building.units && building.units.length > 0) {
       building.units.forEach((u) => {
@@ -190,25 +189,12 @@ export const BuildingDigitalTwin: React.FC<BuildingDigitalTwinProps> = ({
       });
     }
 
+    const actualMaxFloor = Array.from(floorsMap.keys()).reduce((max, f) => Math.max(max, f), 1);
+    const totalFloorCount = building.floorCount || building.floors?.length || actualMaxFloor;
+
     const result: { floorNumber: number; units: Unit3DData[] }[] = [];
     for (let f = 1; f <= totalFloorCount; f++) {
       const unitsOnFloor = floorsMap.get(f) || [];
-      if (unitsOnFloor.length === 0) {
-        for (let u = 1; u <= 4; u++) {
-          unitsOnFloor.push({
-            id: `gen-${f}-${u}`,
-            unitNumber: `${f}0${u}`,
-            unitType: u === 1 ? 'studio' : u === 2 ? 'one_br' : u === 3 ? 'two_br' : 'three_br',
-            status:
-              u === 1 ? 'available' : u === 2 ? 'reserved' : u === 3 ? 'rto_active' : 'occupied',
-            floorNumber: f,
-            squareMeters: u * 28 + 24,
-            bedrooms: u === 1 ? 0 : u === 2 ? 1 : u === 3 ? 2 : 3,
-            bathrooms: u === 4 ? 2 : 1,
-            listPrice: 3500000 + f * 250000 + u * 400000,
-          });
-        }
-      }
       result.push({ floorNumber: f, units: unitsOnFloor });
     }
     return result;
