@@ -10,7 +10,6 @@ on:
 
 env:
   DATABASE_URL: postgresql://elite:elite123@localhost:5432/elite_realty_test
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   lint-and-typecheck:
