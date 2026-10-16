@@ -73,7 +73,7 @@
     "@elite-realty/config-eslint": "*",
     "@elite-realty/config-tsconfig": "*",
     "@elite-realty/shared-types": "*",
-    "typescript": "^5.7.0"
+    "typescript": "^7.0.2"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",
