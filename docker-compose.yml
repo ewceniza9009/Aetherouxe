@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-elite123}
       POSTGRES_DB: ${POSTGRES_DB:-elite_realty}
     ports:
-      - '5434:5432'
+      - '${POSTGRES_PORT:-58432}:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -24,7 +24,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-elite123}
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-elite_realty}
     ports:
-      - '37017:27017'
+      - '${MONGO_PORT:-58417}:27017'
     volumes:
       - mongo-data:/data/db
     healthcheck:
@@ -37,7 +37,7 @@ services:
     image: redis:7-alpine
     container_name: elite-redis
     ports:
-      - '26379:6379'
+      - '${REDIS_PORT:-58479}:6379'
     volumes:
       - redis-data:/data
     healthcheck:
@@ -47,15 +47,15 @@ services:
       retries: 5
 
   minio:
-    image: minio/minio:latest
+    image: cgr.dev/chainguard/minio:latest
     container_name: elite-minio
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     command: server /data --console-address ":9001"
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - '${MINIO_PORT:-58490}:9000'
+      - '${MINIO_CONSOLE_PORT:-58491}:9001'
     volumes:
       - minio-data:/data
 
@@ -66,7 +66,7 @@ services:
     image: elite-realty:latest
     container_name: elite-app
     ports:
-      - '7077:80'
+      - '${APP_PORT:-58480}:80'
     depends_on:
       postgres:
         condition: service_healthy
@@ -85,14 +85,14 @@ services:
       JWT_ACCESS_EXPIRES: '60m'
       JWT_REFRESH_TOKEN_EXPIRES_IN: '7d'
       S3_ENDPOINT: 'http://minio:9000'
-      S3_PUBLIC_URL: 'http://localhost:9000'
+      S3_PUBLIC_URL: 'http://localhost:${MINIO_PORT:-58490}'
       S3_REGION: 'us-east-1'
       S3_ACCESS_KEY: '${MINIO_ROOT_USER:-minioadmin}'
       S3_SECRET_KEY: '${MINIO_ROOT_PASSWORD:-minioadmin}'
       S3_BUCKET: 'elite-realty'
       DEFAULT_TENANT_DOMAIN: 'localhost'
       PORT: '4000'
-      ALLOWED_ORIGINS: 'http://admin.localhost:7077,http://owner.localhost:7077,http://resident.localhost:7077,http://api.localhost:7077,http://localhost:7077,http://admin.localhost,http://owner.localhost,http://resident.localhost,http://api.localhost,http://localhost:3000'
+      ALLOWED_ORIGINS: 'http://admin.localhost:${APP_PORT:-58480},http://owner.localhost:${APP_PORT:-58480},http://resident.localhost:${APP_PORT:-58480},http://api.localhost:${APP_PORT:-58480},http://localhost:${APP_PORT:-58480},http://admin.localhost,http://owner.localhost,http://resident.localhost,http://api.localhost,http://localhost:3000'
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost/health']
       interval: 30s

@@ -10,7 +10,7 @@
 
 const NGINX = process.env.SMOKE_NGINX || "http://127.0.0.1:80";
 const API = process.env.SMOKE_API || "http://127.0.0.1:4000";
-const V1 = API + "/api/v1";
+const V1 = process.env.SMOKE_API_BASE || API + "/api";
 
 async function call(base, path, { method = "GET", token, body } = {}) {
   const headers = { "Content-Type": "application/json" };
